@@ -164,15 +164,15 @@ def check_new_negotiations(self) -> dict:
                         # Notify user via Telegram
                         from src.bot.dispatcher import create_bot
                         bot = create_bot()
-                        for neg in unread[:5]:
-                            try:
-                                await bot.send_message(
-                                    user.telegram_id,
-                                    f"💬 Новое сообщение от {neg.employer_name}\n"
-                                    f"Вакансия: {neg.vacancy_title}",
-                                )
-                            except Exception:
-                                pass
+                            for neg in unread[:5]:
+                                try:
+                                    await bot.send_message(
+                                        user.telegram_id,
+                                        f"[NEW MESSAGE] Новое сообщение от {neg.employer_name}\n"
+                                        f"Вакансия: {neg.vacancy_title}",
+                                    )
+                                except Exception:
+                                    pass
                         results["new_messages"] += len(unread)
 
                     # Sync to database

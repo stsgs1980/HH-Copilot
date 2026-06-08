@@ -34,7 +34,7 @@ async def cq_search(callback: CallbackQuery, state: FSMContext) -> None:
             return
 
     await callback.message.edit_text(
-        "🔍 Поиск вакансий\n\n"
+        "Поиск вакансий\n\n"
         "Отправьте поисковый запрос (например, 'Python разработчик'):",
     )
     await state.set_state(SearchStates.setting_query)
@@ -46,7 +46,7 @@ async def process_search_query(message: Message, state: FSMContext) -> None:
     """Process search query and start search."""
     query = message.text.strip()
     await state.update_data(search_query=query)
-    await message.answer("🔄 Ищу вакансии...")
+    await message.answer("[PROCESSING] Ищу вакансии...")
 
     try:
         from src.db.database import async_session_factory

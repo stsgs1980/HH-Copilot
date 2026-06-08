@@ -32,7 +32,7 @@ async def cq_apply_mode(callback: CallbackQuery, state: FSMContext) -> None:
         current_mode = user.apply_mode if user else "semi_auto"
 
     await callback.message.edit_text(
-        "🤖 Режим откликов\n\n"
+        "Режим откликов\n\n"
         "• **Авто** — бот автоматически откликается на подходящие вакансии\n"
         "• **Полуавто** — бот предлагает вакансии, вы подтверждаете\n"
         "• **Ручной** — вы сами выбираете каждую вакансию\n\n"
@@ -57,7 +57,7 @@ async def cq_set_mode(callback: CallbackQuery, state: FSMContext) -> None:
 
     mode_names = {"auto": "Авто", "semi_auto": "Полуавто", "manual": "Ручной"}
     await callback.message.edit_text(
-        f"✅ Режим изменен на: **{mode_names.get(mode, mode)}**",
+        f"[OK] Режим изменен на: **{mode_names.get(mode, mode)}**",
         reply_markup=main_menu_keyboard(is_authorized=True),
     )
     await callback.answer()
@@ -101,7 +101,7 @@ async def cq_apply(callback: CallbackQuery, state: FSMContext) -> None:
         resume_list = [(r.hh_resume_id, r.title) for r in resumes]
         await state.update_data(pending_vacancy_id=vacancy_id)
         await callback.message.edit_text(
-            "📋 Выберите резюме для отклика:",
+            "Выберите резюме для отклика:",
             reply_markup=resumes_keyboard(resume_list),
         )
         await state.set_state(ApplyStates.selecting_resume_for_apply)
@@ -123,7 +123,7 @@ async def cq_select_resume_for_apply(callback: CallbackQuery, state: FSMContext)
 
 async def _do_apply(callback: CallbackQuery, state: FSMContext, vacancy_id: int, resume_id: str) -> None:
     """Execute the actual application."""
-    await callback.message.edit_text("🔄 Отклик на вакансию...")
+    await callback.message.edit_text("[PROCESSING] Отклик на вакансию...")
 
     try:
         from src.db.database import async_session_factory
@@ -166,31 +166,31 @@ async def _do_apply(callback: CallbackQuery, state: FSMContext, vacancy_id: int,
             method = result.get("method", "unknown")
             method_text = "через API" if method == "api" else "через браузер"
             await callback.message.edit_text(
-                f"✅ Отклик отправлен ({method_text})!",
+                f"[OK] Отклик отправлен ({method_text})!",
                 reply_markup=main_menu_keyboard(is_authorized=True),
             )
         else:
             error = result.get("error", "unknown")
             if error == "already_applied":
                 await callback.message.edit_text(
-                    "ℹ️ Вы уже откликались на эту вакансию.",
+                    "[INFO] Вы уже откликались на эту вакансию.",
                     reply_markup=main_menu_keyboard(is_authorized=True),
                 )
             elif error == "daily_limit_reached":
                 await callback.message.edit_text(
-                    "⚠️ Дневной лимит откликов исчерпан.",
+                    "[WARNING] Дневной лимит откликов исчерпан.",
                     reply_markup=main_menu_keyboard(is_authorized=True),
                 )
             else:
                 await callback.message.edit_text(
-                    f"❌ Ошибка отклика: {error}",
+                    f"[ERROR] Ошибка отклика: {error}",
                     reply_markup=main_menu_keyboard(is_authorized=True),
                 )
 
     except Exception as e:
         logger.error("Apply failed: %s", e)
         await callback.message.edit_text(
-            f"❌ Ошибка: {str(e)[:100]}",
+            f"[ERROR] Ошибка: {str(e)[:100]}",
             reply_markup=main_menu_keyboard(is_authorized=True),
         )
 
@@ -228,7 +228,7 @@ async def cq_apply_all(callback: CallbackQuery, state: FSMContext) -> None:
     resume_id = resumes[0].hh_resume_id
 
     await callback.message.edit_text(
-        f"🔄 Массовый отклик на {len(suitable)} вакансий...\n"
+        f"[PROCESSING] Массовый отклик на {len(suitable)} вакансий...\n"
         "Это может занять некоторое время.",
     )
 
@@ -263,10 +263,10 @@ async def cq_apply_all(callback: CallbackQuery, state: FSMContext) -> None:
             await hh_client.close()
 
         await callback.message.edit_text(
-            f"📊 Результаты массового отклика:\n\n"
-            f"✅ Успешно: {results['applied']}\n"
-            f"⏭ Пропущено: {results['skipped']}\n"
-            f"❌ Ошибки: {results['failed']}",
+            f"[RESULTS] Результаты массового отклика:\n\n"
+            f"[OK] Успешно: {results['applied']}\n"
+            f"[SKIPPED] Пропущено: {results['skipped']}\n"
+            f"[ERROR] Ошибки: {results['failed']}",
             reply_markup=main_menu_keyboard(is_authorized=True),
         )
 

@@ -27,7 +27,7 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
     auth_url, _ = auth.get_auth_url(message.from_user.id)
 
     await message.answer(
-        "👋 Добро пожаловать в HH Bot!\n\n"
+        "[WELCOME] Добро пожаловать в HH Bot!\n\n"
         "Я помогу вам автоматически находить и откликаться на релевантные "
         "вакансии с HH.ru.\n\n"
         "Для начала работы необходимо авторизоваться на HH.ru.",
@@ -42,12 +42,12 @@ async def cq_auth(callback: CallbackQuery, state: FSMContext) -> None:
     auth_url, _ = auth.get_auth_url(callback.from_user.id)
 
     await callback.message.edit_text(
-        "🔑 Для авторизации на HH.ru:\n\n"
+        "[AUTH] Для авторизации на HH.ru:\n\n"
         "1. Нажмите кнопку ниже\n"
         "2. Войдите в аккаунт HH.ru\n"
         "3. Скопируйте код авторизации\n"
         "4. Отправьте код мне в чат\n\n"
-        "⏱ Код действителен 10 минут.",
+        "[INFO] Код действителен 10 минут.",
         reply_markup=auth_keyboard(auth_url),
     )
     await state.set_state(AuthStates.waiting_for_code)
@@ -59,11 +59,11 @@ async def process_auth_code(message: Message, state: FSMContext) -> None:
     """Process the authorization code from user."""
     code = message.text.strip()
     if len(code) < 10:
-        await message.answer("❌ Код слишком короткий. Пожалуйста, отправьте полный код авторизации.")
+        await message.answer("[ERROR] Код слишком короткий. Пожалуйста, отправьте полный код авторизации.")
         return
 
     await state.set_state(AuthStates.authorizing)
-    await message.answer("🔄 Авторизация...")
+    await message.answer("[PROCESSING] Авторизация...")
 
     try:
         # Import here to avoid circular imports
@@ -97,7 +97,7 @@ async def process_auth_code(message: Message, state: FSMContext) -> None:
 
         await state.clear()
         await message.answer(
-            "✅ Авторизация успешна!\n\n"
+            "[OK] Авторизация успешна!\n\n"
             "Теперь вы можете:\n"
             "• Загрузить резюме\n"
             "• Искать вакансии\n"
@@ -109,7 +109,7 @@ async def process_auth_code(message: Message, state: FSMContext) -> None:
         logger.error("Authorization failed: %s", e)
         await state.set_state(AuthStates.waiting_for_code)
         await message.answer(
-            "❌ Ошибка авторизации. Пожалуйста, попробуйте снова.\n"
+            "[ERROR] Ошибка авторизации. Пожалуйста, попробуйте снова.\n"
             f"Ошибка: {str(e)[:100]}"
         )
 
@@ -135,6 +135,6 @@ async def cmd_logout(message: Message, state: FSMContext) -> None:
         logger.error("Logout failed: %s", e)
 
     await message.answer(
-        "👋 Вы вышли из аккаунта HH.ru.\n"
+        "[LOGOUT] Вы вышли из аккаунта HH.ru.\n"
         "Для повторной авторизации используйте /start",
     )
