@@ -205,17 +205,31 @@ npm run dev
 Ошибка входа
 ```
 
-### 3.2 Анализ логов
+### 3.2 Полный traceback ошибки
 
-В терминале uvicorn обнаружена ошибка:
 ```python
-Traceback (most recent call last):
-  File ".../playwright/_impl/_browser_type.py", line 203, in launch
-    browser = await self._launch_browser_with_tracing(
-  ...
-  File ".../asyncio/base_events.py", line 533, in _make_subprocess_transport
+File "C:\Users\stsgr\HH-bot\hh-bot\venv\Lib\site-packages\playwright\_impl\_transport.py", line 120, in connect
+    self._proc = await asyncio.create_subprocess_exec(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+    )
+File "C:\Users\stsgr\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\subprocess.py", line 224, in create_subprocess_exec
+    transport, protocol = await loop.subprocess_exec(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        stderr=stderr, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\stsgr\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 1809, in subprocess_exec
+    transport = await self._make_subprocess_transport(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        protocol, popen_args, False, stdin, stdout, stderr,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bufsize, **kwargs)
+        ^^^^^^^^^^^^^^^^^^
+File "C:\Users\stsgr\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 533, in _make_subprocess_transport
     raise NotImplementedError
 NotImplementedError
+Login failed for user 2:
 ```
 
 ### 3.3 Причина
@@ -244,52 +258,134 @@ Playwright для запуска браузера использует subproces
 
 ---
 
-## 4. Решение
+## 4. Попытка исправления (НЕУДАЧНАЯ)
 
-### 4.1 Рекомендация
+### 4.1 Действия
 
-Установить стабильную версию Python 3.11 или 3.12.
-
-**Почему:**
-- Python 3.11/3.12 — стабильные release-версии
-- Полная поддержка asyncio на Windows
-- Playwright официально поддерживает эти версии
-- Все зависимости имеют precompiled wheels
-
-### 4.2 План действий
-
-1. Скачать Python 3.11.x с https://www.python.org/downloads/release/python-3119/
-   - Выбрать "Windows installer (64-bit)"
-   - **Важно:** Поставить галочку "Add Python to PATH"
-
-2. Пересоздать виртуальное окружение:
 ```powershell
+# Перейдите в папку проекта
 cd C:\Users\stsgr\HH-bot\hh-bot
+
+# Удалите старое виртуальное окружение
 Remove-Item -Recurse -Force venv
+
+# Создайте новое с Python 3.11
 python -m venv venv
+
+# Активируйте
 .\venv\Scripts\activate
+
+# Установите зависимости
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-3. Переустановить зависимости:
+### 4.2 Результат
+
+❌ **НЕУДАЧА — Python 3.11 НЕ УСТАНОВЛЕН!**
+
+Команда `python` по-прежнему указывает на Python 3.14:
+
+```
+sqlalchemy-2.0.50-cp314-cp314-win_amd64.whl
+                      ^^^^^ - cp314 = Python 3.14
+```
+
+### 4.3 Ошибка при установке numpy
+
+```
+error: subprocess-exited-with-error
+× Preparing metadata (pyproject.toml) did not run successfully.
+...
+ERROR: Unknown compiler(s): [['icl'], ['cl'], ['cc'], ['gcc'], ['clang'], ['clang-cl'], ['pgcc']]
+```
+
+**Причина:** numpy 1.26.4 пытается компилироваться из исходников, потому что нет pre-built wheels для Python 3.14, но на машине нет компилятора C.
+
+### 4.4 Ошибка при запуске Playwright
+
 ```powershell
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 playwright install chromium
 ```
 
-4. Запустить backend:
+```
+playwright: The term 'playwright' is not recognized as a name of a cmdlet, function, script file, or executable program.
+```
+
+**Причина:** pip install не завершился успешно из-за ошибки numpy, playwright не установлен.
+
+### 4.5 Ошибка при запуске uvicorn
+
 ```powershell
 python -m uvicorn src.api.app:app --reload --port 8000
 ```
 
-5. Запустить frontend (в новом терминале):
+```
+No module named uvicorn
+```
+
+**Причина:** Зависимости не установлены.
+
+### 4.6 Вывод
+
+**Команда `python -m venv venv` создаёт venv с той версией Python, которая сейчас активна (3.14).**
+
+Чтобы создать venv с Python 3.11, нужно **СНАЧАЛА УСТАНОВИТЬ Python 3.11**.
+
+---
+
+## 5. Правильное решение
+
+### 5.1 Шаг 1: Скачать Python 3.11
+
+1. Перейти на https://www.python.org/downloads/release/python-3119/
+2. Скачать **"Windows installer (64-bit)"**
+3. Запустить установщик
+4. ✅ **ГАЛОЧКА "Add Python to PATH"** — ОБЯЗАТЕЛЬНО!
+5. Нажать "Install Now"
+
+### 5.2 Шаг 2: Закрыть все терминалы
+
+Закрыть ВСЕ окна PowerShell, открыть новое.
+
+### 5.3 Шаг 3: Проверить версию
+
 ```powershell
-cd C:\Users\stsgr\HH-bot\hh-bot\frontend
-npm run dev
+python --version
+```
+
+Должно показать: `Python 3.11.x`
+
+### 5.4 Шаг 4: Пересоздать venv
+
+```powershell
+cd C:\Users\stsgr\HH-bot\hh-bot
+
+# Удалить старое venv
+Remove-Item -Recurse -Force venv
+
+# Создать новое venv с Python 3.11 (явно указать версию)
+py -3.11 -m venv venv
+
+# Активировать
+.\venv\Scripts\activate
+
+# Проверить версию Python в venv
+python --version
+# Должно быть: Python 3.11.x
+
+# Установить зависимости
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# Установить Playwright браузеры
+playwright install chromium
+
+# Запустить backend
+python -m uvicorn src.api.app:app --reload --port 8000
 ```
 
 ---
 
-## 5. Сводная таблица результатов
+## 6. Сводная таблица результатов
 
 | Этап | Статус | Примечание |
 |------|--------|------------|
@@ -304,10 +400,11 @@ npm run dev
 | Запуск Backend | ✅ Успешно | http://localhost:8000/docs работает |
 | Запуск Frontend | ✅ Успешно | http://localhost:3000 работает |
 | **Вход в систему (Playwright)** | ❌ **Ошибка** | Python 3.14 asyncio NotImplementedError |
+| **Попытка пересоздать venv** | ❌ **Ошибка** | Python 3.11 не установлен, команда `python` = 3.14 |
 
 ---
 
-## 6. Файловая структура проекта
+## 7. Файловая структура проекта
 
 ```
 C:\Users\stsgr\HH-bot\hh-bot\
@@ -330,7 +427,7 @@ C:\Users\stsgr\HH-bot\hh-bot\
 
 ---
 
-## 7. Полезные команды
+## 8. Полезные команды
 
 ### Backend
 ```powershell
@@ -363,24 +460,37 @@ sqlite3 .\data\hh_bot.db
 
 ---
 
-## 8. Следующие шаги
+## 9. Чек-лист следующих действий
 
-1. [ ] Установить Python 3.11.x (стабильную версию)
-2. [ ] Удалить старое venv
-3. [ ] Создать новое venv с Python 3.11
-4. [ ] Переустановить все зависимости
-5. [ ] Переустановить Playwright браузеры
-6. [ ] Запустить backend и frontend
-7. [ ] Протестировать вход в систему
-
----
-
-## 9. Заключение
-
-Проект HH-bot успешно развёрнут на локальной машине, но **не работает функционал входа** из-за несовместимости Python 3.14 (pre-release) с Playwright на Windows.
-
-**Решение:** Заменить Python 3.14 на стабильную версию Python 3.11 или 3.12.
+1. [ ] Скачать Python 3.11 с https://www.python.org/downloads/release/python-3119/
+2. [ ] Установить с галочкой "Add Python to PATH"
+3. [ ] Закрыть все терминалы
+4. [ ] Открыть новый терминал, проверить `python --version`
+5. [ ] Удалить venv: `Remove-Item -Recurse -Force venv`
+6. [ ] Создать venv с Python 3.11: `py -3.11 -m venv venv`
+7. [ ] Активировать: `.\venv\Scripts\activate`
+8. [ ] Установить зависимости: `pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+9. [ ] Установить браузеры: `playwright install chromium`
+10. [ ] Запустить backend: `python -m uvicorn src.api.app:app --reload --port 8000`
+11. [ ] Запустить frontend: `cd frontend && npm run dev`
+12. [ ] Протестировать вход в систему на http://localhost:3000
 
 ---
 
-*Документ создан: 2026-06-09*
+## 10. Заключение
+
+### Проблема
+Проект HH-bot развёрнут на локальной машине, но **не работает функционал входа** из-за несовместимости Python 3.14 (pre-release) с Playwright на Windows.
+
+### Неудачная попытка исправления
+Попытка пересоздать venv командой `python -m venv venv` не сработала, потому что:
+- Python 3.11 **не установлен** на машине
+- Команда `python` по-прежнему указывает на Python 3.14
+- venv создаётся с той версией Python, которая активна в системе
+
+### Решение
+**СНАЧАЛА установить Python 3.11**, затем пересоздать venv с явным указанием версии: `py -3.11 -m venv venv`
+
+---
+
+*Документ обновлён: 2026-06-09*
