@@ -1,54 +1,97 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
 
-# dependencies
-node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Next.js
+.next/
+out/
 
-# testing
-/coverage
+# Production
+build/
+dist/
 
-# next.js
-/.next/
-/out/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
 
-# production
-/build
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
 
-# misc
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
-*.pem
+Thumbs.db
 
-# debug
+# Debug / temp
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Downloads / screenshots (generated, not source)
+download/*.png
+download/*.jpg
 
-# vercel
-.vercel
+# Temp JSON debug files
+hh_oauth_search.json
+hh_auth_user_raw.json
+hh_neg_raw.json
+hh_endpoints_search.json
+hh_habr_doc.json
+hh_auth_raw.json
+hh_api_github.json
+hh_apiportal_doc.json
+hh_api_search3.json
+hh_vac_raw.json
+hh_api_search2.json
+hh_vacancies_doc.json
+hh_resumes_github.json
+hh_auth_github.json
+hh_negotiations_github.json
+hh_speca_doc.json
+hh_negotiations_search.json
+hh_api_search1.json
+hh_res_raw.json
 
+# Agent context (not project source)
+agent-ctx/
 
-# typescript
-*.tsbuildinfo
+# Lock files (keep bun.lock, ignore package-lock for consistency)
+package-lock.json
+
+# Next.js auto-generated type file (changes per environment)
 next-env.d.ts
-local-*
-.claude
-.z-ai-config
-*.log
-dev.log
-dev.out.log
-test
-prompt
 
-server.log
-# Skills directory
-/skills/
+# Cache
+.cache/
+.turbo/
+
+# Skills (system internal)
+skills/
+
+# HH-Copilot (has its own repo)
+HH-Copilot/

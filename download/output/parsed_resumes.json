@@ -1,0 +1,49 @@
+{
+  "resumes": [
+    {
+      "resume_id": "demo_resume_1",
+      "title": "Python Developer / Fullstack",
+      "position": "Python Developer",
+      "key_skills": [
+        "Python",
+        "Django",
+        "FastAPI",
+        "React",
+        "TypeScript",
+        "PostgreSQL",
+        "Docker",
+        "Redis",
+        "Celery",
+        "Git",
+        "REST API",
+        "Linux"
+      ],
+      "total_experience_months": 60,
+      "salary": {
+        "from": 250000,
+        "to": 350000,
+        "currency": "RUR"
+      },
+      "area_id": "1",
+      "area_info": {
+        "id": "1",
+        "name": "Москва"
+      },
+      "city": "Москва",
+      "email": "demo@example.com",
+      "experience": [
+        {
+          "company": "Яндекс",
+          "position": "Senior Python Developer",
+          "start_date": "2023-03",
+          "end_date": null,
+          "description": "Разработка и поддержка внутренних сервисов поиска."
+        }
+      ],
+      "education": [],
+      "about": "Опытный Python-разработчик с 5-летним стажем."
+    }
+  ],
+  "parsed_at": "2026-06-08T12:00:00Z",
+  "source": "demo_data"
+}

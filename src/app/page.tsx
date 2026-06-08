@@ -1,31 +1,18 @@
-'use client'
+"use client";
+
+import dynamic from "next/dynamic";
+
+// Use ssr: false to prevent hydration mismatch —
+// auth state differs between server and client
+const HomeContent = dynamic(() => import("./home-content"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-screen items-center justify-center bg-neutral-50">
+      <div className="text-muted-foreground text-sm">Загрузка...</div>
+    </div>
+  ),
+});
 
 export default function Home() {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      gap: '2rem',
-      padding: '1rem'
-    }}>
-      <div style={{
-        position: 'relative',
-        width: '6rem',
-        height: '6rem'
-      }}>
-        <img
-          src="/logo.svg"
-          alt="Z.ai Logo"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain'
-          }}
-        />
-      </div>
-    </div>
-  )
+  return <HomeContent />;
 }

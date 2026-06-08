@@ -1,0 +1,10 @@
+{
+  "name": "hh-api",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun index.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  }
+}
