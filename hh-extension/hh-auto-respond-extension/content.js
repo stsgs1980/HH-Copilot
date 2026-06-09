@@ -746,79 +746,89 @@ function parseResume() {
   //       cell-text > cell-text-content → Позиция (1-й span)
   //       cell-text > cell-text-content → Период (2-й span)
   //     Остальной текст → Описание
+  //
+  // ВНИМАНИЕ: hh.ru может скрывать часть записей опыта.
+  // Ищем ВСЕ company-card на ВЕСЬТЕ странице, не только внутри expCard.
   // ═════════════════════════════════════════
   const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
+
+  // Сначала ищем ВСЕ company-card на всей странице (могут быть вне expCard)
+  const allCompanyCards = document.querySelectorAll('[data-qa="profile-experience-company-card"]');
+  // Уникализируем по элементу (на случай вложенности)
+  const uniqueCards = [];
+  const cardSet = new Set();
+  allCompanyCards.forEach(c => {
+    if (!cardSet.has(c)) { cardSet.add(c); uniqueCards.push(c); }
+  });
+  resumeLog.info('Experience: total company-cards on page: ' + uniqueCards.length);
+
+  // Функция парсинга одной карточки
+  function parseCompanyCard(card) {
+    const job = {};
+
+    // ── Компания и длительность ──
+    const cellLeft = card.querySelector('[data-qa="cell-left-side"]');
+    if (cellLeft) {
+      const cellTexts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+      if (cellTexts.length >= 1) {
+        job.company = (cellTexts[0].textContent || '').trim();
+      }
+      if (cellTexts.length >= 2) {
+        job.duration = (cellTexts[1].textContent || '').trim();
+      }
+    }
+
+    // ── Позиция, период, описание ──
+    const stepContent = card.querySelector('[data-qa="magritte-stepper-step-content"]');
+    if (stepContent) {
+      const stepCellLeft = stepContent.querySelector('[data-qa="cell-left-side"]');
+      if (stepCellLeft) {
+        const stepTexts = stepCellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+        if (stepTexts.length >= 1) {
+          job.position = (stepTexts[0].textContent || '').trim();
+        }
+        if (stepTexts.length >= 2) {
+          job.period = (stepTexts[1].textContent || '').trim();
+        }
+      }
+      // Описание — текст stepContent без позиции и периода
+      const fullStepText = (stepContent.textContent || '').trim();
+      let desc = fullStepText;
+      const posText = job.position || '';
+      const periodText = job.period || '';
+      if (posText && desc.startsWith(posText)) {
+        desc = desc.substring(posText.length);
+      }
+      if (periodText && desc.startsWith(periodText)) {
+        desc = desc.substring(periodText.length);
+      }
+      desc = desc.trim();
+      if (desc.length > 20) {
+        job.description = desc.substring(0, 500);
+      }
+    }
+
+    return (job.company || job.position) ? job : null;
+  }
+
+  const expEntries = [];
+  uniqueCards.forEach(card => {
+    const job = parseCompanyCard(card);
+    if (job) expEntries.push(job);
+  });
+
   if (expCard) {
     resume._debug.found.push('experienceBlock (data-qa="resume-list-card-experience")');
-
-    const expEntries = [];
-    const companyCards = expCard.querySelectorAll('[data-qa="profile-experience-company-card"]');
-    resumeLog.info('Experience: found ' + companyCards.length + ' company-card elements');
-
-    companyCards.forEach(card => {
-      const job = {};
-
-      // ── Компания и длительность ──
-      // Внутри card > [data-qa="cell"] > [data-qa="cell-left-side"]:
-      //   1-й cell-text > cell-text-content = название компании
-      //   2-й cell-text > cell-text-content = длительность ("1 год и 7 месяцев")
-      const cellLeft = card.querySelector('[data-qa="cell-left-side"]');
-      if (cellLeft) {
-        const cellTexts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-        if (cellTexts.length >= 1) {
-          job.company = (cellTexts[0].textContent || '').trim();
-        }
-        if (cellTexts.length >= 2) {
-          job.duration = (cellTexts[1].textContent || '').trim();
-        }
-      }
-
-      // ── Позиция, период, описание ──
-      // Внутри card > [data-qa="magritte-stepper"] > [data-qa="magritte-stepper-step"]:
-      const stepContent = card.querySelector('[data-qa="magritte-stepper-step-content"]');
-      if (stepContent) {
-        // Позиция и период — в cell-left-side внутри stepper
-        const stepCellLeft = stepContent.querySelector('[data-qa="cell-left-side"]');
-        if (stepCellLeft) {
-          const stepTexts = stepCellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-          if (stepTexts.length >= 1) {
-            job.position = (stepTexts[0].textContent || '').trim();
-          }
-          if (stepTexts.length >= 2) {
-            job.period = (stepTexts[1].textContent || '').trim();
-          }
-        }
-        // Описание — берём текст stepContent и вычитаем позицию + период
-        const fullStepText = (stepContent.textContent || '').trim();
-        const posText = job.position || '';
-        const periodText = job.period || '';
-        // Убираем позицию и период из начала текста
-        let desc = fullStepText;
-        if (posText && desc.startsWith(posText)) {
-          desc = desc.substring(posText.length);
-        }
-        if (periodText && desc.startsWith(periodText)) {
-          desc = desc.substring(periodText.length);
-        }
-        desc = desc.trim();
-        if (desc.length > 20) {
-          job.description = desc.substring(0, 500);
-        }
-      }
-
-      if (job.company || job.position) {
-        expEntries.push(job);
-      }
-    });
-
-    resume.experience = expEntries;
-    if (expEntries.length > 0) {
-      resume._debug.found.push('experience: ' + expEntries.length + ' entries');
-    } else {
-      resume._debug.missing.push('experience (0 entries extracted)');
-    }
   } else {
-    resume._debug.missing.push('experienceBlock (no data-qa="resume-list-card-experience")');
+    // expCard не найден, но company-card есть — всё равно парсим
+    resume._debug.missing.push('experienceBlock (no container, but ' + uniqueCards.length + ' cards found)');
+  }
+
+  resume.experience = expEntries;
+  if (expEntries.length > 0) {
+    resume._debug.found.push('experience: ' + expEntries.length + ' entries');
+  } else {
+    resume._debug.missing.push('experience (0 entries extracted)');
   }
 
   // ═════════════════════════════════════════
