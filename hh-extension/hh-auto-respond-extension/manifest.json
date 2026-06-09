@@ -1,29 +1,14 @@
 {
   "manifest_version": 3,
   "name": "HH Auto-Respond",
-  "description": "Автоматизация откликов на hh.ru — встроенная панель прямо на странице поиска вакансий",
+  "description": "Автоматизация откликов на hh.ru — FAB + sidebar",
   "version": "1.0.0",
-  "permissions": [
-    "storage",
-    "cookies",
-    "activeTab",
-    "alarms"
-  ],
-  "host_permissions": [
-    "https://hh.ru/*",
-    "https://*.hh.ru/*"
-  ],
+  "permissions": ["storage", "cookies", "activeTab", "alarms"],
+  "host_permissions": ["https://hh.ru/*", "https://*.hh.ru/*"],
   "content_scripts": [
     {
-      "matches": [
-        "https://hh.ru/*",
-        "https://hh.ru/search/vacancy*",
-        "https://hh.ru/vacancy/*",
-        "https://hh.ru/applicant/*",
-        "https://hh.ru/account/*"
-      ],
-      "js": ["lib/selectors.js", "lib/anti-hallucination.js", "lib/timing.js", "lib/storage.js", "lib/rate-limiter.js", "lib/matching.js", "content/panel.js", "content/parser.js", "content/auto-respond.js", "content/main.js"],
-
+      "matches": ["https://hh.ru/*", "https://*.hh.ru/*"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -33,16 +18,7 @@
   },
   "action": {
     "default_popup": "popup/index.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
   },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": []
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
 }
