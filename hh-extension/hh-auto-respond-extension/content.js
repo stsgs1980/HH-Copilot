@@ -872,6 +872,24 @@ function parseResume() {
       resume._debug.found.push('experience: ' + expEntries.length + ' entries');
     } else {
       resume._debug.missing.push('experience (0 entries extracted)');
+      // АВТОДИАГНОСТИКА: дамп внутренностей experience блока
+      resumeLog.warn('Experience: 0 entries — auto-diagnosing expCard inner structure');
+      console.group('%c[HH-AR][EXP-DIAG] Experience block auto-dump', 'color:#ef4444;font-weight:bold');
+      console.log('  children count:', expCard.children.length);
+      const expInnerQa = expCard.querySelectorAll('[data-qa]');
+      console.log('  inner data-qa count:', expInnerQa.length);
+      expInnerQa.forEach((el, i) => {
+        console.log('  expQa[' + i + ']:', el.getAttribute('data-qa'), '| tag:', el.tagName, '| text:', (el.textContent || '').trim().substring(0, 120));
+      });
+      Array.from(expCard.children).forEach((child, i) => {
+        const qa = child.getAttribute('data-qa') || '(no data-qa)';
+        const tag = child.tagName;
+        const text = (child.textContent || '').trim().substring(0, 200);
+        const subQa = Array.from(child.querySelectorAll('[data-qa]')).map(e => e.getAttribute('data-qa'));
+        const links = Array.from(child.querySelectorAll('a')).map(a => ({ href: (a.getAttribute('href') || '').substring(0, 60), text: (a.textContent || '').trim().substring(0, 60) }));
+        console.log('  child[' + i + ']:', { tag, qa, text, subDataQa: subQa, links });
+      });
+      console.groupEnd();
     }
   } else {
     resume._debug.missing.push('experienceBlock (no data-qa="resume-list-card-experience")');
