@@ -275,5 +275,43 @@ Stage Summary:
 - Pre-commit hook блокирует коммиты без обновления worklog.md
 - Pre-push hook защищает модуль от мусора
 - Remote обновлён на HH-Copilot.git
----
 
+---
+Task ID: 12
+Agent: main
+Task: Генерация каскада задач v3.0 (Task Cascade Document)
+
+Work Log:
+- Изучены все исходные материалы: hh-copilot-documentation.md (399 строк), hh-copilot-fab-panel.html (~1800 строк), content.js (~1600 строк), background/index.js (130 строк), popup/popup.js (130 строк), TASK-CASCADE.md (280 строк), UNICODE_POLICY.md (153 строк), ARCHITECTURE.md (508 строк)
+- Проанализирован wireframe: 6 вкладок FAB панели (Обзор, Резюме, Вакансии, Переговоры, Настройки, Логи) + лендинг
+- Проанализирован текущий код: что работает (FAB, sidebar, resume parser, vacancy list parser, auth, SPA observer, rate limiter, storage, popup), что не работает (vacancy detail, matching engine, auto-apply, negotiations, AI, dark theme, skill gap, KPI dashboard)
+- Инвентаризировано 38 функций из wireframe с привязкой к вкладкам, статусам, приоритетам и зависимостям
+- Сформирован каскад из 7 фаз (Phase 0-6), 35 задач с критериями приёмки и анти-галлюцинационными проверками
+- Сгенерирован DOCX документ (56K) через python-docx: /home/z/my-project/download/HH-Copilot-Task-Cascade-v3.docx
+- Документ содержит: обзор, архитектурные цели, инвентаризацию функций, каскад реализации, механизм контроля, реестр рисков
+
+Stage Summary:
+- Документ каскада задач v3.0 сгенерирован и сохранён
+- 35 задач распределены по 7 фазам с приоритетами P0 (16), P1 (14), P2 (5)
+- 38 функций проинвентаризированы: работает (9), partial (12), stub (17)
+- Следующий шаг: Phase 0 -- esbuild рефакторинг (F0.1-F0.9)
+
+---
+Task ID: 13
+Agent: main
+Task: F6.2 -- Переписывание документации с кросс-проверкой
+
+Work Log:
+- Синхронизирован локальный репозиторий с remote (reset --hard FETCH_HEAD, clean -fd)
+- Проведён полный аудит content.js через subagent: 1637 строк, точная инвентаризация всех функций, селекторов, storage ключей
+- Кросс-проверка TASK-CASCADE.md: исправлены неточности (1636->1637 строк, sidebar 750->720px, storage ключ myResume вместо resume, описание заглушек уточнено, версия 1.5.0->1.5.2)
+- Кросс-проверка ARCHITECTURE.md: обновлена версия на 1.5.2
+- Кросс-проверка README.md: обновлена версия, исправлен clone URL (HR-Automated-Job-Search-System -> HH-Copilot), исправлены строки content.js (1636->1637)
+- Кросс-проверка UNICODE_POLICY.md: обновлена версия на 1.5.2
+- manifest.json bumped 1.5.2 -> 1.5.3
+
+Stage Summary:
+- Все 4 файла документации обновлены с кросс-проверкой против актуального кода
+- TASK-CASCADE.md обновлён до v3.0.0 с точным описанием текущего состояния
+- manifest.json v1.5.3 -- готов к коммиту
+---
