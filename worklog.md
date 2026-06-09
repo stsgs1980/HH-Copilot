@@ -534,3 +534,20 @@ Stage Summary:
 - Root cause: fabStyle expected element but received element.style (CSSStyleDeclaration)
 - Fix: one-line change in fab.js line 22-23
 - Impact: FAB button never rendered, extension completely broken on all hh.ru pages
+
+---
+Task ID: dist-build
+Agent: main
+Task: Create clean dist/ output for Chrome extension loading
+
+Work Log:
+- Modified esbuild.config.mjs to output to dist/ instead of root
+- Added copyStatic() to copy manifest.json, background/, popup/, icons/ to dist/
+- dist/ is cleaned on each build
+- Created .gitignore for node_modules/, dist/, *.bak, *.map
+- dist/ = 192K, 7 files — clean extension package
+
+Stage Summary:
+- Users now load dist/ as unpacked extension in Chrome
+- Source files (src/, docs/, anti-hallucination-guard/) stay in dev folder only
+- .gitignore prevents node_modules and dist from being committed
