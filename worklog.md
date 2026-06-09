@@ -518,3 +518,19 @@ Stage Summary:
 - Sidebar close button, tab clicks, and retry-auth now work immediately after sidebar creation
 - Full bindAllEvents still happens on login for all event handlers
 - Build verified, committed and pushed
+
+---
+Task ID: fix-fab-crash
+Agent: main
+Task: Fix fabStyle() crash — el.style.setProperty() called on CSSStyleDeclaration object
+
+Work Log:
+- Found bug: fabStyle(el, prop, value) did el.style.setProperty() but createFab passed style object as first arg
+- Fixed: renamed param to style, changed to style.setProperty()
+- Rebuilt content.js (150.6kb)
+- Pushing fix
+
+Stage Summary:
+- Root cause: fabStyle expected element but received element.style (CSSStyleDeclaration)
+- Fix: one-line change in fab.js line 22-23
+- Impact: FAB button never rendered, extension completely broken on all hh.ru pages

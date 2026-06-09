@@ -19,8 +19,8 @@ const FAB_ICONS = {
 };
 
 /* Helper: set CSS property with !important to prevent hh.ru overrides */
-function fabStyle(el, prop, value) {
-  el.style.setProperty(prop, value, 'important');
+function fabStyle(style, prop, value) {
+  style.setProperty(prop, value, 'important');
 }
 
 export function createFab(onClick) {
