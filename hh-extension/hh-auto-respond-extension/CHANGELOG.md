@@ -5,7 +5,84 @@
 
 ---
 
-## [1.3.0] — 2026-06-09
+## [1.6.0] — 2026-06-10  (Phase 0 complete)
+
+### Переписано
+- **Phase 0: esbuild modular refactoring (F0.1-F0.9)** -- монолитный content.js (1637 строк)
+  декомпозирован в 16 ES модулей с единым сборочным шагом
+  - `src/lib/selectors.js` -- HH_SELECTORS (47+ групп), findElement, findAllElements
+  - `src/lib/anti-hallucination.js` -- safeGetText, safeGetAttr, safeClick, safeInput,
+    waitForElement, validateVacancyData, extractVacancyId, createLogger
+  - `src/lib/storage.js` -- DEFAULT_SETTINGS, DEFAULT_STATS, chrome.storage.local CRUD
+  - `src/lib/timing.js` -- gaussianRandom, randomDelay, simulateReading, simulateTyping
+  - `src/lib/rate-limiter.js` -- rateLimiter (check, recordAction, adaptiveSlowdown, resetBurst)
+  - `src/parsers/vacancy-list.js` -- parseVacanciesFromPage
+  - `src/parsers/resume-detail.js` -- parseResume (12 полей), diagnoseResumeDOM
+  - `src/parsers/vacancy-detail.js` -- заглушка parseVacancyDetail (Phase 1)
+  - `src/parsers/negotiations.js` -- заглушка parseNegotiations (Phase 1)
+  - `src/ui/fab.js`, `src/ui/panel.js` -- FAB + Shadow DOM sidebar
+  - `src/ui/tabs/vacancies.js`, `src/ui/tabs/resumes.js` -- рабочие вкладки
+  - `src/ui/styles.js`, `src/ui/html.js`, `src/ui/state.js`, `src/ui/auth.js` -- UI инфраструктура
+  - `src/content/main.js` -- boot sequence (auth gate, detectPageType, SPA observer)
+  - `src/engine/auto-respond.js` -- заглушки applyToVacancy/continueApply/applyToAll
+  - `src/services/index.js` -- сервисный барьерный файл
+
+### Добавлено
+- **esbuild** как сборочный инструмент (IIFE bundle, sourcemaps)
+  - `esbuild.config.mjs` -- конфигурация сборки
+  - `package.json` -- скрипты build/watch
+- **content.js.bak** -- резервная копия оригинального монолита
+
+### Изменено
+- content.js теперь собирается из src/ модулей через `npm run build`
+- manifest.json: `type: "module"` для service worker
+
+---
+
+## [1.5.4] -- 2026-06-10
+
+### Добавлено
+- Anti-hallucination-guard submodule + pre-commit/pre-push hooks
+- consumer-project detection в pre-push (skip module validation)
+
+---
+
+## [1.5.3] -- 2026-06-10
+
+### Переписано
+- Полная переработка документации с кросс-проверкой кода:
+  ARCHITECTURE.md, README.md, UNICODE_POLICY.md, TASK-CASCADE.md v3.0
+
+### Исправлено
+- Sidebar ширина 750px -> 720px
+- Storage key resume -> myResume
+- Clone URL исправлен
+
+---
+
+## [1.5.0] -- 2026-06-10
+
+### Удалено
+- Массовая чистка мёртвого кода: 311 файлов, -41361 строк
+  - hh-bot/, Next.js app/, mini-services/, skills/, download/, upload/
+  - Оставлено только расширение в hh-extension/hh-auto-respond-extension/
+
+---
+
+## [1.4.0] -- 2026-06-10
+
+### Добавлено
+- Auto-expand скрытых секций резюме перед парсингом
+- Sidebar ширина 360px -> 720px
+
+### Исправлено
+- Дублирование duration в периоде опыта
+- Удалена текстовая trunkation
+- Мёртвый код (content/, lib/ -- never imported)
+
+---
+
+## [1.3.0] -- 2026-06-09
 
 ### Исправлено
 - **Критический баг: 8 из 11 полей резюме не парсились** на Magritte-страницах

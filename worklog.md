@@ -366,4 +366,23 @@ Stage Summary:
 - window.__hhDiagnose, Shadow DOM (mode: closed), chrome.storage.local all present
 - npm run build / npm run watch scripts working
 - manifest.json v1.5.4
+
+---
+Task ID: 15
+Agent: main
+Task: Phase 0 completion -- CHANGELOG, production build, git tag v1.6.0
+
+Work Log:
+- CHANGELOG.md: added entries for v1.4.0, v1.5.0, v1.5.3, v1.5.4, v1.6.0 (Phase 0 complete)
+- esbuild.config.mjs: added --production flag (minify, drop console/debugger, no sourcemap)
+- package.json: added "build:prod" script
+- Verified: npm run build (dev: 75.5kb + sourcemap) and npm run build:prod (49.2kb minified)
+- manifest.json bumped 1.5.4 -> 1.6.0
+- package.json bumped 1.5.4 -> 1.6.0
+
+Stage Summary:
+- Phase 0 formally completed per TASK-CASCADE section 4.2 criteria
+- CHANGELOG updated with all missing entries
+- Production build verified (49.2kb, no console.log)
+- Ready for git tag v1.6.0 and push
 ---

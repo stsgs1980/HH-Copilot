@@ -1,10 +1,11 @@
 {
   "name": "hh-auto-respond-extension",
-  "version": "1.5.4",
+  "version": "1.6.0",
   "private": true,
   "description": "HH.ru Auto-Respond Chrome Extension — esbuild bundled content script",
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "build:prod": "node esbuild.config.mjs --production",
     "watch": "node esbuild.config.mjs --watch"
   },
   "devDependencies": {
