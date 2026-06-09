@@ -1,0 +1,3 @@
+[submodule "hh-extension/hh-auto-respond-extension/anti-hallucination-guard"]
+	path = hh-extension/hh-auto-respond-extension/anti-hallucination-guard
+	url = https://github.com/stsgs1980/Anti-hallucination-guard.git

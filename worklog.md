@@ -258,4 +258,22 @@ Stage Summary:
 - Проверка авторизации выполняется только один раз благодаря useRef
 - Для тестирования на Windows: git pull origin main && npm run dev
 
+---
+Task ID: 11
+Agent: main
+Task: Добавление anti-hallucination-guard submodule + переименование репо
+
+Work Log:
+- git submodule add https://github.com/stsgs1980/Anti-hallucination-guard.git hh-extension/hh-auto-respond-extension/anti-hallucination-guard
+- bash anti-hallucination-guard/setup.sh — установлен pre-commit и pre-push hooks, скрипты audit/check/validate, skills/
+- Создан AGENT_RULES.md в корне проекта
+- git remote set-url origin https://github.com/stsgs1980/HH-Copilot.git (переименование репо пользователем)
+- manifest.json version bumped 1.5.1 → 1.5.2
+
+Stage Summary:
+- Submodule anti-hallucination-guard интегрирован
+- Pre-commit hook блокирует коммиты без обновления worklog.md
+- Pre-push hook защищает модуль от мусора
+- Remote обновлён на HH-Copilot.git
+---
 
