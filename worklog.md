@@ -578,3 +578,43 @@ Stage Summary:
 - cascade-state.json не синхронизирован с реальным состоянием — нужно верифицировать и отметить завершённые задачи
 - Следующий шаг: верификация build + отметка завершённых P0 задач через cascade-cli.sh
 ---
+
+---
+Task ID: cleanup-and-docs
+Agent: main
+Task: Привести файловую структуру в порядок, верифицировать guard-механизмы, заполнить документацию
+
+Work Log:
+- Удалён HH-Copilot/ (132MB дубль клона из песочницы)
+- Удалены 1052 файла skills/ из git индекса (системные, не часть проекта)
+- Удалены content.js.bak и content.js.map из git индекса (build-артефакты)
+- .gitignore обновлён: добавлены *.bak, *.map, upload/
+- Committed: chore: remove 1052 tracked skills/, 2 build artifacts, tighten .gitignore (aeee38c)
+- Pre-commit hook: VERIFIED WORKING — блокирует коммит без свежего worklog (<10 мин)
+- Pre-push hook: ОБНАРУЖЕН БАГ — путь .git/hooks/.. вместо .git/hooks/../.., guard был молча отключён
+  - Исправлен: RePO_ROOT теперь правильно указывает на корень проекта
+- Pre-push hook: VERIFIED WORKING после исправления
+- cascade-guard/setup.sh: chmod +x (было 664)
+- check-agent.sh: VERIFIED WORKING (worklog fresh, idle < 15 min)
+- audit.sh: VERIFIED WORKING (score 90/100)
+- cascade-cli.sh validate: PASSED
+- cascade-cli.sh status: 0/35 (0%) — все задачи pending
+- cascade-cli.sh ready-tasks: 1 ready (F0.1)
+- cascade-cli.sh deps F1.1: WORKING (depends_on F0.7, 3 dependents)
+- cascade-cli.sh implements F0.7: WORKING (5 function IDs)
+- cascade-cli.sh critical-path: частичный (форматирование вывода)
+- AGENT_RULES.md: VERIFIED — все 15 правил (AHG 1-6 + Cascade C-1..C-9)
+- cascade-state.json: 35 задач, 0 completed, 35 pending
+- Both submodules checked out: cascade-guard@fbf739e, anti-hallucination-guard@d6428a0
+- README.md: 429 строк, актуальный, полный
+- ARCHITECTURE.md: 507 строк, актуальный
+- TASK-CASCADE.md: 829 строк, актуальный
+- CHANGELOG.md: добавлены записи 1.7.0, 1.7.1, 1.7.2, 1.7.3 (были пропущены)
+
+Stage Summary:
+- Файловая структура: убрано 274K+ строк мусора из git, 132MB с диска
+- Git hooks: оба РАБОТАЮТ (pre-commit + pre-push)
+- Guard-системы: cascade-guard и anti-hallucination-guard верифицированы
+- Документация: README (429 строк), ARCHITECTURE (507), TASK-CASCADE (829), CHANGELOG (241+) — все заполнены и актуальны
+-cascade-state.json нужно синхронизировать с реальным состоянием (P0 задачи выполнены в коде)
+---

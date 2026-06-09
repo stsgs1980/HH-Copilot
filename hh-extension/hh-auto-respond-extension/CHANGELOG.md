@@ -5,6 +5,73 @@
 
 ---
 
+## [1.7.3] — 2026-06-10
+
+### Исправлено
+- **Pre-push hook**: исправлен баг разрешения пути (`.git/hooks/..` вместо `.git/hooks/../..` — guard был молча отключён)
+- **validate.sh whitelist**: добавлены `check-agent.sh` и `audit.sh` в разрешённый список
+- **cascade-guard/setup.sh**: добавлены права на исполнение (`chmod +x`)
+- **Git tracking**: удалены 1052 файла skills/ (системные, не часть проекта) из git индекса
+- **Git tracking**: удалены content.js.bak и content.js.map (build-артефакты) из git индекса
+- **.gitignore**: добавлены глобальные правила `*.bak`, `*.map`, `upload/`
+
+### Добавлено
+- **cascade-guard submodule** — git submodule (https://github.com/stsgs1980/Cascade-guard.git)
+  - cascade-cli.sh — CLI навигации по задачам (next-task, start-task, complete-task, status, validate)
+  - cascade-init.sh — интерактивный генератор cascade-state.json
+  - cascade-state.json — 35 задач, 7 фаз (P0-P6), единый источник истины статусов
+  - AGENT_RULES.md — правила C-1..C-9 (зависимости, приоритеты, верификация)
+- **Git hooks**: pre-commit (блокирует без свежего worklog) + pre-push (запускает validate.sh)
+- **worklog.md**: полный журнал работы с Task ID 1-22
+
+### Изменено
+- **.gitmodules**: добавлен cascade-guard submodule
+- **AGENT_RULES.md**: объединены AHG правила (1-6) + Cascade правила (C-1..C-9)
+- Репозиторий синхронизирован с origin/main (GitHub)
+
+---
+
+## [1.7.2] — 2026-06-10
+
+### Добавлено
+- **6-tab UI wireframe** — полная переработка панели под wireframe
+  - Обзор, Резюме, Вакансии, Переговоры, Настройки, Статистика
+  - Green accent theme (#059669/#10B981), glass-morphism, CSS animations
+  - KPI ring, score ring, toggle switch, progress bar
+
+### Исправлено
+- **FAB CSS isolation** — все стили через `style.setProperty(prop, value, 'important')`
+  - hh.ru CSS больше не переопределяет цвет FAB
+
+---
+
+## [1.7.1] — 2026-06-10
+
+### Добавлено
+- **Username display** — в header и auth badge при авторизации
+- **FAB tooltip** — для каждого состояния авторизации
+
+### Исправлено
+- **authIndicator badge** — click handler был мёртв, теперь работает
+- **renderSidebarContent null state** — исправлен regex для spinner HTML
+
+---
+
+## [1.7.0] — 2026-06-10
+
+### Добавлено
+- **Anti-monolith split** — все JS файлы разбиты до <250 строк
+  - parse.js (408) → 4 файла
+  - panel/index.js (277) → panel/ + events.js
+  - Итого 42 JS файла, все <250 строк
+- **TASK-CASCADE.md v4.0.0** — Phase 0 отмечена completed, добавлена Phase 0.5
+- **Popup redirect** — minimal HTML redirect на FAB при клике на иконку
+
+### Изменено
+- Проект переименован: HH-Auto-Respond → HH-Copilot
+
+---
+
 ## [1.6.0] — 2026-06-10  (Phase 0 complete)
 
 ### Переписано
