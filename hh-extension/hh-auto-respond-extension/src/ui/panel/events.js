@@ -14,6 +14,7 @@ import { diagnoseResumeDOM } from '../../parsers/resume-detail.js';
 import { addBlacklistItem, removeBlacklistItem, selectConversation, filterVacancies } from './helpers.js';
 
 import { toggleSidebar, updateAuthState } from './index.js';
+import { resetAuthCache } from '../auth.js';
 
 // ═══════════════════════════════════════════════
 // TAB SWITCHING (6 tabs, CSS class toggle)
@@ -88,10 +89,10 @@ function bindSidebarClicks(container) {
     if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
 
-    /* Auth */
-    if (t.closest('[data-action="check-auth"]')) { updateAuthState(); return; }
-    if (t.closest('#har-retry-auth')) { updateAuthState(); return; }
-    if (t.closest('#authIndicator')) { updateAuthState(); return; }
+    /* Auth — reset cache to force real re-check */
+    if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthState(); return; }
+    if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthState(); return; }
+    if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthState(); return; }
 
     /* Resume */
     if (t.closest('[data-action="load-resume"]')) { window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }
