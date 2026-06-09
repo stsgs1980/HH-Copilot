@@ -19,6 +19,7 @@ ALLOWED=(
     "scripts/"
     "scripts/check-agent.sh"
     "scripts/audit.sh"
+    "scripts/validate.sh"
     "skills/"
     "skills/anti-hallucination-guard/"
     "skills/anti-hallucination-guard/SKILL.md"
