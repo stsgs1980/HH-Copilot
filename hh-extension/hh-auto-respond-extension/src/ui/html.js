@@ -81,9 +81,10 @@ export function getSidebarHTML() {
 }
 
 /* Full logged-in content with 6 tabs */
-export function getLoggedInHTML() {
+export function getLoggedInHTML(userName) {
+  const name = (userName && userName !== 'Пользователь') ? esc(userName) : '';
   return `
-    ${getHeaderHTML()}
+    ${getHeaderHTML(name)}
     ${getTabBarHTML()}
     ${getOverviewSection()}
     ${getResumeSection()}
@@ -101,7 +102,9 @@ export function getLoggedInHTML() {
 }
 
 /* ---- HEADER ---- */
-function getHeaderHTML() {
+function getHeaderHTML(userName) {
+  const name = userName ? esc(userName) : '';
+  const badgeLabel = name ? name : 'Онлайн';
   return `
     <div class="har-header">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -112,13 +115,13 @@ function getHeaderHTML() {
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
           <div id="header-auth-status" style="font-size:11px;color:#71717a;display:flex;align-items:center;gap:4px;">
             <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>
-            Авторизован
+            ${name ? name : 'Авторизован'}
           </div>
         </div>
       </div>
       <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="Нажмите для проверки авторизации">
         <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;"></span>
-        Онлайн
+        ${badgeLabel}
       </div>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">

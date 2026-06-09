@@ -90,7 +90,11 @@ export function renderSidebarContent() {
   if (!content) return;
 
   if (panelState.isLoggedIn === null) {
-    content.innerHTML = getSidebarHTML().replace(/<div class="har-content">[\s\S]*?<\/div>/, '');
+    content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
+      <div class="har-spinner"></div>
+      <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">Проверяем авторизацию...</h3>
+      <p style="font-size:13px;color:#71717a;line-height:1.5;">Определяем статус на hh.ru</p>
+    </div>`;
     return;
   }
   if (!panelState.isLoggedIn) {
@@ -107,9 +111,19 @@ export function renderSidebarContent() {
   /* Logged in: replace entire sidebar innerHTML */
   const container = refs.shadowRoot?.querySelector('.fab-panel');
   if (!container) return;
-  container.innerHTML = getLoggedInHTML();
+  const userName = getUserName();
+  container.innerHTML = getLoggedInHTML(userName);
   bindAllEvents(container);
   renderInitialData();
+  /* Update header auth status with username */
+  const headerStatus = refs.shadowRoot?.getElementById('header-auth-status');
+  if (headerStatus && userName !== 'Пользователь') {
+    headerStatus.innerHTML = `<span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>${esc(userName)}`;
+  }
+  /* Update FAB title with username */
+  if (refs.fabEl && userName !== 'Пользователь') {
+    refs.fabEl.setAttribute('title', 'HH Copilot: ' + userName + '. Нажмите для открытия.');
+  }
 }
 
 function renderInitialData() {
@@ -198,6 +212,7 @@ function bindSidebarClicks(container) {
     /* Auth */
     if (t.closest('[data-action="check-auth"]')) { updateAuthState(); return; }
     if (t.closest('#har-retry-auth')) { updateAuthState(); return; }
+    if (t.closest('#authIndicator')) { updateAuthState(); return; }
 
     /* Resume */
     if (t.closest('[data-action="load-resume"]')) { window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }

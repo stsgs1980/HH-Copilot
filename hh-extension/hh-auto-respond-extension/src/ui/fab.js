@@ -38,18 +38,24 @@ export function updateFabIcon() {
   if (!refs.fabEl) return;
   if (panelState.isLoggedIn === null) {
     refs.fabEl.style.background = '#94a3b8';
+    refs.fabEl.style.boxShadow = '0 4px 20px rgba(148,163,184,0.3)';
     refs.fabEl.style.animation = 'none';
     refs.fabEl.innerHTML = FAB_ICONS.loading;
+    refs.fabEl.setAttribute('title', 'HH Copilot: проверяем авторизацию...');
+    refs.fabEl.setAttribute('aria-label', 'HH Copilot: проверяем авторизацию');
   } else if (!panelState.isLoggedIn) {
     refs.fabEl.style.background = '#ef4444';
     refs.fabEl.style.boxShadow = '0 4px 20px rgba(239,68,68,0.4)';
     refs.fabEl.style.animation = 'none';
     refs.fabEl.innerHTML = FAB_ICONS.locked;
+    refs.fabEl.setAttribute('title', 'HH Copilot: НЕ авторизован на hh.ru');
+    refs.fabEl.setAttribute('aria-label', 'HH Copilot: не авторизован');
   } else if (panelState.isOpen) {
     refs.fabEl.style.background = '#059669';
     refs.fabEl.style.opacity = '0';
     refs.fabEl.style.transform = 'scale(0) rotate(180deg)';
     refs.fabEl.style.pointerEvents = 'none';
+    refs.fabEl.setAttribute('title', 'HH Copilot: закрыть панель');
   } else {
     refs.fabEl.style.background = 'linear-gradient(135deg,#059669,#10B981)';
     refs.fabEl.style.boxShadow = '0 4px 20px rgba(5,150,105,0.4)';
@@ -58,5 +64,7 @@ export function updateFabIcon() {
     refs.fabEl.style.pointerEvents = 'auto';
     refs.fabEl.style.animation = 'fabPulse 2.5s ease-in-out infinite';
     refs.fabEl.innerHTML = FAB_ICONS.briefcase;
+    refs.fabEl.setAttribute('title', 'HH Copilot: авторизован. Нажмите для открытия.');
+    refs.fabEl.setAttribute('aria-label', 'HH Copilot: открыть панель');
   }
 }
