@@ -551,3 +551,30 @@ Stage Summary:
 - Users now load dist/ as unpacked extension in Chrome
 - Source files (src/, docs/, anti-hallucination-guard/) stay in dev folder only
 - .gitignore prevents node_modules and dist from being committed
+
+---
+Task ID: sync-guards
+Agent: main
+Task: Синхронизация репозитория с GitHub, установка git hooks, аудит cascade-guard + anti-hallucination-guard
+
+Work Log:
+- Обнаружено: локальный main в песочнице отставал от origin/main на десятки коммитов (sandbox UUID-коммиты vs реальные GitHub коммиты)
+- git remote add origin https://github.com/stsgs1980/HH-Copilot.git
+- git fetch origin + git reset --hard origin/main (HEAD=978f158)
+- git submodule update --init --recursive — подтянут cascade-guard (fbf739e)
+- cascade-guard/ теперь на месте: setup.sh, AGENT_RULES.md, cascade-cli.sh, cascade-init.sh, validate.sh
+- cascade-state.json EXISTS but ALL 35 tasks = pending (0% complete despite P0 work being done)
+- AHG pre-commit hook скопирован в .git/hooks/pre-commit (chmod +x) — блокирует коммиты без свежего worklog
+- AHG pre-push hook скопирован в .git/hooks/pre-push (chmod +x) — блокирует push с мусором
+- cascade-guard/setup.sh запущен — AGENT_RULES.md обновлён, cascade блок вставлен
+- Проверено: pre-commit hook работает (test commit прошёл так как worklog < 10 мин)
+- AGENT_RULES.md содержит оба блока: AHG правила 1-6 + Cascade правила C-1..C-9
+- cascade-cli.sh status: 0/35 (0%) — ни одна задача не отмечена завершённой
+- cascade-cli.sh next-task: F0.1 (esbuild setup) — но F0.1-F0.9 реально выполнены в коде
+
+Stage Summary:
+- Git hooks УСТАНОВЛЕНЫ и работают
+- cascade-guard подтянут и сконфигурирован
+- cascade-state.json не синхронизирован с реальным состоянием — нужно верифицировать и отметить завершённые задачи
+- Следующий шаг: верификация build + отметка завершённых P0 задач через cascade-cli.sh
+---

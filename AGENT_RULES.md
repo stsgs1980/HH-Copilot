@@ -70,6 +70,7 @@ Stage Summary:
 
 v1.0 | 2026-06-09 | anti-hallucination-guard
 
+
 <!-- CASCADE-GUARD:START -->
 <!-- Do NOT edit between START and END markers. This block is managed by cascade-guard/setup.sh -->
 
