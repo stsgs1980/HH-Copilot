@@ -89,10 +89,10 @@ function bindSidebarClicks(container) {
     if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
 
-    /* Auth — reset cache to force real re-check */
-    if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthState(); return; }
-    if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthState(); return; }
-    if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthState(); return; }
+    /* Auth — reset cache to force real re-check with UI feedback */
+    if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthState(true); return; }
+    if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthState(true); return; }
+    if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthState(true); return; }
 
     /* Resume */
     if (t.closest('[data-action="load-resume"]')) { window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }

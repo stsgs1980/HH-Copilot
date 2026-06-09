@@ -26,15 +26,13 @@ const panelLog = createLogger('Panel');
 // AUTH STATE
 // ═══════════════════════════════════════════════
 
-export function updateAuthState() {
+export function updateAuthState(forceUI) {
   const was = panelState.isLoggedIn;
   const now = checkAuth();
-  if (was !== now) {
+  if (was !== now || forceUI) {
     panelState.isLoggedIn = now;
     panelLog.info('Auth: ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
     renderSidebarContent();
-    /* bindAllEvents and renderInitialData are called here (not inside
-       renderSidebarContent) to avoid a circular import with render.js */
     if (panelState.isLoggedIn) {
       const container = refs.shadowRoot?.querySelector('.fab-panel');
       if (container) {
@@ -43,6 +41,28 @@ export function updateAuthState() {
       }
     }
     updateFabIcon();
+    // Show feedback when user manually checks
+    if (forceUI) {
+      const badge = refs.shadowRoot?.getElementById('authBadge');
+      if (badge && now) {
+        badge.style.transition = 'transform 0.15s';
+        badge.style.transform = 'scale(1.15)';
+        setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
+        // Show brief tooltip-like timestamp
+        const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const authDesc = refs.shadowRoot?.querySelector('.card [style*="color:#71717a"]');
+        // Update the auth card description to show last check time
+        const card = refs.shadowRoot?.querySelector('#tab-overview .card');
+        if (card) {
+          const desc = card.querySelector('div[style*="color:#71717a;"]');
+          if (desc) {
+            const orig = desc.textContent;
+            desc.textContent = 'Проверено: ' + time;
+            setTimeout(() => { desc.textContent = orig; }, 3000);
+          }
+        }
+      }
+    }
   }
 }
 
