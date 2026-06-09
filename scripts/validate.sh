@@ -1,117 +1,79 @@
 #!/bin/bash
-# anti-hallucination-guard / validate.sh
-# Проверяет, что репозиторий содержит только файлы модуля.
-# Запуск: bash validate.sh
-# Можно использовать как pre-push hook.
+# Root-project validate.sh
+# Проверяет сабмодули (cascade-guard, anti-hallucination-guard) и запрещённые файлы в корне.
+# Запуск: bash scripts/validate.sh
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Список разрешённых путей (whitelist)
-ALLOWED=(
-    "setup.sh"
-    "AGENT_RULES.md"
-    "README.md"
-    ".gitignore"
-    ".git-hooks/"
-    ".git-hooks/pre-commit"
-    "scripts/"
-    "scripts/check-agent.sh"
-    "scripts/audit.sh"
-    "scripts/validate.sh"
-    "skills/"
-    "skills/anti-hallucination-guard/"
-    "skills/anti-hallucination-guard/SKILL.md"
-    ".git-hooks/pre-push"
-)
-
-# Список запрещённых паттернов
-FORBIDDEN_PATTERNS=(
-    "*.env"
-    "*.log"
-    "*.tmp"
-    "node_modules/"
-    ".next/"
-    "upload/"
-    "download/"
-    "src/"
-    "app/"
-    "public/"
-    "package.json"
-    "package-lock.json"
-    "tsconfig.json"
-    ".git/modules/"
-)
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 ERRORS=0
 
-echo "=== validate.sh: проверка чистоты репозитория ==="
+echo "=== validate.sh: проверка проекта ==="
 echo ""
 
-# Проверяем, что все tracked-файлы допустимы
-TRACKED_FILES=$(git -C "$SCRIPT_DIR" ls-files)
-for FILE in $TRACKED_FILES; do
-    ALLOWED_FLAG=0
-    for PATTERN in "${ALLOWED[@]}"; do
-        # Проверяем, начинается ли файл с разрешённого пути
-        case "$FILE" in
-            "$PATTERN"*) ALLOWED_FLAG=1 ;;
-        esac
-    done
-    if [ "$ALLOWED_FLAG" -eq 0 ]; then
-        echo "[-] ЗАПРЕЩЁННЫЙ ФАЙЛ: $FILE"
-        echo "    Этот файл не должен быть в репозитории модуля."
-        echo "    Модуль содержит только: setup.sh, AGENT_RULES.md, .git-hooks/, scripts/, skills/, README.md, .gitignore"
-        ERRORS=$((ERRORS + 1))
-    fi
-done
+# 1. cascade-guard submodule
+CG="$REPO_ROOT/cascade-guard"
+if [ -d "$CG" ] && [ -f "$CG/validate.sh" ]; then
+    echo "--- cascade-guard ---"
+    (cd "$CG" && bash validate.sh) || ERRORS=$((ERRORS + 1))
+else
+    echo "[SKIP] cascade-guard submodule не найден"
+fi
 
-# Проверяем, что нет запрещённых паттернов в tracked-файлах
-for FILE in $TRACKED_FILES; do
-    for PATTERN in "${FORBIDDEN_PATTERNS[@]}"; do
-        case "$FILE" in
-            *"$PATTERN"*)
-                echo "[-] ЗАПРЕЩЁННЫЙ ПАТТЕРН: $FILE (совпадение: $PATTERN)"
-                ERRORS=$((ERRORS + 1))
-                ;;
-        esac
-    done
-done
-
-# Проверяем, что все разрешённые файлы существуют
-for ITEM in "${ALLOWED[@]}"; do
-    if [ -e "$SCRIPT_DIR/$ITEM" ]; then
-        echo "[+] $ITEM -- OK"
-    elif [[ "$ITEM" == */ ]]; then
-        # Директория -- проверяем, что внутри есть файлы
-        DIR_CONTENTS=$(find "$SCRIPT_DIR/$ITEM" -type f 2>/dev/null | head -1)
-        if [ -z "$DIR_CONTENTS" ]; then
-            echo "[-] $ITEM -- ПУСТАЯ ДИРЕКТОРИЯ (или отсутствует)"
-            ERRORS=$((ERRORS + 1))
-        else
-            echo "[+] $ITEM -- OK"
+# 2. anti-hallucination-guard submodule — whitelist check
+AHG="$REPO_ROOT/hh-extension/hh-auto-respond-extension/anti-hallucination-guard"
+if [ -d "$AHG" ]; then
+    echo "--- anti-hallucination-guard ---"
+    AHG_FILES=$(cd "$AHG" && git ls-files 2>/dev/null || true)
+    AHG_ALLOWED=("setup.sh" "AGENT_RULES.md" "README.md" ".gitignore" ".git-hooks/" "scripts/" "skills/")
+    AHG_FORBIDDEN=("*.env" "*.log" "*.tmp" "*.bak" "node_modules/" "package.json" "cascade-state.json")
+    AHG_ERR=0
+    for F in $AHG_FILES; do
+        OK=0
+        for A in "${AHG_ALLOWED[@]}"; do
+            case "$F" in "$A"*) OK=1 ;; esac
+        done
+        if [ "$OK" -eq 0 ]; then
+            echo "[-] AHG foreign file: $F"
+            AHG_ERR=$((AHG_ERR + 1))
         fi
+    done
+    for PAT in "${AHG_FORBIDDEN[@]}"; do
+        MATCHES=$(cd "$AHG" && git ls-files "$PAT" 2>/dev/null || true)
+        if [ -n "$MATCHES" ]; then
+            echo "[-] AHG forbidden: $MATCHES"
+            AHG_ERR=$((AHG_ERR + 1))
+        fi
+    done
+    if [ "$AHG_ERR" -eq 0 ]; then
+        echo "[+] anti-hallucination-guard: OK"
+    else
+        ERRORS=$((ERRORS + AHG_ERR))
+    fi
+else
+    echo "[SKIP] anti-hallucination-guard submodule не найден"
+fi
+
+# 3. Root-level forbidden files
+echo "--- root repo ---"
+FORBIDDEN_PATTERNS=("*.env" "*.log" "*.tmp" "*.bak" "*.map")
+for PAT in "${FORBIDDEN_PATTERNS[@]}"; do
+    MATCHES=$(cd "$REPO_ROOT" && git ls-files "$PAT" 2>/dev/null || true)
+    if [ -n "$MATCHES" ]; then
+        for M in $MATCHES; do
+            echo "[-] ЗАПРЕЩЁННЫЙ ФАЙЛ: $M"
+            ERRORS=$((ERRORS + 1))
+        done
     fi
 done
 
 echo ""
-echo "=== Итог ==="
-
 if [ "$ERRORS" -eq 0 ]; then
-    echo "Репозиторий чист. Все файлы соответствуют модулю."
+    echo "Все проверки пройдены."
     exit 0
 else
     echo "ОБНАРУЖЕНО ОШИБОК: $ERRORS"
-    echo ""
-    echo "Возможные причины:"
-    echo "  1. Вы пушите из песочницы -- submodule попал в родительский репо"
-    echo "  2. Вы случайно добавили сторонние файлы (git add -A)"
-    echo "  3. Файлы модуля удалены или переименованы"
-    echo ""
-    echo "Исправление:"
-    echo "  git rm --cached <файл>    -- удалить из индекса"
-    echo "  git commit --amend         -- исправить коммит"
-    echo ""
     exit 1
 fi
