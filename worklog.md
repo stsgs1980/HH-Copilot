@@ -425,5 +425,20 @@ Work Log:
 
 Stage Summary:
 - cascade-guard submodule integrated into HH-Copilot
+
+---
+Task ID: 18
+Agent: main
+Task: Replace old v1.0.0 popup with minimal FAB redirect
+
+Work Log:
+- Old popup/index.html + popup.js: v1.0.0 design with blue theme, 4 tabs, disconnected from new UI
+- Replaced popup/index.html with minimal redirect page (green theme, "Open hh.ru" button)
+- Removed popup.js (no longer needed)
+- Icons kept for chrome://extensions display
+
+Stage Summary:
+- Clicking extension icon now shows minimal popup pointing to FAB panel on hh.ru
+- No more confusion between old popup and new 6-tab sidebar
 ---
 
