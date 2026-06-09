@@ -646,3 +646,5 @@ Stage Summary:
 - Git hooks: pre-commit (worklog freshness) + pre-push (cascade-guard + AHG + root checks) — оба РАБОТАЮТ
 - Следующий шаг: git commit + git push всех накопленных изменений
 ---
+
+Timestamp: 2026-06-09T22:08:29Z

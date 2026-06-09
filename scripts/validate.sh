@@ -23,7 +23,7 @@ else
 fi
 
 # 2. anti-hallucination-guard submodule — whitelist check
-AHG="$REPO_ROOT/hh-extension/hh-auto-respond-extension/anti-hallucination-guard"
+AHG="$REPO_ROOT/anti-hallucination-guard"
 if [ -d "$AHG" ]; then
     echo "--- anti-hallucination-guard ---"
     AHG_FILES=$(cd "$AHG" && git ls-files 2>/dev/null || true)
