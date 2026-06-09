@@ -94,6 +94,9 @@ function bindSidebarClicks(container) {
     if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthStateAsync(); return; }
     if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthStateAsync(); return; }
 
+    /* Logout — redirect to hh.ru logout */
+    if (t.closest('[data-action="logout"]')) { window.location.href = 'https://hh.ru/account/logout'; return; }
+
     /* Resume */
     if (t.closest('[data-action="load-resume"]')) { window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }
 

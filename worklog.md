@@ -746,3 +746,16 @@ Stage Summary:
 - No caching — always fresh DOM state
 - Auth check runs every 5 seconds via setInterval
 - Page parsers start only when auth confirmed true
+---
+Task ID: add-logout-button
+Agent: main
+Task: Add logout button to panel header
+
+Work Log:
+- Added logout icon button (door exit SVG) in shell.js header between auth badge and close button
+- Added data-action="logout" handler in events.js — redirects to https://hh.ru/account/logout
+- Build verified: 173.7kb
+
+Stage Summary:
+- Logout button visible in panel header when logged in (icon next to close button)
+- Click redirects to hh.ru logout page, extension detects state change on next 5s check
