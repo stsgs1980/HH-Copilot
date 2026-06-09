@@ -413,5 +413,17 @@ Stage Summary:
 - Full 6-tab UI matching wireframe implemented
 - Project renamed to HH-Copilot across all config files
 - Bug fix in overview.js (ReferenceError: el is not defined)
+
+---
+Task ID: 17
+Agent: main
+Task: Add cascade-guard submodule
+
+Work Log:
+- git submodule add https://github.com/stsgs1980/Cascade-guard.git cascade-guard
+- bash cascade-guard/setup.sh -- installed hooks and rules
+
+Stage Summary:
+- cascade-guard submodule integrated into HH-Copilot
 ---
 
