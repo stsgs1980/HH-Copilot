@@ -3,88 +3,148 @@
  * ===========
  * HH.ru authentication detection and user name extraction.
  *
- * Strategy (in priority order):
- * 1. NEGATIVE CHECK — look for logged-out indicators first ("Войти" button, login form).
- *    If found → definitely NOT authorized, return false immediately.
- * 2. DOM SELECTORS — look for applicant-specific elements that ONLY exist when logged in.
- *    Uses strict selectors only, no broad containers.
- * 3. chrome.cookies API — send message to background to check for hhtoken cookie.
- *    This is the most reliable method since it bypasses httpOnly limitations.
+ * Strategy:
+ * 1. NEGATIVE CHECK — scan all visible links/buttons for "Войти" text,
+ *    check for login-specific data-qa attributes, check for login form inputs.
+ *    If ANY logged-out indicator found → return false.
+ * 2. POSITIVE CHECK — look for elements that ONLY exist when logged in:
+ *    user name, applicant menu, my resumes link, notification badge.
+ * 3. If neither found → default to NOT authorized (safer than false positive).
+ *
+ * NO caching — each call scans the actual DOM state.
  */
 
-let authLogged = false; // suppress repeated auth logs
-let authResult = null; // cache result
-let authCheckInProgress = false;
+// ─── NEGATIVE DETECTION ──────────────────────────────────────────────
 
-// ─── NEGATIVE DETECTION (logged-out indicators) ─────────────────────
-
-const LOGGED_OUT_SELECTORS = [
-  // Login button on logged-out pages
-  '[data-qa="login"]',
-  'a[data-qa="login"]',
-  // "Войти" link
-  'a[href*="/login"]',
-  // Register button
-  '[data-qa="signup"]',
-  'a[data-qa="signup"]',
-  'a[href*="/signup"]',
-  // Login form inputs
-  'input[name="login"], input[name="username"], input[name="email"]',
-];
-
+/**
+ * Check if the user is logged out by looking for login-related indicators.
+ * Uses both attribute selectors AND text content scanning.
+ */
 function isLoggedOut() {
-  for (const sel of LOGGED_OUT_SELECTORS) {
+  // 1. Check specific data-qa selectors for login elements
+  const loginSelectors = [
+    '[data-qa="login"]',
+    '[data-qa="login-button"]',
+    '[data-qa="account-login"]',
+    '[data-qa="signup"]',
+    '[data-qa="signup-button"]',
+  ];
+  for (const sel of loginSelectors) {
     try {
-      const els = document.querySelectorAll(sel);
-      for (const el of els) {
-        if (!document.body.contains(el)) continue;
+      const el = document.querySelector(sel);
+      if (el && document.body.contains(el)) {
         const style = window.getComputedStyle(el);
-        // Must be visible
-        if (style.display === 'none' || style.visibility === 'hidden') continue;
-        // Must be an actual interactive element (button/link/input)
-        const tag = el.tagName.toLowerCase();
-        if (['a', 'button', 'input'].includes(tag)) {
-          return true;
-        }
-        // Also check for elements that contain "Войти" text
-        if (el.textContent && el.textContent.trim() === 'Войти') {
+        if (style.display !== 'none' && style.visibility !== 'hidden') {
           return true;
         }
       }
-    } catch (e) { /* invalid selector */ }
+    } catch (e) {}
   }
+
+  // 2. Check for login form inputs (only visible when on login page)
+  const inputSelectors = [
+    'input[name="login"]',
+    'input[name="username"]',
+    'input[name="email"]',
+    'input[type="password"]',
+    '[data-qa="login-input"]',
+    '[data-qa="login-email"]',
+  ];
+  for (const sel of inputSelectors) {
+    try {
+      const el = document.querySelector(sel);
+      if (el && document.body.contains(el)) {
+        const style = window.getComputedStyle(el);
+        if (style.display !== 'none' && style.visibility !== 'hidden') {
+          return true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. TEXT SCAN — look for "Войти" text in visible buttons/links
+  //    This catches any login button regardless of data-qa attributes
+  const allButtons = document.querySelectorAll('a, button, [role="button"]');
+  for (const el of allButtons) {
+    if (!document.body.contains(el)) continue;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') continue;
+
+    const text = (el.textContent || '').trim();
+    // Match "Войти" as standalone text (not part of longer text like "Войти и создать")
+    if (text === 'Войти') {
+      return true;
+    }
+  }
+
+  // 4. Check URL — if on login/account page, likely not authorized
+  const url = window.location.pathname;
+  if (/\/account\/login/.test(url) || /\/login/.test(url)) {
+    return true;
+  }
+
   return false;
 }
 
-// ─── POSITIVE DETECTION (logged-in indicators) ────────────────────────
+// ─── POSITIVE DETECTION ───────────────────────────────────────────────
 
-const AUTH_SELECTORS = [
-  // These ONLY appear when user is logged in:
-  '[data-qa="mainmenu_applicant"]',
-  '[data-qa="mainmenu_user_name"]',
-  'a[data-qa="mainmenu_myResumes"]',
-  '[data-qa="mainmenu"] sup',           // Notification badge in menu
-  '.supernova-nav__item--applicant',    // React header applicant nav
-  'a[href*="/applicant/resumes"]',      // Direct link to resumes
-  '.mainmenu__item--applicant',
-];
+/**
+ * Check if the user is logged in by looking for applicant-specific elements.
+ * Only uses selectors that CANNOT exist on the logged-out page.
+ */
+function isLoggedIn() {
+  const authSelectors = [
+    '[data-qa="mainmenu_applicant"]',
+    '[data-qa="mainmenu_user_name"]',
+    'a[data-qa="mainmenu_myResumes"]',
+    '[data-qa="mainmenu"] sup',                // Notification badge
+    '.supernova-nav__item--applicant',          // React nav applicant
+    '.mainmenu__item--applicant',
+  ];
 
-function isAuthorizedDOM() {
-  for (const sel of AUTH_SELECTORS) {
+  for (const sel of authSelectors) {
     try {
       const el = document.querySelector(sel);
       if (!el) continue;
       if (!document.body.contains(el)) continue;
       const style = window.getComputedStyle(el);
       if (style.display !== 'none' && style.visibility !== 'hidden') {
-        return { authorized: true, selector: sel };
+        return true;
       }
-    } catch (e) { /* invalid selector */ }
+    } catch (e) {}
   }
-  return { authorized: false, selector: null };
+
+  // Also check for links to /applicant/ pages (only visible when logged in)
+  const applicantLinks = document.querySelectorAll('a[href*="/applicant/"]');
+  for (const el of applicantLinks) {
+    if (!document.body.contains(el)) continue;
+    const style = window.getComputedStyle(el);
+    if (style.display !== 'none' && style.visibility !== 'hidden') {
+      return true;
+    }
+  }
+
+  return false;
 }
 
-// ─── COOKIE CHECK via Background Script ────────────────────────────────
+// ─── MAIN AUTH CHECK (no caching, always fresh) ──────────────────────
+
+export function checkAuth() {
+  // 1. NEGATIVE CHECK FIRST — if logged-out indicators exist, NOT authorized
+  if (isLoggedOut()) {
+    return false;
+  }
+
+  // 2. POSITIVE CHECK — if logged-in elements found, authorized
+  if (isLoggedIn()) {
+    return true;
+  }
+
+  // 3. No decisive evidence — default to NOT authorized
+  return false;
+}
+
+// ─── ASYNC AUTH CHECK with cookie API ────────────────────────────────
 
 function checkCookiesViaBackground() {
   return new Promise((resolve) => {
@@ -93,7 +153,6 @@ function checkCookiesViaBackground() {
         { type: 'check-auth-cookies' },
         (response) => {
           if (chrome.runtime.lastError) {
-            // Background not available or other error
             resolve(null);
             return;
           }
@@ -107,62 +166,17 @@ function checkCookiesViaBackground() {
     } catch (e) {
       resolve(null);
     }
-    // Timeout fallback — don't block forever
     setTimeout(() => resolve(null), 3000);
   });
 }
 
-// ─── MAIN AUTH CHECK ─────────────────────────────────────────────────
-
-export function checkAuth() {
-  const url = window.location.href;
-
-  // Return cached if URL hasn't changed
-  if (authResult !== null && authResult._url === url) {
-    return authResult.loggedIn;
-  }
-
-  // 1. NEGATIVE CHECK FIRST — if logged-out indicators exist, bail out
-  if (isLoggedOut()) {
-    if (!authLogged) {
-      console.log('[HH-AR][Auth] NOT authorized (logged-out indicators found)');
-      authLogged = true;
-    }
-    authResult = { loggedIn: false, _url: url };
-    return false;
-  }
-
-  // 2. POSITIVE DOM CHECK — look for logged-in-only elements
-  const domResult = isAuthorizedDOM();
-  if (domResult.authorized) {
-    if (!authLogged) {
-      console.log('[HH-AR][Auth] Authorized (selector:', domResult.selector + ')');
-      authLogged = true;
-    }
-    authResult = { loggedIn: true, _url: url };
-    return true;
-  }
-
-  // 3. No decisive DOM evidence — default to NOT authorized
-  //    (better to show "not authorized" than falsely show "authorized")
-  if (!authLogged) {
-    console.log('[HH-AR][Auth] No auth indicators found — assuming NOT authorized');
-    authLogged = true;
-  }
-  authResult = { loggedIn: false, _url: url };
-  return false;
-}
-
-// ─── ASYNC AUTH CHECK with cookie API ────────────────────────────────
 /**
- * Enhanced auth check that also verifies via chrome.cookies API.
- * Use this for manual re-checks triggered by user clicks.
- * Falls back to synchronous checkAuth() if background is unavailable.
+ * Enhanced async auth check with cookie API verification.
+ * Use for manual re-checks triggered by user clicks.
  */
 export async function checkAuthAsync() {
   const syncResult = checkAuth();
 
-  // If sync says "not authorized", trust it (negative check is reliable)
   if (!syncResult) {
     return false;
   }
@@ -170,24 +184,20 @@ export async function checkAuthAsync() {
   // Sync says "authorized" — verify via cookies as second opinion
   const cookieResult = await checkCookiesViaBackground();
   if (cookieResult === null) {
-    // Background unavailable — trust sync result
-    return syncResult;
+    return syncResult; // Background unavailable — trust sync
   }
 
   if (!cookieResult) {
-    // Cookies say NO auth — override sync result
-    console.log('[HH-AR][Auth] Sync said authorized, but cookies say NO — overriding to NOT authorized');
-    authResult.loggedIn = false;
+    console.log('[HH-AR][Auth] Sync said authorized, but cookies say NO');
     return false;
   }
 
   return true;
 }
 
-/** Reset auth cache (call after login/logout) */
+/** Reset auth state (kept for API compatibility) */
 export function resetAuthCache() {
-  authResult = null;
-  authLogged = false;
+  // No-op since we no longer cache — but keeps the API stable
 }
 
 // ─── USER NAME EXTRACTION ────────────────────────────────────────────

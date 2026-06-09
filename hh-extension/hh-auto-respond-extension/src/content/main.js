@@ -2,8 +2,13 @@
  * MAIN: BOOT SEQUENCE
  * =====================
  * Entry point for the bundled content script.
- * Initializes the panel, sets up auth polling, SPA observer,
+ * Initializes the panel, sets up periodic auth checks, SPA observer,
  * and handles page-specific logic.
+ *
+ * Auth flow:
+ *   init() → createPanel() → updateAuthState every 5s
+ *   When auth changes to true → initPageLogic() starts page parsers
+ *   When auth changes to false → panel shows "Войдите в hh.ru"
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
@@ -12,7 +17,6 @@ import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { parseResume, parseResumeList, expandHiddenSections, diagnoseResumeDOM, getResumePageType } from '../parsers/resume-detail.js';
 import { continueApply } from '../engine/auto-respond.js';
 import { panelState, updateAuthState, createPanel, updateVacancies, updateStats, setStatus } from '../ui/panel.js';
-import { checkAuth } from '../ui/auth.js';
 
 const mainLog = createLogger('Main');
 let pageInitialized = false;
@@ -20,11 +24,85 @@ let pageInitialized = false;
 // Expose diagnoseResumeDOM globally for console access
 window.__hhDiagnose = diagnoseResumeDOM;
 
+/**
+ * Initialize page-specific logic (parsers, observers).
+ * Called ONCE when auth state changes from false/null to true.
+ */
+export function initPageLogic() {
+  if (pageInitialized) return;
+  pageInitialized = true;
+  mainLog.info('User logged in — initializing page logic');
+
+  const path = window.location.pathname;
+  mainLog.info('Page: ' + path);
+
+  if (path.startsWith('/search/vacancy')) {
+    const vacancies = parseVacanciesFromPage();
+    updateVacancies(vacancies);
+    const stats = getStats();
+    updateStats(stats);
+
+    // SPA observer — debounce mutations to avoid excessive re-parsing
+    let timer = null;
+    new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const fresh = parseVacanciesFromPage();
+        updateVacancies(fresh);
+      }, 1500);
+    }).observe(document.body, { childList: true, subtree: true });
+    mainLog.info('SPA observer active');
+
+  } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
+    // Resume detail page — parse resume
+    expandHiddenSections();
+    const resume = parseResume();
+    if (resume.id) {
+      panelState.resume = resume;
+      chrome.storage.local.set({ myResume: resume });
+      mainLog.info('Auto-parsed resume: ' + resume.title);
+    }
+
+  } else if (path.startsWith('/applicant/resumes')) {
+    // Resume list page
+    const resumeList = parseResumeList();
+    panelState.resumeList = resumeList;
+    mainLog.info('Resume list page: ' + resumeList.length + ' resumes');
+
+  } else if (/^\/vacancy\/\d+/.test(path)) {
+    // VACANCY DETAIL PAGE — check for pending apply queue
+    mainLog.info('Vacancy detail page detected');
+    try {
+      chrome.storage.local.get('applyQueue', (data) => {
+        const queue = data.applyQueue || [];
+        if (queue.length > 0) {
+          const vacancyId = path.replace('/vacancy/', '').split('?')[0].split('#')[0];
+          const pending = queue.find(q => q.vacancyId === vacancyId);
+          if (pending) {
+            const updatedQueue = queue.filter(q => q.vacancyId !== vacancyId);
+            chrome.storage.local.set({ applyQueue: updatedQueue });
+            mainLog.info('Processing apply for vacancy ' + vacancyId);
+            setTimeout(async () => {
+              await continueApply(pending);
+            }, 2000);
+          } else {
+            mainLog.info('Queue has items but none for current vacancy (' + vacancyId + ')');
+          }
+        } else {
+          mainLog.info('No apply queue');
+        }
+      });
+    } catch (e) {
+      mainLog.error('Error processing apply queue: ' + e.message);
+    }
+  }
+}
+
 async function init() {
   mainLog.info('Loaded: ' + window.location.href);
   await checkDailyReset();
 
-  // Load stats + settings into panelState at boot (not just on /search/vacancy)
+  // Load stats + settings into panelState at boot
   try {
     const [stats, settings] = await Promise.all([getStats(), getAllSettings()]);
     Object.assign(panelState.stats, stats);
@@ -45,13 +123,12 @@ async function init() {
     }
   } catch (e) {}
 
-  // Auth poll — only once (updateAuthState in createPanel handles periodic checks)
-  pollAuth();
+  // Auth state is managed by createPanel's periodic updateAuthState (every 5s)
+  // When auth changes to true, updateAuthState calls initPageLogic
 
   // Events
   window.addEventListener('hh-ar-apply', async (e) => {
     if (!panelState.isLoggedIn) return;
-    // Import dynamically to avoid circular issues
     const { applyToVacancy } = await import('../engine/auto-respond.js');
     await applyToVacancy(e.detail.vacancyId);
   });
@@ -95,86 +172,6 @@ async function init() {
       mainLog.warn('Cannot parse resume from this page (' + path + '). Go to /resume/{hash} or /applicant/resumes');
     }
   });
-}
-
-function pollAuth() {
-  if (checkAuth()) {
-    mainLog.info('User logged in');
-    if (!pageInitialized) {
-      pageInitialized = true;
-      updateAuthState();
-      initPageLogic();
-    }
-    return;
-  }
-  setTimeout(pollAuth, 2000);
-}
-
-async function initPageLogic() {
-  const path = window.location.pathname;
-  mainLog.info('Page: ' + path);
-
-  if (path.startsWith('/search/vacancy')) {
-    const vacancies = await parseVacanciesFromPage();
-    updateVacancies(vacancies);
-    const stats = await getStats();
-    updateStats(stats);
-
-    // SPA observer — debounce mutations to avoid excessive re-parsing
-    let timer = null;
-    new MutationObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        const fresh = await parseVacanciesFromPage();
-        updateVacancies(fresh);
-      }, 1500);
-    }).observe(document.body, { childList: true, subtree: true });
-    mainLog.info('SPA observer active');
-
-  } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
-    // Resume detail page — parse resume
-    await expandHiddenSections();
-    const resume = parseResume();
-    if (resume.id) {
-      panelState.resume = resume;
-      await chrome.storage.local.set({ myResume: resume });
-      mainLog.info('Auto-parsed resume: ' + resume.title);
-    }
-
-  } else if (path.startsWith('/applicant/resumes')) {
-    // Resume list page
-    const resumeList = parseResumeList();
-    panelState.resumeList = resumeList;
-    mainLog.info('Resume list page: ' + resumeList.length + ' resumes');
-
-  } else if (/^\/vacancy\/\d+/.test(path)) {
-    // VACANCY DETAIL PAGE — check for pending apply queue
-    mainLog.info('Vacancy detail page detected');
-    try {
-      const d = await chrome.storage.local.get('applyQueue');
-      const queue = d.applyQueue || [];
-      if (queue.length > 0) {
-        const vacancyId = path.replace('/vacancy/', '').split('?')[0].split('#')[0];
-        const pending = queue.find(q => q.vacancyId === vacancyId);
-        if (pending) {
-          // Remove this item from queue
-          const updatedQueue = queue.filter(q => q.vacancyId !== vacancyId);
-          await chrome.storage.local.set({ applyQueue: updatedQueue });
-          mainLog.info('Processing apply for vacancy ' + vacancyId);
-
-          // Wait a moment for page to settle
-          await new Promise(r => setTimeout(r, 2000));
-          await continueApply(pending);
-        } else {
-          mainLog.info('Queue has items but none for current vacancy (' + vacancyId + ')');
-        }
-      } else {
-        mainLog.info('No apply queue');
-      }
-    } catch (e) {
-      mainLog.error('Error processing apply queue: ' + e.message);
-    }
-  }
 }
 
 // BOOT

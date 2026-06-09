@@ -715,3 +715,34 @@ Stage Summary:
 - Removed all false-positive selectors and broken cookie fallback
 - Manual auth re-checks verify via chrome.cookies API as second opinion
 - If DOM says "authorized" but cookies say "no" → overrides to NOT authorized
+---
+Task ID: fix-auth-v2
+Agent: main
+Task: Fix auth detection v2 — text scan, no cache, no pollAuth
+
+Work Log:
+- ANALYZED: FAB still green when logged out on user's Chrome after previous fix
+- ROOT CAUSE #1: LOGGED_OUT_SELECTORS had wrong data-qa values for hh.ru login page
+  - [data-qa="login"], [data-qa="signup"] don't match real hh.ru selectors
+  - No text-based scanning — relied only on attribute selectors
+- ROOT CAUSE #2: authResult caching — once cached as "true", never re-checked on same URL
+- ROOT CAUSE #3: pollAuth() in main.js stopped polling after first checkAuth()=true
+  - return statement prevented any further auth checks ever
+- ROOT CAUSE #4: panel/index.js updateAuthState used cached result from same checkAuth
+
+FIXES:
+- auth.js: Complete rewrite with NO caching — every call scans fresh DOM
+- auth.js: Added text scan — iterate all buttons/links looking for text "Войти"
+- auth.js: Added URL check — /account/login or /login pages = not authorized
+- auth.js: Added more login selectors (login-button, account-login, login-input, etc.)
+- auth.js: Default to NOT authorized when no decisive evidence (safer)
+- main.js: Removed pollAuth() — createPanel's setInterval(updateAuthState, 5000) handles it
+- main.js: Made initPageLogic() export + call from updateAuthState on login
+- panel/index.js: Added dynamic import of main.js initPageLogic when auth->true
+- panel/index.js: updateAuthStateAsync also triggers initPageLogic
+
+Stage Summary:
+- 3 detection methods: attribute selectors + text scan + URL check
+- No caching — always fresh DOM state
+- Auth check runs every 5 seconds via setInterval
+- Page parsers start only when auth confirmed true

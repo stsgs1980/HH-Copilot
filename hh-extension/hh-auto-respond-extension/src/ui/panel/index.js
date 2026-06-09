@@ -39,6 +39,10 @@ export function updateAuthState(forceUI = false) {
         bindAllEvents(container);
         renderInitialData();
       }
+      // Start page parsers when user logs in
+      if (was !== true) {
+        import('../../content/main.js').then(m => m.initPageLogic()).catch(() => {});
+      }
     }
     updateFabIcon();
     if (forceUI) showAuthFeedback(now);
@@ -58,6 +62,9 @@ export async function updateAuthStateAsync() {
       if (container) {
         bindAllEvents(container);
         renderInitialData();
+      }
+      if (was !== true) {
+        import('../../content/main.js').then(m => m.initPageLogic()).catch(() => {});
       }
     }
     updateFabIcon();
