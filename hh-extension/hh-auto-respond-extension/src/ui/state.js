@@ -6,8 +6,43 @@
  */
 
 export const panelState = {
-  isOpen: false, isLoggedIn: null, status: 'idle',
-  vacancies: [], stats: {}, resume: null, resumeList: [], activeTab: null
+  isOpen: false,
+  isLoggedIn: null,
+  status: 'idle',
+  activeTab: null,
+  vacancies: [],
+  stats: {},
+  resume: null,
+  resumeList: [],
+  negotiations: [],
+  activeConversation: null,
+  settings: {
+    dailyLimit: 200,
+    hourlyLimit: 30,
+    minInterval: 30,
+    burstDetection: true,
+    adaptiveSlowdown: true,
+    captchaAutoPause: true,
+    captchaPauseTime: 5,
+    dailyResetTime: '00:00',
+    autoAuthCheck: true,
+    notifications: true,
+    logging: true,
+    shadowDOM: true
+  },
+  logs: [],
+  dailyStats: {
+    totalApplied: 0,
+    invitations: 0,
+    errors429: 0,
+  },
+  blacklist: [],
+  massApply: {
+    running: false,
+    minMatch: 70,
+    maxApply: 20,
+    progress: 0
+  }
 };
 
 /**
