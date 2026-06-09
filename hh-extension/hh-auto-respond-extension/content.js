@@ -542,9 +542,12 @@ window.__hhDiagnose = diagnoseResumeDOM;
 /**
  * Парсинг страницы резюме (/resume/{hash}).
  * Magritte хэширует CSS-классы ⇒ селекторы по классам НЕ работают.
- * Стратегия: автообнаружение секций по заголовкам (h2/h3 text content)
- * + data-qa для известных стабильных атрибутов.
- * Fallback: сканирование всех блоков resume-block / section.
+ * Magritte НЕ использует h2/h3 заголовки для секций!
+ * Стратегия: data-qa атрибуты на контейнерах секций.
+ * Известные data-qa (подтверждены диагностикой 2026-06-09):
+ *   skills-card, resume-list-card-experience, resume-list-card-education,
+ *   resume-about-card, resume-position-card, skill-tag-*, skill-level-*,
+ *   resume-block-title-position, resume-block-salary
  */
 function parseResume() {
   const t0 = performance.now();
@@ -567,104 +570,49 @@ function parseResume() {
   };
 
   // ═════════════════════════════════════════
-  // СЕКЦИИ: находим ВСЕ h2-заголовки на странице резюме,
-  // определяем тип секции по тексту заголовка,
-  // затем извлекаем данные из родительского блока.
+  // ЗАГОЛОВОК И ЗАРПЛАТА
+  // data-qa="resume-block-title-position" и resume-block-salary
   // ═════════════════════════════════════════
-
-  // Собираем все h2 + h3 заголовки и их родительские блоки
-  const headings = document.querySelectorAll('h2, h3');
-  const sections = []; // { type, heading, block }
-
-  headings.forEach(h => {
-    const text = (h.textContent || '').trim().toLowerCase();
-    let type = null;
-
-    if (/опыт работы/.test(text) || /work experience/.test(text)) type = 'experience';
-    else if (/образовани/.test(text) || /education/.test(text)) type = 'education';
-    else if (/навык/.test(text) || /key skills/.test(text) || /skill/.test(text)) type = 'skills';
-    else if (/язык/.test(text) || /language/.test(text)) type = 'languages';
-    else if (/о себе/.test(text) || /about/.test(text) || (/дополнител/.test(text))) type = 'additional';
-    else if (/специализаци/.test(text) || /specialization/.test(text)) type = 'specialization';
-    else if (/контакт/.test(text) || /contact/.test(text)) type = 'contacts';
-
-    if (!type) return;
-
-    // Находим родительский контейнер — ближайший блок-обёртку
-    // Ищем вверх: div.p>h2 или section, но не дальше чем 4 уровня
-    let block = h.parentElement;
-    for (let i = 0; i < 5 && block; i++) {
-      const tag = block.tagName.toLowerCase();
-      // Если нашли data-qa с resume-block — это наш контейнер
-      if (block.getAttribute('data-qa') || tag === 'section' ||
-          (tag === 'div' && block.children.length > 1 && block.children.length < 50)) {
-        break;
-      }
-      block = block.parentElement;
-    }
-
-    if (block) {
-      sections.push({ type, heading: (h.textContent || '').trim(), block });
-    }
-  });
-
-  resumeLog.info('Found ' + sections.length + ' sections by headings');
-  sections.forEach(s => resumeLog.info('  Section: ' + s.type + ' = "' + s.heading + '"'));
-
-  // ═════════════════════════════════════════
-  // ЗАГОЛОВОК И ЗАРПЛАТА — h1 + следующий блок
-  // ═════════════════════════════════════════
-  const h1 = document.querySelector('h1');
-  if (h1) {
-    resume.title = dbg('resumeTitle', (h1.textContent || '').trim());
+  const titleEl = document.querySelector('[data-qa="resume-block-title-position"]');
+  if (titleEl) {
+    resume.title = dbg('resumeTitle (data-qa)', safeGetText(titleEl));
+  }
+  // Fallback: h1
+  if (!resume.title) {
+    const h1 = document.querySelector('h1');
+    if (h1) resume.title = dbg('resumeTitle (h1)', (h1.textContent || '').trim());
   }
 
-  // Зарплата: ищем текст рядом с h1 — обычно в соседнем div/span
-  // или через data-qa
-  const salaryEl = findElement('resumeSalary');
+  const salaryEl = document.querySelector('[data-qa="resume-block-salary"]');
   if (salaryEl) {
-    resume.salary = dbg('resumeSalary', safeGetText(salaryEl));
-  } else if (h1) {
-    // Fallback: ищем в соседних элементах h1
-    const parent = h1.parentElement;
-    if (parent) {
-      const siblings = parent.querySelectorAll('span, div, p');
-      for (const sib of siblings) {
-        const t = (sib.textContent || '').trim();
-        if (t && (t.includes('руб') || t.includes('USD') || t.includes('EUR') ||
-            t.includes('уровень') || t.includes('з/п') || t.includes('доход')) &&
-            sib !== h1 && !h1.contains(sib)) {
-          resume.salary = dbg('resumeSalary (fallback)', t);
-          break;
-        }
-      }
-    }
+    resume.salary = dbg('resumeSalary (data-qa)', safeGetText(salaryEl));
   }
 
   // ═════════════════════════════════════════
   // ПЕРСОНАЛЬНЫЕ ДАННЫЕ — gender, age, address
-  // Magritte не даёт нам data-qa для этих полей.
-  // Парсим из текста рядом с h1 или в специальном блоке.
+  // Magritte не даёт data-qa для этих полей.
+  // Парсим из текстового содержимого position-card и nearby.
   // ═════════════════════════════════════════
   const personalText = [];
-  // Собираем весь видимый текст выше первого h2, исключая h1
-  if (h1 && h1.parentElement) {
-    const topBlock = h1.parentElement;
-    topBlock.querySelectorAll('span, div, p, a').forEach(el => {
-      if (el === h1 || h1.contains(el)) return;
+
+  // Собираем текст из position-card и соседних блоков
+  const posCard = document.querySelector('[data-qa="resume-position-card"]');
+  if (posCard) {
+    posCard.querySelectorAll('span, div, p, a').forEach(el => {
       const t = (el.textContent || '').trim();
       if (t && t.length > 0 && t.length < 200) personalText.push(t);
     });
   }
-  // Также проверяем блок с data-qa, содержащий personal/gender/age
-  document.querySelectorAll('[data-qa*="personal"], [data-qa*="gender"], [data-qa*="age"]').forEach(el => {
-    const t = (el.textContent || '').trim();
-    if (t && t.length > 0 && t.length < 100 && !personalText.includes(t)) {
-      personalText.push(t);
-    }
-  });
+  // Fallback: текст вокруг заголовка
+  const titleContainer = titleEl ? titleEl.closest('div[data-qa], section') || titleEl.parentElement : null;
+  if (titleContainer) {
+    titleContainer.querySelectorAll('span, div, p, a').forEach(el => {
+      if (el === titleEl || titleEl.contains(el)) return;
+      const t = (el.textContent || '').trim();
+      if (t && t.length > 0 && t.length < 200 && !personalText.includes(t)) personalText.push(t);
+    });
+  }
 
-  // Парсим gender/age/address из собранного текста
   const genderPatterns = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
   const agePattern = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
   const agePattern2 = /(\d{2})\s*years?\s*old/i;
@@ -680,13 +628,12 @@ function parseResume() {
       const m = t.match(agePattern) || t.match(agePattern2);
       if (m) { resume.age = dbg('resumeAge', m[1] + ' лет'); }
     }
-    // Address: ищем текст содержащий город/регион
     if (!resume.address && t.length > 3) {
       const isGender = genderPatterns.some(p => p.test(t));
       const isAge = agePattern.test(t) || agePattern2.test(t);
       if (!isGender && !isAge && !t.includes('руб') && !t.includes('USD') &&
-          !t.includes('з/п') && !t.includes('уровень') && t !== resume.salary) {
-        // Кандидат на адрес — обычно содержит название города
+          !t.includes('з/п') && !t.includes('уровень') && !t.includes('доход') &&
+          t !== resume.salary && t !== resume.title) {
         if (/[А-Яа-яЁё]{2,}/.test(t) && t.length < 80) {
           resume.address = dbg('resumeAddress', t);
         }
@@ -696,101 +643,83 @@ function parseResume() {
 
   // ═════════════════════════════════════════
   // НАВЫКИ (Skills)
-  // Стабильный: data-qa="skills-table" + .bloko-tag__text
+  // data-qa="skills-card" — контейнер секции
+  // [data-qa^="skill-tag-"] — теги навыков
+  // [data-qa^="skill-level-title-"] — уровни
   // ═════════════════════════════════════════
-  const skillsSection = sections.find(s => s.type === 'skills');
-  const skillsBlock = skillsSection ? skillsSection.block : document.querySelector('[data-qa="skills-table"]');
+  const skillsCard = document.querySelector('[data-qa="skills-card"]');
 
-  if (skillsBlock) {
-    resume._debug.found.push('skillsBlock (auto: "' + (skillsSection ? skillsSection.heading : 'data-qa') + '")');
+  if (skillsCard) {
+    resume._debug.found.push('skillsBlock (data-qa="skills-card")');
     // Уровни навыков
-    const skillLevelEls = skillsBlock.querySelectorAll('[data-qa^="skill-level"]');
+    const skillLevelEls = skillsCard.querySelectorAll('[data-qa^="skill-level-title-"]');
     skillLevelEls.forEach(el => {
       const qa = el.getAttribute('data-qa') || '';
-      const lvlMatch = qa.match(/skill-level.*?(\d)/);
+      const lvlMatch = qa.match(/skill-level-title-(\d)/);
       if (lvlMatch) {
         const lvl = lvlMatch[1];
+        const text = (el.textContent || '').trim();
         const labels = { '3': 'Продвинутый', '2': 'Средний', '1': 'Начальный' };
-        if (labels[lvl]) {
-          resume.skillLevels[lvl] = labels[lvl];
-          resume._debug.found.push('skillLevel' + lvl + ': ' + labels[lvl]);
-        }
+        resume.skillLevels[lvl] = labels[lvl] || text;
+        resume._debug.found.push('skillLevel' + lvl + ': ' + (labels[lvl] || text));
       }
     });
-    // Теги навыков
-    const skillTags = skillsBlock.querySelectorAll('.bloko-tag__text, [data-qa="bloko-tag__text"]');
+    // Теги навыков — data-qa="skill-tag-*"
+    const skillTags = skillsCard.querySelectorAll('[data-qa^="skill-tag-"]');
     skillTags.forEach(tag => {
       const text = (tag.textContent || '').trim();
-      if (text && text.length > 0 && text.length < 100) {
+      if (text && text.length > 0 && text.length < 100 && !resume.skills.includes(text)) {
         resume.skills.push(text);
       }
     });
+    // Fallback: bloko-tag внутри skills-card
+    if (resume.skills.length === 0) {
+      const blokoTags = skillsCard.querySelectorAll('.bloko-tag__text');
+      blokoTags.forEach(tag => {
+        const text = (tag.textContent || '').trim();
+        if (text && text.length > 0 && text.length < 100) resume.skills.push(text);
+      });
+    }
+  } else {
+    resume._debug.missing.push('skillsBlock (no data-qa="skills-card")');
   }
   if (resume.skills.length > 0) {
     resume._debug.found.push('skills: ' + resume.skills.length + ' tags');
-  } else {
+  } else if (!resume._debug.found.some(f => f.startsWith('skillsBlock'))) {
     resume._debug.missing.push('skills (no tags found)');
   }
 
   // ═════════════════════════════════════════
-  // СПЕЦИАЛИЗАЦИИ
-  // ═════════════════════════════════════════
-  const specSection = sections.find(s => s.type === 'specialization');
-  if (specSection) {
-    const tags = specSection.block.querySelectorAll('.bloko-tag__text, [data-qa="bloko-tag__text"]');
-    tags.forEach(tag => {
-      const t = (tag.textContent || '').trim();
-      if (t && t.length > 0) resume.specializations.push(t);
-    });
-    if (resume.specializations.length === 0) {
-      // Fallback: plain text links in the section
-      const links = specSection.block.querySelectorAll('a, span');
-      links.forEach(a => {
-        const t = (a.textContent || '').trim();
-        if (t && t.length > 2 && t.length < 100 && !resume.specializations.includes(t)) {
-          resume.specializations.push(t);
-        }
-      });
-    }
-    dbg('specializations', resume.specializations.length + ' items');
-  }
-
-  // ═════════════════════════════════════════
   // ОПЫТ РАБОТЫ (Experience)
+  // data-qa="resume-list-card-experience" — контейнер секции
+  // Внутри: подблоки по структуре, ссылки на /employer/
   // ═════════════════════════════════════════
-  const expSection = sections.find(s => s.type === 'experience');
-  if (expSection) {
-    resume._debug.found.push('experienceBlock (auto: "' + expSection.heading + '")');
-    // Ищем записи опыта — div-блоки внутри секции
-    const expItems = expSection.block.querySelectorAll('div[data-qa]');
-    if (expItems.length === 0) {
-      // Fallback: ищем дочерние div-контейнеры с ссылками на employer
-      const divs = expSection.block.children;
-      for (const div of divs) {
-        if (div.tagName === 'DIV' && div.textContent && div.textContent.trim().length > 20) {
-          expItems.push(div); // wasn't a NodeList, let's collect differently
-        }
-      }
-    }
-    // Собираем записи опыта
-    const expEntries = [];
-    const allDivs = expSection.block.querySelectorAll(':scope > div > div, :scope > div > section');
-    const candidateDivs = allDivs.length > 0 ? allDivs : expSection.block.querySelectorAll('div');
+  const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
+  if (expCard) {
+    resume._debug.found.push('experienceBlock (data-qa="resume-list-card-experience")');
 
-    // Группируем по employer-links или по структуре
+    // Ищем записи опыта — каждый опыт это отдельный div/data-qa блок
+    const expEntries = [];
+    // Способ 1: ищем edit-experience-button-* чтобы определить количество записей
+    const editBtns = document.querySelectorAll('[data-qa^="edit-experience-button-"]');
+    const expCount = editBtns.length;
+    resumeLog.info('Experience edit buttons found: ' + expCount);
+
+    // Способ 2: ищем дочерние div-контейнеры с employer-ссылками
     const processed = new Set();
-    candidateDivs.forEach(item => {
-      if (processed.has(item)) return;
+    const allDivs = expCard.querySelectorAll('div');
+    for (const item of allDivs) {
+      if (processed.has(item)) continue;
       const job = {};
-      // Компания — ищем ссылку на /employer/
+      // Компания — ссылка на /employer/
       const companyEl = item.querySelector('a[href*="/employer/"]');
       if (companyEl) job.company = (companyEl.textContent || '').trim();
-      // Позиция — обычно жирный текст (bloko-text_strong или первое bold)
+      // Позиция
       if (!job.position) {
         const strongEl = item.querySelector('b, strong, [data-qa*="title"], [data-qa*="position"]');
         if (strongEl && strongEl !== companyEl) job.position = (strongEl.textContent || '').trim();
       }
-      // Длительность — ищем текст с датами ( гг. или г.)
+      // Длительность
       if (!job.duration) {
         const spans = item.querySelectorAll('span, div');
         for (const sp of spans) {
@@ -802,7 +731,7 @@ function parseResume() {
           }
         }
       }
-      // Описание — длинный текст
+      // Описание
       if (!job.description) {
         const descEl = item.querySelector('p, [data-qa*="description"]');
         if (descEl) {
@@ -810,7 +739,7 @@ function parseResume() {
           if (dt.length > 30) job.description = dt;
         }
       }
-      // Если нет компании, но есть текст и ссылка на employer, пробуем
+      // Ещё раз проверяем employer links
       if (!job.company) {
         const links = item.querySelectorAll('a');
         for (const a of links) {
@@ -825,7 +754,7 @@ function parseResume() {
         expEntries.push(job);
         processed.add(item);
       }
-    });
+    }
 
     resume.experience = expEntries;
     if (expEntries.length > 0) {
@@ -834,85 +763,110 @@ function parseResume() {
       resume._debug.missing.push('experience (0 entries extracted)');
     }
   } else {
-    resume._debug.missing.push('experienceBlock (no section found)');
+    resume._debug.missing.push('experienceBlock (no data-qa="resume-list-card-experience")');
   }
 
   // ═════════════════════════════════════════
   // ОБРАЗОВАНИЕ (Education)
+  // data-qa="resume-list-card-education" — контейнер
+  // [data-qa^="resume-list-card-education-item-"] — отдельные записи
   // ═════════════════════════════════════════
-  const eduSection = sections.find(s => s.type === 'education');
-  if (eduSection) {
-    resume._debug.found.push('educationBlock (auto: "' + eduSection.heading + '")');
-    // Записи образования — ищем внутри блока
-    const eduDivs = eduSection.block.querySelectorAll('div');
+  const eduCard = document.querySelector('[data-qa="resume-list-card-education"]');
+  if (eduCard) {
+    resume._debug.found.push('educationBlock (data-qa="resume-list-card-education")');
+
     const eduEntries = [];
-    const eduProcessed = new Set();
-    eduDivs.forEach(item => {
-      if (eduProcessed.has(item)) return;
-      const edu = {};
-      // Название учебного заведения — обычно ссылка или bold текст
-      const linkEl = item.querySelector('a');
-      if (linkEl) edu.name = (linkEl.textContent || '').trim();
-      if (!edu.name) {
-        const strongEl = item.querySelector('b, strong, [data-qa*="title"]');
-        if (strongEl) edu.name = (strongEl.textContent || '').trim();
-      }
-      // Год окончания
-      const spans = item.querySelectorAll('span, div');
-      for (const sp of spans) {
-        const t = (sp.textContent || '').trim();
-        if (/\d{4}/.test(t) && t.length < 30) {
-          edu.year = t;
-          break;
+    // Ищем записи образования по data-qa="resume-list-card-education-item-*"
+    const eduItems = eduCard.querySelectorAll('[data-qa^="resume-list-card-education-item-"]');
+
+    if (eduItems.length > 0) {
+      eduItems.forEach(item => {
+        const edu = {};
+        // Название учебного заведения
+        const linkEl = item.querySelector('a');
+        if (linkEl) edu.name = (linkEl.textContent || '').trim();
+        if (!edu.name) {
+          const strongEl = item.querySelector('b, strong, [data-qa*="title"]');
+          if (strongEl) edu.name = (strongEl.textContent || '').trim();
         }
-      }
-      if (edu.name && edu.name.length > 2) {
-        eduEntries.push(edu);
-        eduProcessed.add(item);
-      }
-    });
+        // Год окончания
+        const spans = item.querySelectorAll('span, div');
+        for (const sp of spans) {
+          const t = (sp.textContent || '').trim();
+          if (/\d{4}/.test(t) && t.length < 30) {
+            edu.year = t;
+            break;
+          }
+        }
+        if (edu.name && edu.name.length > 2) {
+          eduEntries.push(edu);
+        }
+      });
+    } else {
+      // Fallback: все div внутри education card
+      const eduDivs = eduCard.querySelectorAll('div');
+      const eduProcessed = new Set();
+      eduDivs.forEach(item => {
+        if (eduProcessed.has(item)) return;
+        const edu = {};
+        const linkEl = item.querySelector('a');
+        if (linkEl) edu.name = (linkEl.textContent || '').trim();
+        if (!edu.name) {
+          const strongEl = item.querySelector('b, strong, [data-qa*="title"]');
+          if (strongEl) edu.name = (strongEl.textContent || '').trim();
+        }
+        const spans = item.querySelectorAll('span, div');
+        for (const sp of spans) {
+          const t = (sp.textContent || '').trim();
+          if (/\d{4}/.test(t) && t.length < 30) { edu.year = t; break; }
+        }
+        if (edu.name && edu.name.length > 2) {
+          eduEntries.push(edu);
+          eduProcessed.add(item);
+        }
+      });
+    }
+
     resume.education = eduEntries;
     if (eduEntries.length > 0) {
       resume._debug.found.push('education: ' + eduEntries.length + ' entries');
+    } else {
+      resume._debug.missing.push('education (0 entries extracted)');
     }
   } else {
-    resume._debug.missing.push('educationBlock (no section found)');
+    resume._debug.missing.push('educationBlock (no data-qa="resume-list-card-education")');
   }
 
   // ═════════════════════════════════════════
   // ЯЗЫКИ (Languages)
+  // Нет отдельного data-qa для языков на данной странице.
+  // Ищем fallback через text-scan всей страницы.
   // ═════════════════════════════════════════
-  const langSection = sections.find(s => s.type === 'languages');
-  if (langSection) {
-    resume._debug.found.push('languagesBlock (auto: "' + langSection.heading + '")');
-    const tags = langSection.block.querySelectorAll('.bloko-tag__text, [data-qa="bloko-tag__text"]');
-    tags.forEach(tag => {
-      const t = (tag.textContent || '').trim();
-      if (t && t.length > 0) resume.languages.push(t);
-    });
-    // Fallback: plain text
-    if (resume.languages.length === 0) {
-      langSection.block.querySelectorAll('span, div, p').forEach(el => {
-        const t = (el.textContent || '').trim();
-        if (t && t.length > 1 && t.length < 80 && !resume.languages.includes(t)) {
-          resume.languages.push(t);
-        }
-      });
+  // Языки обычно отображаются как bloko-теги в отдельной секции
+  // Попробуем найти через data-qa или bloko-tag
+  const langTags = document.querySelectorAll('[data-qa="resume-about-card"] .bloko-tag__text, [data-qa="resume-position-card"] .bloko-tag__text');
+  langTags.forEach(tag => {
+    const t = (tag.textContent || '').trim();
+    if (t && t.length > 0 && !resume.skills.includes(t)) {
+      resume.languages.push(t);
     }
-    if (resume.languages.length > 0) {
-      resume._debug.found.push('languages: ' + resume.languages.join(', '));
-    }
-  } else {
-    resume._debug.missing.push('languagesBlock (no section found)');
+  });
+  if (resume.languages.length > 0) {
+    resume._debug.found.push('languages: ' + resume.languages.join(', '));
   }
+  // Note: если языков нет на странице — не помечаем как missing
 
   // ═════════════════════════════════════════
   // ДОП. ИНФОРМАЦИЯ
+  // data-qa="resume-about-card"
   // ═════════════════════════════════════════
-  const addSection = sections.find(s => s.type === 'additional');
-  if (addSection) {
-    resume.additionalInfo = (addSection.block.textContent || '').trim().substring(0, 500);
-    resume._debug.found.push('additionalBlock (auto)');
+  const aboutCard = document.querySelector('[data-qa="resume-about-card"]');
+  if (aboutCard) {
+    const text = (aboutCard.textContent || '').trim();
+    if (text.length > 10) {
+      resume.additionalInfo = text.substring(0, 500);
+      resume._debug.found.push('additionalBlock (data-qa="resume-about-card")');
+    }
   }
 
   // ═════════════════════════════════════════
