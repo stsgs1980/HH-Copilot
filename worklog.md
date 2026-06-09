@@ -759,3 +759,17 @@ Work Log:
 Stage Summary:
 - Logout button visible in panel header when logged in (icon next to close button)
 - Click redirects to hh.ru logout page, extension detects state change on next 5s check
+
+---
+Task ID: fix-auth-positives
+Agent: main
+Task: Remove broad a[href=/applicant/] selector causing false positives after logout
+
+Work Log:
+- Removed a[href*="/applicant/"] from isLoggedIn() positive detection
+- This selector matched links on logged-out pages (footer, etc.)
+- After logout, checkAuth() could return true incorrectly
+
+Stage Summary:
+- Positive auth check now only uses strict data-qa selectors
+- No more false positives from broad href matching

@@ -114,16 +114,6 @@ function isLoggedIn() {
     } catch (e) {}
   }
 
-  // Also check for links to /applicant/ pages (only visible when logged in)
-  const applicantLinks = document.querySelectorAll('a[href*="/applicant/"]');
-  for (const el of applicantLinks) {
-    if (!document.body.contains(el)) continue;
-    const style = window.getComputedStyle(el);
-    if (style.display !== 'none' && style.visibility !== 'hidden') {
-      return true;
-    }
-  }
-
   return false;
 }
 
