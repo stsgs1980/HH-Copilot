@@ -55,7 +55,15 @@ function findElement(name, root) {
   for (const sel of selectors) {
     try {
       const el = root.querySelector(sel);
-      if (el && el.offsetParent !== null) return el;
+      if (!el) continue;
+      // НЕ проверяем offsetParent (null для fixed/transform элементов)
+      if (root === document) {
+        if (!document.body.contains(el)) continue;
+      } else {
+        if (!root.contains(el)) continue;
+      }
+      const style = window.getComputedStyle(el);
+      if (style.display !== 'none' && style.visibility !== 'hidden') return el;
     } catch (e) {}
   }
   return null;
@@ -114,11 +122,18 @@ function extractVacancyId(url) {
 function waitForElement(selectors, timeout, root) {
   timeout = timeout || 10000;
   root = root || document;
+  const checkVisible = (el) => {
+    if (!el) return false;
+    const container = root === document ? document.body : root;
+    if (!container.contains(el)) return false;
+    const style = window.getComputedStyle(el);
+    return style.display !== 'none' && style.visibility !== 'hidden';
+  };
   return new Promise(resolve => {
     for (const sel of selectors) {
       try {
         const el = root.querySelector(sel);
-        if (el && el.offsetParent !== null) { resolve(el); return; }
+        if (checkVisible(el)) { resolve(el); return; }
       } catch (e) {}
     }
     const startTime = Date.now();
@@ -127,7 +142,7 @@ function waitForElement(selectors, timeout, root) {
       for (const sel of selectors) {
         try {
           const el = root.querySelector(sel);
-          if (el && el.offsetParent !== null) { observer.disconnect(); resolve(el); return; }
+          if (checkVisible(el)) { observer.disconnect(); resolve(el); return; }
         } catch (e) {}
       }
     });
@@ -137,7 +152,9 @@ function waitForElement(selectors, timeout, root) {
 
 function safeClick(el, label) {
   if (!el || !(el instanceof Element) || el.disabled) return false;
-  if (el.offsetParent === null) return false;
+  if (!document.body.contains(el)) return false;
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
   el.click();
   return true;
 }
@@ -362,23 +379,76 @@ let fabEl = null, sidebarEl = null, backdropEl = null, shadowRoot = null;
 const panelState = { isOpen: false, isLoggedIn: null, status: 'idle', vacancies: [], stats: {} };
 
 // AUTH CHECK
+// NOTE: offsetParent === null для position:fixed элементов, поэтому НЕ проверяем его.
+// Проверяем только: элемент существует, не скрыт через display:none / visibility:hidden.
 function checkAuth() {
-  const selectors = ['[data-qa="mainmenu_applicant"]', '[data-qa="mainmenu_user_name"]', 'a[data-qa="mainmenu_myResumes"]'];
+  const selectors = [
+    '[data-qa="mainmenu_applicant"]',
+    '[data-qa="mainmenu_user_name"]',
+    'a[data-qa="mainmenu_myResumes"]',
+    '[data-qa="mainmenu"] sup',
+    '.supernova-nav__item--applicant',
+    'a[href*="/applicant/"]',
+    'a[href*="/account"]',
+    '.bloko-header-hamburger',
+    '[data-qa="mainmenu"] a[href*="resumes"]',
+    '.mainmenu__item--applicant',
+    '[data-qa="mainmenu"]',
+    '.HH-React-Header-Nav',
+    'nav[class*="nav"] a[href*="resumes"]',
+    // Cookie fallback: если есть cookie с именем пользователя, точно авторизован
+  ];
   for (const sel of selectors) {
-    const el = document.querySelector(sel);
-    if (el && el.offsetParent !== null) return true;
+    try {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      // Проверяем что не скрыт через display:none или visibility:hidden
+      if (document.body.contains(el)) {
+        const style = window.getComputedStyle(el);
+        if (style.display !== 'none' && style.visibility !== 'hidden') {
+          console.log('[HH-AR][Auth] Found auth element:', sel);
+          return true;
+        }
+      }
+    } catch (e) { /* invalid selector */ }
   }
+  // Cookie-based fallback: ищем cookie hhruuid или _HH-RU-Auth
+  const cookies = document.cookie || '';
+  if (cookies.includes('hhruuid') || cookies.includes('_HH-RU') || cookies.includes('hhtoken')) {
+    console.log('[HH-AR][Auth] Found auth cookie');
+    return true;
+  }
+  console.log('[HH-AR][Auth] No auth indicators found');
   return false;
 }
 
 function getUserName() {
-  const el = document.querySelector('[data-qa="mainmenu_user_name"]');
-  return (el && el.textContent?.trim()) || 'Пользователь';
+  // Попробуем несколько вариантов получения имени
+  const nameSelectors = [
+    '[data-qa="mainmenu_user_name"]',
+    '.supernova-nav__item--applicant',
+    'a[href*="/applicant/"]',
+  ];
+  for (const sel of nameSelectors) {
+    try {
+      const el = document.querySelector(sel);
+      if (el) {
+        const name = (el.textContent || '').trim();
+        if (name && name.length > 0 && name.length < 100) {
+          console.log('[HH-AR][Auth] User name from:', sel, '=', name);
+          return name;
+        }
+      }
+    } catch (e) {}
+  }
+  console.log('[HH-AR][Auth] Could not extract user name, using default');
+  return 'Пользователь';
 }
 
 function updateAuthState() {
   const was = panelState.isLoggedIn;
   const now = checkAuth();
+  console.log('[HH-AR][Auth] updateAuthState: was=' + was + ', now=' + now + ', url=' + window.location.href);
   if (was !== now) {
     panelState.isLoggedIn = now;
     panelLog.info('Auth: ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
