@@ -16,13 +16,14 @@
   "content_scripts": [
     {
       "matches": [
+        "https://hh.ru/*",
         "https://hh.ru/search/vacancy*",
         "https://hh.ru/vacancy/*",
-        "https://hh.ru/applicant/negotiations*",
-        "https://hh.ru/applicant/resumes*"
+        "https://hh.ru/applicant/*",
+        "https://hh.ru/account/*"
       ],
       "js": ["lib/selectors.js", "lib/anti-hallucination.js", "lib/timing.js", "lib/storage.js", "lib/rate-limiter.js", "lib/matching.js", "content/panel.js", "content/parser.js", "content/auto-respond.js", "content/main.js"],
-      "css": ["content/panel.css"],
+
       "run_at": "document_idle"
     }
   ],
@@ -43,10 +44,5 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "web_accessible_resources": [
-    {
-      "resources": ["content/panel.css"],
-      "matches": ["https://hh.ru/*"]
-    }
-  ]
+  "web_accessible_resources": []
 }
