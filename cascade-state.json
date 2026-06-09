@@ -1,0 +1,1163 @@
+{
+  "_meta": {
+    "version": "3.0",
+    "project": "HH Copilot Chrome Extension",
+    "repo": "https://github.com/stsgs1980/HH-Copilot.git",
+    "lastUpdated": "2026-06-09T17:52:05Z",
+    "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work."
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Refactoring - content.js decomposition",
+      "gate": "ALL P0 tasks must be COMPLETED before P1 tasks become READY",
+      "tasks": [
+        {
+          "id": "F0.1",
+          "title": "Setup esbuild: package.json, esbuild.config.mjs, entry point src/content/main.js",
+          "priority": "P0",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [],
+          "implements": [],
+          "acceptance": "npm run build produces content.js from modules. Built file is functionally equivalent to original (FAB, sidebar, parsing). Extension loads without errors.",
+          "anti_hallucination": "Search for all functions from original in built bundle. No undefined errors on load."
+        },
+        {
+          "id": "F0.2",
+          "title": "Extract lib/selectors.js: HH_SELECTORS + findElement/findAllElements",
+          "priority": "P0",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [],
+          "acceptance": "Module contains 47+ selector groups. findElement works correctly when imported. DevTools: window.__testSelectors works.",
+          "anti_hallucination": "Every selector verified on real hh.ru page via DevTools. No hashed Magritte classes."
+        },
+        {
+          "id": "F0.3",
+          "title": "Extract lib/anti-hallucination.js: safeGetText, safeGetAttr, validateVacancyData, etc.",
+          "priority": "P0",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [],
+          "acceptance": "All functions return concrete types. safeClick(null) = false. waitForElement with timeout=1000 returns null in 1 sec.",
+          "anti_hallucination": "Tested with null, undefined, empty strings, invisible elements. No exceptions."
+        },
+        {
+          "id": "F0.4",
+          "title": "Extract lib/storage.js: DEFAULT_SETTINGS, DEFAULT_STATS, getAllSettings, etc.",
+          "priority": "P0",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [
+            "F-ST-02",
+            "F-ST-05"
+          ],
+          "acceptance": "All functions via chrome.storage.local. addEventLog writes with timestamp. getEventLogs(10) returns last 10. Blacklist works correctly.",
+          "anti_hallucination": "All async in try/catch. chrome.storage.local.get with non-existent key doesn't crash. getStats() always object with numbers."
+        },
+        {
+          "id": "F0.5",
+          "title": "Extract lib/timing.js: gaussianRandom, randomDelay, simulateReading, simulateTyping",
+          "priority": "P0",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [
+            "F-ST-04"
+          ],
+          "acceptance": "gaussianRandom(10,4) in range ~2-20. simulateTyping char-by-char 30-120ms. simulateLongPause 25-40 sec.",
+          "anti_hallucination": "gaussianRandom never negative. simulateTyping checks readonly."
+        },
+        {
+          "id": "F0.6",
+          "title": "Extract lib/rate-limiter.js: class RateLimiter with private fields + getProgress/reset/exportState",
+          "priority": "P0",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [
+            "F-OV-03"
+          ],
+          "acceptance": "check() returns {allowed, reason?, waitMs?}. Burst >= 5 blocks. getProgress() correct numbers.",
+          "anti_hallucination": "adaptiveFactor doesn't exceed 5.0. hourlyCount resets on hour change. check() doesn't block forever."
+        },
+        {
+          "id": "F0.7",
+          "title": "Extract parser modules: vacancy-list, resume-list, resume-detail, vacancy-detail(stub), negotiations(stub)",
+          "priority": "P0",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.2",
+            "F0.3"
+          ],
+          "implements": [
+            "F-VC-01",
+            "F-RS-01",
+            "F-RS-02",
+            "F-RS-03",
+            "F-RS-05"
+          ],
+          "acceptance": "Each module compiles and exports a function. parseVacanciesFromPage identical to original. parseResume 12 fields.",
+          "anti_hallucination": "parseVacanciesFromPage returns [] when absent (not null). _debug contains found/missing."
+        },
+        {
+          "id": "F0.8",
+          "title": "Extract UI modules: fab, panel, tabs/{overview,resumes,vacancies,negotiations,settings,logs}. CSS as string export.",
+          "priority": "P0",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F0.2",
+            "F0.3",
+            "F0.4",
+            "F0.5",
+            "F0.6"
+          ],
+          "implements": [
+            "F-OV-01",
+            "F-OV-06",
+            "F-VC-10",
+            "F-VC-08",
+            "F-ST-01"
+          ],
+          "acceptance": "FAB displays. Shadow DOM isolated. Tabs switch. Resumes and vacancies display.",
+          "anti_hallucination": "Shadow DOM mode=closed prevents external access. innerHTML uses escapeHtml. No memory leaks."
+        },
+        {
+          "id": "F0.9",
+          "title": "Boot sequence: src/content/main.js. Order: logger init, auth gate, detectPageType, run parser, create FAB+panel, SPA observer, pendingApply check",
+          "priority": "P0",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.7",
+            "F0.8"
+          ],
+          "implements": [
+            "F-OV-01"
+          ],
+          "acceptance": "main.js loads without errors. FAB on all hh.ru pages. Auth gate blocks for unauthenticated. SPA observer restarts parsing.",
+          "anti_hallucination": "detectPageType correct with query params. Auth gate no false negatives. Boot doesn't block page load."
+        }
+      ]
+    },
+    {
+      "id": "P1",
+      "name": "Core Parsing Enhancement",
+      "gate": "ALL P0 tasks COMPLETED. P1 P0 tasks can start, P1 P1 tasks wait for P0 within phase.",
+      "tasks": [
+        {
+          "id": "F1.1",
+          "title": "parseVacancyDetail() in parsers/vacancy-detail.js",
+          "priority": "P0",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.7"
+          ],
+          "implements": [],
+          "acceptance": "On real vacancy page extracts all fields. parseInt('Не указана') fallback 0. Experience '3-6 лет' -> {min:3,max:6}. Skills array no duplicates.",
+          "anti_hallucination": "parseInt never returns NaN. Word forms 'год/года/лет' handled. No crash on vacancies without salary/experience."
+        },
+        {
+          "id": "F1.2",
+          "title": "Vacancy page DOM diagnostics. Add selectors: vacancyDescriptionContent, vacancyKeySkills, etc.",
+          "priority": "P0",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.2",
+            "F1.1"
+          ],
+          "implements": [],
+          "acceptance": "Each group 2+ selectors. diagnoseVacancyDOM dumps data-qa. All tested on real page.",
+          "anti_hallucination": "Run on 5 different vacancies. No hashed Magritte classes. Stable data-qa and Bloko BEM."
+        },
+        {
+          "id": "F1.3",
+          "title": "parseNegotiations() in parsers/negotiations.js",
+          "priority": "P1",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F0.7",
+            "F1.4"
+          ],
+          "implements": [
+            "F-NG-01"
+          ],
+          "acceptance": "On negotiations page extracts list. Status from predefined values. Unread count = number.",
+          "anti_hallucination": "Parser works on empty list. Status recognized for all states. Unread not string."
+        },
+        {
+          "id": "F1.4",
+          "title": "Negotiations selectors + diagnoseNegotiationsDOM()",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.2"
+          ],
+          "implements": [],
+          "acceptance": "Selectors find elements. diagnoseNegotiationsDOM structured dump. Fallback chains.",
+          "anti_hallucination": "No dependency on hashed classes. data-qa stable. Correct with long lists (50+)."
+        },
+        {
+          "id": "F1.5",
+          "title": "lib/salary-parser.js: parseSalaryString, getSalaryMidpoint, isSalaryAcceptable",
+          "priority": "P1",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [],
+          "acceptance": "parseSalaryString correct for all formats. getSalaryMidpoint({from:200000,to:300000}) = 250000. isSalaryAcceptable with tolerance.",
+          "anti_hallucination": "parseInt with spaces works. null salary doesn't crash. USD/EUR/RUR recognized. No NaN."
+        },
+        {
+          "id": "F1.6",
+          "title": "lib/experience-parser.js: parseExperienceString, getExperienceYears, isExperienceMatch",
+          "priority": "P1",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [],
+          "acceptance": "parseExperienceString all forms. isExperienceMatch({min:3,max:6}, 5) = true. Overqualification penalty.",
+          "anti_hallucination": "All word forms. parseExperienceString(null) = {min:0,max:0}. Missing periods don't crash."
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "Matching Engine",
+      "gate": "F1.1, F1.5, F1.6 must be COMPLETED before P2 starts",
+      "tasks": [
+        {
+          "id": "F2.1",
+          "title": "engine/matching.js: calculateMatchScore(vacancy, resume) -> {total:0-100, breakdown:{skills,salary,experience,position,location}}",
+          "priority": "P0",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F1.1",
+            "F1.5",
+            "F1.6"
+          ],
+          "implements": [
+            "F-CR-05"
+          ],
+          "acceptance": "total in [0,100]. breakdown.skills via Jaccard. Perfect match total >= 90.",
+          "anti_hallucination": "Jaccard for empty sets = 0 (not NaN). Salary null doesn't crash. Aliases without false matches."
+        },
+        {
+          "id": "F2.2",
+          "title": "engine/skill-gap.js: analyzeSkillGap(resumeSkills, marketSkills) -> [{skill, demand, have}]",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F2.1"
+          ],
+          "implements": [
+            "F-CR-06",
+            "F-RS-04"
+          ],
+          "acceptance": "Returns top-5 missing. demand in percentages. have = true/false.",
+          "anti_hallucination": "Empty skill array doesn't crash. Duplicates removed. Percentages 0-100."
+        },
+        {
+          "id": "F2.3",
+          "title": "Integrate matching into UI: vacancy matchScore, badge with %, filter by min score, sorting by score",
+          "priority": "P1",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F2.1",
+            "F0.8"
+          ],
+          "implements": [
+            "F-VC-04",
+            "F-VC-05",
+            "F-VC-06"
+          ],
+          "acceptance": "Each vacancy has score. Badge displays. Filter works. Sorting correct.",
+          "anti_hallucination": "Score = 0 for vacancies without skills. Null score doesn't break sorting."
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "Auto-Apply System",
+      "gate": "F2.1 must be COMPLETED before P3 starts",
+      "tasks": [
+        {
+          "id": "F3.1",
+          "title": "5-step modal apply process in ui/components/apply-modal.js",
+          "priority": "P0",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F0.8",
+            "F1.1"
+          ],
+          "implements": [
+            "F-VC-07",
+            "F-OV-05"
+          ],
+          "acceptance": "Modal displays 5 steps. Progress bar correct. Cancel button closes. Every action logged.",
+          "anti_hallucination": "Apply button exists before click. Already-applied checked before step 2. Navigation doesn't crash on error."
+        },
+        {
+          "id": "F3.2",
+          "title": "engine/cover-letter.js: generateCoverLetter(vacancy, resume, template, tone)",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.4"
+          ],
+          "implements": [
+            "F-ST-03",
+            "F-CR-02"
+          ],
+          "acceptance": "All variables replaced. Tone changes text style. Template saves/loads from storage.",
+          "anti_hallucination": "{position} not left unreplaced. Empty fields give fallback. Tone doesn't break formatting."
+        },
+        {
+          "id": "F3.3",
+          "title": "Typing simulation in cover letter: char-by-char input via setter + dispatchEvent",
+          "priority": "P0",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.5",
+            "F3.1"
+          ],
+          "implements": [
+            "F-ST-04"
+          ],
+          "acceptance": "Each char appears with delay. Pauses on punctuation. Input events fire. textarea.value contains full text after completion.",
+          "anti_hallucination": "setter from HTMLTextAreaElement.prototype.value works. readonly doesn't crash (check). All events bubbles:true."
+        },
+        {
+          "id": "F3.4",
+          "title": "Batch auto-apply: vacancy queue (sorted by matchScore desc), score filter, rateLimiter.check() pause, progress UI, pause/resume",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F3.1",
+            "F3.3",
+            "F2.3",
+            "F0.6"
+          ],
+          "implements": [
+            "F-OV-05"
+          ],
+          "acceptance": "Queue shows vacancies by descending score. Pause between applies. Pause button works. Rate limiter blocks at limit.",
+          "anti_hallucination": "Empty queue doesn't crash. Each vacancy checked for already-applied. Paused state saved on panel close."
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "Negotiations and AI",
+      "gate": "F1.3 must be COMPLETED before P4 starts",
+      "tasks": [
+        {
+          "id": "F4.1",
+          "title": "UI tab Negotiations: chat list with company, position, last message, date, status, unread badge",
+          "priority": "P1",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F1.3",
+            "F0.8"
+          ],
+          "implements": [
+            "F-NG-01",
+            "F-NG-02",
+            "F-NG-03",
+            "F-NG-05"
+          ],
+          "acceptance": "Tab displays list. Statuses colored. Unread badge. Refresh restarts parsing.",
+          "anti_hallucination": "Empty list shows placeholder. Long text truncated with ellipsis. Status from predefined list."
+        },
+        {
+          "id": "F4.2",
+          "title": "services/ai-service.js: sendMessage via z-ai-web-dev-sdk through background script",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.1"
+          ],
+          "implements": [
+            "F-CR-02"
+          ],
+          "acceptance": "AI returns text. Cover letter generated from template + context. Chat response based on history.",
+          "anti_hallucination": "AI timeout (30 sec) handled. Empty response doesn't crash. Rate limit on AI requests. Fallback when AI unavailable."
+        },
+        {
+          "id": "F4.3",
+          "title": "AI chat responses: read history, generate 3 variants, adapt tone, insert with typing simulation",
+          "priority": "P2",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F4.2",
+            "F3.3",
+            "F1.3"
+          ],
+          "implements": [
+            "F-CR-03",
+            "F-NG-04"
+          ],
+          "acceptance": "3 response variants displayed. Tone adapted. Typing simulation on insert.",
+          "anti_hallucination": "Chat history correctly extracted. Empty history gives fallback prompt. 3 variants always string array."
+        },
+        {
+          "id": "F4.4",
+          "title": "CAPTCHA detection: img[src*=captcha], .g-recaptcha, [data-qa*=captcha]. Auto-pause + badge + toast",
+          "priority": "P1",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F0.3"
+          ],
+          "implements": [
+            "F-CR-04"
+          ],
+          "acceptance": "CAPTCHA on page -> auto-pause. Badge shows notification. Toast 'CAPTCHA detected'. Pause removed manually.",
+          "anti_hallucination": "False positive doesn't block work. Multiple CAPTCHAs don't crash. Pause correctly removed."
+        }
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "UI Enhancement",
+      "gate": "F0.8, F2.3, F3.4 must be COMPLETED before P5 starts",
+      "tasks": [
+        {
+          "id": "F5.1",
+          "title": "Full 6-tab panel: Overview, Resume, Vacancies, Negotiations, Settings, Logs",
+          "priority": "P0",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F0.8",
+            "F2.3",
+            "F3.4",
+            "F4.1"
+          ],
+          "implements": [
+            "F-OV-02",
+            "F-OV-03",
+            "F-OV-06",
+            "F-RS-04",
+            "F-VC-02",
+            "F-VC-03",
+            "F-NG-01",
+            "F-LG-01",
+            "F-LG-02",
+            "F-LG-03",
+            "F-LG-04"
+          ],
+          "acceptance": "All 6 tabs switch. Each tab displays corresponding data. Navigation without data loss.",
+          "anti_hallucination": "Tab switching doesn't create memory leaks. Panel CSS doesn't affect hh.ru. Scroll inside tab doesn't scroll page."
+        },
+        {
+          "id": "F5.2",
+          "title": "Dark/light theme: CSS variables, toggle in settings, chrome.storage persistence",
+          "priority": "P2",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.8",
+            "F0.4"
+          ],
+          "implements": [
+            "F-CR-01"
+          ],
+          "acceptance": "Toggle works. Theme persists. Smooth transition. Panel doesn't flicker on switch.",
+          "anti_hallucination": "Panel theme doesn't affect hh.ru styles. CSS variables have fallback values. Transition doesn't slow rendering."
+        },
+        {
+          "id": "F5.3",
+          "title": "KPI Dashboard: 4 cards (applied today, invitations, errors, total). Conversion funnel 5 stages",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.4",
+            "F0.8"
+          ],
+          "implements": [
+            "F-OV-02",
+            "F-LG-01",
+            "F-LG-02",
+            "F-LG-03"
+          ],
+          "acceptance": "KPI cards show current data. Funnel 5 levels. Numbers correct. Auto-refresh.",
+          "anti_hallucination": "KPI doesn't show stale data. Funnel correct with zero values. Progress bars bounded [0,100]."
+        },
+        {
+          "id": "F5.4",
+          "title": "Shimmer effect: CSS animation for high match score vacancies (>80%) not yet applied to",
+          "priority": "P2",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F2.3",
+            "F0.8"
+          ],
+          "implements": [
+            "F-VC-09"
+          ],
+          "acceptance": "Shimmer appears on recommended vacancies. Doesn't affect performance. Removed after apply.",
+          "anti_hallucination": "Animation doesn't cause layout thrash. requestAnimationFrame for smooth. Shimmer removed after apply."
+        },
+        {
+          "id": "F5.5",
+          "title": "Match breakdown popup: 5 metrics with progress bars and values. Color coding green/yellow/red",
+          "priority": "P1",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F2.1",
+            "F0.8"
+          ],
+          "implements": [
+            "F-VC-06"
+          ],
+          "acceptance": "Breakdown shows 5 metrics. Colors correct. Values 0-100%. Closes on click outside.",
+          "anti_hallucination": "Values bounded [0,100]. Null skills don't crash. Popup position doesn't overflow screen."
+        }
+      ]
+    },
+    {
+      "id": "P6",
+      "name": "Polish and Release",
+      "gate": "ALL P0/P1 tasks from P0-P5 must be COMPLETED",
+      "tasks": [
+        {
+          "id": "F6.1",
+          "title": "Extension icons: generate 16x16, 48x48, 128x128 PNG via z-ai-generate CLI",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F0.9"
+          ],
+          "implements": [],
+          "acceptance": "3 icons in icons/. manifest.json references all 3. Icons display in Chrome toolbar and chrome://extensions.",
+          "anti_hallucination": "Files in correct PNG format. Exact sizes. Background transparency (or white)."
+        },
+        {
+          "id": "F6.2",
+          "title": "Full documentation rewrite: README.md, ARCHITECTURE.md, CHANGELOG.md",
+          "priority": "P0",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F0.9"
+          ],
+          "implements": [],
+          "acceptance": "README describes current functionality. ARCHITECTURE describes modular structure. CHANGELOG contains all versions.",
+          "anti_hallucination": "File names match links. No dead links. CHANGELOG versions match manifest.json."
+        },
+        {
+          "id": "F6.3",
+          "title": "Landing page: adapt hh-copilot-landing.html, deploy to GitHub Pages or Netlify",
+          "priority": "P2",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F6.2"
+          ],
+          "implements": [],
+          "acceptance": "Landing accessible by URL. All sections display. Responsive. SEO meta tags filled.",
+          "anti_hallucination": "No broken links. Images load. Mobile version readable. PageSpeed > 80."
+        },
+        {
+          "id": "F6.4",
+          "title": "Chrome Web Store preparation: description, screenshots, category, privacy policy",
+          "priority": "P2",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F6.1",
+            "F6.2"
+          ],
+          "implements": [],
+          "acceptance": "Zip archive ready. Description filled. 3 screenshots. Category Productivity.",
+          "anti_hallucination": "Zip <= 10MB. manifest.json valid. No deprecated permissions. All permissions justified."
+        }
+      ]
+    }
+  ],
+  "functionInventory": [
+    {
+      "id": "F-OV-01",
+      "name": "Auth check",
+      "tab": "Overview",
+      "status": "Works",
+      "priority": "P0",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.8",
+        "F0.9"
+      ]
+    },
+    {
+      "id": "F-OV-02",
+      "name": "KPI cards (4 metrics)",
+      "tab": "Overview",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [
+        "F-OV-01"
+      ],
+      "implemented_by": [
+        "F5.1",
+        "F5.3"
+      ]
+    },
+    {
+      "id": "F-OV-03",
+      "name": "Daily limit progress bar",
+      "tab": "Overview",
+      "status": "Partial",
+      "priority": "P0",
+      "depends_on": [
+        "F-OV-01"
+      ],
+      "implemented_by": [
+        "F0.6",
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-OV-04",
+      "name": "Adaptive slowdown visualization",
+      "tab": "Overview",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-OV-03"
+      ],
+      "implemented_by": [
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-OV-05",
+      "name": "Auto-apply with queue",
+      "tab": "Overview",
+      "status": "Stub",
+      "priority": "P0",
+      "depends_on": [
+        "F-VC-05",
+        "F-VC-07"
+      ],
+      "implemented_by": [
+        "F3.1",
+        "F3.4"
+      ]
+    },
+    {
+      "id": "F-OV-06",
+      "name": "Recent actions log",
+      "tab": "Overview",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [
+        "F-OV-03"
+      ],
+      "implemented_by": [
+        "F0.8",
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-RS-01",
+      "name": "Resume data parsing (12 fields)",
+      "tab": "Resume",
+      "status": "Works",
+      "priority": "P0",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.7"
+      ]
+    },
+    {
+      "id": "F-RS-02",
+      "name": "Skills extraction",
+      "tab": "Resume",
+      "status": "Works",
+      "priority": "P0",
+      "depends_on": [
+        "F-RS-01"
+      ],
+      "implemented_by": [
+        "F0.7"
+      ]
+    },
+    {
+      "id": "F-RS-03",
+      "name": "Experience timeline",
+      "tab": "Resume",
+      "status": "Works",
+      "priority": "P0",
+      "depends_on": [
+        "F-RS-01"
+      ],
+      "implemented_by": [
+        "F0.7"
+      ]
+    },
+    {
+      "id": "F-RS-04",
+      "name": "Skill Gap Analysis",
+      "tab": "Resume",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-RS-02",
+        "F-CR-06"
+      ],
+      "implemented_by": [
+        "F2.2",
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-RS-05",
+      "name": "Refresh button",
+      "tab": "Resume",
+      "status": "Works",
+      "priority": "P0",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.7"
+      ]
+    },
+    {
+      "id": "F-VC-01",
+      "name": "Vacancy list parsing",
+      "tab": "Vacancies",
+      "status": "Works",
+      "priority": "P0",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.7"
+      ]
+    },
+    {
+      "id": "F-VC-02",
+      "name": "Text search filter",
+      "tab": "Vacancies",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-VC-01"
+      ],
+      "implemented_by": [
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-VC-03",
+      "name": "Status filter",
+      "tab": "Vacancies",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-VC-01"
+      ],
+      "implemented_by": [
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-VC-04",
+      "name": "Range slider match score",
+      "tab": "Vacancies",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-CR-05"
+      ],
+      "implemented_by": [
+        "F2.3"
+      ]
+    },
+    {
+      "id": "F-VC-05",
+      "name": "Vacancy card + match",
+      "tab": "Vacancies",
+      "status": "Partial",
+      "priority": "P0",
+      "depends_on": [
+        "F-CR-05"
+      ],
+      "implemented_by": [
+        "F2.3"
+      ]
+    },
+    {
+      "id": "F-VC-06",
+      "name": "Match breakdown (5 metrics)",
+      "tab": "Vacancies",
+      "status": "Stub",
+      "priority": "P0",
+      "depends_on": [
+        "F-CR-05"
+      ],
+      "implemented_by": [
+        "F2.3",
+        "F5.5"
+      ]
+    },
+    {
+      "id": "F-VC-07",
+      "name": "Manual apply (5-step modal)",
+      "tab": "Vacancies",
+      "status": "Stub",
+      "priority": "P0",
+      "depends_on": [
+        "F-VC-01"
+      ],
+      "implemented_by": [
+        "F3.1"
+      ]
+    },
+    {
+      "id": "F-VC-08",
+      "name": "Ban button (blacklist)",
+      "tab": "Vacancies",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.8"
+      ]
+    },
+    {
+      "id": "F-VC-09",
+      "name": "Shimmer for high scores",
+      "tab": "Vacancies",
+      "status": "Stub",
+      "priority": "P2",
+      "depends_on": [
+        "F-VC-05"
+      ],
+      "implemented_by": [
+        "F5.4"
+      ]
+    },
+    {
+      "id": "F-VC-10",
+      "name": "Status visualization",
+      "tab": "Vacancies",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [
+        "F-VC-01"
+      ],
+      "implemented_by": [
+        "F0.8"
+      ]
+    },
+    {
+      "id": "F-NG-01",
+      "name": "Chat list parsing",
+      "tab": "Negotiations",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [],
+      "implemented_by": [
+        "F1.3",
+        "F4.1"
+      ]
+    },
+    {
+      "id": "F-NG-02",
+      "name": "Unread badge",
+      "tab": "Negotiations",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-NG-01"
+      ],
+      "implemented_by": [
+        "F4.1"
+      ]
+    },
+    {
+      "id": "F-NG-03",
+      "name": "Status categorization",
+      "tab": "Negotiations",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-NG-01"
+      ],
+      "implemented_by": [
+        "F4.1"
+      ]
+    },
+    {
+      "id": "F-NG-04",
+      "name": "Open chat",
+      "tab": "Negotiations",
+      "status": "Stub",
+      "priority": "P2",
+      "depends_on": [
+        "F-NG-01"
+      ],
+      "implemented_by": [
+        "F4.3"
+      ]
+    },
+    {
+      "id": "F-NG-05",
+      "name": "Refresh button",
+      "tab": "Negotiations",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-NG-01"
+      ],
+      "implemented_by": [
+        "F4.1"
+      ]
+    },
+    {
+      "id": "F-ST-01",
+      "name": "Mode selector (manual/semi/auto)",
+      "tab": "Settings",
+      "status": "Partial",
+      "priority": "P0",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.8"
+      ]
+    },
+    {
+      "id": "F-ST-02",
+      "name": "Rate limiting sliders",
+      "tab": "Settings",
+      "status": "Partial",
+      "priority": "P0",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.4"
+      ]
+    },
+    {
+      "id": "F-ST-03",
+      "name": "Cover letter template",
+      "tab": "Settings",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-CR-02"
+      ],
+      "implemented_by": [
+        "F3.2"
+      ]
+    },
+    {
+      "id": "F-ST-04",
+      "name": "Typing simulation toggle",
+      "tab": "Settings",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.5",
+        "F3.3"
+      ]
+    },
+    {
+      "id": "F-ST-05",
+      "name": "5 toggles",
+      "tab": "Settings",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.4"
+      ]
+    },
+    {
+      "id": "F-ST-06",
+      "name": "Blacklist management",
+      "tab": "Settings",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-VC-08"
+      ],
+      "implemented_by": [
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-LG-01",
+      "name": "Statistics (2x2)",
+      "tab": "Logs",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [
+        "F-OV-02"
+      ],
+      "implemented_by": [
+        "F5.3"
+      ]
+    },
+    {
+      "id": "F-LG-02",
+      "name": "Limit progress",
+      "tab": "Logs",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [
+        "F-OV-03"
+      ],
+      "implemented_by": [
+        "F5.3"
+      ]
+    },
+    {
+      "id": "F-LG-03",
+      "name": "Conversion funnel",
+      "tab": "Logs",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-OV-02"
+      ],
+      "implemented_by": [
+        "F5.3"
+      ]
+    },
+    {
+      "id": "F-LG-04",
+      "name": "Event log + filter",
+      "tab": "Logs",
+      "status": "Partial",
+      "priority": "P1",
+      "depends_on": [],
+      "implemented_by": [
+        "F0.4",
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-LG-05",
+      "name": "Clear button",
+      "tab": "Logs",
+      "status": "Stub",
+      "priority": "P2",
+      "depends_on": [],
+      "implemented_by": [
+        "F5.1"
+      ]
+    },
+    {
+      "id": "F-CR-01",
+      "name": "Dark/light theme",
+      "tab": "Global",
+      "status": "Stub",
+      "priority": "P2",
+      "depends_on": [],
+      "implemented_by": [
+        "F5.2"
+      ]
+    },
+    {
+      "id": "F-CR-02",
+      "name": "AI cover letter generation",
+      "tab": "Engine",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-ST-03"
+      ],
+      "implemented_by": [
+        "F3.2",
+        "F4.2"
+      ]
+    },
+    {
+      "id": "F-CR-03",
+      "name": "AI chat responses",
+      "tab": "Engine",
+      "status": "Stub",
+      "priority": "P2",
+      "depends_on": [
+        "F-NG-01"
+      ],
+      "implemented_by": [
+        "F4.3"
+      ]
+    },
+    {
+      "id": "F-CR-04",
+      "name": "CAPTCHA detection",
+      "tab": "Engine",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [],
+      "implemented_by": [
+        "F4.4"
+      ]
+    },
+    {
+      "id": "F-CR-05",
+      "name": "Matching engine (Jaccard)",
+      "tab": "Engine",
+      "status": "Stub",
+      "priority": "P0",
+      "depends_on": [
+        "F-RS-02"
+      ],
+      "implemented_by": [
+        "F2.1"
+      ]
+    },
+    {
+      "id": "F-CR-06",
+      "name": "Skill gap analysis engine",
+      "tab": "Engine",
+      "status": "Stub",
+      "priority": "P1",
+      "depends_on": [
+        "F-CR-05"
+      ],
+      "implemented_by": [
+        "F2.2"
+      ]
+    }
+  ]
+}
