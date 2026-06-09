@@ -1002,7 +1002,7 @@ function getSidebarCSS() {
 }
 
 function getSidebarHTML() {
-  return '<div class="har-header"><h3>HH Auto-Respond</h3><span class="har-version">v1.0</span></div><div class="har-content"><div class="har-auth-box"><div class="har-spinner"></div><h3>Проверяем авторизацию...</h3><p>Определяем статус на hh.ru</p></div></div>';
+  return '<div class="har-header"><h3>HH Auto-Respond</h3><span class="har-version">v1.1.0</span></div><div class="har-content"><div class="har-auth-box"><div class="har-spinner"></div><h3>Проверяем авторизацию...</h3><p>Определяем статус на hh.ru</p></div></div>';
 }
 
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }

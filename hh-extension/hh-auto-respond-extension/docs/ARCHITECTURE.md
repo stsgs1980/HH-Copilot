@@ -2,7 +2,7 @@
 
 ## Документация: Архитектура, Функционал, Методики реализации, Методики проверки, Антигаллюцинация
 
-**Версия:** 1.0.0
+**Версия:** 1.1.0
 **Тип:** Chrome Extension (Manifest V3)
 **Целевая платформа:** hh.ru (Magritte дизайн-система)
 **Дата:** 2026-06-09
@@ -80,31 +80,33 @@
 
 ```
 hh-auto-respond-extension/
-├── manifest.json                          # Manifest V3 конфигурация
+├── manifest.json                          # Manifest V3 конфигурация (version: 1.1.0)
+├── content.js                             # Единый бандл: lib + parser + panel + auto-respond + resume + boot
+├── CHANGELOG.md                           # История версий (Keep a Changelog формат)
 ├── background/
-│   └── index.js                            # Service Worker: routing, alarms, badge
-├── content/
-│   ├── main.js                             # Entry point: page type detection, init
-│   ├── parser.js                           # Парсинг вакансий с DOM
-│   ├── panel.js                            # Shadow DOM floating panel UI
-│   ├── auto-respond.js                     # 8-шаговый процесс отклика
-│   └── panel.css                           # (встроена в panel.js через Shadow DOM)
-├── lib/
-│   ├── selectors.js                        # 47 групп CSS-селекторов Magritte
-│   ├── anti-hallucination.js               # Трёхуровневая система верификации
-│   ├── timing.js                           # Гауссовы задержки, имитация набора
-│   ├── storage.js                          # chrome.storage.local обёртка
-│   ├── rate-limiter.js                     # Token bucket + adaptive slowdown
-│   └── matching.js                         # Weighted matching engine
+│   └── index.js                           # Service Worker: routing, alarms, badge
+├── lib/                                   # Исходные модули (для референса, НЕ подключаются к manifest)
+│   ├── selectors.js                       # 47+ групп CSS-селекторов Magritte/Bloko
+│   ├── anti-hallucination.js              # Трёхуровневая система верификации
+│   ├── timing.js                          # Гауссовы задержки, имитация набора
+│   ├── storage.js                         # chrome.storage.local обёртка
+│   ├── rate-limiter.js                    # Token bucket + adaptive slowdown
+│   └── matching.js                        # Weighted matching engine
+├── content/                               # Исходные модули (для референса, НЕ подключаются к manifest)
+│   ├── main.js                            # Entry point (объединён в content.js)
+│   ├── parser.js                          # Парсинг вакансий (объединён в content.js)
+│   ├── panel.js                           # Shadow DOM floating panel UI (объединён в content.js)
+│   ├── auto-respond.js                   # 8-шаговый процесс отклика (объединён в content.js)
+│   └── panel.css                          # (встроена в content.js через Shadow DOM)
 ├── popup/
 │   ├── index.html                          # Popup UI с 4 вкладками
-│   └── popup.js                            # Popup logic
+│   └── popup.js                           # Popup logic
 ├── icons/
 │   ├── icon16.png
 │   ├── icon48.png
 │   └── icon128.png
 └── docs/
-    └── ARCHITECTURE.md                     # Этот файл
+    └── ARCHITECTURE.md                    # Этот файл
 ```
 
 ### 1.4 Жизненный цикл
@@ -704,22 +706,26 @@ const id = match?.[1] || '';
 
 ### Фаза 1 (текущая): Базовая структура
 - ✅ Manifest V3 architecture
-- ✅ Selectors registry (47 групп)
+- ✅ Selectors registry (47+ групп)
 - ✅ Vacancy parser
-- ✅ Panel UI (Shadow DOM)
-- ✅ Auto-respond (8-step flow)
+- ✅ Panel UI (Shadow DOM, FAB + sidebar)
+- ✅ Auth detection (13 selectors + cookie fallback)
+- ✅ Resume parser (30+ селекторов, Magritte-совместимый)
+- ✅ Resume display в sidebar (табовая система)
+- ✅ Auto-respond (8-step flow, placeholder)
 - ✅ Rate limiter + timing
 - ✅ Matching engine
 - ✅ Anti-hallucination system
 - ✅ Popup dashboard
+- ✅ CHANGELOG.md (версионирование)
 
 ### Фаза 2: Улучшения
-- ⬜ Resume parser (парсинг данных резюме из /applicant/resumes)
 - ⬜ AI cover letter generation (через Web LLM API)
 - ⬜ Negotiation tracker (отслеживание сообщений от работодателей)
 - ⬜ Auto-reply to messages (шаблонные ответы в переговорах)
 - ⬜ Export/Import данных (JSON backup)
 - ⬜ Analytics dashboard (графики откликов по дням/неделям)
+- ⬜ Skill gap analysis (какие навыки востребованы, но отсутствуют в резюме)
 
 ### Фаза 3: Распространение
 - ⬜ Chrome Web Store публикация
