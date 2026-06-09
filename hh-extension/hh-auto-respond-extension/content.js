@@ -788,7 +788,10 @@ function parseResume() {
           job.position = (stepTexts[0].textContent || '').trim();
         }
         if (stepTexts.length >= 2) {
-          job.period = (stepTexts[1].textContent || '').trim();
+          let rawPeriod = (stepTexts[1].textContent || '').trim();
+        // Убираем duration в скобках если есть (дублирует cellTexts[1])
+        rawPeriod = rawPeriod.replace(/\s*\(\d[^)]+\)$/, '').trim();
+        job.period = rawPeriod;
         }
       }
       // Описание — текст stepContent без позиции и периода
@@ -804,7 +807,7 @@ function parseResume() {
       }
       desc = desc.trim();
       if (desc.length > 20) {
-        job.description = desc.substring(0, 500);
+        job.description = desc;
       }
     }
 
@@ -960,7 +963,7 @@ function parseResume() {
   if (aboutCard) {
     const text = (aboutCard.textContent || '').trim();
     if (text.length > 10) {
-      resume.additionalInfo = text.substring(0, 500);
+      resume.additionalInfo = text;
       resume._debug.found.push('additionalBlock (data-qa="resume-about-card")');
     }
   }
@@ -1299,7 +1302,7 @@ function renderResumePanel() {
 
   // Experience
   const expHtml = r.experience.length > 0
-    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.period ? ' &middot; ' + esc(j.period) : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description).substring(0, 200) + '</div>' : '') + '</div>').join('')
+    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.period ? ' &middot; ' + esc(j.period) : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description) + '</div>' : '') + '</div>').join('')
     : '<div class="har-empty" style="padding:8px">Опыт не найден</div>';
 
   // Education
@@ -1337,7 +1340,7 @@ function renderResumePanel() {
       </div>
       ${eduHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">Образование</div>' + eduHtml + '</div>' : ''}
       ${langHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">Языки</div>' + langHtml + '</div>' : ''}
-      ${r.additionalInfo ? '<div class="har-resume-section"><div class="har-section-subtitle">Доп. информация</div><div style="font-size:12px;color:#475569;padding:4px 0">' + esc(r.additionalInfo).substring(0, 300) + '</div></div>' : ''}
+      ${r.additionalInfo ? '<div class="har-resume-section"><div class="har-section-subtitle">Доп. информация</div><div style="font-size:12px;color:#475569;padding:4px 0">' + esc(r.additionalInfo) + '</div></div>' : ''}
       ${debugHtml}
       <div style="font-size:10px;color:#94a3b8;padding:8px 0">Parsed: ${r.parsedAt}</div>
       <a href="${esc(r.url)}" target="_blank" class="har-btn har-btn-secondary" style="display:block;text-align:center;text-decoration:none;margin-top:8px">Open on hh.ru</a>
