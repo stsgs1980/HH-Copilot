@@ -463,3 +463,17 @@ Stage Summary:
 - Auth status clearly visible: gray=loading, red=not logged in, green=logged in
 - Username displayed in header auth badge and FAB tooltip
 - v1.7.2 committed and pushed
+
+---
+Task ID: 20
+Agent: main
+Task: Fix hardcoded version strings in popup and footer
+
+Work Log:
+- popup/index.html had v1.7.0 hardcoded -> fixed to v1.7.2
+- html.js footer had v1.7.0 hardcoded in 2 places -> fixed to v1.7.2
+- Versions must match manifest.json version
+
+Stage Summary:
+- All version strings now consistent at v1.7.2
+- Need to automate version sync to avoid this in future
