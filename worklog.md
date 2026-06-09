@@ -315,3 +315,55 @@ Stage Summary:
 - TASK-CASCADE.md обновлён до v3.0.0 с точным описанием текущего состояния
 - manifest.json v1.5.3 -- готов к коммиту
 ---
+Task ID: 14
+Agent: main
+Task: Phase 0 -- esbuild refactoring of content.js (F0.1-F0.9)
+
+Work Log:
+- F0.1: Setup build environment
+  - Created package.json with esbuild devDependency
+  - Created esbuild.config.mjs (entry: src/content/main.js, output: content.js, format: iife, bundle: true, minify: false, sourcemap: true, treeShaking: false)
+  - Added scripts: "build" and "watch"
+  - Backed up content.js as content.js.bak
+  - Created src/ with subdirectories: lib/, parsers/, engine/, ui/tabs/, services/, content/
+  - Created barrier index.js in lib/, parsers/, engine/, ui/, services/
+- F0.2: Extracted lib/selectors.js (HH_SELECTORS, getSelectors, findElement, findAllElements)
+  - Added new selectors: vacancyDescriptionContent, vacancySkillsOnPage, negotiationsChatItem, negotiationsChatUnread
+- F0.3: Extracted lib/anti-hallucination.js (safeGetText, safeGetAttr, validateVacancyData, extractVacancyId, waitForElement, safeClick, safeInput, createLogger)
+- F0.4: Extracted lib/storage.js (DEFAULT_SETTINGS, DEFAULT_STATS, getAllSettings, getStats, incrementApplied, isAlreadyApplied, markAsApplied, checkDailyReset)
+- F0.5: Extracted lib/timing.js (gaussianRandom, randomDelay, simulateReading, simulateTyping)
+- F0.6: Extracted lib/rate-limiter.js (rateLimiter object with check, recordAction, adaptiveSlowdown, resetBurst)
+- F0.7: Extracted parsers/ modules
+  - parsers/vacancy-list.js: parseVacanciesFromPage
+  - parsers/resume-detail.js: parseResume, diagnoseResumeDOM, parseResumeList, expandHiddenSections, getResumePageType
+  - parsers/vacancy-detail.js: stub (parseVacancyDetail)
+  - parsers/negotiations.js: stub (parseNegotiations)
+- F0.8: Extracted UI modules
+  - ui/state.js: panelState object + refs (fabEl, sidebarEl, backdropEl, shadowRoot)
+  - ui/styles.js: getSidebarCSS
+  - ui/html.js: getSidebarHTML, esc, scoreClass
+  - ui/auth.js: checkAuth, getUserName
+  - ui/fab.js: createFab(onClick), updateFabIcon
+  - ui/tabs/vacancies.js: renderVacancyList, renderStatsValues
+  - ui/tabs/resumes.js: renderResumePanel, renderResumeListPanel (imports getResumePageType from parsers)
+  - ui/panel.js: createSidebar, toggleSidebar, renderSidebarContent, renderLoggedInContent, bindSidebarEvents, bindTabEvents, updateAuthState, createPanel, updateVacancies, updateStats, setStatus
+- F0.9: Created content/main.js boot sequence
+  - Imports all modules, sets up init(), pollAuth(), initPageLogic()
+  - SPA MutationObserver for /search/vacancy
+  - Event handlers for hh-ar-apply, hh-ar-apply-all, hh-ar-refresh, hh-ar-load-resume
+  - Exposes window.__hhDiagnose = diagnoseResumeDOM
+  - Handles pendingApply on vacancy/resume pages
+- engine/auto-respond.js: applyToVacancy, continueApply, applyToAll (extracted from main)
+- manifest.json version bumped 1.5.3 -> 1.5.4
+- Build verified: all 50+ original function names present in bundle
+- No circular dependencies in module graph
+
+Stage Summary:
+- Monolithic 1637-line IIFE content.js refactored into 16 ES module files
+- esbuild bundles src/content/main.js -> content.js (IIFE, 1465 lines, 75.5kb)
+- Source map generated (content.js.map, 148.2kb)
+- All original function names preserved (verified by grep)
+- window.__hhDiagnose, Shadow DOM (mode: closed), chrome.storage.local all present
+- npm run build / npm run watch scripts working
+- manifest.json v1.5.4
+---
