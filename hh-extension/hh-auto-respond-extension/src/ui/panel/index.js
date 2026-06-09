@@ -11,7 +11,7 @@ import { panelState, refs } from '../state.js';
 export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
-import { checkAuth } from '../auth.js';
+import { checkAuth, checkAuthAsync } from '../auth.js';
 import { createFab, updateFabIcon } from '../fab.js';
 import { renderVacancyList, renderStatsValues } from '../tabs/vacancies.js';
 import { renderOverviewKPI, addTimelineEvent } from '../tabs/overview.js';
@@ -26,7 +26,7 @@ const panelLog = createLogger('Panel');
 // AUTH STATE
 // ═══════════════════════════════════════════════
 
-export function updateAuthState(forceUI) {
+export function updateAuthState(forceUI = false) {
   const was = panelState.isLoggedIn;
   const now = checkAuth();
   if (was !== now || forceUI) {
@@ -41,26 +41,47 @@ export function updateAuthState(forceUI) {
       }
     }
     updateFabIcon();
-    // Show feedback when user manually checks
-    if (forceUI) {
-      const badge = refs.shadowRoot?.getElementById('authBadge');
-      if (badge && now) {
-        badge.style.transition = 'transform 0.15s';
-        badge.style.transform = 'scale(1.15)';
-        setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
-        // Show brief tooltip-like timestamp
+    if (forceUI) showAuthFeedback(now);
+  }
+}
+
+/** Enhanced async auth check — used for manual re-checks via cookie API */
+export async function updateAuthStateAsync() {
+  const was = panelState.isLoggedIn;
+  const now = await checkAuthAsync();
+  if (was !== now) {
+    panelState.isLoggedIn = now;
+    panelLog.info('Auth (async): ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
+    renderSidebarContent();
+    if (panelState.isLoggedIn) {
+      const container = refs.shadowRoot?.querySelector('.fab-panel');
+      if (container) {
+        bindAllEvents(container);
+        renderInitialData();
+      }
+    }
+    updateFabIcon();
+  }
+  showAuthFeedback(now);
+}
+
+/** Show visual feedback after manual auth check */
+function showAuthFeedback(isLoggedIn) {
+  if (isLoggedIn) {
+    const badge = refs.shadowRoot?.getElementById('authBadge');
+    if (badge) {
+      badge.style.transition = 'transform 0.15s';
+      badge.style.transform = 'scale(1.15)';
+      setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
+    }
+    const card = refs.shadowRoot?.querySelector('#tab-overview .card');
+    if (card) {
+      const desc = card.querySelector('div[style*="color:#71717a;"]');
+      if (desc) {
         const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const authDesc = refs.shadowRoot?.querySelector('.card [style*="color:#71717a"]');
-        // Update the auth card description to show last check time
-        const card = refs.shadowRoot?.querySelector('#tab-overview .card');
-        if (card) {
-          const desc = card.querySelector('div[style*="color:#71717a;"]');
-          if (desc) {
-            const orig = desc.textContent;
-            desc.textContent = 'Проверено: ' + time;
-            setTimeout(() => { desc.textContent = orig; }, 3000);
-          }
-        }
+        const orig = desc.textContent;
+        desc.textContent = 'Проверено: ' + time;
+        setTimeout(() => { desc.textContent = orig; }, 3000);
       }
     }
   }

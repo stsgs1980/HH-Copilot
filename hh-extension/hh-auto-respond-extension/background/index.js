@@ -108,6 +108,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.local.set({ logs });
       });
       break;
+
+    case 'check-auth-cookies':
+      // Check for hh.ru auth cookies via chrome.cookies API
+      chrome.cookies.get({ url: 'https://hh.ru', name: 'hhtoken' }, (cookie) => {
+        if (chrome.runtime.lastError) {
+          sendResponse({ hasAuthCookie: false });
+          return;
+        }
+        sendResponse({ hasAuthCookie: !!cookie });
+      });
+      return true; // async response
   }
 });
 

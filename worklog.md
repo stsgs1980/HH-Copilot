@@ -673,3 +673,45 @@ Stage Summary:
 - Root cause #3 (version): Chrome кэширует старый content.js — юзеру нужно перезагрузить расширение из dist/
 - Root cause #4 (hourlyApplied): никогда не записывается в storage — косметический баг (всегда 0/ч)
 - Коммит: fix: load stats+settings at boot, fix dailyLimit source
+---
+Task ID: fix-version-display
+Agent: main
+Task: Fix version display bug — panel showed v1.7.2 instead of v1.7.3
+
+Work Log:
+- Found root cause: root content.js (2864 lines, v1.7.2) was tracked in git and committed
+- dist/content.js (v1.7.3) was in .gitignored dist/ — Chrome loaded the stale root file
+- Removed content.js from git index, added to .gitignore
+- Rebuilt: npm run build — dist/content.js shows v1.7.3 correctly
+- Manifest description already correct: "HH Copilot — автоматизация откликов на hh.ru, FAB + 6-tab sidebar"
+- Committed and pushed: 22e2e71
+
+Stage Summary:
+- Root content.js was stale build artifact tracked in git — now in .gitignore
+- Extension must be loaded from dist/ after npm run build
+- All version strings now show v1.7.3
+
+---
+Task ID: fix-auth-detection
+Agent: main
+Task: Rewrite auth detection — FAB green when logged out, panel shows "authorized" incorrectly
+
+Work Log:
+- ANALYZED root cause: checkAuth() had 2 fatal flaws:
+  1. Overly broad DOM selectors matched logged-out page elements (mainmenu container, hamburger, a[href="/account"])
+  2. Cookie fallback checked hhruuid (visitor UUID, not auth token) — always true for any visitor
+- REWRITTEN src/ui/auth.js with 3-layer detection:
+  1. NEGATIVE CHECK FIRST: isLoggedOut() scans for login/signup buttons, login form inputs
+  2. STRICT POSITIVE DOM CHECK: only logged-in-only selectors (applicant menu, user name, resumes link)
+  3. Removed broken cookie fallback entirely
+- Added checkAuthAsync() with chrome.cookies API verification via background script
+- Added check-auth-cookies message handler in background/index.js (checks hhtoken cookie)
+- Updated panel/index.js: new updateAuthStateAsync() function for manual re-checks
+- Updated events.js: manual auth button clicks now use async cookie-verified check
+- Build verified: isLoggedOut present, checkAuthAsync present, no stale selectors, no hhruuid
+
+Stage Summary:
+- Auth detection now uses negative-check-first strategy (detect logged-out state first)
+- Removed all false-positive selectors and broken cookie fallback
+- Manual auth re-checks verify via chrome.cookies API as second opinion
+- If DOM says "authorized" but cookies say "no" → overrides to NOT authorized
