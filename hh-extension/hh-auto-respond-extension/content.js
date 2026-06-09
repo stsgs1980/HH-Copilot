@@ -12,6 +12,7 @@
 // ═══════════════════════════════════════════════
 
 const HH_SELECTORS = {
+  // ── Vacancy Search ──
   vacancyCard: ['[data-qa="vacancy-serp__vacancy"]', '.vacancy-serp-item', '[class*="vacancy-serp-item"]'],
   vacancyTitleLink: ['a[data-qa="serp-item__title"]', 'a[data-qa="vacancy-serp__vacancy-title"]'],
   vacancyTitleText: ['[data-qa="serp-item__title-text"]'],
@@ -22,6 +23,7 @@ const HH_SELECTORS = {
   vacancyTags: ['.bloko-tag__text'],
   replyButton: ['[data-qa="vacancy-serp__vacancy_response"]', '[data-qa="vacancy-response-link-top"]'],
   nextPage: ['[data-qa="pager-next"]'],
+  // ── Vacancy Page ──
   vacancyTitleOnPage: ['[data-qa="vacancy-title"]', 'h1.bloko-header-section-1'],
   vacancyCompanyOnPage: ['[data-qa="vacancy-company-name"]', 'a[data-qa="vacancy-company-name"]'],
   vacancyDescription: ['[data-qa="vacancy-description"]', '.vacancy-description'],
@@ -35,9 +37,105 @@ const HH_SELECTORS = {
   testTaskWarning: ['[data-qa="test-task-required"]'],
   alreadyApplied: ['[data-qa="already-applied"]'],
   indirectEmployerAlert: ['[data-qa="indirect-employer-alert"]'],
-  resumePersonalName: ['[data-qa="resume-personal-name"]'],
-  resumeTitle: ['[data-qa="resume-block-title-position"]'],
-  resumeSkillTag: ['[data-qa="skill-tag"]', '.bloko-tag__text'],
+  // ── Resume Page (Bloko + data-qa, stable) ──
+  resumeTitle: [
+    '[data-qa="resume-block-title-position"]',
+    'span[data-qa="resume-block-title-position"]',
+    '.resume-block__title-text'
+  ],
+  resumeSalary: [
+    '[data-qa="resume-block-salary"]',
+    '.resume-block__salary'
+  ],
+  resumeSpecialization: [
+    '[data-qa="resume-block-position-specialization"]',
+    '.resume-block__specialization'
+  ],
+  resumeSpecializationCategory: [
+    '[data-qa="resume-block-specialization-category"]'
+  ],
+  resumeExperience: [
+    '[data-qa="resume-block-experience"]',
+    '.resume-block[data-qa*="experience"]'
+  ],
+  resumeExperienceItem: [
+    '[data-qa="resume-block-experience-item"]',
+    '.resume-block__experience-item'
+  ],
+  resumeExperienceCompany: [
+    '[data-qa="resume-block-experience-company"]',
+    '.resume-block__experience-company a'
+  ],
+  resumeExperiencePosition: [
+    '[data-qa="resume-block-experience-position"]',
+    '.resume-block__experience-position'
+  ],
+  resumeExperienceDuration: [
+    '[data-qa="resume-block-experience-duration"]',
+    '.resume-block__experience-duration'
+  ],
+  resumeExperienceDescription: [
+    '[data-qa="resume-block-experience-description"]',
+    '.resume-block__experience-description'
+  ],
+  resumeSkillsTable: [
+    '[data-qa="skills-table"]',
+    '.resume-block[data-qa="skills-table"]'
+  ],
+  resumeSkillTag: [
+    '[data-qa="bloko-tag__text"]',
+    '.bloko-tag__text',
+    '[data-qa="skill-tag"]'
+  ],
+  resumeSkillLevel3: ['[data-qa="skill-level-title-3"]'],
+  resumeSkillLevel2: ['[data-qa="skill-level-title-2"]'],
+  resumeSkillLevel1: ['[data-qa="skill-level-title-1"]'],
+  resumeEducation: [
+    '[data-qa="resume-block-education"]',
+    '.resume-block[data-qa="resume-block-education"]'
+  ],
+  resumeEducationItem: [
+    '[data-qa="resume-block-education-item"]',
+    '.resume-block__education-item'
+  ],
+  resumeLanguages: [
+    '[data-qa="resume-block-languages"]',
+    '.resume-block[data-qa="resume-block-languages"]'
+  ],
+  resumeLanguageItem: [
+    '[data-qa="resume-block-language-item"]',
+    '[data-qa="bloko-tag bloko-tag_inline"]',
+    '.bloko-tag__text'
+  ],
+  resumeAdditional: [
+    '[data-qa="resume-block-additional"]',
+    '.resume-block[data-qa="resume-block-additional"]'
+  ],
+  resumeGender: ['[data-qa="resume-personal-gender"]'],
+  resumeAge: ['[data-qa="resume-personal-age"]'],
+  resumeAddress: ['[data-qa="resume-personal-address"]'],
+  resumeBirthday: ['[data-qa="resume-personal-birthday"]'],
+  resumePhoto: ['[data-qa="resume-photo-desktop"]', '[data-qa="resume-photo-forbidden"]'],
+  resumePersonalName: [
+    '[data-qa="resume-personal-name"]',
+    '.resume__personal-name',
+    'h2.bloko-header-1'
+  ],
+  // ── Resume List Page (applicant/resumes) ──
+  resumeListItem: [
+    '[data-qa="resume-list-item"]',
+    '.applicant-resumes__resume',
+    '[class*="resume-item"]'
+  ],
+  resumeListTitle: [
+    '[data-qa="resume-list-item-title"]',
+    '.applicant-resumes__title',
+    'a[href*="/resume/"]'
+  ],
+  resumeListLink: [
+    'a[href*="/resume/"]'
+  ],
+  // ── Auth ──
   loginEmailInput: ['input[name="username"]', 'input[type="email"]', 'input[data-qa="login-input-username"]'],
   loginPasswordInput: ['input[name="password"]', 'input[type="password"]', 'input[data-qa="login-input-password"]'],
   loginCaptchaImage: ['img[src*="captcha"]', '.g-recaptcha'],
@@ -371,6 +469,211 @@ async function parseVacanciesFromPage() {
 }
 
 // ═══════════════════════════════════════════════
+// CONTENT: RESUME PARSER
+// ═══════════════════════════════════════════════
+
+const resumeLog = createLogger('Resume');
+
+/**
+ * Парсинг страницы резюме (/resume/{hash}).
+ * Собирает: позиция, навыки, опыт работы, образование, языки, контакты.
+ * Все селекторы основаны на data-qa (стабильные), fallback на Bloko BEM классы.
+ */
+function parseResume() {
+  const t0 = performance.now();
+  const resume = {
+    id: '', url: window.location.href,
+    title: '', salary: '', gender: '', age: '', address: '',
+    specializations: [], skills: [], skillLevels: {},
+    experience: [], education: [], languages: [],
+    additionalInfo: '', parsedAt: new Date().toISOString(),
+    _debug: { found: [], missing: [] }
+  };
+
+  // Извлечь resume hash из URL
+  const hashMatch = window.location.pathname.match(/\/resume\/([a-f0-9]+)/);
+  resume.id = hashMatch ? hashMatch[1] : '';
+
+  // ── Helper: безопасное извлечение текста + логирование ──
+  const grab = (name, sel) => {
+    const el = findElement(name);
+    if (el) {
+      const text = safeGetText(el);
+      if (text) { resume._debug.found.push(name + ': "' + text.substring(0, 60) + '"'); return text; }
+    }
+    resume._debug.missing.push(name);
+    return '';
+  };
+
+  const grabAll = (name) => {
+    const els = findAllElements(name);
+    if (els.length > 0) {
+      resume._debug.found.push(name + ': ' + els.length + ' items');
+      return els.map(el => safeGetText(el)).filter(Boolean);
+    }
+    resume._debug.missing.push(name);
+    return [];
+  };
+
+  // ── Блок: Позиция / Заголовок ──
+  resume.title = grab('resumeTitle');
+  resume.salary = grab('resumeSalary');
+
+  // ── Блок: Персональные данные ──
+  resume.gender = grab('resumeGender');
+  resume.age = grab('resumeAge');
+  resume.address = grab('resumeAddress');
+
+  // ── Блок: Специализации ──
+  resume.specializations = grabAll('resumeSpecialization');
+
+  // ── Блок: Навыки (Skills) ──
+  // Сначала определяем уровни навыков
+  const skillLevels = { 3: 'Продвинутый', 2: 'Средний', 1: 'Начальный' };
+  for (const [lvl, label] of Object.entries(skillLevels)) {
+    const el = findElement('resumeSkillLevel' + lvl);
+    if (el) {
+      resume.skillLevels[lvl] = label;
+      resume._debug.found.push('skillLevel' + lvl + ': ' + label);
+    }
+  }
+
+  // Извлекаем теги навыков. Они размечены data-qa="bloko-tag__text"
+  // но эти теги общие для навыков, языков и т.д.
+  // Поэтому ищем теги только внутри блока [data-qa="skills-table"]
+  const skillsTable = document.querySelector('[data-qa="skills-table"]');
+  if (skillsTable) {
+    resume._debug.found.push('skillsTable block');
+    const skillTags = skillsTable.querySelectorAll('[data-qa="bloko-tag__text"], .bloko-tag__text');
+    skillTags.forEach(tag => {
+      const text = safeGetText(tag);
+      if (text && text.length > 0 && text.length < 100) {
+        resume.skills.push(text);
+      }
+    });
+  } else {
+    // Fallback: ищем теги навыков по всему документу в блоке resume-block
+    const resumeBlocks = document.querySelectorAll('.resume-block');
+    for (const block of resumeBlocks) {
+      const blockQa = block.getAttribute('data-qa') || '';
+      if (blockQa.includes('skill') || block.classList.contains('resume-skills')) {
+        const tags = block.querySelectorAll('[data-qa="bloko-tag__text"], .bloko-tag__text');
+        tags.forEach(tag => {
+          const text = safeGetText(tag);
+          if (text && text.length > 0 && text.length < 100) resume.skills.push(text);
+        });
+        if (tags.length > 0) break;
+      }
+    }
+    if (resume.skills.length === 0) {
+      resume._debug.missing.push('skillsTable (no skills found)');
+    }
+  }
+
+  // ── Блок: Опыт работы (Experience) ──
+  const expBlock = document.querySelector('[data-qa="resume-block-experience"]');
+  if (expBlock) {
+    resume._debug.found.push('experienceBlock');
+    // Ищем элементы опыта — каждый job entry
+    const expItems = expBlock.querySelectorAll('.resume-block-item, [class*="experience-item"]');
+    expItems.forEach(item => {
+      const job = {};
+      const companyEl = item.querySelector('[data-qa*="experience-company"], .resume-block__experience-company a, a[href*="/employer/"]');
+      const positionEl = item.querySelector('[data-qa*="experience-position"], .resume-block__experience-position');
+      const durationEl = item.querySelector('[data-qa*="experience-duration"], .resume-block__experience-duration');
+      const descEl = item.querySelector('[data-qa*="experience-description"], .resume-block__experience-description');
+
+      if (companyEl) job.company = safeGetText(companyEl);
+      if (positionEl) job.position = safeGetText(positionEl);
+      if (durationEl) job.duration = safeGetText(durationEl);
+      if (descEl) job.description = safeGetText(descEl);
+
+      if (job.company || job.position) {
+        resume.experience.push(job);
+      }
+    });
+  } else {
+    resume._debug.missing.push('experienceBlock');
+  }
+
+  // ── Блок: Образование (Education) ──
+  const eduBlock = document.querySelector('[data-qa="resume-block-education"]');
+  if (eduBlock) {
+    resume._debug.found.push('educationBlock');
+    const eduItems = eduBlock.querySelectorAll('.resume-block-item, [class*="education-item"]');
+    eduItems.forEach(item => {
+      const edu = {};
+      const nameEl = item.querySelector('[data-qa*="education-name"], .resume-block__education-name, a');
+      const yearEl = item.querySelector('[data-qa*="education-year"], .resume-block__education-year');
+      if (nameEl) edu.name = safeGetText(nameEl);
+      if (yearEl) edu.year = safeGetText(yearEl);
+      if (edu.name) resume.education.push(edu);
+    });
+  } else {
+    resume._debug.missing.push('educationBlock');
+  }
+
+  // ── Блок: Языки (Languages) ──
+  const langBlock = document.querySelector('[data-qa="resume-block-languages"]');
+  if (langBlock) {
+    resume._debug.found.push('languagesBlock');
+    const langTags = langBlock.querySelectorAll('[data-qa="bloko-tag__text"], .bloko-tag__text');
+    langTags.forEach(tag => {
+      const text = safeGetText(tag);
+      if (text) resume.languages.push(text);
+    });
+  } else {
+    resume._debug.missing.push('languagesBlock');
+  }
+
+  // ── Блок: Доп. информация ──
+  const addBlock = document.querySelector('[data-qa="resume-block-additional"]');
+  if (addBlock) {
+    resume.additionalInfo = safeGetText(addBlock);
+    resume._debug.found.push('additionalBlock');
+  }
+
+  // ── Итого ──
+  const elapsed = (performance.now() - t0).toFixed(1);
+  resumeLog.info('Resume parsed in ' + elapsed + 'ms');
+  resumeLog.info('Found: ' + resume._debug.found.length + ' | Missing: ' + resume._debug.missing.length);
+  resumeLog.info('Skills: ' + resume.skills.length + ' | Experience: ' + resume.experience.length + ' | Education: ' + resume.education.length);
+  console.log('[HH-AR][Resume] Parsed resume:', JSON.stringify({
+    id: resume.id, title: resume.title, salary: resume.salary,
+    skills: resume.skills, experienceCount: resume.experience.length,
+    educationCount: resume.education.length, languages: resume.languages,
+    debug: resume._debug
+  }, null, 2));
+
+  return resume;
+}
+
+/**
+ * Парсинг списка резюме (/applicant/resumes).
+ * Возвращает массив {title, url, id} для каждого резюме пользователя.
+ */
+function parseResumeList() {
+  const resumes = [];
+  // Ищем все ссылки на резюме на странице
+  const links = document.querySelectorAll('a[href*="/resume/"]');
+  links.forEach(link => {
+    const href = link.getAttribute('href') || '';
+    const hashMatch = href.match(/\/resume\/([a-f0-9]+)/);
+    if (!hashMatch) return;
+    const id = hashMatch[1];
+    // Проверяем что не дубликат
+    if (resumes.find(r => r.id === id)) return;
+    resumes.push({
+      id: id,
+      title: safeGetText(link) || 'Без названия',
+      url: href.startsWith('http') ? href : 'https://hh.ru' + href
+    });
+  });
+  resumeLog.info('Resume list: ' + resumes.length + ' resumes found');
+  return resumes;
+}
+
+// ═══════════════════════════════════════════════
 // CONTENT: PANEL (FAB + SIDEBAR)
 // ═══════════════════════════════════════════════
 
@@ -547,20 +850,113 @@ function renderLoggedInContent(content) {
       <div class="har-user-info"><div class="har-user-name">${esc(name)}</div><div class="har-user-status">Авторизован</div></div>
       <div class="har-dot har-dot-${panelState.status}"></div>
     </div>
-    <div class="har-stats">
-      <div class="har-stat"><span class="har-stat-val" id="sv-applied">0</span><span class="har-stat-lbl">откликов</span></div>
-      <div class="har-stat"><span class="har-stat-val" id="sv-remain">200</span><span class="har-stat-lbl">осталось</span></div>
-      <div class="har-stat"><span class="har-stat-val" id="sv-errors">0</span><span class="har-stat-lbl">ошибок</span></div>
+    <div class="har-tabs">
+      <button class="har-tab ${!panelState.activeTab || panelState.activeTab === 'vacancies' ? 'har-tab-active' : ''}" data-tab="vacancies">Вакансии</button>
+      <button class="har-tab ${panelState.activeTab === 'resume' ? 'har-tab-active' : ''}" data-tab="resume">Моё резюме</button>
     </div>
-    <div class="har-progress"><div class="har-progress-bar"><div class="har-progress-fill" id="pf"></div></div><div class="har-progress-text" id="pt">0 / 200</div></div>
-    <div class="har-actions">
-      <button class="har-btn har-btn-primary" data-action="apply-all">Откликнуться на все</button>
-      <div style="display:flex;gap:8px"><button class="har-btn har-btn-secondary" data-action="pause" style="flex:1">Пауза</button><button class="har-btn har-btn-secondary" data-action="refresh" style="flex:1">Обновить</button></div>
+    <div class="har-tab-content" id="har-tab-vacancies" style="${panelState.activeTab === 'resume' ? 'display:none' : ''}">
+      <div class="har-stats">
+        <div class="har-stat"><span class="har-stat-val" id="sv-applied">0</span><span class="har-stat-lbl">откликов</span></div>
+        <div class="har-stat"><span class="har-stat-val" id="sv-remain">200</span><span class="har-stat-lbl">осталось</span></div>
+        <div class="har-stat"><span class="har-stat-val" id="sv-errors">0</span><span class="har-stat-lbl">ошибок</span></div>
+      </div>
+      <div class="har-progress"><div class="har-progress-bar"><div class="har-progress-fill" id="pf"></div></div><div class="har-progress-text" id="pt">0 / 200</div></div>
+      <div class="har-actions">
+        <button class="har-btn har-btn-primary" data-action="apply-all">Откликнуться на все</button>
+        <div style="display:flex;gap:8px"><button class="har-btn har-btn-secondary" data-action="pause" style="flex:1">Пауза</button><button class="har-btn har-btn-secondary" data-action="refresh" style="flex:1">Обновить</button></div>
+      </div>
+      <div class="har-section-title">Вакансии на странице</div>
+      <div class="har-vacancy-list" id="har-vlist"><div class="har-empty">Загрузка...</div></div>
     </div>
-    <div class="har-section-title">Вакансии на странице</div>
-    <div class="har-vacancy-list" id="har-vlist"><div class="har-empty">Загрузка...</div></div>`;
+    <div class="har-tab-content" id="har-tab-resume" style="${!panelState.activeTab || panelState.activeTab !== 'resume' ? 'display:none' : ''}">
+      <div id="har-resume-content"><div class="har-empty">Откройте страницу резюме на hh.ru<br>или нажмите кнопку "Загрузить".</div></div>
+      <button class="har-btn har-btn-primary har-btn-block" data-action="load-resume" style="margin:12px 20px">Загрузить с текущей страницы</button>
+      <button class="har-btn har-btn-secondary har-btn-block" data-action="goto-resume" style="margin:0 20px 12px">Перейти к списку резюме</button>
+    </div>`;
+  bindTabEvents(content);
   renderVacancyList();
   renderStatsValues();
+  if (panelState.activeTab === 'resume') renderResumePanel();
+}
+
+function bindTabEvents(container) {
+  container.querySelectorAll('.har-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      panelState.activeTab = tabName;
+      // Переключаем видимость табов
+      const vacDiv = shadowRoot?.getElementById('har-tab-vacancies');
+      const resDiv = shadowRoot?.getElementById('har-tab-resume');
+      if (vacDiv) vacDiv.style.display = tabName === 'vacancies' ? '' : 'none';
+      if (resDiv) resDiv.style.display = tabName === 'resume' ? '' : 'none';
+      // Подсветка табов
+      shadowRoot?.querySelectorAll('.har-tab').forEach(t => {
+        t.classList.toggle('har-tab-active', t.dataset.tab === tabName);
+      });
+      if (tabName === 'resume') renderResumePanel();
+    });
+  });
+}
+
+function renderResumePanel() {
+  const container = shadowRoot?.getElementById('har-resume-content');
+  if (!container) return;
+
+  const r = panelState.resume;
+  if (!r || !r.id) {
+    container.innerHTML = '<div class="har-empty">Резюме ещё не загружено.<br>Перейдите на страницу резюме на hh.ru<br>и нажмите "Загрузить с текущей страницы".</div>';
+    return;
+  }
+
+  // Skills
+  const skillsHtml = r.skills.length > 0
+    ? '<div class="har-tag-list">' + r.skills.map(s => '<span class="har-tag">' + esc(s) + '</span>').join('') + '</div>'
+    : '<div class="har-empty" style="padding:8px">Навыки не найдены</div>';
+
+  // Experience
+  const expHtml = r.experience.length > 0
+    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.duration ? ' &middot; ' + esc(j.duration) : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description).substring(0, 200) + '</div>' : '') + '</div>').join('')
+    : '<div class="har-empty" style="padding:8px">Опыт не найден</div>';
+
+  // Education
+  const eduHtml = r.education.length > 0
+    ? r.education.map(e => '<div class="har-edu-item"><span>' + esc(e.name) + '</span>' + (e.year ? ' <span class="har-edu-year">' + esc(e.year) + '</span>' : '') + '</div>').join('')
+    : '';
+
+  // Languages
+  const langHtml = r.languages.length > 0
+    ? '<div class="har-tag-list">' + r.languages.map(l => '<span class="har-tag har-tag-lang">' + esc(l) + '</span>').join('') + '</div>'
+    : '';
+
+  // Debug info
+  const debugHtml = '<div class="har-debug"><details><summary>Debug (' + r._debug.found.length + ' found, ' + r._debug.missing.length + ' missing)</summary>' +
+    '<div class="har-debug-body">' +
+    r._debug.found.map(f => '<div style="color:#22c55e">✓ ' + esc(f) + '</div>').join('') +
+    r._debug.missing.map(m => '<div style="color:#ef4444">✗ ' + esc(m) + '</div>').join('') +
+    '</div></details></div>';
+
+  container.innerHTML = `
+    <div class="har-resume-card">
+      <div class="har-resume-header">
+        <div class="har-resume-title">${esc(r.title || 'Без названия')}</div>
+        ${r.salary ? '<div class="har-resume-salary">' + esc(r.salary) + '</div>' : ''}
+        <div class="har-resume-meta">${esc(r.gender)} ${esc(r.age)}${r.address ? ' &middot; ' + esc(r.address) : ''}</div>
+      </div>
+      ${r.specializations.length > 0 ? '<div class="har-resume-section"><div class="har-section-subtitle">Специализации</div><div class="har-tag-list">' + r.specializations.map(s => '<span class="har-tag">' + esc(s) + '</span>').join('') + '</div></div>' : ''}
+      <div class="har-resume-section">
+        <div class="har-section-subtitle">Навыки (${r.skills.length})</div>
+        ${skillsHtml}
+      </div>
+      <div class="har-resume-section">
+        <div class="har-section-subtitle">Опыт работы (${r.experience.length})</div>
+        ${expHtml}
+      </div>
+      ${eduHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">Образование</div>' + eduHtml + '</div>' : ''}
+      ${langHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">Языки</div>' + langHtml + '</div>' : ''}
+      ${r.additionalInfo ? '<div class="har-resume-section"><div class="har-section-subtitle">Доп. информация</div><div style="font-size:12px;color:#475569;padding:4px 0">' + esc(r.additionalInfo).substring(0, 300) + '</div></div>' : ''}
+      ${debugHtml}
+      <div style="font-size:10px;color:#94a3b8;padding:8px 0">Parsed: ${r.parsedAt}</div>
+    </div>`;
 }
 
 function renderVacancyList() {
@@ -595,11 +991,14 @@ function bindSidebarEvents(container) {
     if (e.target.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (e.target.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
     if (e.target.closest('#har-retry-auth')) { updateAuthState(); return; }
+    // Resume actions
+    if (e.target.closest('[data-action="load-resume"]')) { window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }
+    if (e.target.closest('[data-action="goto-resume"]')) { window.open('https://hh.ru/applicant/resumes', '_blank'); return; }
   });
 }
 
 function getSidebarCSS() {
-  return '@keyframes har-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes har-pulse{0%,100%{opacity:1}50%{opacity:.5}}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}.har-sidebar{height:100%;display:flex;flex-direction:column;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:13px;color:#1a1a1a}.har-header{padding:16px 20px;background:linear-gradient(135deg,#2964FF,#6366f1);color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}.har-header h3{margin:0;font-size:16px;font-weight:700}.har-version{font-size:10px;opacity:.7}.har-content{flex:1;overflow-y:auto}.har-user-bar{display:flex;align-items:center;gap:12px;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.har-avatar{width:36px;height:36px;border-radius:50%;background:#2964FF;display:flex;align-items:center;justify-content:center}.har-user-info{flex:1}.har-user-name{font-size:13px;font-weight:600}.har-user-status{font-size:11px;color:#22c55e}.har-dot{width:8px;height:8px;border-radius:50%;background:#9ca3af}.har-dot-idle{background:#9ca3af}.har-dot-running{background:#22c55e;animation:har-pulse 1.5s infinite}.har-dot-paused{background:#f59e0b}.har-dot-error{background:#ef4444}.har-auth-box{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center}.har-spinner{width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#2964FF;border-radius:50%;animation:har-spin .8s linear infinite;margin-bottom:20px}.har-lock-icon{margin-bottom:20px}.har-auth-box h3{font-size:18px;font-weight:700;margin:0 0 12px}.har-auth-box p{font-size:13px;color:#64748b;line-height:1.6;margin:0 0 24px}.har-stats{display:flex;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;gap:12px}.har-stat{text-align:center;flex:1}.har-stat-val{display:block;font-weight:800;font-size:22px;color:#2964FF}.har-stat-lbl{display:block;font-size:10px;color:#64748b;text-transform:uppercase;margin-top:2px}.har-progress{padding:8px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.har-progress-bar{height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden}.har-progress-fill{height:100%;background:linear-gradient(90deg,#2964FF,#6366f1);border-radius:2px;transition:width .5s}.har-progress-text{font-size:10px;color:#94a3b8;text-align:right;margin-top:4px}.har-actions{padding:12px 20px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #e2e8f0}.har-btn{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;text-align:center}.har-btn-primary{background:#2964FF;color:#fff}.har-btn-primary:hover{background:#1d4ed8}.har-btn-secondary{background:#f1f5f9;color:#475569}.har-btn-secondary:hover{background:#e2e8f0}.har-btn-block{width:100%;display:block;margin:6px 0}.har-section-title{padding:10px 20px 6px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}.har-vacancy-list{flex:1;overflow-y:auto}.har-vcard{padding:10px 20px;border-bottom:1px solid #f1f5f9;transition:background .15s}.har-vcard:hover{background:#f8fafc}.har-vcard.applied{opacity:.5}.har-vcard.blacklisted{opacity:.3}.har-vhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}.har-vtitle{font-weight:600;color:#2964FF;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.har-vtitle:hover{text-decoration:underline}.har-score{padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap}.sc-high{background:#dcfce7;color:#166534}.sc-medium{background:#fef9c3;color:#854d0e}.sc-low{background:#fee2e2;color:#991b1b}.har-vmeta{display:flex;gap:10px;font-size:12px;color:#64748b;margin-bottom:6px}.har-vsalary{color:#1a1a1a;font-weight:500}.har-vfoot{display:flex;align-items:center;justify-content:space-between}.har-vfoot>span:first-child{font-size:11px;color:#94a3b8}.har-btn-apply{padding:4px 12px;background:#2964FF;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}.har-btn-apply:hover{background:#1d4ed8}.har-badge{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600}.ba{background:#dbeafe;color:#1d4ed8}.bb{background:#fee2e2;color:#991b1b}.har-empty{padding:24px 20px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.6}';
+  return '@keyframes har-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes har-pulse{0%,100%{opacity:1}50%{opacity:.5}}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}.har-sidebar{height:100%;display:flex;flex-direction:column;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:13px;color:#1a1a1a}.har-header{padding:16px 20px;background:linear-gradient(135deg,#2964FF,#6366f1);color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}.har-header h3{margin:0;font-size:16px;font-weight:700}.har-version{font-size:10px;opacity:.7}.har-content{flex:1;overflow-y:auto}.har-user-bar{display:flex;align-items:center;gap:12px;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.har-avatar{width:36px;height:36px;border-radius:50%;background:#2964FF;display:flex;align-items:center;justify-content:center}.har-user-info{flex:1}.har-user-name{font-size:13px;font-weight:600}.har-user-status{font-size:11px;color:#22c55e}.har-dot{width:8px;height:8px;border-radius:50%;background:#9ca3af}.har-dot-idle{background:#9ca3af}.har-dot-running{background:#22c55e;animation:har-pulse 1.5s infinite}.har-dot-paused{background:#f59e0b}.har-dot-error{background:#ef4444}.har-auth-box{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center}.har-spinner{width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#2964FF;border-radius:50%;animation:har-spin .8s linear infinite;margin-bottom:20px}.har-lock-icon{margin-bottom:20px}.har-auth-box h3{font-size:18px;font-weight:700;margin:0 0 12px}.har-auth-box p{font-size:13px;color:#64748b;line-height:1.6;margin:0 0 24px}.har-stats{display:flex;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;gap:12px}.har-stat{text-align:center;flex:1}.har-stat-val{display:block;font-weight:800;font-size:22px;color:#2964FF}.har-stat-lbl{display:block;font-size:10px;color:#64748b;text-transform:uppercase;margin-top:2px}.har-progress{padding:8px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.har-progress-bar{height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden}.har-progress-fill{height:100%;background:linear-gradient(90deg,#2964FF,#6366f1);border-radius:2px;transition:width .5s}.har-progress-text{font-size:10px;color:#94a3b8;text-align:right;margin-top:4px}.har-actions{padding:12px 20px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #e2e8f0}.har-btn{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;text-align:center}.har-btn-primary{background:#2964FF;color:#fff}.har-btn-primary:hover{background:#1d4ed8}.har-btn-secondary{background:#f1f5f9;color:#475569}.har-btn-secondary:hover{background:#e2e8f0}.har-btn-block{width:100%;display:block;margin:6px 0}.har-section-title{padding:10px 20px 6px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}.har-vacancy-list{flex:1;overflow-y:auto}.har-vcard{padding:10px 20px;border-bottom:1px solid #f1f5f9;transition:background .15s}.har-vcard:hover{background:#f8fafc}.har-vcard.applied{opacity:.5}.har-vcard.blacklisted{opacity:.3}.har-vhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}.har-vtitle{font-weight:600;color:#2964FF;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.har-vtitle:hover{text-decoration:underline}.har-score{padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap}.sc-high{background:#dcfce7;color:#166534}.sc-medium{background:#fef9c3;color:#854d0e}.sc-low{background:#fee2e2;color:#991b1b}.har-vmeta{display:flex;gap:10px;font-size:12px;color:#64748b;margin-bottom:6px}.har-vsalary{color:#1a1a1a;font-weight:500}.har-vfoot{display:flex;align-items:center;justify-content:space-between}.har-vfoot>span:first-child{font-size:11px;color:#94a3b8}.har-btn-apply{padding:4px 12px;background:#2964FF;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}.har-btn-apply:hover{background:#1d4ed8}.har-badge{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600}.ba{background:#dbeafe;color:#1d4ed8}.bb{background:#fee2e2;color:#991b1b}.har-empty{padding:24px 20px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.6}.har-tabs{display:flex;border-bottom:1px solid #e2e8f0;background:#f8fafc}.har-tab{flex:1;padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}.har-tab:hover{color:#1a1a1a;background:#f1f5f9}.har-tab-active{color:#2964FF;border-bottom-color:#2964FF;background:#fff}.har-tab-content{flex:1;overflow-y:auto}.har-resume-card{padding:16px 20px}.har-resume-header{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0}.har-resume-title{font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:4px}.har-resume-salary{font-size:14px;font-weight:600;color:#2964FF;margin-bottom:4px}.har-resume-meta{font-size:12px;color:#64748b}.har-resume-section{margin-bottom:12px}.har-section-subtitle{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.har-tag-list{display:flex;flex-wrap:wrap;gap:4px}.har-tag{display:inline-block;padding:3px 8px;background:#eff6ff;color:#2964FF;border-radius:4px;font-size:11px;font-weight:500}.har-tag-lang{background:#f0fdf4;color:#166534}.har-exp-item{padding:8px 0;border-bottom:1px solid #f1f5f9}.har-exp-pos{font-size:13px;font-weight:600;color:#1a1a1a}.har-exp-meta{font-size:11px;color:#64748b;margin-top:2px}.har-exp-desc{font-size:11px;color:#475569;margin-top:4px;line-height:1.4}.har-edu-item{font-size:12px;color:#475569;padding:4px 0}.har-edu-year{color:#94a3b8;font-size:11px}.har-debug{margin-top:12px;padding-top:8px;border-top:1px solid #f1f5f9}.har-debug summary{font-size:10px;color:#94a3b8;cursor:pointer;padding:4px 0}.har-debug-body{font-size:10px;font-family:monospace;padding:8px 0;line-height:1.8}';
 }
 
 function getSidebarHTML() {
@@ -684,6 +1083,15 @@ async function init() {
   await checkDailyReset();
   createPanel();
 
+  // Load saved resume from storage
+  try {
+    const d = await chrome.storage.local.get('myResume');
+    if (d.myResume && d.myResume.id) {
+      panelState.resume = d.myResume;
+      mainLog.info('Loaded saved resume: ' + d.myResume.title);
+    }
+  } catch (e) {}
+
   // Auth poll
   pollAuth();
 
@@ -700,6 +1108,20 @@ async function init() {
     if (!panelState.isLoggedIn) return;
     const v = await parseVacanciesFromPage();
     updateVacancies(v);
+  });
+  // Resume events
+  window.addEventListener('hh-ar-load-resume', async () => {
+    if (!panelState.isLoggedIn) return;
+    const resume = parseResume();
+    if (resume.id) {
+      panelState.resume = resume;
+      // Сохранить в storage для использования между страницами
+      await chrome.storage.local.set({ myResume: resume });
+      panelLog.info('Resume loaded and saved');
+      if (panelState.activeTab === 'resume') renderResumePanel();
+    } else {
+      panelLog.warn('Could not parse resume from current page');
+    }
   });
 }
 
@@ -737,6 +1159,30 @@ async function initPageLogic() {
     }).observe(document.body, { childList: true, subtree: true });
     mainLog.info('SPA observer active');
 
+  } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
+    // Страница резюме — автоматически парсим
+    const resume = parseResume();
+    if (resume.id) {
+      panelState.resume = resume;
+      await chrome.storage.local.set({ myResume: resume });
+      mainLog.info('Auto-parsed resume: ' + resume.title);
+    }
+    // Зарегистрируем pendingApply если есть
+    const { pendingApply } = await chrome.storage.local.get('pendingApply');
+    if (pendingApply?.vacancyId) {
+      const age = Date.now() - (pendingApply.timestamp || 0);
+      if (age < 120000) {
+        await chrome.storage.local.remove('pendingApply');
+        await continueApply(pendingApply);
+      } else {
+        await chrome.storage.local.remove('pendingApply');
+      }
+    }
+
+  } else if (path.startsWith('/applicant/resumes')) {
+    // Список резюме
+    const resumeList = parseResumeList();
+    mainLog.info('Resume list page: ' + resumeList.length + ' resumes');
   } else if (/^\/vacancy\/\d+/.test(path)) {
     const { pendingApply } = await chrome.storage.local.get('pendingApply');
     if (pendingApply?.vacancyId) {
