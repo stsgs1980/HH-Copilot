@@ -22,6 +22,9 @@ export function renderSidebarContent() {
   const content = refs.shadowRoot?.querySelector('.har-content');
   if (!content) return;
 
+  // Always update header status text to match auth state
+  updateHeaderStatus();
+
   if (panelState.isLoggedIn === null) {
     content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
       <div class="har-spinner"></div>
@@ -57,6 +60,28 @@ export function renderSidebarContent() {
   /* Update FAB title with username */
   if (refs.fabEl && userName !== 'Пользователь') {
     refs.fabEl.setAttribute('title', 'HH Copilot: ' + userName + '. Нажмите для открытия.');
+  }
+}
+
+/**
+ * Update the header status text to reflect actual auth state.
+ * The initial HTML always shows "Проверяем авторизацию..." — this
+ * function updates it to "Не авторизован" or leaves it for the full
+ * logged-in re-render.
+ */
+function updateHeaderStatus() {
+  if (!refs.shadowRoot) return;
+  const container = refs.shadowRoot?.querySelector('.fab-panel');
+  if (!container) return;
+
+  // Only update if we're still using the initial shell HTML
+  // (logged-in state replaces everything via getLoggedInHTML)
+  if (panelState.isLoggedIn === false) {
+    const headerStatus = container.querySelector('.har-header div[style*="font-size:11px"]');
+    if (headerStatus) {
+      const dotColor = '#ef4444';
+      headerStatus.innerHTML = `<span class="pulse-dot" style="width:6px;height:6px;background:${dotColor};border-radius:50%;display:inline-block;"></span>Не авторизован`;
+    }
   }
 }
 
