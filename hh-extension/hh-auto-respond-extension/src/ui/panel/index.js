@@ -18,7 +18,7 @@ import { renderOverviewKPI, addTimelineEvent } from '../tabs/overview.js';
 import { renderBlacklist } from '../tabs/settings.js';
 
 import { renderSidebarContent, renderInitialData } from './render.js';
-import { bindAllEvents } from './events.js';
+import { bindAllEvents, bindTabClicks } from './events.js';
 
 const panelLog = createLogger('Panel');
 
@@ -72,7 +72,8 @@ export function createSidebar() {
   container.innerHTML = getSidebarHTML();
   refs.shadowRoot.appendChild(container);
 
-  bindSidebarEvents(container);
+  /* Initial bind: close button, retry-auth, tab clicks */
+  bindTabClicks(container);
   document.body.appendChild(refs.backdropEl);
   document.body.appendChild(refs.sidebarEl);
 }

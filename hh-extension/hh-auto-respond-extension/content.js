@@ -357,8 +357,7 @@
     return vacancies;
   }
 
-  // src/parsers/resume-detail/parse.js
-  var resumeLog = createLogger("Resume");
+  // src/parsers/resume-detail/parse-company-card.js
   function parseCompanyCard(card) {
     const job = {};
     const cellLeft = card.querySelector('[data-qa="cell-left-side"]');
@@ -402,45 +401,10 @@
     }
     return job.company || job.position ? job : null;
   }
-  function parseResume() {
-    const t0 = performance.now();
-    const resume = {
-      id: "",
-      url: window.location.href,
-      title: "",
-      salary: "",
-      gender: "",
-      age: "",
-      address: "",
-      specializations: [],
-      skills: [],
-      skillLevels: {},
-      experience: [],
-      education: [],
-      languages: [],
-      additionalInfo: "",
-      parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      _debug: { found: [], missing: [] }
-    };
-    const hashMatch = window.location.pathname.match(/\/resume\/([a-f0-9]+)/);
-    resume.id = hashMatch ? hashMatch[1] : "";
-    const dbg = (key, val) => {
-      if (val) resume._debug.found.push(key + ": " + (typeof val === "string" ? '"' + val.substring(0, 60) + '"' : val));
-      else resume._debug.missing.push(key);
-      return val;
-    };
-    const titleEl = document.querySelector('[data-qa="resume-block-title-position"]');
-    if (titleEl) {
-      resume.title = dbg("resumeTitle (data-qa)", safeGetText(titleEl));
-    }
-    if (!resume.title) {
-      const h1 = document.querySelector("h1");
-      if (h1) resume.title = dbg("resumeTitle (h1)", (h1.textContent || "").trim());
-    }
-    const salaryEl = document.querySelector('[data-qa="resume-block-salary"]');
-    if (salaryEl) {
-      resume.salary = dbg("resumeSalary (data-qa)", safeGetText(salaryEl));
-    }
+
+  // src/parsers/resume-detail/parse-resume-sections.js
+  var resumeLog = createLogger("Resume");
+  function parsePersonalData(titleEl, dbg, resume) {
     const personalText = [];
     const posCard = document.querySelector('[data-qa="resume-position-card"]');
     if (posCard) {
@@ -486,6 +450,8 @@
         }
       }
     }
+  }
+  function parseSkills(dbg, resume) {
     const skillsCard = document.querySelector('[data-qa="skills-card"]');
     if (skillsCard) {
       resume._debug.found.push('skillsBlock (data-qa="skills-card")');
@@ -523,6 +489,8 @@
     } else if (!resume._debug.found.some((f) => f.startsWith("skillsBlock"))) {
       resume._debug.missing.push("skills (no tags found)");
     }
+  }
+  function parseExperience(dbg, resume) {
     const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
     const allCompanyCards = document.querySelectorAll('[data-qa="profile-experience-company-card"]');
     const uniqueCards = [];
@@ -550,87 +518,8 @@
     } else {
       resume._debug.missing.push("experience (0 entries extracted)");
     }
-    const eduCard = document.querySelector('[data-qa="resume-list-card-education"]');
-    if (eduCard) {
-      resume._debug.found.push('educationBlock (data-qa="resume-list-card-education")');
-      const eduEntries = [];
-      const eduUiTexts = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
-      const eduCells = eduCard.querySelectorAll('[data-qa="cell-left-side"]');
-      resumeLog.info("Education: found " + eduCells.length + " cell-left-side elements");
-      eduCells.forEach((cell) => {
-        const edu = {};
-        const cellTexts = cell.querySelectorAll('[data-qa="cell-text-content"]');
-        cellTexts.forEach((ct) => {
-          const t = (ct.textContent || "").trim();
-          if (!t || t.length < 2) return;
-          if (eduUiTexts.test(t)) return;
-          if (!edu.name) {
-            edu.name = t;
-          } else if (!edu.description) {
-            edu.description = t;
-          } else if (!edu.year && /\d{4}/.test(t)) {
-            edu.year = t.match(/\d{4}/)?.[0] || t;
-          }
-        });
-        if (edu.name && !eduUiTexts.test(edu.name) && edu.name.length > 3) {
-          eduEntries.push(edu);
-        }
-      });
-      if (eduEntries.length === 0) {
-        resumeLog.info("Education: fallback to direct children of eduCard");
-        Array.from(eduCard.children).forEach((child) => {
-          const edu = {};
-          const linkEl = child.querySelector("a");
-          if (linkEl) {
-            const t = (linkEl.textContent || "").trim();
-            if (!eduUiTexts.test(t)) edu.name = t;
-          }
-          if (!edu.name) {
-            const textEls = child.querySelectorAll("span, div, p");
-            for (const el of textEls) {
-              const t = (el.textContent || "").trim();
-              if (t.length > 3 && /[А-Яа-яЁё]/.test(t) && !/^\d/.test(t) && !/\d{4}/.test(t) && !eduUiTexts.test(t)) {
-                edu.name = t;
-                break;
-              }
-            }
-          }
-          const spans = child.querySelectorAll("span, div");
-          for (const sp of spans) {
-            const t = (sp.textContent || "").trim();
-            if (/^\d{4}$/.test(t) || /\d{4}/.test(t) && t.length < 15) {
-              edu.year = t;
-              break;
-            }
-          }
-          if (edu.name && !eduUiTexts.test(edu.name) && edu.name.length > 2) {
-            eduEntries.push(edu);
-          }
-        });
-      }
-      if (eduEntries.length === 0) {
-        resumeLog.info("Education: fallback to full text scan");
-        const fullText = (eduCard.textContent || "").trim();
-        const lines = fullText.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 3);
-        for (const line of lines) {
-          if (/[А-Яа-яЁё]{3,}/.test(line) && line.length < 200) {
-            const yearMatch = line.match(/(\d{4})/);
-            eduEntries.push({
-              name: line.replace(/\d{4}/g, "").trim().substring(0, 100),
-              year: yearMatch ? yearMatch[1] : ""
-            });
-          }
-        }
-      }
-      resume.education = eduEntries;
-      if (eduEntries.length > 0) {
-        resume._debug.found.push("education: " + eduEntries.length + " entries");
-      } else {
-        resume._debug.missing.push("education (0 entries extracted)");
-      }
-    } else {
-      resume._debug.missing.push('educationBlock (no data-qa="resume-list-card-education")');
-    }
+  }
+  function parseLanguagesAndAbout(dbg, resume) {
     const langTags = document.querySelectorAll('[data-qa="resume-about-card"] .bloko-tag__text, [data-qa="resume-position-card"] .bloko-tag__text');
     langTags.forEach((tag) => {
       const t = (tag.textContent || "").trim();
@@ -649,10 +538,144 @@
         resume._debug.found.push('additionalBlock (data-qa="resume-about-card")');
       }
     }
+  }
+
+  // src/parsers/resume-detail/parse-resume-education.js
+  var resumeLog2 = createLogger("Resume");
+  function parseEducation(dbg, resume) {
+    const eduCard = document.querySelector('[data-qa="resume-list-card-education"]');
+    if (!eduCard) {
+      resume._debug.missing.push('educationBlock (no data-qa="resume-list-card-education")');
+      return;
+    }
+    resume._debug.found.push('educationBlock (data-qa="resume-list-card-education")');
+    const eduEntries = [];
+    const eduUiTexts = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
+    const eduCells = eduCard.querySelectorAll('[data-qa="cell-left-side"]');
+    resumeLog2.info("Education: found " + eduCells.length + " cell-left-side elements");
+    eduCells.forEach((cell) => {
+      const edu = {};
+      const cellTexts = cell.querySelectorAll('[data-qa="cell-text-content"]');
+      cellTexts.forEach((ct) => {
+        const t = (ct.textContent || "").trim();
+        if (!t || t.length < 2) return;
+        if (eduUiTexts.test(t)) return;
+        if (!edu.name) {
+          edu.name = t;
+        } else if (!edu.description) {
+          edu.description = t;
+        } else if (!edu.year && /\d{4}/.test(t)) {
+          edu.year = t.match(/\d{4}/)?.[0] || t;
+        }
+      });
+      if (edu.name && !eduUiTexts.test(edu.name) && edu.name.length > 3) {
+        eduEntries.push(edu);
+      }
+    });
+    if (eduEntries.length === 0) {
+      resumeLog2.info("Education: fallback to direct children of eduCard");
+      Array.from(eduCard.children).forEach((child) => {
+        const edu = {};
+        const linkEl = child.querySelector("a");
+        if (linkEl) {
+          const t = (linkEl.textContent || "").trim();
+          if (!eduUiTexts.test(t)) edu.name = t;
+        }
+        if (!edu.name) {
+          const textEls = child.querySelectorAll("span, div, p");
+          for (const el of textEls) {
+            const t = (el.textContent || "").trim();
+            if (t.length > 3 && /[А-Яа-яЁё]/.test(t) && !/^\d/.test(t) && !/\d{4}/.test(t) && !eduUiTexts.test(t)) {
+              edu.name = t;
+              break;
+            }
+          }
+        }
+        const spans = child.querySelectorAll("span, div");
+        for (const sp of spans) {
+          const t = (sp.textContent || "").trim();
+          if (/^\d{4}$/.test(t) || /\d{4}/.test(t) && t.length < 15) {
+            edu.year = t;
+            break;
+          }
+        }
+        if (edu.name && !eduUiTexts.test(edu.name) && edu.name.length > 2) {
+          eduEntries.push(edu);
+        }
+      });
+    }
+    if (eduEntries.length === 0) {
+      resumeLog2.info("Education: fallback to full text scan");
+      const fullText = (eduCard.textContent || "").trim();
+      const lines = fullText.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 3);
+      for (const line of lines) {
+        if (/[А-Яа-яЁё]{3,}/.test(line) && line.length < 200) {
+          const yearMatch = line.match(/(\d{4})/);
+          eduEntries.push({
+            name: line.replace(/\d{4}/g, "").trim().substring(0, 100),
+            year: yearMatch ? yearMatch[1] : ""
+          });
+        }
+      }
+    }
+    resume.education = eduEntries;
+    if (eduEntries.length > 0) {
+      resume._debug.found.push("education: " + eduEntries.length + " entries");
+    } else {
+      resume._debug.missing.push("education (0 entries extracted)");
+    }
+  }
+
+  // src/parsers/resume-detail/parse-resume.js
+  var resumeLog3 = createLogger("Resume");
+  function parseResume() {
+    const t0 = performance.now();
+    const resume = {
+      id: "",
+      url: window.location.href,
+      title: "",
+      salary: "",
+      gender: "",
+      age: "",
+      address: "",
+      specializations: [],
+      skills: [],
+      skillLevels: {},
+      experience: [],
+      education: [],
+      languages: [],
+      additionalInfo: "",
+      parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      _debug: { found: [], missing: [] }
+    };
+    const hashMatch = window.location.pathname.match(/\/resume\/([a-f0-9]+)/);
+    resume.id = hashMatch ? hashMatch[1] : "";
+    const dbg = (key, val) => {
+      if (val) resume._debug.found.push(key + ": " + (typeof val === "string" ? '"' + val.substring(0, 60) + '"' : val));
+      else resume._debug.missing.push(key);
+      return val;
+    };
+    const titleEl = document.querySelector('[data-qa="resume-block-title-position"]');
+    if (titleEl) {
+      resume.title = dbg("resumeTitle (data-qa)", safeGetText(titleEl));
+    }
+    if (!resume.title) {
+      const h1 = document.querySelector("h1");
+      if (h1) resume.title = dbg("resumeTitle (h1)", (h1.textContent || "").trim());
+    }
+    const salaryEl = document.querySelector('[data-qa="resume-block-salary"]');
+    if (salaryEl) {
+      resume.salary = dbg("resumeSalary (data-qa)", safeGetText(salaryEl));
+    }
+    parsePersonalData(titleEl, dbg, resume);
+    parseSkills(dbg, resume);
+    parseExperience(dbg, resume);
+    parseEducation(dbg, resume);
+    parseLanguagesAndAbout(dbg, resume);
     const elapsed = (performance.now() - t0).toFixed(1);
-    resumeLog.info("Resume parsed in " + elapsed + "ms");
-    resumeLog.info("Found: " + resume._debug.found.length + " | Missing: " + resume._debug.missing.length);
-    resumeLog.info("Skills: " + resume.skills.length + " | Experience: " + resume.experience.length + " | Education: " + resume.education.length);
+    resumeLog3.info("Resume parsed in " + elapsed + "ms");
+    resumeLog3.info("Found: " + resume._debug.found.length + " | Missing: " + resume._debug.missing.length);
+    resumeLog3.info("Skills: " + resume.skills.length + " | Experience: " + resume.experience.length + " | Education: " + resume.education.length);
     console.log("[HH-AR][Resume] Parsed resume:", JSON.stringify({
       id: resume.id,
       title: resume.title,
@@ -802,7 +825,7 @@
   }
 
   // src/parsers/resume-detail/index.js
-  var resumeLog2 = createLogger("Resume");
+  var resumeLog4 = createLogger("Resume");
   function getResumePageType() {
     const path = window.location.pathname;
     if (/\/resume\/[a-f0-9]+/.test(path)) return "resume";
@@ -823,7 +846,7 @@
       }
     });
     if (clicked.length > 0) {
-      resumeLog2.info("Expanded hidden sections: " + clicked.join(", "));
+      resumeLog4.info("Expanded hidden sections: " + clicked.join(", "));
       await new Promise((r) => setTimeout(r, 1500));
     }
   }
@@ -842,7 +865,7 @@
         url: href.startsWith("http") ? href : "https://hh.ru" + href
       });
     });
-    resumeLog2.info("Resume list: " + resumes.length + " resumes found");
+    resumeLog4.info("Resume list: " + resumes.length + " resumes found");
     return resumes;
   }
 
@@ -2052,73 +2075,6 @@
     if (text) text.textContent = applied + " / " + limit;
   }
 
-  // src/ui/tabs/resumes.js
-  function renderResumeListPanel() {
-    const container = refs.shadowRoot?.getElementById("har-resume-content");
-    if (!container) return;
-    const list = panelState.resumeList;
-    if (!list || list.length === 0) {
-      container.innerHTML = '<div class="har-empty">\u0421\u043F\u0438\u0441\u043E\u043A \u0440\u0435\u0437\u044E\u043C\u0435 \u043F\u0443\u0441\u0442.<br>\u041D\u0430\u0436\u043C\u0438\u0442\u0435 "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C" \u0434\u043B\u044F \u043F\u0430\u0440\u0441\u0438\u043D\u0433\u0430.</div>';
-      return;
-    }
-    container.innerHTML = '<div class="har-resume-list-header">\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: ' + list.length + "</div>" + list.map((r) => {
-      const isActive = panelState.resume && panelState.resume.id === r.id;
-      return '<div class="har-resume-list-item ' + (isActive ? "har-resume-list-active" : "") + '"><a href="' + esc(r.url) + '" target="_blank" class="har-resume-list-link">' + esc(r.title) + "</a>" + (isActive ? '<span class="har-resume-loaded-badge">loaded</span>' : "") + "</div>";
-    }).join("") + '<div class="har-resume-list-hint">Click to open resume in new tab, then press "Load" on that page.</div>';
-    container.querySelectorAll(".har-resume-list-link").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.open(link.getAttribute("href"), "_blank");
-      });
-    });
-  }
-  function renderResumePanel() {
-    const container = refs.shadowRoot?.getElementById("har-resume-content");
-    if (!container) return;
-    const r = panelState.resume;
-    if (!r || !r.id) {
-      if (panelState.resumeList && panelState.resumeList.length > 0) {
-        renderResumeListPanel();
-        return;
-      }
-      const pageType = getResumePageType();
-      let hint = 'Go to your resume page on hh.ru<br>and click "Load from current page".';
-      if (pageType === "resume-list") {
-        hint = 'Click "Load" to see your resumes listed on this page.';
-      }
-      container.innerHTML = '<div class="har-empty">Resume not loaded yet.<br>' + hint + "</div>";
-      return;
-    }
-    const skillsHtml = r.skills.length > 0 ? '<div class="har-tag-list">' + r.skills.map((s) => '<span class="har-tag">' + esc(s) + "</span>").join("") + "</div>" : '<div class="har-empty" style="padding:8px">\u041D\u0430\u0432\u044B\u043A\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B</div>';
-    const expHtml = r.experience.length > 0 ? r.experience.map((j) => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || "?") + '</div><div class="har-exp-meta">' + esc(j.company || "") + (j.period ? " &middot; " + esc(j.period) : "") + "</div>" + (j.description ? '<div class="har-exp-desc">' + esc(j.description) + "</div>" : "") + "</div>").join("") : '<div class="har-empty" style="padding:8px">\u041E\u043F\u044B\u0442 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D</div>';
-    const eduHtml = r.education.length > 0 ? r.education.map((e) => '<div class="har-edu-item"><span>' + esc(e.name) + "</span>" + (e.year ? ' <span class="har-edu-year">' + esc(e.year) + "</span>" : "") + "</div>").join("") : "";
-    const langHtml = r.languages.length > 0 ? '<div class="har-tag-list">' + r.languages.map((l) => '<span class="har-tag har-tag-lang">' + esc(l) + "</span>").join("") + "</div>" : "";
-    const debugHtml = '<div class="har-debug"><details><summary>Debug (' + r._debug.found.length + " found, " + r._debug.missing.length + ' missing)</summary><div class="har-debug-body">' + r._debug.found.map((f) => '<div style="color:#22c55e">\u2713 ' + esc(f) + "</div>").join("") + r._debug.missing.map((m) => '<div style="color:#ef4444">\u2717 ' + esc(m) + "</div>").join("") + "</div></details></div>";
-    container.innerHTML = `
-    <div class="har-resume-card">
-      <div class="har-resume-header">
-        <div class="har-resume-title">${esc(r.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F")}</div>
-        ${r.salary ? '<div class="har-resume-salary">' + esc(r.salary) + "</div>" : ""}
-        <div class="har-resume-meta">${esc(r.gender)} ${esc(r.age)}${r.address ? " &middot; " + esc(r.address) : ""}</div>
-      </div>
-      ${r.specializations.length > 0 ? '<div class="har-resume-section"><div class="har-section-subtitle">\u0421\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u0438</div><div class="har-tag-list">' + r.specializations.map((s) => '<span class="har-tag">' + esc(s) + "</span>").join("") + "</div></div>" : ""}
-      <div class="har-resume-section">
-        <div class="har-section-subtitle">\u041D\u0430\u0432\u044B\u043A\u0438 (${r.skills.length})</div>
-        ${skillsHtml}
-      </div>
-      <div class="har-resume-section">
-        <div class="har-section-subtitle">\u041E\u043F\u044B\u0442 \u0440\u0430\u0431\u043E\u0442\u044B (${r.experience.length})</div>
-        ${expHtml}
-      </div>
-      ${eduHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">\u041E\u0431\u0440\u0430\u0437\u043E\u0432\u0430\u043D\u0438\u0435</div>' + eduHtml + "</div>" : ""}
-      ${langHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">\u042F\u0437\u044B\u043A\u0438</div>' + langHtml + "</div>" : ""}
-      ${r.additionalInfo ? '<div class="har-resume-section"><div class="har-section-subtitle">\u0414\u043E\u043F. \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F</div><div style="font-size:12px;color:#475569;padding:4px 0">' + esc(r.additionalInfo) + "</div></div>" : ""}
-      ${debugHtml}
-      <div style="font-size:10px;color:#94a3b8;padding:8px 0">Parsed: ${r.parsedAt}</div>
-      <a href="${esc(r.url)}" target="_blank" class="har-btn har-btn-secondary" style="display:block;text-align:center;text-decoration:none;margin-top:8px">Open on hh.ru</a>
-    </div>`;
-  }
-
   // src/ui/tabs/overview.js
   function renderOverviewKPI() {
     const s = panelState.stats;
@@ -2182,6 +2138,57 @@
     if (countEl) countEl.textContent = count + " " + declension(count, ["\u0441\u043E\u0431\u044B\u0442\u0438\u0435", "\u0441\u043E\u0431\u044B\u0442\u0438\u044F", "\u0441\u043E\u0431\u044B\u0442\u0438\u0439"]);
   }
   function declension(n, forms) {
+    const abs = Math.abs(n) % 100;
+    const last = abs % 10;
+    if (abs > 10 && abs < 20) return forms[2];
+    if (last > 1 && last < 5) return forms[1];
+    if (last === 1) return forms[0];
+    return forms[2];
+  }
+
+  // src/ui/tabs/settings.js
+  function renderBlacklist() {
+    const list = refs.shadowRoot?.getElementById("bl-list");
+    const badge = refs.shadowRoot?.getElementById("bl-count-badge");
+    if (!list) return;
+    const bl = panelState.blacklist || [];
+    if (badge) badge.textContent = bl.length + " " + declension2(bl.length, ["\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F", "\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438", "\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0439"]);
+    if (bl.length === 0) {
+      list.innerHTML = '<div style="padding:8px;text-align:center;font-size:11px;color:#71717a;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u043F\u0443\u0441\u0442</div>';
+      return;
+    }
+    list.innerHTML = bl.map(
+      (name) => `<div class="bl-item" data-bl-name="${esc(name)}">
+      <span style="font-size:12px;">${esc(name)}</span>
+      <button class="btn-bl-del" data-bl-remove="${esc(name)}">\u0423\u0434\u0430\u043B\u0438\u0442\u044C</button>
+    </div>`
+    ).join("");
+  }
+  function renderSettingsValues() {
+    const el = (id) => refs.shadowRoot?.getElementById(id);
+    if (!el) return;
+    const set = (id, val) => {
+      const e = el(id);
+      if (e) e.value = val;
+    };
+    const chk = (id, val) => {
+      const e = el(id);
+      if (e) e.checked = val;
+    };
+    set("s-daily-limit", panelState.settings.dailyLimit);
+    set("s-hourly-limit", panelState.settings.hourlyLimit);
+    set("s-min-interval", panelState.settings.minInterval);
+    set("s-captcha-time", panelState.settings.captchaPauseTime);
+    set("s-reset-time", panelState.settings.dailyResetTime);
+    chk("s-burst", panelState.settings.burstDetection);
+    chk("s-adaptive", panelState.settings.adaptiveSlowdown);
+    chk("s-captcha", panelState.settings.captchaAutoPause);
+    chk("s-auth-check", panelState.settings.autoAuthCheck);
+    chk("s-notifications", panelState.settings.notifications);
+    chk("s-logging", panelState.settings.logging);
+    chk("s-shadow-dom", panelState.settings.shadowDOM);
+  }
+  function declension2(n, forms) {
     const abs = Math.abs(n) % 100;
     const last = abs % 10;
     if (abs > 10 && abs < 20) return forms[2];
@@ -2340,57 +2347,6 @@
     }).join("");
   }
 
-  // src/ui/tabs/settings.js
-  function renderBlacklist() {
-    const list = refs.shadowRoot?.getElementById("bl-list");
-    const badge = refs.shadowRoot?.getElementById("bl-count-badge");
-    if (!list) return;
-    const bl = panelState.blacklist || [];
-    if (badge) badge.textContent = bl.length + " " + declension2(bl.length, ["\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F", "\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438", "\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0439"]);
-    if (bl.length === 0) {
-      list.innerHTML = '<div style="padding:8px;text-align:center;font-size:11px;color:#71717a;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u043F\u0443\u0441\u0442</div>';
-      return;
-    }
-    list.innerHTML = bl.map(
-      (name) => `<div class="bl-item" data-bl-name="${esc(name)}">
-      <span style="font-size:12px;">${esc(name)}</span>
-      <button class="btn-bl-del" data-bl-remove="${esc(name)}">\u0423\u0434\u0430\u043B\u0438\u0442\u044C</button>
-    </div>`
-    ).join("");
-  }
-  function renderSettingsValues() {
-    const el = (id) => refs.shadowRoot?.getElementById(id);
-    if (!el) return;
-    const set = (id, val) => {
-      const e = el(id);
-      if (e) e.value = val;
-    };
-    const chk = (id, val) => {
-      const e = el(id);
-      if (e) e.checked = val;
-    };
-    set("s-daily-limit", panelState.settings.dailyLimit);
-    set("s-hourly-limit", panelState.settings.hourlyLimit);
-    set("s-min-interval", panelState.settings.minInterval);
-    set("s-captcha-time", panelState.settings.captchaPauseTime);
-    set("s-reset-time", panelState.settings.dailyResetTime);
-    chk("s-burst", panelState.settings.burstDetection);
-    chk("s-adaptive", panelState.settings.adaptiveSlowdown);
-    chk("s-captcha", panelState.settings.captchaAutoPause);
-    chk("s-auth-check", panelState.settings.autoAuthCheck);
-    chk("s-notifications", panelState.settings.notifications);
-    chk("s-logging", panelState.settings.logging);
-    chk("s-shadow-dom", panelState.settings.shadowDOM);
-  }
-  function declension2(n, forms) {
-    const abs = Math.abs(n) % 100;
-    const last = abs % 10;
-    if (abs > 10 && abs < 20) return forms[2];
-    if (last > 1 && last < 5) return forms[1];
-    if (last === 1) return forms[0];
-    return forms[2];
-  }
-
   // src/ui/panel/render.js
   function renderSidebarContent() {
     const content = refs.shadowRoot?.querySelector(".har-content");
@@ -2435,6 +2391,73 @@
     renderNegotiationList();
   }
 
+  // src/ui/tabs/resumes.js
+  function renderResumeListPanel() {
+    const container = refs.shadowRoot?.getElementById("har-resume-content");
+    if (!container) return;
+    const list = panelState.resumeList;
+    if (!list || list.length === 0) {
+      container.innerHTML = '<div class="har-empty">\u0421\u043F\u0438\u0441\u043E\u043A \u0440\u0435\u0437\u044E\u043C\u0435 \u043F\u0443\u0441\u0442.<br>\u041D\u0430\u0436\u043C\u0438\u0442\u0435 "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C" \u0434\u043B\u044F \u043F\u0430\u0440\u0441\u0438\u043D\u0433\u0430.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="har-resume-list-header">\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: ' + list.length + "</div>" + list.map((r) => {
+      const isActive = panelState.resume && panelState.resume.id === r.id;
+      return '<div class="har-resume-list-item ' + (isActive ? "har-resume-list-active" : "") + '"><a href="' + esc(r.url) + '" target="_blank" class="har-resume-list-link">' + esc(r.title) + "</a>" + (isActive ? '<span class="har-resume-loaded-badge">loaded</span>' : "") + "</div>";
+    }).join("") + '<div class="har-resume-list-hint">Click to open resume in new tab, then press "Load" on that page.</div>';
+    container.querySelectorAll(".har-resume-list-link").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.open(link.getAttribute("href"), "_blank");
+      });
+    });
+  }
+  function renderResumePanel() {
+    const container = refs.shadowRoot?.getElementById("har-resume-content");
+    if (!container) return;
+    const r = panelState.resume;
+    if (!r || !r.id) {
+      if (panelState.resumeList && panelState.resumeList.length > 0) {
+        renderResumeListPanel();
+        return;
+      }
+      const pageType = getResumePageType();
+      let hint = 'Go to your resume page on hh.ru<br>and click "Load from current page".';
+      if (pageType === "resume-list") {
+        hint = 'Click "Load" to see your resumes listed on this page.';
+      }
+      container.innerHTML = '<div class="har-empty">Resume not loaded yet.<br>' + hint + "</div>";
+      return;
+    }
+    const skillsHtml = r.skills.length > 0 ? '<div class="har-tag-list">' + r.skills.map((s) => '<span class="har-tag">' + esc(s) + "</span>").join("") + "</div>" : '<div class="har-empty" style="padding:8px">\u041D\u0430\u0432\u044B\u043A\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B</div>';
+    const expHtml = r.experience.length > 0 ? r.experience.map((j) => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || "?") + '</div><div class="har-exp-meta">' + esc(j.company || "") + (j.period ? " &middot; " + esc(j.period) : "") + "</div>" + (j.description ? '<div class="har-exp-desc">' + esc(j.description) + "</div>" : "") + "</div>").join("") : '<div class="har-empty" style="padding:8px">\u041E\u043F\u044B\u0442 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D</div>';
+    const eduHtml = r.education.length > 0 ? r.education.map((e) => '<div class="har-edu-item"><span>' + esc(e.name) + "</span>" + (e.year ? ' <span class="har-edu-year">' + esc(e.year) + "</span>" : "") + "</div>").join("") : "";
+    const langHtml = r.languages.length > 0 ? '<div class="har-tag-list">' + r.languages.map((l) => '<span class="har-tag har-tag-lang">' + esc(l) + "</span>").join("") + "</div>" : "";
+    const debugHtml = '<div class="har-debug"><details><summary>Debug (' + r._debug.found.length + " found, " + r._debug.missing.length + ' missing)</summary><div class="har-debug-body">' + r._debug.found.map((f) => '<div style="color:#22c55e">\u2713 ' + esc(f) + "</div>").join("") + r._debug.missing.map((m) => '<div style="color:#ef4444">\u2717 ' + esc(m) + "</div>").join("") + "</div></details></div>";
+    container.innerHTML = `
+    <div class="har-resume-card">
+      <div class="har-resume-header">
+        <div class="har-resume-title">${esc(r.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F")}</div>
+        ${r.salary ? '<div class="har-resume-salary">' + esc(r.salary) + "</div>" : ""}
+        <div class="har-resume-meta">${esc(r.gender)} ${esc(r.age)}${r.address ? " &middot; " + esc(r.address) : ""}</div>
+      </div>
+      ${r.specializations.length > 0 ? '<div class="har-resume-section"><div class="har-section-subtitle">\u0421\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u0438</div><div class="har-tag-list">' + r.specializations.map((s) => '<span class="har-tag">' + esc(s) + "</span>").join("") + "</div></div>" : ""}
+      <div class="har-resume-section">
+        <div class="har-section-subtitle">\u041D\u0430\u0432\u044B\u043A\u0438 (${r.skills.length})</div>
+        ${skillsHtml}
+      </div>
+      <div class="har-resume-section">
+        <div class="har-section-subtitle">\u041E\u043F\u044B\u0442 \u0440\u0430\u0431\u043E\u0442\u044B (${r.experience.length})</div>
+        ${expHtml}
+      </div>
+      ${eduHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">\u041E\u0431\u0440\u0430\u0437\u043E\u0432\u0430\u043D\u0438\u0435</div>' + eduHtml + "</div>" : ""}
+      ${langHtml ? '<div class="har-resume-section"><div class="har-section-subtitle">\u042F\u0437\u044B\u043A\u0438</div>' + langHtml + "</div>" : ""}
+      ${r.additionalInfo ? '<div class="har-resume-section"><div class="har-section-subtitle">\u0414\u043E\u043F. \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F</div><div style="font-size:12px;color:#475569;padding:4px 0">' + esc(r.additionalInfo) + "</div></div>" : ""}
+      ${debugHtml}
+      <div style="font-size:10px;color:#94a3b8;padding:8px 0">Parsed: ${r.parsedAt}</div>
+      <a href="${esc(r.url)}" target="_blank" class="har-btn har-btn-secondary" style="display:block;text-align:center;text-decoration:none;margin-top:8px">Open on hh.ru</a>
+    </div>`;
+  }
+
   // src/ui/panel/helpers.js
   function addBlacklistItem() {
     const input = refs.shadowRoot?.getElementById("bl-input");
@@ -2474,60 +2497,7 @@
     });
   }
 
-  // src/ui/panel/index.js
-  var panelLog = createLogger("Panel");
-  function updateAuthState() {
-    const was = panelState.isLoggedIn;
-    const now = checkAuth();
-    if (was !== now) {
-      panelState.isLoggedIn = now;
-      panelLog.info("Auth: " + (now ? "LOGGED IN" : "NOT LOGGED IN"));
-      renderSidebarContent();
-      if (panelState.isLoggedIn) {
-        const container = refs.shadowRoot?.querySelector(".fab-panel");
-        if (container) {
-          bindAllEvents(container);
-          renderInitialData();
-        }
-      }
-      updateFabIcon();
-    }
-  }
-  function createSidebar() {
-    if (refs.sidebarEl) return;
-    refs.backdropEl = document.createElement("div");
-    refs.backdropEl.id = "hh-ar-backdrop";
-    refs.backdropEl.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:999998;opacity:0;pointer-events:none;transition:opacity 0.3s;";
-    refs.backdropEl.addEventListener("click", () => {
-      if (panelState.isOpen) toggleSidebar();
-    });
-    refs.sidebarEl = document.createElement("div");
-    refs.sidebarEl.id = "hh-ar-sidebar";
-    refs.sidebarEl.style.cssText = "position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);";
-    refs.shadowRoot = refs.sidebarEl.attachShadow({ mode: "closed" });
-    const style = document.createElement("style");
-    style.textContent = getSidebarCSS();
-    refs.shadowRoot.appendChild(style);
-    const container = document.createElement("div");
-    container.className = "fab-panel";
-    container.innerHTML = getSidebarHTML();
-    refs.shadowRoot.appendChild(container);
-    bindSidebarEvents(container);
-    document.body.appendChild(refs.backdropEl);
-    document.body.appendChild(refs.sidebarEl);
-  }
-  function toggleSidebar() {
-    if (!refs.sidebarEl) createSidebar();
-    if (!refs.fabEl) createFab(toggleSidebar);
-    panelState.isOpen = !panelState.isOpen;
-    refs.sidebarEl.style.transform = panelState.isOpen ? "translateX(0)" : "translateX(100%)";
-    if (refs.backdropEl) {
-      refs.backdropEl.style.opacity = panelState.isOpen ? "1" : "0";
-      refs.backdropEl.style.pointerEvents = panelState.isOpen ? "auto" : "none";
-    }
-    updateFabIcon();
-    panelLog.info("Sidebar " + (panelState.isOpen ? "opened" : "closed"));
-  }
+  // src/ui/panel/events.js
   function switchTab(tabId) {
     panelState.activeTab = tabId;
     const sr = refs.shadowRoot;
@@ -2681,6 +2651,61 @@
     if (statusFilter) {
       statusFilter.addEventListener("change", () => filterVacancies());
     }
+  }
+
+  // src/ui/panel/index.js
+  var panelLog = createLogger("Panel");
+  function updateAuthState() {
+    const was = panelState.isLoggedIn;
+    const now = checkAuth();
+    if (was !== now) {
+      panelState.isLoggedIn = now;
+      panelLog.info("Auth: " + (now ? "LOGGED IN" : "NOT LOGGED IN"));
+      renderSidebarContent();
+      if (panelState.isLoggedIn) {
+        const container = refs.shadowRoot?.querySelector(".fab-panel");
+        if (container) {
+          bindAllEvents(container);
+          renderInitialData();
+        }
+      }
+      updateFabIcon();
+    }
+  }
+  function createSidebar() {
+    if (refs.sidebarEl) return;
+    refs.backdropEl = document.createElement("div");
+    refs.backdropEl.id = "hh-ar-backdrop";
+    refs.backdropEl.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:999998;opacity:0;pointer-events:none;transition:opacity 0.3s;";
+    refs.backdropEl.addEventListener("click", () => {
+      if (panelState.isOpen) toggleSidebar();
+    });
+    refs.sidebarEl = document.createElement("div");
+    refs.sidebarEl.id = "hh-ar-sidebar";
+    refs.sidebarEl.style.cssText = "position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);";
+    refs.shadowRoot = refs.sidebarEl.attachShadow({ mode: "closed" });
+    const style = document.createElement("style");
+    style.textContent = getSidebarCSS();
+    refs.shadowRoot.appendChild(style);
+    const container = document.createElement("div");
+    container.className = "fab-panel";
+    container.innerHTML = getSidebarHTML();
+    refs.shadowRoot.appendChild(container);
+    bindTabClicks(container);
+    document.body.appendChild(refs.backdropEl);
+    document.body.appendChild(refs.sidebarEl);
+  }
+  function toggleSidebar() {
+    if (!refs.sidebarEl) createSidebar();
+    if (!refs.fabEl) createFab(toggleSidebar);
+    panelState.isOpen = !panelState.isOpen;
+    refs.sidebarEl.style.transform = panelState.isOpen ? "translateX(0)" : "translateX(100%)";
+    if (refs.backdropEl) {
+      refs.backdropEl.style.opacity = panelState.isOpen ? "1" : "0";
+      refs.backdropEl.style.pointerEvents = panelState.isOpen ? "auto" : "none";
+    }
+    updateFabIcon();
+    panelLog.info("Sidebar " + (panelState.isOpen ? "opened" : "closed"));
   }
   function updateVacancies(vacancies) {
     panelState.vacancies = (vacancies || []).filter((v) => v && v.id && v.title);

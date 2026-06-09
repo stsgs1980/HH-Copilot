@@ -68,7 +68,7 @@ export function bindAllEvents(container) {
   bindInputChanges(container);
 }
 
-function bindTabClicks(container) {
+export function bindTabClicks(container) {
   container.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });

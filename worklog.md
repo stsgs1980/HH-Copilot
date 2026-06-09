@@ -500,3 +500,21 @@ Stage Summary:
 - Anti-monolith: ALL 42 JS files < 250 lines
 - TASK-CASCADE.md v4.0.0 reflects actual project state at v1.7.2
 - docx file was never in this repo — no deletion needed
+
+---
+Task ID: 22
+Agent: main
+Task: Fix auth bug — bindSidebarEvents() was undefined, causing events not to bind on sidebar creation
+
+Work Log:
+- Found bug: panel/index.js line 75 called bindSidebarEvents(container) which does NOT exist
+- Correct function: bindAllEvents() from events.js
+- Fix: replaced with bindTabClicks() (exported) for initial bind at creation time
+- bindAllEvents() is called later by updateAuthState() when auth state changes to logged-in
+- Exported bindTabClicks from events.js
+- Rebuilt content.js (150.6kb dev build)
+
+Stage Summary:
+- Sidebar close button, tab clicks, and retry-auth now work immediately after sidebar creation
+- Full bindAllEvents still happens on login for all event handlers
+- Build verified, committed and pushed
