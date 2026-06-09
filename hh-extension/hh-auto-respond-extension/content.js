@@ -736,160 +736,86 @@ function parseResume() {
   // ═════════════════════════════════════════
   // ОПЫТ РАБОТЫ (Experience)
   // data-qa="resume-list-card-experience" — контейнер секции
-  // Стратегия: data-qa карточек компаний внутри блока.
-  // Известные data-qa: profile-experience-company-card (запись работы),
-  //   edit-experience-button-* (кнопки редактирования = количество записей).
-  // Fallback: структура без data-qa — ищем employer-ссылки.
+  // Внутри: profile-experience-company-card — каждая запись работы.
+  // Структура карточки (подтверждена дампом 2026-06-09):
+  //   card > cell > cell-left-side:
+  //     cell-text > cell-text-content → Компания (1-й span)
+  //     cell-text > cell-text-content → Длительность (2-й span)
+  //   card > magritte-stepper > magritte-stepper-step > ...-content:
+  //     cell > cell-left-side:
+  //       cell-text > cell-text-content → Позиция (1-й span)
+  //       cell-text > cell-text-content → Период (2-й span)
+  //     Остальной текст → Описание
   // ═════════════════════════════════════════
   const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
   if (expCard) {
     resume._debug.found.push('experienceBlock (data-qa="resume-list-card-experience")');
 
     const expEntries = [];
-
-    // Способ 1: data-qa карточек опыта
     const companyCards = expCard.querySelectorAll('[data-qa="profile-experience-company-card"]');
-    if (companyCards.length > 0) {
-      resumeLog.info('Experience: found ' + companyCards.length + ' company-card data-qa elements');
-      companyCards.forEach(card => {
-        const job = {};
-        // Компания: ищем data-qa с employer или ссылку
-        const employerEl = card.querySelector('[data-qa*="employer"], [data-qa*="company"]');
-        if (employerEl) {
-          // Берём только прямое текстовое содержимое, без детей
-          const links = employerEl.querySelectorAll('a');
-          if (links.length > 0) {
-            job.company = (links[0].textContent || '').trim();
-          } else {
-            job.company = (employerEl.textContent || '').trim();
-          }
-        }
-        // Позиция
-        const posEl = card.querySelector('[data-qa*="position"], [data-qa*="title"]');
-        if (posEl) job.position = (posEl.textContent || '').trim();
-        // Длительность — ищем текст с годами/датами
-        const allTextEls = card.querySelectorAll('span, div, p');
-        for (const el of allTextEls) {
-          const t = (el.textContent || '').trim();
-          if (t.length < 80 && (/\d{4}\s*[\u2014\-]\s*\d{4}/.test(t) || /\d{4}\s*[\u2014\-]\s*по наст/.test(t) ||
-              /(?:январ|феврал|март|апрел|ма[йя]|июн|июл|август|сентяб|октяб|нояб|декаб)/i.test(t))) {
-            job.duration = t;
-            break;
-          }
-        }
-        // Описание
-        const descEl = card.querySelector('[data-qa*="description"], p');
-        if (descEl) {
-          const dt = (descEl.textContent || '').trim();
-          if (dt.length > 30) job.description = dt;
-        }
-        // Fallback для компании: ссылка на /employer/
-        if (!job.company) {
-          const empLink = card.querySelector('a[href*="/employer/"]');
-          if (empLink) job.company = (empLink.textContent || '').trim();
-        }
-        // Fallback для позиции: первая ссылка (не employer)
-        if (!job.position) {
-          const links = card.querySelectorAll('a');
-          for (const a of links) {
-            const href = a.getAttribute('href') || '';
-            if (!href.includes('/employer/')) {
-              job.position = (a.textContent || '').trim();
-              break;
-            }
-          }
-        }
-        if (job.company || job.position) expEntries.push(job);
-      });
-    }
+    resumeLog.info('Experience: found ' + companyCards.length + ' company-card elements');
 
-    // Способ 2: если company-card не нашли — ищем по edit-кнопкам
-    if (expEntries.length === 0) {
-      const editBtns = document.querySelectorAll('[data-qa^="edit-experience-button-"]');
-      resumeLog.info('Experience: fallback to edit buttons, found ' + editBtns.length);
-      // Каждая edit-кнопка соответствует одной записи опыта.
-      // Ищем родительский контейнер каждой кнопки.
-      editBtns.forEach(btn => {
-        // Поднимаемся к ближайшему контейнеру записи
-        let entry = btn.parentElement;
-        for (let depth = 0; depth < 5 && entry && entry !== expCard; depth++) {
-          entry = entry.parentElement;
-        }
-        if (!entry || entry === expCard) {
-          // Берём parent кнопки как ближайший контейнер
-          entry = btn.parentElement;
-          for (let depth = 0; depth < 3 && entry; depth++) {
-            if (entry.parentElement === expCard || entry === expCard) break;
-            entry = entry.parentElement;
-          }
-        }
-        if (!entry) return;
-        const job = {};
-        const companyEl = entry.querySelector('a[href*="/employer/"]');
-        if (companyEl) job.company = (companyEl.textContent || '').trim();
-        const posEl = entry.querySelector('[data-qa*="position"], [data-qa*="title"]');
-        if (posEl) job.position = (posEl.textContent || '').trim();
-        const spans = entry.querySelectorAll('span, div');
-        for (const sp of spans) {
-          const t = (sp.textContent || '').trim();
-          if (t.length < 80 && (/\d{4}\s*[\u2014\-]\s*\d{4}/.test(t) || /\d{4}\s*[\u2014\-]\s*по наст/.test(t) ||
-              /(?:январ|феврал|март|апрел|ма[йя]|июн|июл|август|сентяб|октяб|нояб|декаб)/i.test(t))) {
-            job.duration = t; break;
-          }
-        }
-        if (job.company || job.position) expEntries.push(job);
-      });
-    }
+    companyCards.forEach(card => {
+      const job = {};
 
-    // Способ 3: общий fallback — дочерние контейнеры с employer-ссылками
-    if (expEntries.length === 0) {
-      resumeLog.info('Experience: fallback to employer links in children');
-      const children = expCard.children;
-      for (const child of children) {
-        const job = {};
-        const links = child.querySelectorAll('a');
-        for (const a of links) {
-          const href = a.getAttribute('href') || '';
-          if (href.includes('/employer/')) {
-            job.company = (a.textContent || '').trim();
-          } else if (href.includes('/vacancy/') || href.includes('/employer/')) {
-            job.position = (a.textContent || '').trim();
-          }
+      // ── Компания и длительность ──
+      // Внутри card > [data-qa="cell"] > [data-qa="cell-left-side"]:
+      //   1-й cell-text > cell-text-content = название компании
+      //   2-й cell-text > cell-text-content = длительность ("1 год и 7 месяцев")
+      const cellLeft = card.querySelector('[data-qa="cell-left-side"]');
+      if (cellLeft) {
+        const cellTexts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+        if (cellTexts.length >= 1) {
+          job.company = (cellTexts[0].textContent || '').trim();
         }
-        // Дата из прямых детей
-        for (const el of child.querySelectorAll('span, div')) {
-          const t = (el.textContent || '').trim();
-          if (t.length < 80 && (/\d{4}\s*[\u2014\-]\s*\d{4}/.test(t) || /\d{4}\s*[\u2014\-]\s*по наст/.test(t))) {
-            job.duration = t; break;
-          }
+        if (cellTexts.length >= 2) {
+          job.duration = (cellTexts[1].textContent || '').trim();
         }
-        if (job.company || job.position) expEntries.push(job);
       }
-    }
+
+      // ── Позиция, период, описание ──
+      // Внутри card > [data-qa="magritte-stepper"] > [data-qa="magritte-stepper-step"]:
+      const stepContent = card.querySelector('[data-qa="magritte-stepper-step-content"]');
+      if (stepContent) {
+        // Позиция и период — в cell-left-side внутри stepper
+        const stepCellLeft = stepContent.querySelector('[data-qa="cell-left-side"]');
+        if (stepCellLeft) {
+          const stepTexts = stepCellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+          if (stepTexts.length >= 1) {
+            job.position = (stepTexts[0].textContent || '').trim();
+          }
+          if (stepTexts.length >= 2) {
+            job.period = (stepTexts[1].textContent || '').trim();
+          }
+        }
+        // Описание — берём текст stepContent и вычитаем позицию + период
+        const fullStepText = (stepContent.textContent || '').trim();
+        const posText = job.position || '';
+        const periodText = job.period || '';
+        // Убираем позицию и период из начала текста
+        let desc = fullStepText;
+        if (posText && desc.startsWith(posText)) {
+          desc = desc.substring(posText.length);
+        }
+        if (periodText && desc.startsWith(periodText)) {
+          desc = desc.substring(periodText.length);
+        }
+        desc = desc.trim();
+        if (desc.length > 20) {
+          job.description = desc.substring(0, 500);
+        }
+      }
+
+      if (job.company || job.position) {
+        expEntries.push(job);
+      }
+    });
 
     resume.experience = expEntries;
     if (expEntries.length > 0) {
       resume._debug.found.push('experience: ' + expEntries.length + ' entries');
     } else {
       resume._debug.missing.push('experience (0 entries extracted)');
-      // АВТОДИАГНОСТИКА: дамп внутренностей experience блока
-      resumeLog.warn('Experience: 0 entries — auto-diagnosing expCard inner structure');
-      console.group('%c[HH-AR][EXP-DIAG] Experience block auto-dump', 'color:#ef4444;font-weight:bold');
-      console.log('  children count:', expCard.children.length);
-      const expInnerQa = expCard.querySelectorAll('[data-qa]');
-      console.log('  inner data-qa count:', expInnerQa.length);
-      expInnerQa.forEach((el, i) => {
-        console.log('  expQa[' + i + ']:', el.getAttribute('data-qa'), '| tag:', el.tagName, '| text:', (el.textContent || '').trim().substring(0, 120));
-      });
-      Array.from(expCard.children).forEach((child, i) => {
-        const qa = child.getAttribute('data-qa') || '(no data-qa)';
-        const tag = child.tagName;
-        const text = (child.textContent || '').trim().substring(0, 200);
-        const subQa = Array.from(child.querySelectorAll('[data-qa]')).map(e => e.getAttribute('data-qa'));
-        const links = Array.from(child.querySelectorAll('a')).map(a => ({ href: (a.getAttribute('href') || '').substring(0, 60), text: (a.textContent || '').trim().substring(0, 60) }));
-        console.log('  child[' + i + ']:', { tag, qa, text, subDataQa: subQa, links });
-      });
-      console.groupEnd();
     }
   } else {
     resume._debug.missing.push('experienceBlock (no data-qa="resume-list-card-experience")');
@@ -1388,7 +1314,7 @@ function renderResumePanel() {
 
   // Experience
   const expHtml = r.experience.length > 0
-    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.duration ? ' &middot; ' + esc(j.duration) : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description).substring(0, 200) + '</div>' : '') + '</div>').join('')
+    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.period ? ' &middot; ' + esc(j.period) : '') + (j.duration ? ' (' + esc(j.duration) + ')' : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description).substring(0, 200) + '</div>' : '') + '</div>').join('')
     : '<div class="har-empty" style="padding:8px">Опыт не найден</div>';
 
   // Education
