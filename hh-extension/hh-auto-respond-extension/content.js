@@ -837,7 +837,7 @@ function parseResume() {
     // Способ 1: cell-based структура (как в experience)
     // eduCard > children: каждая запись образования.
     // Фильтруем UI-текст (заголовки, кнопки).
-    const eduUiTexts = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное)$/i;
+    const eduUiTexts = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
     // Ищем все cell-left-side внутри eduCard (как в experience)
     const eduCells = eduCard.querySelectorAll('[data-qa="cell-left-side"]');
     resumeLog.info('Education: found ' + eduCells.length + ' cell-left-side elements');
@@ -1289,7 +1289,7 @@ function renderResumePanel() {
 
   // Experience
   const expHtml = r.experience.length > 0
-    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.period ? ' &middot; ' + esc(j.period) : '') + (j.duration ? ' (' + esc(j.duration) + ')' : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description).substring(0, 200) + '</div>' : '') + '</div>').join('')
+    ? r.experience.map(j => '<div class="har-exp-item"><div class="har-exp-pos">' + esc(j.position || '?') + '</div><div class="har-exp-meta">' + esc(j.company || '') + (j.period ? ' &middot; ' + esc(j.period) : '') + '</div>' + (j.description ? '<div class="har-exp-desc">' + esc(j.description).substring(0, 200) + '</div>' : '') + '</div>').join('')
     : '<div class="har-empty" style="padding:8px">Опыт не найден</div>';
 
   // Education
