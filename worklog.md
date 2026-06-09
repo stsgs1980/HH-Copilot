@@ -773,3 +773,23 @@ Work Log:
 Stage Summary:
 - Positive auth check now only uses strict data-qa selectors
 - No more false positives from broad href matching
+
+---
+Task ID: 1
+Agent: main
+Task: Fix auth detection — isLoggedOut() false positives, header status stuck, cookie override
+
+Work Log:
+- Analyzed screenshots: user logged in on hh.ru but extension showing "Войдите в hh.ru"
+- Root cause 1: isLoggedOut() text scan for "Войти" scanned ALL buttons/links on entire page → false positive from banners/content
+- Root cause 2: renderSidebarContent() only updated .har-content, never updated .har-header → header stuck on "Проверяем авторизацию..."
+- Root cause 3: checkAuthAsync() never used cookies as override when sync check returned false
+- Fixed auth.js: text scan limited to top 120px (header only), URL check moved first, added more positive selectors (/applicant/* links)
+- Fixed render.js: added updateHeaderStatus() to update header text for false/true states
+- Fixed checkAuthAsync(): cookie=true overrides sync=false result
+- Build successful: dist/content.js 176.1kb
+
+Stage Summary:
+- Auth detection now uses header-only text scan + broader positive selectors + cookie override
+- Header status properly updates to "Не авторизован" (red) or "Авторизован" (green)
+- Files changed: src/ui/auth.js, src/ui/panel/render.js
