@@ -1135,7 +1135,7 @@ function createSidebar() {
 
   sidebarEl = document.createElement('div');
   sidebarEl.id = 'hh-ar-sidebar';
-  sidebarEl.style.cssText = 'position:fixed;top:0;right:0;width:360px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);';
+  sidebarEl.style.cssText = 'position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);';
   shadowRoot = sidebarEl.attachShadow({ mode: 'closed' });
 
   const style = document.createElement('style');

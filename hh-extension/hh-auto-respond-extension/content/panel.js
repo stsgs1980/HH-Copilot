@@ -270,7 +270,7 @@ export function createSidebar() {
     position: fixed;
     top: 0;
     right: 0;
-    width: 360px;
+    width: 720px;
     height: 100vh;
     z-index: 999999;
     transform: translateX(100%);

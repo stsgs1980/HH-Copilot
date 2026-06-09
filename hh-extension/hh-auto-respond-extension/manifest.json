@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "HH Auto-Respond",
   "description": "Автоматизация откликов на hh.ru — FAB + sidebar",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "permissions": ["storage", "cookies", "activeTab", "alarms"],
   "host_permissions": ["https://hh.ru/*", "https://*.hh.ru/*"],
   "content_scripts": [
