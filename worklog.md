@@ -672,3 +672,8 @@ Stage Summary:
 - Build verified: v1.9.7, 316.7kb
 - Known stubs: parseVacancyDetail, parseNegotiations (Phase 1 pending)
 - Pending cascade tasks: 26 (P1-P6)
+---
+Task ID: 1
+Agent: main
+Task: Resume UI rename and selector
+Wed Jun 10 20:43:51 UTC 2026

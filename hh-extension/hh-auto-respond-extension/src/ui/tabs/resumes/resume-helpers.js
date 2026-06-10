@@ -124,7 +124,8 @@ export function updateSkillGapSection(r) {
   if (vacancySkills.size === 0) {
     section.style.display = '';
     const subtitle = refs.shadowRoot?.getElementById('res-gap-subtitle');
-    if (subtitle) subtitle.textContent = 'Откройте вакансии для сравнения';
+    const resumeTitle = r.title || 'Без названия';
+    if (subtitle) subtitle.textContent = resumeTitle + ' — откройте вакансии для сравнения';
     return;
   }
 
@@ -168,15 +169,16 @@ export function updateSkillGapSection(r) {
     }
   }
 
-  // Update subtitle
+  // Update subtitle — show which resume is used for matching
   const subtitle = refs.shadowRoot?.getElementById('res-gap-subtitle');
   if (subtitle) {
+    const resumeTitle = r.title || 'Без названия';
     if (matchPct >= 80) {
-      subtitle.textContent = 'Топ ' + Math.round(100 - matchPct) + '% кандидатов на аналогичных позициях';
+      subtitle.textContent = resumeTitle + ' — топ ' + Math.round(100 - matchPct) + '% кандидатов';
     } else if (matchPct >= 50) {
-      subtitle.textContent = 'Совпадение ' + matchPct + '% с требованиями вакансий';
+      subtitle.textContent = resumeTitle + ' — совпадение ' + matchPct + '%';
     } else {
-      subtitle.textContent = 'Рекомендуется дополнить навыки';
+      subtitle.textContent = resumeTitle + ' — рекомендуется дополнить навыки';
     }
   }
 

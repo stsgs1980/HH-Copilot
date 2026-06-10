@@ -295,10 +295,10 @@ async function init() {
   window.addEventListener('hh-ar-load-resume', async () => {
     if (!panelState.isLoggedIn) return;
     const path = window.location.pathname;
-    setStatus('Загрузка резюме...');
+    setStatus('Загрузка действующего резюме...');
 
     // Show loading spinner in the panel content area
-    showResumeLoading('Загрузка резюме...');
+    showResumeLoading('Загрузка действующего резюме...');
 
     try {
     if (/\/resume\/[a-f0-9]+/.test(path)) {
@@ -339,7 +339,7 @@ async function init() {
         panelState.myResumes = await getMyResumes();
         renderResumePanel();
         renderMyResumesPanel();
-        setStatus('Резюме загружено: ' + (resume.title || 'Без названия'));
+        setStatus('Действующее резюме загружено: ' + (resume.title || 'Без названия'));
         mainLog.info('Resume loaded and saved: ' + resume.title);
       } else {
         setStatus('Не удалось распознать резюме на этой странице (нет данных)');

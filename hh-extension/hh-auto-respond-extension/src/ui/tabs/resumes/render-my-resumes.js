@@ -42,6 +42,9 @@ export function renderMyResumesPanel() {
 
   if (resumes.length === 0) {
     listEl.innerHTML = '<div style="padding:8px;text-align:center;">Нажмите «Синхронизировать все» для загрузки резюме</div>';
+    // Also update the selector trigger
+    const selectorTrigger = refs.shadowRoot?.getElementById('res-selector-trigger');
+    if (selectorTrigger) selectorTrigger.style.display = 'none';
     return;
   }
 
@@ -58,11 +61,12 @@ export function renderMyResumesPanel() {
     } else {
       visBadge = '<span class="badge badge-zinc" style="font-size:9px;margin-left:4px;">Статус неизвестен</span>';
     }
+    const activeBadge = isActive ? '<span class="badge badge-green" style="font-size:9px;margin-left:4px;">Действующее</span>' : '';
     return '<div class="har-my-resume-item" data-resume-idx="' + idx + '" style="padding:8px 0;border-bottom:1px solid #e4e4e7;cursor:pointer;' +
       (isActive ? 'background:#f0fdf4;border-radius:6px;padding:8px;' : '') +
       '">' +
       '<div style="font-weight:600;font-size:12px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;">' +
-        '<span>' + esc(r.title || 'Без названия') + '</span>' + visBadge +
+        '<span>' + esc(r.title || 'Без названия') + '</span>' + visBadge + activeBadge +
       '</div>' +
       (r.salary ? '<div style="font-size:11px;color:#059669;">' + esc(r.salary) + '</div>' : '') +
       '<div style="font-size:10px;color:#71717a;">' +
@@ -94,7 +98,7 @@ export function renderResumeListPanel() {
   if (!container) return;
   const list = panelState.resumeList;
   if (!list || list.length === 0) {
-    container.innerHTML = '<div class="har-empty">Список резюме пуст.<br>Нажмите «Загрузить» для парсинга.</div>';
+    container.innerHTML = '<div class="har-empty">Список резюме пуст.<br>Нажмите «Загрузить» для выбора.</div>';
     return;
   }
   container.innerHTML =

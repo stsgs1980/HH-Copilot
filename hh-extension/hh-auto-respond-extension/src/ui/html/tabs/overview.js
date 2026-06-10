@@ -140,7 +140,7 @@ function overviewQuickActions() {
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-primary" data-action="apply-all">${ICONS.rocket} Массовый отклик</button>
       <button class="btn btn-outline" data-tab-switch="vacancies">${ICONS.check} Парсинг вакансий</button>
-      <button class="btn btn-outline" data-tab-switch="resume">${ICONS.file} Парсинг резюме</button>
+      <button class="btn btn-outline" data-tab-switch="resume">${ICONS.file} Действующее резюме</button>
       <button class="btn btn-outline" data-action="reset-daily">${ICONS.refresh} Сброс дневных</button>
     </div>
   </div>`;
