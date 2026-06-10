@@ -383,3 +383,37 @@ Stage Summary:
 - User can now diagnose: (1) click "Тест парсинга" on /resume/{hash} page, (2) see result in status line + console
 - "Очистить резюме" resets everything so re-parse starts clean
 - "Дамп в консоль" shows what's currently stored
+
+---
+Task ID: R0.9
+Agent: main
+Task: Fix resume parsing on /resume/edit/ pages, fix clear button, add data validation (v1.8.7)
+
+Work Log:
+- User reported 3 issues when on /resume/edit/{id}/about page:
+  1. "Очистить резюме" doesn't work — data auto-restores from myResumes[]
+  2. "Синхронизировать все резюме" shows only 3 experiences (but 6 in DOM)
+  3. "Перепарсить резюме" results in "Без названия Статус неизвестен"
+- Root cause 1: /resume/edit/ page has different DOM — no data-qa attributes for parseResume()
+  The edit page is a form, not a display page. parseResume() finds 0 company-cards.
+- Root cause 2: renderResumePanel() auto-restores from myResumes[0] when panelState.resume is null
+  After clearing, the fallback immediately restores data
+- Root cause 3: No validation — empty parse results overwrite good data
+- Fix 1: Edit page detection (/resume/edit/) now uses fetchAndParseResume() to fetch the VIEW page
+  (/applicant/resumes/view?resume={id}) and parse that instead. Applied to:
+  - initPageLogic() auto-parse
+  - hh-ar-load-resume handler ("Перепарсить" / "Загрузить с текущей страницы")
+  - testParseResume() diagnostic button
+- Fix 2: Added panelState._resumeCleared flag. When set:
+  - renderResumePanel() skips auto-restore from myResumes[]
+  - Flag is reset when: sync completes, resume loaded, resume clicked in list
+- Fix 3: Parse validation — resume must have title OR skills OR experience to be saved
+  Empty results show "Не удалось распознать резюме" warning instead
+- initPageLogic() made async to support await fetchAndParseResume()
+- Bumped version to 1.8.7
+
+Stage Summary:
+- 6 files modified: main.js, events.js, state.js, render-resume-panel.js, render-my-resumes.js, manifest.json
+- Resume parsing works correctly on both /resume/{hash} (VIEW) and /resume/edit/{id} (EDIT) pages
+- Clear button properly clears without auto-restore
+- Empty parse results no longer overwrite good data

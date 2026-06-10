@@ -77,6 +77,7 @@ export function renderMyResumesPanel() {
       const resume = resumes[idx];
       if (!resume) return;
       panelState.resume = resume;
+      panelState._resumeCleared = false;
       chrome.storage.local.set({ myResume: resume });
       renderResumePanel();
       renderMyResumesPanel();

@@ -15,6 +15,7 @@ import { createLogger } from '../lib/anti-hallucination.js';
 import { checkDailyReset, getStats, getAllSettings, getMyResumes, saveMyResume, clearMyResumes } from '../lib/storage.js';
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { parseResume, parseResumeList, expandHiddenSections, diagnoseResumeDOM, debugVisibility, getResumePageType } from '../parsers/resume-detail.js';
+import { fetchAndParseResume } from '../lib/resume-fetch.js';
 import { continueApply } from '../engine/auto-respond.js';
 import { panelState, updateAuthState, createPanel, updateVacancies, updateStats, setStatus } from '../ui/panel.js';
 import { renderMyResumesPanel, renderResumePanel, renderResumeListPanel } from '../ui/tabs/resumes.js';
@@ -34,7 +35,7 @@ window.__hhDebugVisibility = debugVisibility;
  * Initialize page-specific logic (parsers, observers).
  * Called ONCE when auth state changes from false/null to true.
  */
-export function initPageLogic() {
+export async function initPageLogic() {
   if (pageInitialized) return;
   pageInitialized = true;
   mainLog.info('User logged in -- initializing page logic');
@@ -61,18 +62,47 @@ export function initPageLogic() {
 
   } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
     // Resume detail page -- parse resume
-    expandHiddenSections();
-    const resume = parseResume();
-    if (resume.id) {
-      panelState.resume = resume;
-      chrome.storage.local.set({ myResume: resume });
-      saveMyResume(resume).then(() => {
-        getMyResumes().then(list => {
-          panelState.myResumes = list;
-          renderMyResumesPanel();
+    if (/\/resume\/edit\//.test(path)) {
+      // EDIT page: DOM differs from view page, use fetch-based parser instead
+      const editMatch = path.match(/\/resume\/([a-f0-9]+)/);
+      if (editMatch) {
+        const resumeId = editMatch[1];
+        const viewUrl = 'https://hh.ru/applicant/resumes/view?resume=' + resumeId;
+        mainLog.info('Edit page detected, fetching view: ' + viewUrl);
+        try {
+          const resume = await fetchAndParseResume(viewUrl);
+          if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
+            panelState.resume = resume;
+            panelState._resumeCleared = false;
+            chrome.storage.local.set({ myResume: resume });
+            saveMyResume(resume).then(() => {
+              getMyResumes().then(list => {
+                panelState.myResumes = list;
+                renderMyResumesPanel();
+              });
+            });
+            mainLog.info('Auto-fetched resume (from edit page): ' + resume.title);
+          }
+        } catch (err) {
+          mainLog.warn('Failed to fetch resume from edit page: ' + err.message);
+        }
+      }
+    } else {
+      // VIEW page: parse the live DOM directly
+      expandHiddenSections();
+      const resume = parseResume();
+      if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
+        panelState.resume = resume;
+        panelState._resumeCleared = false;
+        chrome.storage.local.set({ myResume: resume });
+        saveMyResume(resume).then(() => {
+          getMyResumes().then(list => {
+            panelState.myResumes = list;
+            renderMyResumesPanel();
+          });
         });
-      });
-      mainLog.info('Auto-parsed resume: ' + resume.title);
+        mainLog.info('Auto-parsed resume: ' + resume.title);
+      }
     }
 
   } else if (path.startsWith('/applicant/resumes')) {
@@ -157,6 +187,7 @@ async function handleSyncResumes() {
 
     if (results.length > 0) {
       panelState.resume = results[0];
+      panelState._resumeCleared = false;
       await chrome.storage.local.set({ myResume: results[0] });
       renderResumePanel();
     }
@@ -265,10 +296,38 @@ async function init() {
     setStatus('Загрузка резюме...');
 
     if (/\/resume\/[a-f0-9]+/.test(path)) {
-      await expandHiddenSections();
-      const resume = parseResume();
-      if (resume.id) {
+      let resume;
+
+      if (/\/resume\/edit\//.test(path)) {
+        // EDIT page: DOM differs from view, fetch the view page instead
+        const editMatch = path.match(/\/resume\/([a-f0-9]+)/);
+        if (editMatch) {
+          const resumeId = editMatch[1];
+          const viewUrl = 'https://hh.ru/applicant/resumes/view?resume=' + resumeId;
+          mainLog.info('Edit page detected, fetching view: ' + viewUrl);
+          try {
+            resume = await fetchAndParseResume(viewUrl);
+            mainLog.info('Fetched resume from edit page: ' + resume.title);
+          } catch (err) {
+            mainLog.error('Failed to fetch resume from edit page: ' + err.message);
+            setStatus('Ошибка загрузки: ' + err.message);
+            return;
+          }
+        } else {
+          setStatus('Не удалось извлечь ID резюме из URL');
+          return;
+        }
+      } else {
+        // VIEW page: parse the live DOM directly
+        await expandHiddenSections();
+        resume = parseResume();
+      }
+
+      // Validate: don't save empty results over good data
+      const hasUsefulData = resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0);
+      if (hasUsefulData) {
         panelState.resume = resume;
+        panelState._resumeCleared = false;
         await chrome.storage.local.set({ myResume: resume });
         await saveMyResume(resume);
         panelState.myResumes = await getMyResumes();
@@ -277,8 +336,10 @@ async function init() {
         setStatus('Резюме загружено: ' + (resume.title || 'Без названия'));
         mainLog.info('Resume loaded and saved: ' + resume.title);
       } else {
-        setStatus('Не удалось распознать резюме на этой странице');
-        mainLog.warn('Could not parse resume from current page (no id)');
+        setStatus('Не удалось распознать резюме на этой странице (нет данных)');
+        mainLog.warn('Parse result has no useful data — not saving. Found: ' +
+          JSON.stringify(resume._debug?.found) + ' Missing: ' +
+          JSON.stringify(resume._debug?.missing));
       }
     } else if (path.includes('/applicant/resumes')) {
       const list = parseResumeList();

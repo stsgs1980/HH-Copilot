@@ -99,7 +99,8 @@ export function renderResumePanel() {
   const r = panelState.resume;
   if (!r || !r.id) {
     const synced = panelState.myResumes || [];
-    if (synced.length > 0 && synced[0].id) {
+    // Only auto-select from synced resumes if user hasn't explicitly cleared
+    if (!panelState._resumeCleared && synced.length > 0 && synced[0].id) {
       panelState.resume = synced[0];
       chrome.storage.local.set({ myResume: synced[0] });
       renderResumePanel();

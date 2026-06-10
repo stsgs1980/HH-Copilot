@@ -37,6 +37,7 @@ export const panelState = {
     invitations: 0,
     errors429: 0,
   },
+  _resumeCleared: false,
   blacklist: [],
   massApply: {
     running: false,

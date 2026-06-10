@@ -41,3 +41,35 @@ Stage Summary:
 - Strategy 0 (link text) is now reliable because it normalizes whitespace
 - debugVisibility() now shows accurate indicator positions
 - Push attempt — resolving git tracking issues
+
+---
+Task ID: 8
+Agent: Main
+Task: Fix resume parsing on /resume/edit/ pages, fix clear button, add data validation (v1.8.7)
+
+Work Log:
+- User reported: buttons "перепарсить резюме" and "загрузить с текущей страницы" don't work on /resume/edit/ pages
+- User reported: "очистить резюме" doesn't actually clear — data comes back from myResumes[]
+- User reported: "перепарсить" on edit page results in "Без названия Статус неизвестен"
+- Root cause 1: /resume/edit/{id}/about has different DOM structure — no data-qa attributes that parseResume() looks for. parseResume() finds 0 company-cards, returns empty resume
+- Root cause 2: renderResumePanel() has fallback that auto-selects synced[0] from myResumes when panelState.resume is null
+- Root cause 3: No validation — empty parse results overwrite good data
+
+Fixes:
+1. Edit page detection: /resume/edit/ paths now use fetchAndParseResume() to fetch the VIEW page (/applicant/resumes/view?resume={id}) and parse that instead. Applied to: initPageLogic(), hh-ar-load-resume handler, testParseResume()
+2. Clear button: Added panelState._resumeCleared flag. When set, renderResumePanel() skips auto-restore from myResumes[]. Flag reset on sync, load, or resume click
+3. Parse validation: Resume must have title OR skills OR experience to be saved. Empty results show warning status
+
+Files changed:
+- src/content/main.js: import fetchAndParseResume, edit page detection in initPageLogic + load-resume handler, parse validation
+- src/ui/panel/events.js: _resumeCleared flag in clearResumeData(), edit page handling in testParseResume(), parse validation
+- src/ui/state.js: added _resumeCleared: false to panelState
+- src/ui/tabs/resumes/render-resume-panel.js: respect _resumeCleared flag
+- src/ui/tabs/resumes/render-my-resumes.js: reset _resumeCleared on resume click
+- manifest.json: version 1.8.6 → 1.8.7
+- initPageLogic() made async for fetchAndParseResume support
+
+Stage Summary:
+- Resume parsing now works correctly on both /resume/{hash} (view) and /resume/edit/{id} (edit) pages
+- Clear button properly clears without auto-restore
+- Empty parse results no longer overwrite good data
