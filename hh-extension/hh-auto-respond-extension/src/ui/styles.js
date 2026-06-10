@@ -151,7 +151,11 @@ export function getSidebarCSS() {
 .sub-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin: 0 -8px; border-radius: 6px; transition: background 0.15s; }
 .sub-toggle:hover { background: rgba(0,0,0,0.03); }
 .sub-body { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s, padding 0.35s; opacity: 0; padding-top: 0; }
-.sub-body.open { max-height: 500px; opacity: 1; padding-top: 6px; }
+.sub-body.open { max-height: 2000px; opacity: 1; padding-top: 6px; overflow-y: auto; }
+.sub-body.open::-webkit-scrollbar { width: 3px; }
+.sub-body.open::-webkit-scrollbar-track { background: transparent; }
+.sub-body.open::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+.sub-body.open::-webkit-scrollbar-thumb:hover { background: #059669; }
 .sub-chevron { transition: transform 0.25s; flex-shrink: 0; }
 .sub-chevron.open { transform: rotate(180deg); }
 

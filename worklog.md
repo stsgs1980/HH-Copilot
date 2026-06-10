@@ -594,6 +594,31 @@ Stage Summary:
 - Version 1.9.4 consistent across all 4 version sources
 - Build passes, ready for user to pull
 ---
+Task ID: 16
+Agent: main
+Task: v1.9.6 — Split strategy5/6 into sub-modules, fix experience scroll & text truncation
+
+Work Log:
+- Split resume-fetch-strategy5-scripts.js (240 lines) into 2 files:
+  - strategy5-scripts.js (116 lines) — orchestrator with 4 passes
+  - strategy5-scanners.js (148 lines) — 3 JSON scanners (structured, array, deep)
+- Split resume-fetch-strategy6-expand.js (524 lines) into 4 files:
+  - strategy6-expand.js (108 lines) — orchestrator (iframe → URLs → API → params)
+  - strategy6-iframe.js (142 lines) — hidden iframe + click "Развернуть"
+  - strategy6-urls.js (161 lines) — URL discovery from buttons/scripts/known patterns
+  - strategy6-api.js (158 lines) — applicant API + JSON/expanded-doc parsing
+- Removed deprecated findExperienceArray() — replaced by findExperienceInObject from json-utils
+- Fixed UI: .sub-body.open max-height 500→2000px + overflow-y auto + scrollbar
+- Fixed UI: removed .substring(0,200) truncation on experience description
+- Updated resume-fetch.js module listing in header comment
+- Build passed (315.3kb), version bumped to 1.9.6
+
+Stage Summary:
+- 5 modified + 4 new files, all builds passing
+- External API unchanged (same exports from same filenames)
+- Experience section now scrollable with full text descriptions
+
+---
 Task ID: 3
 Agent: main
 Task: Commit v1.9.5 code changes

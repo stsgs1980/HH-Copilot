@@ -7,8 +7,12 @@
  *   resume-fetch-resume.js          — Single resume parsing + experience orchestrator
  *   resume-fetch-experience.js      — Experience Strategies 1-3 (DOM-based)
  *   resume-fetch-strategy4-text.js  — Strategy 4 (text pattern parsing)
- *   resume-fetch-strategy5-scripts.js — Strategy 5 (script JSON parsing)
- *   resume-fetch-strategy6-expand.js  — Strategy 6 (iframe/API expansion)
+ *   resume-fetch-strategy5-scripts.js   — Strategy 5 orchestrator (script JSON parsing)
+ *   resume-fetch-strategy5-scanners.js  — Strategy 5 JSON scanners
+ *   resume-fetch-strategy6-expand.js    — Strategy 6 orchestrator (iframe/API expansion)
+ *   resume-fetch-strategy6-iframe.js    — Strategy 6 iframe sub-strategy
+ *   resume-fetch-strategy6-urls.js      — Strategy 6 URL discovery + fetch
+ *   resume-fetch-strategy6-api.js       — Strategy 6 applicant API + result parsing
  *   resume-fetch-json-utils.js      — JSON extraction utilities
  *   resume-fetch-education-languages.js — Education & languages parsing
  */
