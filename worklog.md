@@ -341,3 +341,23 @@ Stage Summary:
 - Skill Gap Analysis: full wireframe compliance — ring + stacked bar + 3 categories + recommendation
 - Experience Timeline: wireframe format (Company • Period), last item clean
 - Auto-updates when vacancies are parsed or "Анализ" button clicked
+
+---
+Task ID: R0.7
+Agent: main
+Task: Fix parseSalaryConditions ReferenceError — resume parsing completely broken
+
+Work Log:
+- User reported: ReferenceError: parseSalaryConditions is not defined at parseResume (content.js:1372)
+- Root cause: parseSalaryConditions and parseContacts are defined and exported in parse-resume-sections.js, but were NOT imported in parse-resume.js
+- The import line only had 4 of 6 functions: parsePersonalData, parseSkills, parseExperience, parseLanguagesAndAbout
+- Missing: parseSalaryConditions, parseContacts
+- This caused parseResume() to crash on every call — zero resume data parsed
+- Fix: added parseSalaryConditions and parseContacts to the import statement in parse-resume.js
+- Verified: parseSalaryConditions appears 2x in bundle (definition + call)
+- Bumped version to 1.8.5
+
+Stage Summary:
+- 1 file fixed: parse-resume.js (import line)
+- Critical bug: entire resume parsing was broken since R0.1-R0.5 refactor
+- 6 experience entries in DOM confirmed, parseCompanyCard logic should work now that parseResume doesn't crash

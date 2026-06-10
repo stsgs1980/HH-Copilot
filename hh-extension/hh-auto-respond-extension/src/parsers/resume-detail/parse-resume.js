@@ -6,7 +6,7 @@
  */
 
 import { safeGetText, createLogger } from '../../lib/anti-hallucination.js';
-import { parsePersonalData, parseSkills, parseExperience, parseLanguagesAndAbout } from './parse-resume-sections.js';
+import { parsePersonalData, parseSalaryConditions, parseSkills, parseExperience, parseLanguagesAndAbout, parseContacts } from './parse-resume-sections.js';
 import { parseEducation } from './parse-resume-education.js';
 import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from '../../lib/resume-constants.js';
 
