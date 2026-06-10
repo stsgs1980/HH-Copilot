@@ -89,7 +89,7 @@ export async function initPageLogic() {
       }
     } else {
       // VIEW page: parse the live DOM directly
-      expandHiddenSections();
+      await expandHiddenSections();
       const resume = parseResume();
       if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
         panelState.resume = resume;

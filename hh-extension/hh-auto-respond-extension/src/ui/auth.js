@@ -161,18 +161,15 @@ function isLoggedIn() {
 export function checkAuth() {
   // 1. NEGATIVE CHECK FIRST — if logged-out indicators exist, NOT authorized
   if (isLoggedOut()) {
-    console.log('[HH-AR][Auth] checkAuth → false (isLoggedOut detected)');
     return false;
   }
 
   // 2. POSITIVE CHECK — if logged-in elements found, authorized
   if (isLoggedIn()) {
-    console.log('[HH-AR][Auth] checkAuth → true (isLoggedIn detected)');
     return true;
   }
 
   // 3. No decisive evidence — default to NOT authorized
-  console.log('[HH-AR][Auth] checkAuth → false (no decisive evidence)');
   return false;
 }
 

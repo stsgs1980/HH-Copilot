@@ -4,4 +4,4 @@
  * manifest.json and package.json use this via esbuild define.
  */
 
-export const VERSION = '1.7.3';
+export const VERSION = '1.8.9';

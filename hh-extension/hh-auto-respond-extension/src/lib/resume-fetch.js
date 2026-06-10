@@ -187,20 +187,52 @@ function parseExperienceFromDoc(doc, dbg, resume) {
   allCards.forEach(c => { if (!seen.has(c)) { seen.add(c); uniqueCards.push(c); } });
 
   const entries = [];
+  const usedStepperElements = new Set();
+
+  // Strategy 1: parse company cards (each card wraps a stepper item)
   uniqueCards.forEach(card => {
     const job = parseCompanyCardFromDoc(card);
     if (job) entries.push(job);
+    // Track which stepper elements are already covered by company cards
+    const stepEl = card.querySelector('[data-qa="magritte-stepper-step-content"]');
+    if (stepEl) usedStepperElements.add(stepEl);
   });
 
   const expCard = doc.querySelector('[data-qa="resume-list-card-experience"]');
   if (expCard) {
     resume._debug.found.push('experienceBlock');
 
-    // Fallback: if fewer than expected cards, try parsing stepper items inside expCard
-    // hh.ru sometimes renders all experience data in stepper items without data-qa company-card
-    if (uniqueCards.length === 0) {
-      const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
-      stepperItems.forEach(step => {
+    // Strategy 2: parse remaining stepper items NOT covered by company cards
+    // hh.ru may render some experiences only as stepper items without company-card wrapper
+    // (e.g. when "Показать все" sections are SSR'd but not wrapped in company-card)
+    const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
+    const alreadyParsed = entries.length;
+
+    stepperItems.forEach(step => {
+      // Skip stepper items already covered by company cards
+      if (usedStepperElements.has(step)) return;
+      // Skip if this stepper is nested inside a company card we already parsed
+      let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
+      if (parentCard && uniqueCards.includes(parentCard)) return;
+
+      const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
+      if (!cellLeft) return;
+      const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+      const job = {};
+      if (texts.length >= 1) job.position = (texts[0].textContent || '').trim();
+      if (texts.length >= 2) job.period = (texts[1].textContent || '').trim().replace(/\s*\(\d[^)]+\)$/, '').trim();
+      if (job.position || job.period) entries.push(job);
+    });
+
+    const stepperAdded = entries.length - alreadyParsed;
+    if (stepperAdded > 0) {
+      resume._debug.found.push('experience (stepper supplement): +' + stepperAdded);
+    }
+
+    // Strategy 3: if still 0 entries, try broader text-based parsing
+    if (entries.length === 0) {
+      const allStepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
+      allStepperItems.forEach(step => {
         const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
         if (!cellLeft) return;
         const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
@@ -210,7 +242,7 @@ function parseExperienceFromDoc(doc, dbg, resume) {
         if (job.position) entries.push(job);
       });
       if (entries.length > 0) {
-        resume._debug.found.push('experience (stepper fallback): ' + entries.length);
+        resume._debug.found.push('experience (stepper full fallback): ' + entries.length);
       }
     }
   } else {
