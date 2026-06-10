@@ -162,3 +162,26 @@ Stage Summary:
 - Visibility status: 'visible' / 'hidden' / 'unknown' — tracked through entire pipeline (list → parse → save → display)
 - UI badges: green "Видимо", amber "Скрыто", zinc "Статус неизвестен"
 - Scale-ready: visibility detection works for any number of resumes per user
+
+---
+Task ID: 5
+Agent: Main
+Task: Fix missing visibility badges - add migration for old stored data + bump version
+
+Work Log:
+- User reported: badges still not showing in v1.7.7
+- VLM analysis confirmed: 3 resumes listed, no visibility badges visible
+- Root cause: old resumes in chrome.storage saved before v1.7.8 have no `visibility` field
+- Bumped version to 1.7.8 so user can verify new code is loaded
+- Added migration in main.js boot sequence:
+  - For `myResume` (single): backfills `visibility`, cleans `title` noise
+  - For `myResumes` (list): backfills `visibility`, cleans `title` noise
+  - Auto-saves migrated data back to chrome.storage
+- Old data without `visibility` gets `VISIBILITY_UNKNOWN` → shows "Статус неизвестен" badge
+- After re-sync, full visibility status (visible/hidden) is populated
+- Build successful: v1.7.8, 0 lint errors
+
+Stage Summary:
+- Version bumped: 1.7.7 → 1.7.8
+- Migration added: old stored data gets visibility field backfilled at boot
+- User needs to: (1) reload extension in chrome://extensions, (2) re-sync resumes
