@@ -1,7 +1,0 @@
-node_modules/
-dist/
-content.js
-*.bak
-*.map
-.DS_Store
-Thumbs.db

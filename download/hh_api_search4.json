@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://github.com/hhru/api/blob/master/docs/employer_resumes.md",
+    "name": "api/docs/employer_resumes.md at master · hhru/api - GitHub",
+    "snippet": "Сокращенное представление резюме ... Отличается от полного представления отсутствием некоторых полей. Например, если указано более одно среднего образования - ...",
+    "host_name": "github.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/seregazhuk/php-headhunter-api",
+    "name": "seregazhuk/php-headhunter-api: PHP library that provides  - GitHub",
+    "snippet": "Provides a friendly API interface for HeadHunter (hh.ru) service. Official API docs available here. Dependencies Requires PHP 5.6 or above.",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://gist.github.com/32f4852a6049ff0da5a9",
+    "name": "HeadHunter API testing. Это тестовая работа. Тестирование",
+    "snippet": "HeadHunter API testing. Это тестовая работа. Тестирование страницы пользователя https://github.com/hhru/api/blob/master/docs/me.md - TestHHme.java.",
+    "host_name": "gist.github.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://developers.enhancv.com/api/retrieve",
+    "name": "Retrieve Resume | Enhancv API Documentation",
+    "snippet": "Retrieve a single resume's complete data in the Enhancv analyzer format. Available section types (27 types including experiences, educations, skills, etc.)",
+    "host_name": "developers.enhancv.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/hhru/api",
+    "name": "hhru/api: HeadHunter API: документация и библиотеки - GitHub",
+    "snippet": "По-русски | In english. HeadHunter API — это инструментарий для интеграции HeadHunter в ваш продукт. Для начала ознакомьтесь с общей информацией по работе ...",
+    "host_name": "github.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  }
+]

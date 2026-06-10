@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://api.hh.ru/openapi/redoc",
+    "name": "Документация api.hh.ru - HeadHunter API",
+    "snippet": "Возвращает список вакансий, размещенных в сервисе. Список вакансий фильтруется согласно переданным параметрам запроса. Особенности работы метода: Неизвестные ...",
+    "host_name": "api.hh.ru",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://setka.ru/posts/019b0d90-3081-7f00-9167-3b3fb4f856e9",
+    "name": "HH закрывает API для соискателей. HRы получили много власти",
+    "snippet": "HH закрывает API для соискателей. HRы получили много власти в вопросах найма. Подключили автофильтры, натюнили их под свои забавные критерии ...",
+    "host_name": "setka.ru",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.instagram.com/reel/DSPGET0DQWV",
+    "name": "hh вырубает api для соискателей - Instagram",
+    "snippet": "421 likes, 52 comments - bobrov_site on December 13, 2025: \"hh вырубает api для соискателей\".",
+    "host_name": "www.instagram.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://api.hh.ru",
+    "name": "HeadHunter API - HH.ru",
+    "snippet": "С помощью HeadHunter API вы можете получать информацию о соискателях и компаниях, а также использовать функциональность HeadHunter для своего сайта или ...",
+    "host_name": "api.hh.ru",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://habr.com/ru/articles/1004214",
+    "name": "как живут HR-помощники после закрытия API hh.ru / Хабр",
+    "snippet": "Для соискателей главный совет: не ведитесь на красивые обещания. Проверяйте дату последнего обновления расширения, смотрите, как оно ...",
+    "host_name": "habr.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.threads.com/@ochen_zahotelos/post/DSJ6ri0Da63/headhunter-c-15-%D0%B4%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8F-%D0%B7%D0%B0%D0%BA%D1%80%D0%BE%D0%B5%D1%82-%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF-%D0%BA-%D1%81%D0%BE%D0%B8%D1%81%D0%BA%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%D1%81%D0%BA%D0%BE%D0%BC%D1%83-api%D0%B2%D1%81%D1%8F-%D1%8D%D0%BA%D0%BE%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0-%D1%81%D0%B5%D1%80%D0%B2%D0%B8?hl=en",
+    "name": "HeadHunter c 15 декабря закроет доступ к соискательскому API",
+    "snippet": "API вся экосистема сервисов которые искали работу за кандидатов и делали массовые отклики на базе ИИ умирают. hh.ru hh.ru",
+    "host_name": "www.threads.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://speca.io/speca/headhunter-api",
+    "name": "HeadHunter API - Speca",
+    "snippet": "В данный момент функциональность откликов/приглашений реализована только для соискателей. Для работодателей данный сервис запланирован, но еще не выпущен. В ...",
+    "host_name": "speca.io",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/hhru/api",
+    "name": "hhru/api: HeadHunter API: документация и библиотеки - GitHub",
+    "snippet": "Зарегистрированное приложение может запрашивать у пользователей hh.ru разрешение доступа к их персональным данным, без получения и хранения их логина и пароля.",
+    "host_name": "github.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=hQnPMc-o3rk",
+    "name": "Консультация по работе с API HH.ru - YouTube",
+    "snippet": "Консультация по работе с API HH.ru. 1.4K views · 1 year ago ...more. Академия Data-Diving. 729. Subscribe. 21. Share.",
+    "host_name": "www.youtube.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://hh.ru/article/31102",
+    "name": "API hh.ru: HR-автоматизация теперь ещё доступнее",
+    "snippet": "В декабре мы сделали сервис API hh.ru ещё доступнее для всех работодателей. Теперь настроить получение откликов по размещённым вакансиям в ...",
+    "host_name": "hh.ru",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://api.hh.ru/openapi/redoc",
+    "name": "Документация api.hh.ru - HeadHunter API",
+    "snippet": "Авторизация осуществляется по протоколу OAuth2. Все данные доступны только в формате JSON. Базовый URL — https://api.hh.ru/; Возможны запросы к данным любого ...",
+    "host_name": "api.hh.ru",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/hhru/api/blob/master/docs/employer_resumes.md",
+    "name": "api/docs/employer_resumes.md at master · hhru/api - GitHub",
+    "snippet": "В настоящий момент резюме доступны для скачивания в форматах PDF и RTF. Соискатель может скачать свои резюме. Название скачиваемого файла может содержать имя ...",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://api.hh.ru",
+    "name": "HeadHunter API - HH.ru",
+    "snippet": "С помощью HeadHunter API вы можете получать информацию о соискателях и компаниях, а также использовать функциональность HeadHunter для своего сайта или ...",
+    "host_name": "api.hh.ru",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://speca.io/speca/headhunter-api",
+    "name": "HeadHunter API - Speca",
+    "snippet": "HeadHunter API — это бесплатный инструментарий для интеграции HeadHunter в ваш продукт. Base URI. https://api.hh.ru. Parameters.",
+    "host_name": "speca.io",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://hh.ru/article/31102",
+    "name": "API hh.ru: HR-автоматизация теперь ещё доступнее",
+    "snippet": "При поиске резюме кандидатов API hh.ru предоставляет возможность ранжировать результаты из базы резюме по различным критериям: позволяет из ...",
+    "host_name": "hh.ru",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/hhru/api",
+    "name": "hhru/api: HeadHunter API: документация и библиотеки - GitHub",
+    "snippet": "Справочник менеджеров работодателя · employer · Получение информации о менеджере · employer · Дневной лимит просмотра резюме для текущего менеджера · employer ...",
+    "host_name": "github.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apiportal.ru/catalog/headhunter",
+    "name": "HeadHunter - Портал API",
+    "snippet": "HeadHunter API — RESTful /resumes: GET поиск резюме (платно). Оставьте заявку, и мы поможем интегрировать API в ваши системы! 900 ₽/мес. Беспла ...",
+    "host_name": "apiportal.ru",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=hQnPMc-o3rk",
+    "name": "Консультация по работе с API HH.ru - YouTube",
+    "snippet": "Спикер - Анастасия Абазовская Блокнот: https://colab.research.google.com/drive/1o32O4rD4g0qNSGDyC1Mta353cG5z7OnH?usp=sharing.",
+    "host_name": "www.youtube.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://habr.com/ru/companies/hh/articles/303168",
+    "name": "API hh.ru. Быстрый старт / Хабр",
+    "snippet": "Через API работает поиск по вакансиям. Доступны различные справочники: регионы, используемые на сайте, специализации работников, отрасли ...",
+    "host_name": "habr.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://masterpro.ws/api-headhunter",
+    "name": "API HeadHunter: скрипт для обновления резюме - Masterpro",
+    "snippet": "Прежде всего, проверяем ассоциативный массив параметров url, если скрипт только начинает работать - показываем линк на HeadHunter \"Обновить ...",
+    "host_name": "masterpro.ws",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]
