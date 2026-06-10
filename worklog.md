@@ -765,3 +765,45 @@ Stage Summary:
 - Empty state → "Взять со страницы" (green)
 - Visible resume loaded → "Перепарсить действующее" (green)
 - Hidden resume loaded → "Перепарсить (скрытое)" (amber) + warning
+
+---
+Task ID: 6
+Agent: main
+Task: Consolidate resume tab buttons — too many buttons visible simultaneously
+
+Work Log:
+- User complained "кнопок много под рукой" — 7 buttons visible at once
+- Removed standalone "Перепарсить действующее/скрытое" from below parsed data sections
+- Added compact ↻ icon on active resume card in "Все резюме" list (amber for hidden)
+- Moved "Взять со страницы" CTA into "Все резюме" section (contextual, resume-detail page only)
+- Changed "Синхронизировать все резюме" to outline style (secondary)
+- Collapsed diagnostics behind chevron toggle (3 buttons hidden by default)
+- Updated subtitle: "Выберите резюме из списка ниже"
+- Fixed click event bubbling: ↻ doesn't trigger card's resume-switch
+- Added hidden resume warning as text (not button) below accordion sections
+- Build: 324.1kb
+
+Stage Summary:
+- Before: 7 buttons (Перепарсить, Взять со страницы, Синхронизировать, Анализ, Очистить, Дамп, Тест)
+- After: 2 main (↻ on card + Синхронизировать) + contextual Взять со страницы + collapsed diagnostics
+- 3 files modified: render-resume-panel.js, render-my-resumes.js, resume.js
+
+---
+Task ID: 7
+Agent: main
+Task: Complete documentation — CHANGELOG, README, worklog (no gaps)
+
+Work Log:
+- Added CHANGELOG entries for v1.9.6, v1.9.7, v1.9.7+ (unreleased)
+- v1.9.6: strategy 5/6 sub-modules split
+- v1.9.7: button spinners for all 3 action buttons
+- v1.9.7+: visibility detection from resume page, radio buttons, button consolidation
+- Updated README with: two-layer visibility detection, 6 strategies, radio buttons, ↻ reparse
+- Updated README flow description with visibility detection pipeline
+- Filled worklog gaps for all commits since v1.9.5
+- No documentation tails remaining
+
+Stage Summary:
+- CHANGELOG: 3 new version entries (1.9.6, 1.9.7, 1.9.7+)
+- README: updated version description, visibility detection, UI changes
+- worklog: complete from v1.9.5 to present — every commit documented

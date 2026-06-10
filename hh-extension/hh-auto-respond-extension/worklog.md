@@ -151,3 +151,66 @@ Stage Summary:
 - Falls back to API endpoints and query params if iframe fails
 - All version files consistent at 1.9.5
 - Build passes, new functions confirmed in dist/content.js bundle
+
+---
+Task ID: v1.9.6-v1.9.7
+Agent: main
+Task: Strategy 5/6 sub-modules split + button spinners + version sync
+
+Work Log:
+- Split resume-fetch.js monolith (1481→75 lines) into 14 focused modules
+- strategy5-scanners.js, strategy6-urls/iframe/expand/api.js, json-utils.js, education-languages.js
+- Fixed experience scroll & text truncation
+- All 3 action buttons now show loading spinner when clicked
+- Added hh-ar-load-resume-done and hh-ar-sync-done events
+- Synced version references: popup v1.7.3→v1.9.7, README v1.8.3→v1.9.7
+- v1.9.5 → v1.9.6 → v1.9.7
+
+Stage Summary:
+- 14 resume-fetch modules, all under 200 lines
+- Buttons no longer appear stuck after click
+- All version references consistent at 1.9.7
+
+---
+Task ID: visibility-ux-rework
+Agent: main
+Task: Fix visibility detection + UI rework (radio buttons, button consolidation, rename)
+
+Work Log:
+- Fixed syncAllResumes(): was only syncing visible, now syncs ALL resumes
+- Fixed detectVisibilityFromLinkText(): returns UNKNOWN instead of VISIBLE
+- Added UNKNOWN→VISIBLE final fallback after ALL strategies
+- Added detectVisibilityFromResumePage() with 6 strategies in resume-fetch-resume.js
+- Page-level visibility OVERRIDES list-level metadata
+- Renamed 'Парсинг резюме' → 'Действующее резюме'
+- Removed dropdown selector, added radio buttons (◉/○) in resume list
+- Renamed 'Сделать текущее действующим' → 'Взять со страницы'
+- Made reparse button context-aware: amber for hidden, green for visible
+- Consolidated buttons: 7 → 2 main + contextual CTA + collapsed diagnostics
+- Added ↻ icon on active resume card for reparse
+- Moved 'Взять со страницы' CTA into 'Все резюме' section (contextual)
+- Collapsed diagnostics behind chevron toggle
+- Fixed click event bubbling: ↻ doesn't trigger resume switch
+
+Stage Summary:
+- Two-layer visibility detection: list page + resume detail page
+- Radio buttons replace dropdown (no accidental clicks)
+- Button consolidation: 7→2 main buttons
+- Build passes: dist/content.js 324.1kb
+
+---
+Task ID: docs-complete
+Agent: main
+Task: Complete documentation — CHANGELOG, README, worklog
+
+Work Log:
+- Added CHANGELOG entries for v1.9.6, v1.9.7, v1.9.7+ (unreleased)
+- Updated README with two-layer visibility detection, 6 strategies, radio buttons, ↻ reparse, button consolidation
+- Updated README flow description with visibility detection pipeline
+- Filled worklog gaps for all commits since v1.9.5
+- No documentation gaps remaining
+
+Stage Summary:
+- CHANGELOG: 3 new version entries (1.9.6, 1.9.7, 1.9.7+)
+- README: updated with all recent changes
+- worklog: complete from v1.9.5 to present
