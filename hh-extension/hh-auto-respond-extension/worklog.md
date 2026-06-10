@@ -128,3 +128,26 @@ Stage Summary:
 - Auth log noise eliminated
 - CHANGELOG.md fully up to date (v1.7.3 → v1.8.9)
 
+
+---
+Task ID: 1
+Agent: main
+Task: Fix Strategy 6 in resume-fetch.js to get all 6 experience entries instead of 3
+
+Work Log:
+- Analyzed diagnostic output from user's browser console
+- Key finding: "Развернуть" button does NOT use AJAX — React/Magritte loads data during hydration
+- Company names NOT found in any <script> tag in SSR HTML
+- SSR HTML = 808K chars vs live DOM after expand = ~2M chars
+- Designed hidden iframe approach as primary Strategy 6 method
+- Implemented fetchExpandedExperienceViaIframe() — loads resume in hidden iframe
+- Implemented parseExperienceFromIframeDoc() — parses experience from iframe DOM
+- Kept existing API/query-param approaches as fallback
+- Updated version to 1.9.5 across version.js, package.json, manifest.json, CHANGELOG.md
+- Build verified successfully (esbuild, 311.6kb)
+
+Stage Summary:
+- Strategy 6 now uses hidden iframe as PRIMARY approach (mirrors expandHiddenSections DOM logic)
+- Falls back to API endpoints and query params if iframe fails
+- All version files consistent at 1.9.5
+- Build passes, new functions confirmed in dist/content.js bundle

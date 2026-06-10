@@ -826,14 +826,17 @@ function extractJsonArrayFromHtml(html, startIdx) {
  * Try to fetch full experience data when SSR only renders 3 entries.
  *
  * hh.ru's resume page has a "Свернуть"/"Развернуть" button in the experience
- * section. In SSR, only 3 company-cards are rendered. Clicking "Развернуть"
- * triggers an AJAX load that adds the remaining experience entries.
+ * section. In SSR, only 3 company-cards are rendered. The "Развернуть"
+ * button does NOT use AJAX — React/Magritte loads all data during client-side
+ * hydration and the button simply toggles component visibility in React state.
+ * The full experience data is never in the SSR HTML or <script> tags.
  *
  * We try multiple approaches:
- *  1. Find the "Развернуть" button's AJAX URL in data-attributes or Magritte state
- *  2. Try internal applicant API endpoints
- *  3. Try re-fetching with expansion query parameters
- *  4. Look for "loadMore" / "fetchUrl" patterns in script tags
+ *  1. [PRIMARY] Load the resume in a hidden iframe, click "Развернуть",
+ *     and parse the fully-rendered DOM (mirrors the DOM-based approach)
+ *  2. [FALLBACK] Try internal applicant API endpoints
+ *  3. [FALLBACK] Try re-fetching with expansion query parameters
+ *  4. [FALLBACK] Find expansion URLs from data-attributes or Magritte state
  *
  * @param {Document} doc - Parsed document from DOMParser
  * @param {string} html - Raw HTML string
@@ -844,6 +847,22 @@ function extractJsonArrayFromHtml(html, startIdx) {
  */
 async function fetchExpandedExperience(doc, html, resumeId, currentCount, resumeUrl) {
   fetchLog.info('Strategy 6: starting (currentCount=' + currentCount + ', resumeId=' + (resumeId || 'none') + ')');
+
+  // ── Step 0 [PRIMARY]: Load resume in hidden iframe, click "Развернуть", parse DOM ──
+  // The "Развернуть" button does NOT use AJAX. React/Magritte loads all
+  // experience data during client-side hydration. The only reliable way to
+  // get all entries is to load the page, let React hydrate, click the button,
+  // and parse the resulting DOM. This mirrors the DOM-based approach in
+  // expandHiddenSections() which already works perfectly.
+  try {
+    const iframeEntries = await fetchExpandedExperienceViaIframe(resumeUrl, currentCount);
+    if (iframeEntries.length > currentCount) {
+      fetchLog.info('Strategy 6: SUCCESS via iframe — got ' + iframeEntries.length + ' experiences');
+      return iframeEntries;
+    }
+  } catch (err) {
+    fetchLog.info('Strategy 6: iframe approach failed: ' + err.message);
+  }
 
   // ── Step 1: Find "Развернуть" / "Показать все" button URLs ──
   const expansionUrls = findExpansionUrls(doc, html, resumeId);
@@ -947,6 +966,154 @@ async function fetchExpandedExperience(doc, html, resumeId, currentCount, resume
 
   fetchLog.info('Strategy 6: all approaches exhausted, returning current count: ' + currentCount);
   return [];
+}
+
+// ═══════════════════════════════════════════════
+// STRATEGY 6 PRIMARY: HIDDEN IFRAME APPROACH
+// ═══════════════════════════════════════════════
+
+/**
+ * Load the resume page in a hidden iframe, click "Развернуть" buttons
+ * to expand all experience entries, then parse the fully-rendered DOM.
+ *
+ * This mirrors the DOM-based approach (expandHiddenSections + parseResume)
+ * that already works perfectly on the live page. Since "Развернуть" does
+ * NOT use AJAX but rather toggles React component state, the only reliable
+ * way to get all experience entries from a fetch-based context is to load
+ * the full page (with React hydration), click the button, and parse the DOM.
+ *
+ * @param {string} resumeUrl - Full URL of the resume page
+ * @param {number} currentCount - Number of experience entries already found via fetch
+ * @returns {Array} Parsed experience entries (may be same count or more)
+ */
+async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) {
+  fetchLog.info('Strategy 6 iframe: loading ' + resumeUrl);
+
+  // Create a hidden iframe off-screen
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1280px;height:800px;opacity:0;pointer-events:none;border:none;';
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.setAttribute('tabindex', '-1');
+  iframe.src = resumeUrl;
+  document.body.appendChild(iframe);
+
+  try {
+    // Wait for iframe to load (full page, including scripts)
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('iframe load timeout (15s)')), 15000);
+      iframe.addEventListener('load', () => { clearTimeout(timeout); resolve(); });
+      iframe.addEventListener('error', () => { clearTimeout(timeout); reject(new Error('iframe load error')); });
+    });
+
+    // Wait for React/Magritte hydration to complete (scripts need time to run)
+    await new Promise(r => setTimeout(r, 2500));
+
+    // Access iframe document (same-origin: both on hh.ru)
+    const iframeDoc = iframe.contentDocument;
+    if (!iframeDoc) {
+      throw new Error('Cannot access iframe document (cross-origin or blocked)');
+    }
+
+    // Count experience cards before expansion
+    const preCards = iframeDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
+    const preSteppers = iframeDoc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
+    fetchLog.info('Strategy 6 iframe: before expand — ' + preCards.length + ' company-cards, ' + preSteppers.length + ' stepper-items');
+
+    // Click "Развернуть" buttons (same logic as expandHiddenSections)
+    const expandButtons = iframeDoc.querySelectorAll('[data-qa="profile-experience-viewAll"], button');
+    let clicked = 0;
+    expandButtons.forEach(btn => {
+      const text = (btn.textContent || '').trim().toLowerCase();
+      if (text.includes('развернуть') || text.includes('показать все') ||
+          text.includes('показать ещё') || text.includes('посмотреть всё') ||
+          text.includes('посмотреть все') || text.includes('expand')) {
+        try { btn.click(); clicked++; } catch (e) { /* ignore */ }
+      }
+    });
+    fetchLog.info('Strategy 6 iframe: clicked ' + clicked + ' expand buttons');
+
+    if (clicked > 0) {
+      // Wait for React to re-render with expanded content
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Count experience cards after expansion
+    const postCards = iframeDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
+    const postSteppers = iframeDoc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
+    fetchLog.info('Strategy 6 iframe: after expand — ' + postCards.length + ' company-cards, ' + postSteppers.length + ' stepper-items');
+
+    // Parse experience from the iframe DOM (same logic as parseExperienceFromDoc)
+    const entries = parseExperienceFromIframeDoc(iframeDoc);
+    fetchLog.info('Strategy 6 iframe: parsed ' + entries.length + ' experience entries');
+
+    return entries;
+  } finally {
+    // Always clean up the iframe
+    try {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    } catch (e) { /* ignore */ }
+  }
+}
+
+/**
+ * Parse experience entries from an iframe document.
+ * Uses the same parsing strategies as parseExperienceFromDoc()
+ * but works on the iframe's fully-rendered DOM.
+ *
+ * @param {Document} iframeDoc - The iframe's contentDocument
+ * @returns {Array} Parsed experience entries
+ */
+function parseExperienceFromIframeDoc(iframeDoc) {
+  const allCards = iframeDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
+  const seen = new Set();
+  const uniqueCards = [];
+  allCards.forEach(c => { if (!seen.has(c)) { seen.add(c); uniqueCards.push(c); } });
+
+  const entries = [];
+  const usedStepperElements = new Set();
+
+  // Strategy 1: Parse company cards
+  uniqueCards.forEach(card => {
+    const job = parseCompanyCardFromDoc(card);
+    if (job) entries.push(job);
+    const stepEl = card.querySelector('[data-qa="magritte-stepper-step-content"]');
+    if (stepEl) usedStepperElements.add(stepEl);
+  });
+
+  // Strategy 2: Parse stepper items NOT covered by company cards
+  const expCard = iframeDoc.querySelector('[data-qa="resume-list-card-experience"]');
+  if (expCard) {
+    const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
+    stepperItems.forEach(step => {
+      if (usedStepperElements.has(step)) return;
+      let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
+      if (parentCard && uniqueCards.includes(parentCard)) return;
+
+      const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
+      if (!cellLeft) return;
+      const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+      const job = {};
+      if (texts.length >= 1) job.position = (texts[0].textContent || '').trim();
+      if (texts.length >= 2) job.period = (texts[1].textContent || '').trim().replace(/\s*\(\d[^)]+\)$/, '').trim();
+      if (job.position || job.period) entries.push(job);
+    });
+  }
+
+  // Strategy 3: If still 0, try all stepper items directly
+  if (entries.length === 0 && expCard) {
+    const allStepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
+    allStepperItems.forEach(step => {
+      const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
+      if (!cellLeft) return;
+      const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
+      const job = {};
+      if (texts.length >= 1) job.position = (texts[0].textContent || '').trim();
+      if (texts.length >= 2) job.period = (texts[1].textContent || '').trim().replace(/\s*\(\d[^)]+\)$/, '').trim();
+      if (job.position) entries.push(job);
+    });
+  }
+
+  return entries;
 }
 
 /**
