@@ -64,3 +64,28 @@ Stage Summary:
 - `[data-qa="resume-about-card"]` — доп. информация / о себе
 - `[data-qa="profile-experience-viewAll"]` — кнопка "Показать все"
 - `.bloko-tag__text` — fallback для тегов (навыки, языки)
+
+---
+Task ID: 2
+Agent: Main
+Task: Сохранение исходников HH Bot и создание архитектурной документации
+
+Work Log:
+- Получены от пользователя все 9 Python файлов из hh-bot/src/hh/ через PowerShell
+- Получены все 6 Next.js API route файлов из hh-bot/src/app/api/hh/resumes/
+- Сохранены 9 Python файлов в docs/hh-bot-src/hh/ (commit 9c8e9a2 + __init__.py)
+- Сохранены 6 Next.js route файлов в docs/hh-bot-src/app/api/hh/resumes/ (commits 25a608c, 35b2d9f)
+- Создана архитектурная документация docs/HH_BOT_ARCHITECTURE.md (627 строк, commit 4763ca0)
+- Все коммиты запушены в origin/main
+
+Stage Summary:
+- Репозиторий содержит полный слепок исходников HH Bot (Python + Next.js)
+- Архитектурная документация покрывает: архитектуру, компоненты, поток данных, антидетект, селекторы, TODO
+- Идентифицирован мёртвый код: HHApiClient, HHAuth (пост-закрытие API декабрь 2025)
+- Идентифицированы незавершённые TODO в Next.js API routes (6 заглушек)
+- Файлы в репозитории:
+  - docs/HH_API_RESEARCH.md -- исследование API
+  - docs/HH_BOT_ARCHITECTURE.md -- архитектурная документация
+  - docs/hh-bot-src/hh/ -- 9 Python файлов бэкенда
+  - docs/hh-bot-src/app/api/hh/resumes/ -- 6 Next.js API route файлов
+  - UNICODE_POLICY.md -- политика форматирования
