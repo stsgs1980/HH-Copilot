@@ -108,5 +108,15 @@ export function getResumeSection() {
         <span id="res-gap-recommendation-text" style="font-size:11px;color:#92400E;line-height:1.5;"></span>
       </div>
     </div>
+    <!-- Diagnostic tools -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Диагностика</div>
+      <div id="res-status-line" style="font-size:11px;color:#71717a;margin-bottom:8px;">Готово</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" data-action="clear-resume">Очистить резюме</button>
+        <button class="btn btn-outline btn-sm" data-action="dump-resume">Дамп в консоль</button>
+        <button class="btn btn-outline btn-sm" data-action="test-parse">Тест парсинга</button>
+      </div>
+    </div>
   </div>`;
 }

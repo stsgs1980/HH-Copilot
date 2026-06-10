@@ -1,6 +1,6 @@
 {
   "name": "hh-copilot",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "private": true,
   "description": "HH Copilot — автоматизация откликов на hh.ru, Chrome Extension (esbuild)",
   "scripts": {

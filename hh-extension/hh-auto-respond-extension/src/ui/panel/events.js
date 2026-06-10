@@ -98,9 +98,12 @@ function bindSidebarClicks(container) {
     if (t.closest('[data-action="logout"]')) { window.location.href = 'https://hh.ru/account/logout'; return; }
 
     /* Resume */
-    if (t.closest('[data-action="load-resume"]')) { window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }
-    if (t.closest('[data-action="sync-resumes"]')) { window.dispatchEvent(new CustomEvent('hh-ar-sync-resumes')); return; }
+    if (t.closest('[data-action="load-resume"]')) { console.log('[HH-AR][Events] load-resume clicked, dispatching hh-ar-load-resume'); window.dispatchEvent(new CustomEvent('hh-ar-load-resume')); return; }
+    if (t.closest('[data-action="sync-resumes"]')) { console.log('[HH-AR][Events] sync-resumes clicked'); window.dispatchEvent(new CustomEvent('hh-ar-sync-resumes')); return; }
     if (t.closest('[data-action="analyze-skills"]')) { import('../tabs/resumes/resume-helpers.js').then(m => m.updateSkillGapSection(panelState.resume)); return; }
+    if (t.closest('[data-action="clear-resume"]')) { clearResumeData(); return; }
+    if (t.closest('[data-action="dump-resume"]')) { dumpResumeToConsole(); return; }
+    if (t.closest('[data-action="test-parse"]')) { testParseResume(); return; }
 
     /* Quick action tab switches */
     const tabSwitch = t.closest('[data-tab-switch]');
@@ -165,4 +168,78 @@ function bindInputChanges(container) {
   if (statusFilter) {
     statusFilter.addEventListener('change', () => filterVacancies());
   }
+}
+
+// ═══════════════════════════════════════════════
+// DIAGNOSTIC FUNCTIONS
+// ═══════════════════════════════════════════════
+
+function setStatusLine(text) {
+  const el = refs.shadowRoot?.getElementById('res-status-line');
+  if (el) el.textContent = text;
+}
+
+function clearResumeData() {
+  console.log('[HH-AR][Diag] Clearing resume data...');
+  panelState.resume = null;
+  panelState.resumeList = [];
+  chrome.storage.local.remove('myResume', () => {
+    console.log('[HH-AR][Diag] myResume removed from storage');
+    setStatusLine('Резюме очищено из памяти и storage');
+    renderResumePanel();
+  });
+}
+
+function dumpResumeToConsole() {
+  console.log('[HH-AR][Diag] === DUMP START ===');
+  console.log('[HH-AR][Diag] panelState.resume:', JSON.stringify(panelState.resume, null, 2));
+  console.log('[HH-AR][Diag] panelState.resumeList:', panelState.resumeList?.length);
+  console.log('[HH-AR][Diag] panelState.myResumes:', panelState.myResumes?.length);
+  console.log('[HH-AR][Diag] panelState.vacancies:', panelState.vacancies?.length);
+  console.log('[HH-AR][Diag] URL:', window.location.href);
+  console.log('[HH-AR][Diag] Auth:', panelState.isLoggedIn);
+  console.log('[HH-AR][Diag] === DUMP END ===');
+  setStatusLine('Дамп выведен в консоль (F12)');
+}
+
+async function testParseResume() {
+  console.log('[HH-AR][Diag] === TEST PARSE START ===');
+  setStatusLine('Тест парсинга...');
+
+  const path = window.location.pathname;
+  console.log('[HH-AR][Diag] Current path:', path);
+  console.log('[HH-AR][Diag] Is resume page:', /\/resume\/[a-f0-9]+/.test(path));
+  console.log('[HH-AR][Diag] Is resumes list:', path.includes('/applicant/resumes'));
+
+  if (/\/resume\/[a-f0-9]+/.test(path)) {
+    try {
+      const { expandHiddenSections } = await import('../../parsers/resume-detail/index.js');
+      const { parseResume } = await import('../../parsers/resume-detail/parse-resume.js');
+
+      await expandHiddenSections();
+      const resume = parseResume();
+
+      console.log('[HH-AR][Diag] Parse result:', JSON.stringify(resume, null, 2));
+      console.log('[HH-AR][Diag] Experience count:', resume.experience?.length);
+      console.log('[HH-AR][Diag] Skills count:', resume.skills?.length);
+      console.log('[HH-AR][Diag] Debug found:', resume._debug?.found);
+      console.log('[HH-AR][Diag] Debug missing:', resume._debug?.missing);
+
+      if (resume.id) {
+        panelState.resume = resume;
+        await chrome.storage.local.set({ myResume: resume });
+        renderResumePanel();
+        setStatusLine('Спарсено: ' + resume.experience?.length + ' мест, ' + resume.skills?.length + ' навыков');
+      } else {
+        setStatusLine('Ошибка: resume.id пустой');
+      }
+    } catch (err) {
+      console.error('[HH-AR][Diag] Parse error:', err);
+      setStatusLine('Ошибка парсинга: ' + err.message);
+    }
+  } else {
+    setStatusLine('Откройте страницу /resume/{hash} для теста');
+    console.log('[HH-AR][Diag] Not on resume page, cannot test parse');
+  }
+  console.log('[HH-AR][Diag] === TEST PARSE END ===');
 }

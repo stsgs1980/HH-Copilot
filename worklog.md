@@ -361,3 +361,25 @@ Stage Summary:
 - 1 file fixed: parse-resume.js (import line)
 - Critical bug: entire resume parsing was broken since R0.1-R0.5 refactor
 - 6 experience entries in DOM confirmed, parseCompanyCard logic should work now that parseResume doesn't crash
+
+---
+Task ID: R0.8
+Agent: main
+Task: Add diagnostic buttons + fix load-resume button not responding
+
+Work Log:
+- User reported: "Загрузить с текущей страницы" and "Перепарсить" buttons do nothing
+- Added console.log to load-resume event handler for tracing
+- Added 3 diagnostic buttons in resume tab:
+  - «Очистить резюме» — clears panelState.resume + chrome.storage.local myResume
+  - «Дамп в консоль» — dumps full panelState.resume JSON to console
+  - «Тест парсинга» — runs parseResume() directly with error handling, shows result in status line
+- Added res-status-line element for visual feedback (replaces invisible setStatus)
+- All diagnostic buttons show results in both console and status line
+- Bumped version to 1.8.6
+
+Stage Summary:
+- 2 files modified: resume.js (diagnostic UI), events.js (handlers + console.log tracing)
+- User can now diagnose: (1) click "Тест парсинга" on /resume/{hash} page, (2) see result in status line + console
+- "Очистить резюме" resets everything so re-parse starts clean
+- "Дамп в консоль" shows what's currently stored
