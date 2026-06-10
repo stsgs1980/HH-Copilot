@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HH Copilot — FAB Panel Wireframe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            accent: { 50:'#ECFDF5',100:'#D1FAE5',200:'#A7F3D0',300:'#6EE7B7',400:'#34D399',500:'#10B981',600:'#059669',700:'#047857',800:'#065F46',900:'#064E3B' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; }
+    body { background: #f4f4f5; min-height: 100vh; display: flex; justify-content: flex-end; }
+    :focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* ========== #5: Panel — layered softer shadow, removed ::before green glow ========== */
+    .fab-panel {
+      width: 750px; height: 100vh; position: fixed; right: 0; top: 0; z-index: 1000;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-left: 1px solid rgba(0,0,0,0.08);
+      display: flex; flex-direction: column;
+      letter-spacing: -0.01em;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 8px 40px rgba(0,0,0,0.08), 0 2px 12px rgba(0,0,0,0.04);
+      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s ease;
+    }
+    /* ::before green glow removed per polish #5 */
+    .fab-panel.hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
+
+    /* FAB Button — pulse animation when panel closed */
+    .fab-btn {
+      position: fixed; right: 24px; bottom: 24px; z-index: 999;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #059669, #10B981);
+      color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(5,150,105,0.4);
+      transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .fab-btn:hover { transform: scale(1.1); box-shadow: 0 8px 32px rgba(5,150,105,0.5); }
+    .fab-btn.panel-open { transform: scale(0) rotate(180deg); opacity: 0; pointer-events: none; }
+    .fab-btn:not(.panel-open) { animation: fabPulse 2.5s ease-in-out infinite; }
+    @keyframes fabPulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(5,150,105,0.4); }
+      50% { box-shadow: 0 4px 20px rgba(5,150,105,0.4), 0 0 0 8px rgba(5,150,105,0.12); }
+    }
+
+    /* Tab section — smooth content transition */
+    .tab-section { display: none; flex: 1; overflow-y: auto; padding: 16px; opacity: 0; transition: opacity 0.2s ease; }
+    .tab-section.active { display: block; opacity: 1; }
+
+    /* ========== #3: Tab system — pill indicator, text-shadow on active, smooth ::after transition ========== */
+    .tab-btn { position: relative; padding: 10px 6px; font-size: 12px; font-weight: 500; color: #52525B;
+      background: none; border: none; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; flex: 1; border-radius: 8px; }
+    .tab-btn:hover { color: #18181b; background: rgba(0,0,0,0.04); }
+    .tab-btn.active { color: #059669; font-weight: 600; background: rgba(5,150,105,0.06);
+      text-shadow: 0 0 8px rgba(5,150,105,0.12); }
+    .tab-btn.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+      width:20px; height:3px; background:#059669; border-radius:99px;
+      transition: width 0.25s cubic-bezier(0.16,1,0.3,1), height 0.2s ease; }
+
+    /* ========== #2: Cards — inner shadow for "lifted" feel, softer hover ========== */
+    .card { background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 14px;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8); }
+    .card:hover { transform: translateY(-0.5px); box-shadow: 0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8); }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
+    @keyframes pulseDot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    .pulse-dot { animation: pulseDot 2s infinite; }
+    @keyframes slideRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .slide-right { animation: slideRight 0.35s cubic-bezier(0.16,1,0.3,1); }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent 0%, rgba(5,150,105,0.08) 50%, transparent 100%);
+      background-size: 200% 100%; animation: shimmer 2s infinite; }
+
+    /* Match score ring */
+    .score-ring { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; position: relative; }
+    .score-ring.high { background: conic-gradient(#059669 0deg, #059669 calc(var(--score)*3.6deg), #e4e4e7 calc(var(--score)*3.6deg)); }
+
+    /* Hero KPI ring */
+    @keyframes ringFill { from { stroke-dashoffset: 339.292; } }
+    .kpi-ring-bg { fill: none; stroke: #f4f4f5; stroke-width: 8; }
+    .kpi-ring-fill { fill: none; stroke: url(#kpiGrad); stroke-width: 8; stroke-linecap: round;
+      stroke-dasharray: 339.292; stroke-dashoffset: 123.89; animation: ringFill 1.2s ease-out;
+      transform: rotate(-90deg); transform-origin: center; }
+    @keyframes countdown { from { width: 100%; } to { width: 0%; } }
+    .countdown-bar { animation: countdown 48s linear infinite; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .kpi-stat { animation: slideUp 0.4s ease backwards; }
+    .kpi-stat:nth-child(1) { animation-delay: 0.1s; }
+    .kpi-stat:nth-child(2) { animation-delay: 0.2s; }
+    .kpi-stat:nth-child(3) { animation-delay: 0.3s; }
+
+    /* ========== #18: Progress bar — shimmer animation on green fills ========== */
+    .progress-bar { height: 6px; background: #f4f4f5; border-radius: 3px; overflow: hidden; }
+    .progress-bar .fill { height: 100%; border-radius: 3px; transition: width 0.5s ease;
+      background-size: 200% 100%; }
+    .progress-bar .fill[style*="059669"],
+    .progress-bar .fill[style*="10B981"],
+    .progress-bar .fill[style*="059669"],
+    .progress-bar .fill.fill-green {
+      background-image: linear-gradient(90deg, #059669 0%, #34D399 40%, #059669 60%, #10B981 100%);
+      background-size: 200% 100%;
+      animation: progressShimmer 2.5s linear infinite;
+    }
+    @keyframes progressShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ========== #7: Toggle switch — knob shadow, stronger shadow when checked ========== */
+    .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+    .toggle input { display: none; }
+    .toggle .slider { position: absolute; inset: 0; background: #d4d4d8; border-radius: 11px; transition: background 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s; }
+    .toggle .slider::before { content:''; position:absolute; left:2px; top:2px; width:18px; height:18px;
+      background:#fff; border-radius:50%; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .toggle input:checked + .slider { background: #059669; box-shadow: 0 0 8px rgba(5,150,105,0.3); }
+    .toggle input:checked + .slider::before { transform: translateX(18px); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+
+    /* ========== #6: Badge — letter-spacing, tabular-nums, subtle matching borders ========== */
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+    .badge-green { background: #D1FAE5; color: #065F46; border: 1px solid rgba(5,150,105,0.15); }
+    .badge-amber { background: #FEF3C7; color: #92400E; border: 1px solid rgba(217,119,6,0.15); }
+    .badge-red { background: #FEE2E2; color: #B91C1C; border: 1px solid rgba(220,38,38,0.15); }
+    .badge-blue { background: #DBEAFE; color: #1E40AF; border: 1px solid rgba(37,99,235,0.15); }
+    .badge-zinc { background: #F4F4F5; color: #52525B; }
+
+    /* ========== #1: Buttons — micro-interactions, inner shadow, hover lift, active press, tighter text ========== */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px;
+      border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none;
+      transition: all 0.2s cubic-bezier(0.16,1,0.3,1); letter-spacing: -0.01em; }
+    .btn-primary { background: #059669; color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(0,0,0,0.1); }
+    .btn-primary:hover { background: #047857; transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(5,150,105,0.25); }
+    .btn-primary:active { transform: translateY(0);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.1); }
+    .btn-outline { background: transparent; border: 1px solid #d4d4d8; color: #3f3f46;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+    .btn-outline:hover { background: rgba(5,150,105,0.06); border-color: rgba(5,150,105,0.25); color: #059669; }
+    .btn-danger { background: #DC2626; color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(0,0,0,0.1); }
+    .btn-danger:hover { background: #B91C1C; transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(220,38,38,0.25); }
+    .btn-danger:active { transform: translateY(0);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.1); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+    /* ========== #11: Vacancy items — smoother cubic-bezier easing, subtle hover shadow ========== */
+    .vacancy-item { display: flex; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05);
+      cursor: pointer; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); border-left: 2px solid transparent; }
+    .vacancy-item:hover { background: #f9fafb; border-color: rgba(5,150,105,0.15); border-left-color: #059669;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+    /* Log entry */
+    .log-entry { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+    .log-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+
+    /* Timeline */
+    .timeline-toggle { cursor: pointer; user-select: none; }
+    .timeline-toggle:hover { background: #FAFAFA; }
+    .timeline-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s; opacity: 0; }
+    .timeline-body.open { max-height: 2000px; opacity: 1; }
+    .timeline-chevron { transition: transform 0.3s; }
+    .timeline-chevron.open { transform: rotate(180deg); }
+    .tl-item { position: relative; padding-left: 24px; padding-bottom: 4px; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-item::before { content: ''; position: absolute; left: 5px; top: 8px; bottom: 0; width: 1.5px; background: #e4e4e7; }
+    .tl-item:last-child::before { display: none; }
+
+    /* ========== #9: Timeline dots — transition, first dot green glow ========== */
+    .tl-dot { position: absolute; left: 1px; top: 5px; width: 10px; height: 10px; border-radius: 50%;
+      border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.08); z-index: 1;
+      transition: transform 0.2s, box-shadow 0.2s; }
+    .tl-item:first-child .tl-dot { box-shadow: 0 0 0 3px rgba(5,150,105,0.15), 0 0 0 1px rgba(0,0,0,0.08); }
+
+    /* Sub-accordion inside timeline */
+    .sub-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin: 0 -8px; border-radius: 6px; transition: background 0.15s; }
+    .sub-toggle:hover { background: rgba(0,0,0,0.03); }
+    .sub-body { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s, padding 0.35s; opacity: 0; padding-top: 0; }
+    .sub-body.open { max-height: 500px; opacity: 1; padding-top: 6px; }
+    .sub-chevron { transition: transform 0.25s; flex-shrink: 0; }
+    .sub-chevron.open { transform: rotate(180deg); }
+
+    /* ========== #10: AI reply cards — translateY hover instead of scale, green shadow ========== */
+    .ai-reply-card { padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(5,150,105,0.15);
+      border-left: 3px solid rgba(5,150,105,0.25); background: #ffffff; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16,1,0.3,1); margin-bottom: 6px; }
+    .ai-reply-card:hover { background: #ECFDF5; border-color: rgba(5,150,105,0.3); border-left-color: #059669;
+      transform: translateY(-1px); box-shadow: 0 2px 12px rgba(5,150,105,0.1); }
+    .ai-reply-card:last-child { margin-bottom: 0; }
+    .ai-source { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .ai-src-resume { background: #D1FAE5; color: #065F46; }
+    .ai-src-vacancy { background: #DBEAFE; color: #1E40AF; }
+    .ai-src-context { background: #FEF3C7; color: #78350F; }
+
+    /* Overlay for clicking outside */
+    .panel-overlay { position: fixed; inset: 0; z-index: 998; background: rgba(0,0,0,0.15);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .panel-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    /* ========== #8: Skill tags — transition, hover lift + shadow ========== */
+    .skill-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px;
+      font-size: 12px; font-weight: 500; transition: all 0.15s ease; }
+    .skill-tag:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .skill-match { background: #D1FAE5; color: #065F46; }
+    .skill-miss { background: #FEE2E2; color: #B91C1C; }
+    .skill-extra { background: #DBEAFE; color: #1E40AF; }
+
+    /* ========== #20: Typing animation — bolder cursor ========== */
+    @keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
+    .typing-cursor::after { content:'|'; animation: blink 1s infinite; color: #059669;
+      font-weight: 300; font-size: 14px; }
+
+    /* ========== #4: Inputs/selects/textareas — #FAFAFA default bg, bg transition, lighter placeholder ========== */
+    .fab-panel input, .fab-panel select, .fab-panel textarea {
+      background: #FAFAFA;
+      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
+    }
+    .fab-panel input::placeholder, .fab-panel textarea::placeholder {
+      color: #a1a1aa;
+    }
+    .fab-panel input:focus, .fab-panel select:focus, .fab-panel textarea:focus {
+      border-color: #059669 !important;
+      box-shadow: 0 0 0 3px rgba(5,150,105,0.1);
+      background: #ffffff;
+    }
+
+    /* Close button hover state */
+    .fab-panel header button:hover, .fab-panel [onclick="togglePanel()"]:hover {
+      background: #f4f4f5;
+      color: #18181b;
+    }
+
+    /* ========== #12: Conversation items — smoother transition, active left accent ========== */
+    .conv-item { transition: all 0.2s ease; border-radius: 8px; }
+    .conv-item:hover { background: #FAFAFA; }
+    .conv-item.active, .conv-item[style*="ECFDF5"] {
+      box-shadow: inset 3px 0 0 #059669;
+    }
+
+    /* ========== #13: Scrollbar — even thinner, more rounded thumb ========== */
+    .tab-section::-webkit-scrollbar { width: 3px; }
+    .tab-section::-webkit-scrollbar-track { background: transparent; }
+    .tab-section::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .tab-section::-webkit-scrollbar-thumb:hover { background: #059669; }
+
+    /* ========== #19: Toast — rounder, backdrop-blur, subtle border ========== */
+    .toast, .toast-msg {
+      position: fixed; bottom: 24px; right: 24px; z-index: 10000;
+      padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 500;
+      background: #18181b; color: #fff;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    }
+    @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-8px); } }
+
+    /* ========== #14: Footer — glass feel background gradient ========== */
+    .fab-panel > div:last-of-type:not(.tab-section) {
+      border-top: 1px solid rgba(0,0,0,0.06);
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.9));
+    }
+
+    /* ========== #15: Blacklist items — left border on red bg, delete button hover ========== */
+    .fab-panel div[style*="FEF2F2"] {
+      border-left: 3px solid #FECACA;
+    }
+    .fab-panel div[style*="FEF2F2"] .btn-sm[style*="FEE2E2"] {
+      transition: background 0.15s ease;
+    }
+    .fab-panel div[style*="FEF2F2"] .btn-sm[style*="FEE2E2"]:hover {
+      background: #DC2626 !important;
+      color: #fff !important;
+    }
+
+    /* ========== #16: Range input custom styling ========== */
+    .fab-panel input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      height: 4px; background: #e4e4e7; border-radius: 2px;
+      outline: none; border: none; padding: 0;
+    }
+    .fab-panel input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #ffffff; border: 2px solid #059669;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      cursor: pointer; transition: box-shadow 0.15s;
+    }
+    .fab-panel input[type="range"]::-webkit-slider-thumb:hover {
+      box-shadow: 0 1px 6px rgba(5,150,105,0.3), 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .fab-panel input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #ffffff; border: 2px solid #059669;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+    .fab-panel input[type="range"]::-moz-range-track {
+      height: 4px; background: #e4e4e7; border-radius: 2px; border: none;
+    }
+
+    /* ========== #17: Stats bar chart — animated height transition, rounded tops ========== */
+    .fab-panel #tab-stats div[style*="border-radius:4px"][style*="180deg"] {
+      border-radius: 4px 4px 2px 2px;
+      transition: height 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Overlay (click to close) -->
+<div class="panel-overlay" id="panelOverlay" onclick="togglePanel()" aria-hidden="true"></div>
+
+<!-- FAB Button -->
+<button class="fab-btn" id="fabBtn" onclick="togglePanel()" title="HH Copilot" aria-label="Открыть HH Copilot" aria-expanded="false" aria-controls="fabPanel">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+  </svg>
+</button>
+
+<!-- ===== FAB PANEL (560px) ===== -->
+<div class="fab-panel hidden slide-right" id="fabPanel" role="dialog" aria-label="HH Copilot" aria-hidden="true">
+
+  <!-- Header -->
+  <div style="padding:14px 16px; border-bottom:1px solid rgba(0,0,0,0.06); display:flex; align-items:center; gap:10px; flex-shrink:0;">
+    <div style="width:32px; height:32px; background:linear-gradient(135deg,#059669,#10B981); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:14px; font-weight:700;">HH Copilot</div>
+      <div style="font-size:11px; color:#71717a; display:flex; align-items:center; gap:4px;">
+        <span style="width:6px; height:6px; background:#10B981; border-radius:50%;" class="pulse-dot"></span>
+        Авторизован • hh.ru
+      </div>
+    </div>
+    <!-- Auth status indicator -->
+    <div id="authIndicator" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" class="badge badge-green" onclick="checkAuth()" style="cursor:pointer;" title="Нажмите для проверки авторизации">
+      <span style="width:5px; height:5px; background:#059669; border-radius:50%; margin-right:4px;"></span>
+      Онлайн
+    </div>
+    <!-- Close -->
+    <button onclick="togglePanel()" aria-label="Закрыть панель" style="width:28px; height:28px; border-radius:8px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#71717a;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div role="tablist" aria-label="Вкладки панели" style="display:flex; border-bottom:1px solid rgba(0,0,0,0.06); flex-shrink:0; padding:0 4px;">
+    <button class="tab-btn active" id="tab-overview-btn" role="tab" aria-selected="true" aria-controls="tab-overview" onclick="switchTab('overview', this)" data-tab="overview">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Обзор
+    </button>
+    <button class="tab-btn" id="tab-resume-btn" role="tab" aria-selected="false" aria-controls="tab-resume" onclick="switchTab('resume', this)" data-tab="resume">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Резюме
+    </button>
+    <button class="tab-btn" id="tab-vacancies-btn" role="tab" aria-selected="false" aria-controls="tab-vacancies" onclick="switchTab('vacancies', this)" data-tab="vacancies">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+      Вакансии
+    </button>
+    <button class="tab-btn" id="tab-negotiations-btn" role="tab" aria-selected="false" aria-controls="tab-negotiations" onclick="switchTab('negotiations', this)" data-tab="negotiations">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Переговоры
+    </button>
+    <button class="tab-btn" id="tab-settings-btn" role="tab" aria-selected="false" aria-controls="tab-settings" onclick="switchTab('settings', this)" data-tab="settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Настройки
+    </button>
+    <button class="tab-btn" id="tab-stats-btn" role="tab" aria-selected="false" aria-controls="tab-stats" onclick="switchTab('stats', this)" data-tab="stats">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Статистика
+    </button>
+  </div>
+
+  <!-- ===================== TAB: ОБЗОР ===================== -->
+  <div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tab-overview-btn">
+
+    <!-- Auth Status Card (F1: Authorization Check) -->
+    <div class="card fade-in" style="margin-bottom:12px; border-left:3px solid #059669;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-size:12px; font-weight:600;">Авторизация HH.ru</div>
+          <div style="font-size:11px; color:#71717a; margin-top:2px;">Проверка через <code style="font-size:11px; background:#f4f4f5; padding:1px 4px; border-radius:3px;">[data-qa="mainmenu_applicant"]</code></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="badge badge-green" id="authBadge"><span class="pulse-dot" style="width:5px; height:5px; background:#059669; border-radius:50%; display:inline-block; margin-right:3px;"></span> Авторизован</span>
+          <button class="btn btn-outline btn-sm" onclick="checkAuth()">Проверить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Hero Block -->
+    <div class="card fade-in" style="margin-bottom:12px; padding:18px; background:linear-gradient(135deg, rgba(5,150,105,0.03) 0%, rgba(16,185,129,0.05) 50%, rgba(37,99,235,0.03) 100%); border:1px solid rgba(5,150,105,0.1);">
+      <div style="display:flex; gap:18px; align-items:stretch;">
+
+        <!-- Ring: Daily Limit -->
+        <div style="flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+          <svg width="108" height="108" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="kpiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#059669"/>
+                <stop offset="100%" stop-color="#34D399"/>
+              </linearGradient>
+            </defs>
+            <circle class="kpi-ring-bg" cx="60" cy="60" r="54"/>
+            <circle class="kpi-ring-fill" cx="60" cy="60" r="54"/>
+          </svg>
+          <div style="position:absolute; top:50%; left:42px; transform:translateY(-50%); text-align:center;">
+            <div style="font-size:26px; font-weight:800; color:#18181b; line-height:1;">127</div>
+            <div style="font-size:11px; color:#71717a; font-weight:500;">из 200</div>
+          </div>
+          <div style="font-size:11px; font-weight:600; color:#059669; margin-top:6px; letter-spacing:0.3px;">ДНЕВНОЙ ЛИМИТ</div>
+        </div>
+
+        <!-- Right stats -->
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:10px;">
+
+          <!-- Hourly -->
+          <div class="kpi-stat" style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.7); border-radius:10px; border:1px solid rgba(0,0,0,0.04);">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#FEF3C7,#FDE68A); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M12 2v4m0 12v4m-8-10H2m20 0h-2"/><circle cx="12" cy="12" r="4"/></svg>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:baseline; gap:4px;">
+                <span style="font-size:18px; font-weight:700; color:#18181b;">12</span>
+                <span style="font-size:12px; color:#71717a;">/30 час</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
+                <div style="flex:1; height:4px; background:#f4f4f5; border-radius:2px; overflow:hidden;"><div style="height:100%; width:40%; background:linear-gradient(90deg,#D97706,#F59E0B); border-radius:2px;"></div></div>
+                <span style="font-size:11px; color:#B45309; font-weight:600; white-space:nowrap;">48с</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Applied today -->
+          <div class="kpi-stat" style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.7); border-radius:10px; border:1px solid rgba(0,0,0,0.04);">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#D1FAE5,#A7F3D0); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:baseline; gap:4px;">
+                <span style="font-size:18px; font-weight:700; color:#059669;">47</span>
+                <span style="font-size:11px; color:#71717a;">откликов</span>
+              </div>
+              <div style="font-size:11px; color:#71717a; margin-top:2px;">
+                <span style="color:#059669; font-weight:600;">+12</span> за последний час
+              </div>
+            </div>
+            <!-- mini sparkline -->
+            <svg width="48" height="24" viewBox="0 0 48 24" style="flex-shrink:0; opacity:0.6;">
+              <polyline points="0,20 8,16 16,18 24,10 32,12 40,4 48,6" fill="none" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <!-- Invitations -->
+          <div class="kpi-stat" style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.7); border-radius:10px; border:1px solid rgba(0,0,0,0.04);">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#DBEAFE,#BFDBFE); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:baseline; gap:4px;">
+                <span style="font-size:18px; font-weight:700; color:#2563EB;">5</span>
+                <span style="font-size:11px; color:#71717a;">приглашений</span>
+              </div>
+              <div style="font-size:11px; color:#71717a; margin-top:2px;">
+                <span style="color:#2563EB; font-weight:600;">+2</span> новых за сегодня
+              </div>
+            </div>
+            <!-- mini sparkline -->
+            <svg width="48" height="24" viewBox="0 0 48 24" style="flex-shrink:0; opacity:0.6;">
+              <polyline points="0,18 8,20 16,14 24,16 32,8 40,10 48,2" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Rate Limit Status (F7) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <span style="font-size:12px; font-weight:600;">Скоринг и лимиты</span>
+        <span class="badge badge-green">Норма</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">Мин. интервал</div>
+          <div style="font-size:14px; font-weight:600;">30 сек</div>
+        </div>
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">Burst detection</div>
+          <div style="font-size:14px; font-weight:600; color:#059669;">Выкл</div>
+        </div>
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">429 ошибок</div>
+          <div style="font-size:14px; font-weight:600;">0</div>
+        </div>
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">CAPTCHA</div>
+          <div style="font-size:14px; font-weight:600; color:#059669;">Не обнаружена</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:12px; font-weight:600; margin-bottom:10px;">Быстрые действия</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="switchTab('vacancies', document.querySelector('[data-tab=vacancies]'))">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Массовый отклик
+        </button>
+        <button class="btn btn-outline" onclick="switchTab('vacancies', document.querySelector('[data-tab=vacancies]'))">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Парсинг вакансий
+        </button>
+        <button class="btn btn-outline" onclick="switchTab('resume', document.querySelector('[data-tab=resume]'))">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+          Парсинг резюме
+        </button>
+        <button class="btn btn-outline" onclick="resetDaily()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>
+          Сброс дневных
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Timeline: Last Activity -->
+    <div class="card fade-in">
+      <div class="timeline-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleTimeline()" style="display:flex; align-items:center; justify-content:space-between; padding:2px 0;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="font-size:12px; font-weight:600;">Последняя активность</div>
+          <div style="display:flex; gap:-4px;">
+            <div style="width:14px; height:14px; border-radius:50%; background:#059669; border:2px solid #fff; margin-left:-3px; position:relative; z-index:3;"></div>
+            <div style="width:14px; height:14px; border-radius:50%; background:#2563EB; border:2px solid #fff; margin-left:-3px; position:relative; z-index:2;"></div>
+            <div style="width:14px; height:14px; border-radius:50%; background:#D97706; border:2px solid #fff; margin-left:-3px; position:relative; z-index:1;"></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:11px; color:#71717a;">5 событий</span>
+          <svg class="timeline-chevron" id="tlChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="timeline-body" id="tlBody" style="margin-top:4px;">
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#059669;"></div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between;">
+            <span style="font-size:11px;"><b>Отклик:</b> Яндекс — Senior Frontend</span>
+            <span style="font-size:11px; color:#71717a; flex-shrink:0; margin-left:8px;">2 мин назад</span>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin-top:1px;">match: 87% • ручной</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#2563EB;"></div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between;">
+            <span style="font-size:11px;"><b>Приглашение</b> от Тинькофф</span>
+            <span style="font-size:11px; color:#71717a; flex-shrink:0; margin-left:8px;">15 мин назад</span>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin-top:1px;">Техническое интервью</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#D97706;"></div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between;">
+            <span style="font-size:11px;">CAPTCHA обнаружена — <b>пауза 5 мин</b></span>
+            <span style="font-size:11px; color:#71717a; flex-shrink:0; margin-left:8px;">1 ч назад</span>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin-top:1px;">автоматическая остановка</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#DC2626;"></div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between;">
+            <span style="font-size:11px;">Отказ: <b>VK — PM</b></span>
+            <span style="font-size:11px; color:#71717a; flex-shrink:0; margin-left:8px;">3 ч назад</span>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin-top:1px;">не прошли отбор</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#71717a;"></div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between;">
+            <span style="font-size:11px;">Авто-репарсинг <b>(MutationObserver)</b></span>
+            <span style="font-size:11px; color:#71717a; flex-shrink:0; margin-left:8px;">5 ч назад</span>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin-top:1px;">пагинация: стр. 1-3 • 42 вакансии</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB: РЕЗЮМЕ ===================== -->
+  <div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tab-resume-btn">
+
+    <!-- Resume Parsing (F3) — Collapsible Timeline -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <!-- Header: always visible -->
+      <div class="timeline-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleResumeTimeline()" style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#059669,#10B981); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; flex-shrink:0;">АК</div>
+          <div>
+            <div style="font-size:13px; font-weight:600;">Парсинг резюме</div>
+            <div style="font-size:11px; color:#71717a; margin-top:1px;">Алексей Козлов • 7 лет опыта • 18 навыков</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="badge badge-green" style="font-size:11px;">спарсено</span>
+          <svg class="timeline-chevron" id="resChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <!-- Collapsible parsed data timeline -->
+      <div class="timeline-body" id="resBody" style="margin-top:12px; padding-top:4px;">
+
+        <!-- 1. Личные данные — collapsible sub-item -->
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#059669;"></div>
+          <div class="sub-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleSub('subPersonal','chevPersonal')">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11px; font-weight:600; color:#059669;">Личные данные</span>
+              <span style="font-size:11px; color:#71717a;">4 поля</span>
+            </div>
+            <svg class="sub-chevron" id="chevPersonal" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sub-body" id="subPersonal">
+            <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px; font-size:11px;">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 12px;">
+                <span style="color:#71717a;">Имя</span><span style="font-weight:500;">Алексей Козлов</span>
+                <span style="color:#71717a;">Позиция</span><span style="font-weight:500;">Senior Frontend Developer</span>
+                <span style="color:#71717a;">Город</span><span style="font-weight:500;">Москва, Россия</span>
+                <span style="color:#71717a;">Опыт</span><span style="font-weight:500;">7 лет</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Зарплата и условия — collapsible sub-item -->
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#2563EB;"></div>
+          <div class="sub-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleSub('subSalary','chevSalary')">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11px; font-weight:600; color:#2563EB;">Зарплата и условия</span>
+              <span style="font-size:11px; color:#71717a;">5 полей</span>
+            </div>
+            <svg class="sub-chevron" id="chevSalary" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sub-body" id="subSalary">
+            <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px; font-size:11px;">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 12px;">
+                <span style="color:#71717a;">Зарплата</span><span style="font-weight:500;">250 000 — 350 000 &#8381;</span>
+                <span style="color:#71717a;">Занятость</span><span style="font-weight:500;">Полная занятость</span>
+                <span style="color:#71717a;">Формат</span><span style="font-weight:500;">Удалённая работа</span>
+                <span style="color:#71717a;">График</span><span style="font-weight:500;">Гибкий</span>
+                <span style="color:#71717a;">Перемещения</span><span style="font-weight:500;">Не готов к переезду</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Опыт работы — collapsible sub-item -->
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#D97706;"></div>
+          <div class="sub-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleSub('subExp','chevExp')">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11px; font-weight:600; color:#B45309;">Опыт работы</span>
+              <span style="font-size:11px; color:#71717a;">3 места</span>
+            </div>
+            <svg class="sub-chevron" id="chevExp" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sub-body" id="subExp">
+            <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px; font-size:11px;">
+              <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div style="font-weight:600;">Senior Frontend Developer</div>
+                <div style="color:#71717a; margin-top:2px;">Маркетплейс &#8226; 2021 &#8212; н.в. (3 года)</div>
+                <div style="color:#71717a; margin-top:3px; font-size:11px;">Микрофронтенд-архитектура, React, TypeScript, оптимизация</div>
+              </div>
+              <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div style="font-weight:600;">Frontend Developer</div>
+                <div style="color:#71717a; margin-top:2px;">Финтех-стартап &#8226; 2018 &#8212; 2021 (3 года)</div>
+                <div style="color:#71717a; margin-top:3px; font-size:11px;">SPA, Redux, REST API, CI/CD</div>
+              </div>
+              <div>
+                <div style="font-weight:600;">Junior Frontend</div>
+                <div style="color:#71717a; margin-top:2px;">Веб-агентство &#8226; 2017 &#8212; 2018 (1 год)</div>
+                <div style="color:#71717a; margin-top:3px; font-size:11px;">HTML/CSS, JavaScript, jQuery, адаптивная вёрстка</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Образование — collapsible sub-item -->
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#7C3AED;"></div>
+          <div class="sub-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleSub('subEdu','chevEdu')">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11px; font-weight:600; color:#7C3AED;">Образование</span>
+              <span style="font-size:11px; color:#71717a;">4 поля</span>
+            </div>
+            <svg class="sub-chevron" id="chevEdu" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sub-body" id="subEdu">
+            <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px; font-size:11px;">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 12px;">
+                <span style="color:#71717a;">ВУЗ</span><span style="font-weight:500;">МГТУ им. Баумана</span>
+                <span style="color:#71717a;">Факультет</span><span style="font-weight:500;">Информатика и ВТ</span>
+                <span style="color:#71717a;">Год</span><span style="font-weight:500;">2017</span>
+                <span style="color:#71717a;">Степень</span><span style="font-weight:500;">Бакалавр</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Языки — collapsible sub-item -->
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#EC4899;"></div>
+          <div class="sub-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleSub('subLang','chevLang')">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11px; font-weight:600; color:#EC4899;">Языки</span>
+              <span style="font-size:11px; color:#71717a;">2 языка</span>
+            </div>
+            <svg class="sub-chevron" id="chevLang" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sub-body" id="subLang">
+            <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px; font-size:11px;">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 12px;">
+                <span style="color:#71717a;">Русский</span><span style="font-weight:500;">Нативный</span>
+                <span style="color:#71717a;">Английский</span><span style="font-weight:500;">B2 (Upper-Intermediate)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Контакты — collapsible sub-item -->
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#71717a;"></div>
+          <div class="sub-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleSub('subContacts','chevContacts')">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11px; font-weight:600; color:#71717a;">Контакты</span>
+              <span style="font-size:11px; color:#71717a;">3 поля</span>
+            </div>
+            <svg class="sub-chevron" id="chevContacts" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sub-body" id="subContacts">
+            <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px; font-size:11px;">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 12px;">
+                <span style="color:#71717a;">Телефон</span><span style="font-weight:500;">+7 999 123-45-67</span>
+                <span style="color:#71717a;">Email</span><span style="font-weight:500;">alexey@example.com</span>
+                <span style="color:#71717a;">Telegram</span><span style="font-weight:500;">@alexey_k</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Re-parse button at bottom -->
+        <div style="padding-top:12px; padding-left:24px;">
+          <button class="btn btn-primary btn-sm" onclick="parseResume()" style="width:100%;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>
+            Перепарсить резюме
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Skills (parsed) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <span style="font-size:12px; font-weight:600;">Навыки из резюме</span>
+        <span class="badge badge-zinc">18 навыков</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:4px;">
+        <span class="skill-tag skill-match">React</span>
+        <span class="skill-tag skill-match">TypeScript</span>
+        <span class="skill-tag skill-match">Next.js</span>
+        <span class="skill-tag skill-match">JavaScript</span>
+        <span class="skill-tag skill-match">Redux</span>
+        <span class="skill-tag skill-match">GraphQL</span>
+        <span class="skill-tag skill-match">Webpack</span>
+        <span class="skill-tag skill-match">CSS/SCSS</span>
+        <span class="skill-tag skill-match">REST API</span>
+        <span class="skill-tag skill-match">Jest</span>
+        <span class="skill-tag skill-match">Git</span>
+        <span class="skill-tag skill-match">Docker</span>
+        <span class="skill-tag skill-match">CI/CD</span>
+        <span class="skill-tag skill-match">Module Federation</span>
+        <span class="skill-tag skill-match">Figma</span>
+        <span class="skill-tag skill-match">Node.js</span>
+        <span class="skill-tag skill-match">Tailwind CSS</span>
+        <span class="skill-tag skill-match">Storybook</span>
+      </div>
+    </div>
+
+    <!-- Skill Gap Analysis (F10) — compact visual -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <!-- Header + score ring -->
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+        <div style="width:44px; height:44px; border-radius:50%; background:conic-gradient(#059669 0deg 280.8deg, #e4e4e7 280.8deg 360deg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <div style="width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.95); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#059669;">78%</div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600;">Анализ навыков</div>
+          <div style="font-size:11px; color:#71717a; margin-top:1px;">Топ 22% кандидатов на аналогичных позициях</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="analyzeSkills()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0"/></svg>
+          Анализ
+        </button>
+      </div>
+
+      <!-- Stacked bar: visual ratio -->
+      <div style="display:flex; height:6px; border-radius:3px; overflow:hidden; margin-bottom:12px; background:#f4f4f5;">
+        <div style="width:77.8%; background:linear-gradient(90deg,#059669,#34D399); border-radius:3px 0 0 3px;" title="Совпадают: 14"></div>
+        <div style="width:16.7%; background:linear-gradient(90deg,#DC2626,#F87171);" title="Не хватает: 3"></div>
+        <div style="width:5.5%; background:linear-gradient(90deg,#2563EB,#60A5FA); border-radius:0 3px 3px 0;" title="Плюс: 1"></div>
+      </div>
+
+      <!-- Row 1: Match -->
+      <div style="margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#059669; flex-shrink:0;"></span>
+          <span style="font-size:11px; font-weight:600; color:#059669;">Совпадают</span>
+          <span class="badge badge-green" style="font-size:11px; padding:1px 6px;">14</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:4px; padding-left:13px;">
+          <span class="skill-tag skill-match">React</span>
+          <span class="skill-tag skill-match">TypeScript</span>
+          <span class="skill-tag skill-match">Next.js</span>
+          <span class="skill-tag skill-match">GraphQL</span>
+          <span class="skill-tag skill-match">Jest</span>
+          <span style="font-size:11px; color:#71717a; padding:3px 0;">+9</span>
+        </div>
+      </div>
+
+      <!-- Row 2: Gap -->
+      <div style="margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#DC2626; flex-shrink:0;"></span>
+          <span style="font-size:11px; font-weight:600; color:#DC2626;">Не хватает</span>
+          <span class="badge badge-red" style="font-size:11px; padding:1px 6px;">3</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:4px; padding-left:13px;">
+          <span class="skill-tag skill-miss">Vue.js</span>
+          <span class="skill-tag skill-miss">AWS</span>
+          <span class="skill-tag skill-miss">Kubernetes</span>
+        </div>
+      </div>
+
+      <!-- Row 3: Extra -->
+      <div style="margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#2563EB; flex-shrink:0;"></span>
+          <span style="font-size:11px; font-weight:600; color:#2563EB;">Ваш плюс</span>
+          <span class="badge badge-blue" style="font-size:11px; padding:1px 6px;">1</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:4px; padding-left:13px;">
+          <span class="skill-tag skill-extra">Module Federation</span>
+        </div>
+      </div>
+
+      <!-- Recommendation -->
+      <div style="background:#FFFBEB; border:1px solid rgba(217,119,6,0.15); border-radius:8px; padding:8px 10px; display:flex; align-items:flex-start; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" style="flex-shrink:0; margin-top:1px;"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span style="font-size:11px; color:#92400E; line-height:1.5;">Добавьте <b>AWS</b> и <b>Vue.js</b> для роста до <b>85%</b> совпадения с рынком.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB: ВАКАНСИИ ===================== -->
+  <div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tab-vacancies-btn">
+
+    <!-- Vacancy Parsing (F2) + SPA Observer (F14) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div>
+          <div style="font-size:13px; font-weight:600;">Парсинг вакансий</div>
+          <div style="font-size:11px; color:#71717a; margin-top:2px;">Извлечение со страницы поиска hh.ru</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="parseVacancies()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Спарсить
+        </button>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <div style="flex:1; background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">Найдено</div>
+          <div style="font-size:16px; font-weight:700;">42</div>
+        </div>
+        <div style="flex:1; background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">Match > 70%</div>
+          <div style="font-size:16px; font-weight:700; color:#059669;">18</div>
+        </div>
+        <div style="flex:1; background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">В чёрном списке</div>
+          <div style="font-size:16px; font-weight:700; color:#DC2626;">3</div>
+        </div>
+      </div>
+      <!-- SPA MutationObserver toggle -->
+      <div style="display:flex; align-items:center; justify-content:space-between; background:#FAFAFA; border-radius:8px; padding:8px 12px;">
+        <div>
+          <div style="font-size:11px; font-weight:500;">Авто-репарсинг при пагинации</div>
+          <div style="font-size:11px; color:#71717a;">MutationObserver отслеживает изменения DOM</div>
+        </div>
+        <label class="toggle"><input type="checkbox" checked onchange="toggleObserver(this)"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+      <div style="flex:1; position:relative;">
+        <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:#71717a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Поиск по вакансиям..." style="width:100%; padding:8px 10px 8px 32px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; outline:none;" onfocus="this.style.borderColor='#059669'" onblur="this.style.borderColor='#e4e4e7'">
+      </div>
+      <select style="padding:8px 10px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; outline:none; background:#fff;">
+        <option>Все</option><option>Match > 80%</option><option>Match > 60%</option><option>Не в ЧС</option>
+      </select>
+    </div>
+
+    <!-- Vacancy List with Matching (F4) -->
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+
+      <!-- Vacancy 1 -->
+      <div class="vacancy-item fade-in">
+        <div style="width:44px; height:44px; border-radius:10px; background:#FFFBEB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="font-size:11px; font-weight:700; color:#B45309;">ЯН</span>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Senior Frontend Developer</span>
+            <div style="width:36px; height:36px; border-radius:50%; background:conic-gradient(#059669 0deg 313.2deg, #e4e4e7 313.2deg 360deg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <div style="width:28px; height:28px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#059669;">87</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin:2px 0 4px;">Яндекс • Москва • 300 000-400 000 &#8381;</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <span class="badge badge-green" style="font-size:11px;">React</span>
+            <span class="badge badge-green" style="font-size:11px;">TS</span>
+            <span class="badge badge-amber" style="font-size:11px;">Vue</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vacancy 2 -->
+      <div class="vacancy-item fade-in">
+        <div style="width:44px; height:44px; border-radius:10px; background:#EFF6FF; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="font-size:11px; font-weight:700; color:#2563EB;">ТК</span>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12px; font-weight:600;">Lead Frontend Engineer</span>
+            <div style="width:36px; height:36px; border-radius:50%; background:conic-gradient(#059669 0deg 280.8deg, #e4e4e7 280.8deg 360deg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <div style="width:28px; height:28px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#059669;">78</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin:2px 0 4px;">Тинькофф • Удалённо • 350 000-500 000 &#8381;</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <span class="badge badge-green" style="font-size:11px;">React</span>
+            <span class="badge badge-green" style="font-size:11px;">Next.js</span>
+            <span class="badge badge-red" style="font-size:11px;">AWS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vacancy 3 -->
+      <div class="vacancy-item fade-in">
+        <div style="width:44px; height:44px; border-radius:10px; background:#F4F4F5; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="font-size:11px; font-weight:700; color:#71717a;">СБ</span>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12px; font-weight:600;">Frontend Developer</span>
+            <div style="width:36px; height:36px; border-radius:50%; background:conic-gradient(#059669 0deg 237.6deg, #e4e4e7 237.6deg 360deg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <div style="width:28px; height:28px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#B45309;">66</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin:2px 0 4px;">Сбер • Москва • 200 000-280 000 &#8381;</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <span class="badge badge-green" style="font-size:11px;">React</span>
+            <span class="badge badge-green" style="font-size:11px;">TS</span>
+            <span class="badge badge-red" style="font-size:11px;">K8s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vacancy 4 (blacklisted) -->
+      <div class="vacancy-item fade-in" style="opacity:0.5;">
+        <div style="width:44px; height:44px; border-radius:10px; background:#FEF2F2; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="font-size:11px; font-weight:700; color:#DC2626;">VK</span>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12px; font-weight:600; text-decoration:line-through;">Frontend Team Lead</span>
+            <span class="badge badge-red" style="font-size:11px;">ЧС</span>
+          </div>
+          <div style="font-size:11px; color:#71717a; margin:2px 0 4px;">VK • Санкт-Петербург</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Apply (F5) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:13px; font-weight:600; margin-bottom:10px;">Ручной отклик</div>
+      <div style="font-size:11px; color:#71717a; margin-bottom:8px;">Сопроводительное письмо генерируется автоматически на основе мэтчинга</div>
+      <div style="background:#FAFAFA; border-radius:8px; padding:10px; margin-bottom:10px; font-size:11px; line-height:1.6; min-height:80px; color:#3f3f46;">
+        <span id="coverLetterText">Здравствуйте! Меня заинтересовала вакансия Senior Frontend Developer. У меня 7 лет опыта в разработке на React и TypeScript, включая архитектуру микрофронтендов для маркетплейса с 2 млн пользователей. Готов обсудить детали на интервью.</span><span class="typing-cursor" id="typingCursor" style="display:none;"></span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn btn-primary" onclick="manualApply()">Отправить отклик</button>
+        <button class="btn btn-outline" onclick="simulateTyping()">Печать по символам</button>
+        <label style="font-size:11px; color:#71717a; display:flex; align-items:center; gap:4px;">
+          <input type="checkbox" checked style="accent-color:#059669;"> Авто-заполнение
+        </label>
+      </div>
+    </div>
+
+    <!-- Mass Auto-Apply (F6) -->
+    <div class="card fade-in">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div>
+          <div style="font-size:13px; font-weight:600;">Массовый автоотклик</div>
+          <div style="font-size:11px; color:#71717a; margin-top:2px;">Автоматические отклики по фильтрам с учётом лимитов</div>
+        </div>
+        <span class="badge badge-amber" id="massStatus">Остановлен</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px; color:#71717a; display:block; margin-bottom:4px;">Мин. мэтч</label>
+          <input type="range" min="0" max="100" value="70" style="width:100%; accent-color:#059669;" oninput="this.nextElementSibling.textContent=this.value+'%'">
+          <span style="font-size:11px; font-weight:600;">70%</span>
+        </div>
+        <div>
+          <label style="font-size:11px; color:#71717a; display:block; margin-bottom:4px;">Макс. откликов</label>
+          <input type="number" value="20" min="1" max="200" style="width:100%; padding:6px 10px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; outline:none;">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" onclick="startMassApply()" id="massStartBtn">Запустить</button>
+        <button class="btn btn-danger" onclick="stopMassApply()" id="massStopBtn" disabled style="opacity:0.5;">Остановить</button>
+      </div>
+
+      <!-- Progress (hidden initially) -->
+      <div id="massProgress" style="display:none; margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#71717a; margin-bottom:4px;">
+          <span>Прогресс: <b id="massCount">0</b>/20</span>
+          <span id="massEta">ETA: ~15 мин</span>
+        </div>
+        <div class="progress-bar"><div class="fill" id="massFill" style="width:0%; background:linear-gradient(90deg,#059669,#10B981);"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB: ПЕРЕГОВОРЫ ===================== -->
+  <div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tab-negotiations-btn">
+
+    <!-- Negotiations List (F9) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div>
+          <div style="font-size:13px; font-weight:600;">Переговоры</div>
+          <div style="font-size:11px; color:#71717a; margin-top:2px;">Отслеживание сообщений с работодателями</div>
+        </div>
+        <span class="badge badge-blue">3 активных</span>
+      </div>
+
+      <!-- Conversation items -->
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <div onclick="selectConversation('yandex')" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; cursor:pointer; background:#ECFDF5;" class="conv-item active">
+          <div style="width:36px; height:36px; border-radius:50%; background:#D1FAE5; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#065F46; flex-shrink:0;">ЯН</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:12px; font-weight:600;">Яндекс — Анна</span>
+              <span style="font-size:11px; color:#71717a;">14:23</span>
+            </div>
+            <div style="font-size:11px; color:#71717a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Мы рассмотрели ваше резюме...</div>
+          </div>
+          <div style="width:8px; height:8px; border-radius:50%; background:#059669; flex-shrink:0;"></div>
+        </div>
+
+        <div onclick="selectConversation('tinkoff')" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; cursor:pointer;" class="conv-item">
+          <div style="width:36px; height:36px; border-radius:50%; background:#DBEAFE; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#2563EB; flex-shrink:0;">ТК</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:12px; font-weight:600;">Тинькофф — Мария</span>
+              <span style="font-size:11px; color:#71717a;">12:01</span>
+            </div>
+            <div style="font-size:11px; color:#71717a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Когда вам удобно на интервью?</div>
+          </div>
+        </div>
+
+        <div onclick="selectConversation('sber')" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; cursor:pointer;" class="conv-item">
+          <div style="width:36px; height:36px; border-radius:50%; background:#FFFBEB; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#B45309; flex-shrink:0;">СБ</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:12px; font-weight:600;">Сбер — Отдел подбора</span>
+              <span style="font-size:11px; color:#71717a;">вчера</span>
+            </div>
+            <div style="font-size:11px; color:#71717a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Спасибо за отклик! Подскажите...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Conversation -->
+    <div class="card fade-in" style="margin-bottom:12px; display:flex; flex-direction:column; max-height:340px;">
+      <div style="display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:10px; flex-shrink:0;">
+        <div style="width:28px; height:28px; border-radius:50%; background:#D1FAE5; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#065F46;">ЯН</div>
+        <div>
+          <div style="font-size:12px; font-weight:600;">Яндекс — Анна</div>
+          <div style="font-size:11px; color:#059669;">Онлайн</div>
+        </div>
+        <div style="margin-left:auto;">
+          <span class="badge badge-green" style="font-size:11px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0"/></svg>
+            AI
+          </span>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-bottom:10px;">
+        <div class="fade-in" style="align-self:flex-start; max-width:85%;">
+          <div style="background:#fff; border:1px solid #e4e4e7; border-radius:12px; border-top-left-radius:4px; padding:8px 12px;">
+            <div style="font-size:11px; font-weight:600; color:#059669; margin-bottom:3px;">Анна, Яндекс</div>
+            <div style="font-size:11px; line-height:1.5;">Здравствуйте, Алексей! Мы рассмотрели ваше резюме на позицию Senior Frontend Developer и хотели бы пригласить вас на техническое интервью.</div>
+          </div>
+        </div>
+
+        <!-- AI Hints Panel -->
+        <div class="shimmer fade-in" style="align-self:flex-start; max-width:92%; background:#ECFDF5; border:1px solid #A7F3D0; border-radius:12px; padding:10px 12px;">
+          <div style="display:flex; align-items:center; gap:5px; margin-bottom:8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0"/></svg>
+            <span style="font-size:11px; font-weight:700; color:#047857;">AI подсказки</span>
+            <span style="font-size:11px; color:#059669; opacity:0.7;">на основе:</span>
+            <span class="ai-source ai-src-resume">резюме</span>
+            <span class="ai-source ai-src-vacancy">вакансии</span>
+            <span class="ai-source ai-src-context">переписки</span>
+          </div>
+
+          <!-- Reply: Time -->
+          <div class="ai-reply-card" onclick="insertAIReply('time')">
+            <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style="font-size:11px; font-weight:600; color:#B45309;">По времени</span>
+              <span style="margin-left:auto; font-size:11px; color:#71717a;">1 клик</span>
+            </div>
+            <div style="font-size:11px; color:#3f3f46; line-height:1.4;">Спасибо за приглашение! Мне удобно во вторник или среду с 10:00 до 18:00. Яндекс обычно проводит 3 этапа — готов пройти все.</div>
+          </div>
+
+          <!-- Reply: Skills -->
+          <div class="ai-reply-card" onclick="insertAIReply('skills')">
+            <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <span style="font-size:11px; font-weight:600; color:#059669;">По навыкам</span>
+              <span style="margin-left:auto; font-size:11px; color:#71717a;">1 клик</span>
+            </div>
+            <div style="font-size:11px; color:#3f3f46; line-height:1.4;">Отлично! Мой стек (React, TypeScript, микрофронтенды) хорошо совпадает с требованиями. Расскажу о масштабном проекте маркетплейса.</div>
+          </div>
+
+          <!-- Reply: Salary -->
+          <div class="ai-reply-card" onclick="insertAIReply('salary')">
+            <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+              <span style="font-size:11px; font-weight:600; color:#2563EB;">По зарплате</span>
+              <span style="margin-left:auto; font-size:11px; color:#71717a;">1 клик</span>
+            </div>
+            <div style="font-size:11px; color:#3f3f46; line-height:1.4;">Благодарю за приглашение! Мои ожидания по зарплате — от 300 000 руб. Готов обсудить условия на интервью.</div>
+          </div>
+
+          <!-- Reply: Proactive -->
+          <div class="ai-reply-card" onclick="insertAIReply('proactive')">
+            <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              <span style="font-size:11px; font-weight:600; color:#7C3AED;">Проактивный</span>
+              <span style="margin-left:auto; font-size:11px; color:#71717a;">1 клик</span>
+            </div>
+            <div style="font-size:11px; color:#3f3f46; line-height:1.4;">Спасибо! Подскажите, над каким продуктом будет работа и сколько человек в команде? Также интересно узнать про процесс code review.</div>
+          </div>
+        </div>
+
+        <div class="fade-in" style="align-self:flex-end; max-width:85%;">
+          <div style="background:#059669; color:#fff; border-radius:12px; border-top-right-radius:4px; padding:8px 12px;">
+            <div style="font-size:11px; line-height:1.5;">Здравствуйте, Анна! Спасибо за приглашение. Мне будет удобно во вторник или среду, с 10:00 до 18:00.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div style="display:flex; gap:8px; flex-shrink:0; padding-top:10px; border-top:1px solid rgba(0,0,0,0.06);">
+        <input type="text" placeholder="Сообщение..." style="flex:1; padding:8px 12px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; outline:none;">
+        <button class="btn btn-primary" style="padding:8px 12px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>
+
+  <!-- Cover Letter Template & Typing (F15) — in Negotiations context -->
+    <div class="card fade-in">
+      <div class="timeline-toggle" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="toggleCoverLetter()" style="display:flex; align-items:center; justify-content:space-between; padding:2px 0;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="font-size:12px; font-weight:600;">Шаблоны и ввод</div>
+          <div style="display:flex; gap:4px;">
+            <span style="font-size:11px; color:#71717a; background:#f4f4f5; padding:1px 6px; border-radius:4px;">сопроводительное</span>
+            <span style="font-size:11px; color:#71717a; background:#f4f4f5; padding:1px 6px; border-radius:4px;">эмуляция набора</span>
+          </div>
+        </div>
+        <svg class="timeline-chevron" id="clChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="timeline-body" id="clBody" style="margin-top:10px;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+
+          <!-- Typing emulation toggle + speed on one row -->
+          <div style="display:flex; align-items:center; gap:12px;">
+            <label class="toggle" style="flex-shrink:0;"><input type="checkbox" checked><span class="slider"></span></label>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:11px; font-weight:500;">Эмуляция набора</div>
+              <div style="font-size:11px; color:#71717a;">Посимвольный ввод (антибот)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+              <input type="number" value="80" style="width:52px; padding:4px 6px; border:1px solid #e4e4e7; border-radius:6px; font-size:11px; text-align:center; outline:none;">
+              <span style="font-size:11px; color:#71717a;">мс</span>
+            </div>
+          </div>
+
+          <!-- Template -->
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+              <label style="font-size:11px; font-weight:500;">Шаблон сопроводительного</label>
+              <span style="font-size:11px; color:#71717a;">{position} {experience} {skills}</span>
+            </div>
+            <textarea style="width:100%; height:64px; padding:8px 10px; border:1px solid #e4e4e7; border-radius:8px; font-size:11px; outline:none; resize:none; line-height:1.5;" onfocus="this.style.borderColor='#059669'" onblur="this.style.borderColor='#e4e4e7'">Здравствуйте! Меня заинтересовала вакансия {position}. У меня {experience} опыта в {skills}. Готов обсудить детали на интервью.</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tab-settings-btn">
+
+    <!-- Rate Limiting (F7) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:13px; font-weight:600; margin-bottom:12px;">Лимиты и рейт-лимитинг</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Дневной лимит</div>
+            <div style="font-size:11px; color:#71717a;">Макс. откликов в день</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" value="200" style="width:64px; padding:6px 8px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; text-align:center; outline:none;">
+            <span style="font-size:11px; color:#71717a;">/ день</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Часовой лимит</div>
+            <div style="font-size:11px; color:#71717a;">Макс. откликов в час</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" value="30" style="width:64px; padding:6px 8px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; text-align:center; outline:none;">
+            <span style="font-size:11px; color:#71717a;">/ час</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Мин. интервал</div>
+            <div style="font-size:11px; color:#71717a;">Между откликами</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" value="30" style="width:64px; padding:6px 8px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; text-align:center; outline:none;">
+            <span style="font-size:11px; color:#71717a;">сек</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px; border-top:1px solid rgba(0,0,0,0.04);">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Burst detection</div>
+            <div style="font-size:11px; color:#71717a;">Остановка при всплеске 429</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Adaptive slowdown</div>
+            <div style="font-size:11px; color:#71717a;">Увеличение интервала при 429/CAPTCHA</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPTCHA Handling (F16) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:13px; font-weight:600; margin-bottom:10px;">CAPTCHA обработка</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Авто-пауза при CAPTCHA</div>
+            <div style="font-size:11px; color:#71717a;">Остановить отклики и уведомить</div>
+          </div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Время паузы</div>
+            <div style="font-size:11px; color:#71717a;">Перед продолжением</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" value="5" style="width:64px; padding:6px 8px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; text-align:center; outline:none;">
+            <span style="font-size:11px; color:#71717a;">мин</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blacklist (F8) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div>
+          <div style="font-size:13px; font-weight:600;">Чёрный список</div>
+          <div style="font-size:11px; color:#71717a; margin-top:2px;">Работодатели, которые будут пропущены</div>
+        </div>
+        <span class="badge badge-zinc">3 компании</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#FEF2F2; border-radius:8px;">
+          <span style="font-size:12px;">VK</span>
+          <button class="btn btn-sm" style="background:#FEE2E2; color:#DC2626; font-size:11px;" onclick="this.parentElement.remove()">Удалить</button>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#FEF2F2; border-radius:8px;">
+          <span style="font-size:12px;">Тензор (Яндекс.Маркет)</span>
+          <button class="btn btn-sm" style="background:#FEE2E2; color:#DC2626; font-size:11px;" onclick="this.parentElement.remove()">Удалить</button>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#FEF2F2; border-radius:8px;">
+          <span style="font-size:12px;">HeadHunter (внутренние)</span>
+          <button class="btn btn-sm" style="background:#FEE2E2; color:#DC2626; font-size:11px;" onclick="this.parentElement.remove()">Удалить</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" placeholder="Название компании..." id="blacklistInput" style="flex:1; padding:7px 10px; border:1px solid #e4e4e7; border-radius:8px; font-size:11px; outline:none;">
+        <button class="btn btn-outline btn-sm" onclick="addToBlacklist()">+ Добавить</button>
+      </div>
+    </div>
+
+    <!-- Daily Reset (F13) -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:13px; font-weight:600; margin-bottom:10px;">Ежедневный сброс</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Авто-сброс счётчиков</div>
+            <div style="font-size:11px; color:#71717a;">Время сброса (chrome.alarms)</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="time" value="00:00" style="padding:4px 8px; border:1px solid #e4e4e7; border-radius:8px; font-size:12px; outline:none;">
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:12px; font-weight:500;">Следующий сброс</div>
+            <div style="font-size:11px; color:#71717a;">Через chrome.alarms API</div>
+          </div>
+          <span style="font-size:11px; font-weight:600; color:#71717a;">через 8ч 23мин</span>
+        </div>
+        <button class="btn btn-outline" style="align-self:flex-start;" onclick="resetDaily()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>
+          Сбросить сейчас
+        </button>
+      </div>
+    </div>
+
+    <!-- General Settings -->
+    <div class="card fade-in">
+      <div style="font-size:13px; font-weight:600; margin-bottom:10px;">Общие настройки</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:12px; font-weight:500;">Авто-проверка авторизации</div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:12px; font-weight:500;">Уведомления</div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:12px; font-weight:500;">Логирование действий</div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:12px; font-weight:500;">Shadow DOM изоляция</div>
+          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB: СТАТИСТИКА И ЛОГИ ===================== -->
+  <div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tab-stats-btn">
+
+    <!-- Period Selector -->
+    <div style="display:flex; gap:6px; margin-bottom:12px;">
+      <button class="btn btn-sm btn-primary" style="font-size:11px;">Сегодня</button>
+      <button class="btn btn-sm btn-outline" style="font-size:11px;">Неделя</button>
+      <button class="btn btn-sm btn-outline" style="font-size:11px;">Месяц</button>
+      <button class="btn btn-sm btn-outline" style="font-size:11px;">Всё время</button>
+    </div>
+
+    <!-- Stats KPIs -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+      <div class="card fade-in" style="text-align:center; padding:12px 8px;">
+        <div style="font-size:11px; color:#71717a; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Всего откликов</div>
+        <div style="font-size:22px; font-weight:700;">147</div>
+      </div>
+      <div class="card fade-in" style="text-align:center; padding:12px 8px;">
+        <div style="font-size:11px; color:#71717a; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Приглашений</div>
+        <div style="font-size:22px; font-weight:700; color:#2563EB;">23</div>
+      </div>
+      <div class="card fade-in" style="text-align:center; padding:12px 8px;">
+        <div style="font-size:11px; color:#71717a; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Конверсия</div>
+        <div style="font-size:22px; font-weight:700; color:#059669;">15.6%</div>
+      </div>
+    </div>
+
+    <!-- Weekly Chart -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:12px; font-weight:600; margin-bottom:12px;">Динамика за неделю</div>
+      <div style="display:flex; align-items:flex-end; gap:6px; height:100px;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#059669,#10B981); height:60%;"></div>
+          <span style="font-size:11px; color:#71717a;">Пн</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#059669,#10B981); height:80%;"></div>
+          <span style="font-size:11px; color:#71717a;">Вт</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#059669,#10B981); height:45%;"></div>
+          <span style="font-size:11px; color:#71717a;">Ср</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#059669,#10B981); height:90%;"></div>
+          <span style="font-size:11px; color:#71717a;">Чт</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#059669,#34D399); height:100%;"></div>
+          <span style="font-size:11px; color:#71717a;">Пт</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#047857,#059669); height:50%;"></div>
+          <span style="font-size:11px; color:#71717a;">Сб</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="width:100%; border-radius:4px; background:linear-gradient(180deg,#047857,#059669); height:25%;"></div>
+          <span style="font-size:11px; color:#71717a;">Вс</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Funnel -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:12px; font-weight:600; margin-bottom:10px;">Воронка конверсии</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:11px; color:#71717a; width:90px; flex-shrink:0;">Просмотрено</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill" style="width:100%; background:#3f3f46;"></div></div>
+          <span style="font-size:11px; font-weight:600; width:40px; text-align:right;">342</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:11px; color:#71717a; width:90px; flex-shrink:0;">Match > 60%</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill" style="width:65%; background:#D97706;"></div></div>
+          <span style="font-size:11px; font-weight:600; width:40px; text-align:right;">222</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:11px; color:#71717a; width:90px; flex-shrink:0;">Отклики</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill" style="width:43%; background:#059669;"></div></div>
+          <span style="font-size:11px; font-weight:600; width:40px; text-align:right;">147</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:11px; color:#71717a; width:90px; flex-shrink:0;">Приглашения</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill" style="width:7%; background:#2563EB;"></div></div>
+          <span style="font-size:11px; font-weight:600; width:40px; text-align:right;">23</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:11px; color:#71717a; width:90px; flex-shrink:0;">Собеседования</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill" style="width:2.3%; background:#7C3AED; min-width:8px;"></div></div>
+          <span style="font-size:11px; font-weight:600; width:40px; text-align:right;">8</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rate Limit Stats -->
+    <div class="card fade-in" style="margin-bottom:12px;">
+      <div style="font-size:12px; font-weight:600; margin-bottom:10px;">Статистика лимитов</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">429 ошибок (всего)</div>
+          <div style="font-size:16px; font-weight:700;">3</div>
+        </div>
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">CAPTCHA (всего)</div>
+          <div style="font-size:16px; font-weight:700;">1</div>
+        </div>
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">Adaptive slowdowns</div>
+          <div style="font-size:16px; font-weight:700;">5</div>
+        </div>
+        <div style="background:#FAFAFA; border-radius:8px; padding:8px 10px;">
+          <div style="font-size:11px; color:#71717a;">Ср. интервал</div>
+          <div style="font-size:16px; font-weight:700;">34с</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="card fade-in">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <span style="font-size:12px; font-weight:600;">Лог действий</span>
+        <button class="btn btn-outline btn-sm" style="font-size:11px;" onclick="clearLog()">Очистить</button>
+      </div>
+      <div id="activityLog">
+        <div class="log-entry"><div class="log-dot" style="background:#059669;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#059669;">[ОТКЛИК]</b> Яндекс — Senior Frontend (match: 87%)</div><div style="font-size:11px; color:#71717a;">14:23:15 • 手動</div></div></div>
+        <div class="log-entry"><div class="log-dot" style="background:#059669;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#059669;">[ОТКЛИК]</b> Тинькофф — Lead Frontend (match: 78%)</div><div style="font-size:11px; color:#71717a;">14:22:45 • АВТО</div></div></div>
+        <div class="log-entry"><div class="log-dot" style="background:#D97706;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#B45309;">[CAPTCHA]</b> Обнаружена, пауза 5 мин</div><div style="font-size:11px; color:#71717a;">13:15:02</div></div></div>
+        <div class="log-entry"><div class="log-dot" style="background:#059669;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#059669;">[ПАРСИНГ]</b> 42 вакансии спарсены (стр. 1-3)</div><div style="font-size:11px; color:#71717a;">13:10:30 • MutationObserver</div></div></div>
+        <div class="log-entry"><div class="log-dot" style="background:#71717a;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#71717a;">[СБРОС]</b> Дневные счётчики обнулены</div><div style="font-size:11px; color:#71717a;">00:00:00 • chrome.alarms</div></div></div>
+        <div class="log-entry"><div class="log-dot" style="background:#DC2626;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#DC2626;">[429]</b> Слишком много запросов, adaptive slowdown до 60с</div><div style="font-size:11px; color:#71717a;">вчера 18:42</div></div></div>
+        <div class="log-entry"><div class="log-dot" style="background:#2563EB;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#2563EB;">[ПРИГЛАШЕНИЕ]</b> Тинькофф пригласил на интервью</div><div style="font-size:11px; color:#71717a;">вчера 12:01</div></div></div>
+        <div class="log-entry" style="border:none;"><div class="log-dot" style="background:#059669;"></div><div style="flex:1;"><div style="font-size:11px;"><b style="color:#059669;">[РЕЗЮМЕ]</b> Парсинг завершён: 18 навыков извлечено</div><div style="font-size:11px; color:#71717a;">вчера 10:00</div></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:10px 16px; border-top:1px solid rgba(0,0,0,0.06); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:rgba(255,255,255,0.5);">
+    <div style="font-size:11px; color:#71717a;">HH Copilot v1.0 • Chrome Extension</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="font-size:11px; color:#71717a;">Storage: <b>23 KB</b></div>
+      <div style="display:flex; align-items:center; gap:4px;">
+        <span style="width:6px; height:6px; background:#10B981; border-radius:50%;"></span>
+        <span style="font-size:11px; color:#71717a;">chrome.storage.sync</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+  // Panel toggle
+  function togglePanel() {
+    const panel = document.getElementById('fabPanel');
+    const btn = document.getElementById('fabBtn');
+    const overlay = document.getElementById('panelOverlay');
+    const isOpen = !panel.classList.contains('hidden');
+    if (isOpen) {
+      panel.classList.add('hidden');
+      btn.classList.remove('panel-open');
+      overlay.classList.remove('visible');
+      btn.setAttribute('aria-expanded', 'false');
+      panel.setAttribute('aria-hidden', 'true');
+      overlay.setAttribute('aria-hidden', 'true');
+    } else {
+      panel.classList.remove('hidden');
+      btn.classList.add('panel-open');
+      overlay.classList.add('visible');
+      btn.setAttribute('aria-expanded', 'true');
+      panel.setAttribute('aria-hidden', 'false');
+      overlay.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  // Tab switching
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    document.getElementById('tab-' + tabId).classList.add('active');
+    if (btn) {
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+    }
+  }
+
+  // F1: Auth check
+  function checkAuth() {
+    const badge = document.getElementById('authBadge');
+    const indicator = document.getElementById('authIndicator');
+    badge.className = 'badge badge-amber';
+    badge.innerHTML = '<span class="pulse-dot" style="width:5px;height:5px;background:#D97706;border-radius:50%;display:inline-block;margin-right:3px;"></span> Проверка...';
+    indicator.className = 'badge badge-amber';
+    indicator.innerHTML = '<span class="pulse-dot" style="width:5px;height:5px;background:#D97706;border-radius:50%;display:inline-block;margin-right:3px;"></span> Проверка...';
+    setTimeout(() => {
+      badge.className = 'badge badge-green';
+      badge.innerHTML = '<span class="pulse-dot" style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:3px;"></span> Авторизован';
+      indicator.className = 'badge badge-green';
+      indicator.innerHTML = '<span class="pulse-dot" style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:3px;"></span> Онлайн';
+    }, 1500);
+  }
+
+  // F2: Parse vacancies
+  function parseVacancies() {
+    showToast('Парсинг вакансий...', 'info');
+    setTimeout(() => showToast('Найдено 42 вакансии (18 match > 70%)', 'success'), 2000);
+  }
+
+  // F3: Parse resume
+  function parseResume() {
+    showToast('Парсинг резюме...', 'info');
+    setTimeout(() => showToast('Извлечено: 18 навыков, 3 позиции, зарплата 250-350K', 'success'), 2000);
+  }
+
+  // F5: Manual apply
+  function manualApply() {
+    showToast('Отклик отправлен!', 'success');
+  }
+
+  // F6: Mass apply
+  let massInterval = null;
+  function startMassApply() {
+    document.getElementById('massStatus').className = 'badge badge-green';
+    document.getElementById('massStatus').textContent = 'Работает';
+    document.getElementById('massProgress').style.display = 'block';
+    document.getElementById('massStartBtn').disabled = true;
+    document.getElementById('massStartBtn').style.opacity = '0.5';
+    document.getElementById('massStopBtn').disabled = false;
+    document.getElementById('massStopBtn').style.opacity = '1';
+    let count = 0;
+    massInterval = setInterval(() => {
+      count++;
+      document.getElementById('massCount').textContent = count;
+      document.getElementById('massFill').style.width = (count/20*100) + '%';
+      const remaining = Math.round((20 - count) * 0.75);
+      document.getElementById('massEta').textContent = 'ETA: ~' + remaining + ' мин';
+      if (count >= 20) stopMassApply();
+    }, 800);
+  }
+
+  function stopMassApply() {
+    if (massInterval) clearInterval(massInterval);
+    massInterval = null;
+    document.getElementById('massStatus').className = 'badge badge-amber';
+    document.getElementById('massStatus').textContent = 'Остановлен';
+    document.getElementById('massStartBtn').disabled = false;
+    document.getElementById('massStartBtn').style.opacity = '1';
+    document.getElementById('massStopBtn').disabled = true;
+    document.getElementById('massStopBtn').style.opacity = '0.5';
+    showToast('Массовый отклик остановлен', 'info');
+  }
+
+  // F10: Skill analysis
+  function analyzeSkills() {
+    showToast('Анализ навыков...', 'info');
+    setTimeout(() => showToast('Совпадение: 78%. Рекомендуем добавить AWS, Vue.js, K8s', 'success'), 2000);
+  }
+
+  // F13: Daily reset
+  function resetDaily() {
+    showToast('Дневные счётчики сброшены', 'success');
+  }
+
+  // F14: Toggle observer
+  function toggleObserver(el) {
+    showToast(el.checked ? 'MutationObserver включён' : 'MutationObserver отключён', 'info');
+  }
+
+  // F15: Typing simulation
+  function simulateTyping() {
+    const text = 'Здравствуйте! Меня заинтересовала вакансия Senior Frontend Developer. У меня 7 лет опыта в разработке на React и TypeScript, включая архитектуру микрофронтендов для маркетплейса с 2 млн пользователей. Готов обсудить детали на интервью.';
+    const el = document.getElementById('coverLetterText');
+    const cursor = document.getElementById('typingCursor');
+    el.textContent = '';
+    cursor.style.display = 'inline';
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        el.textContent += text[i];
+        i++;
+      } else {
+        clearInterval(interval);
+        cursor.style.display = 'none';
+      }
+    }, 50);
+  }
+
+  // F8: Blacklist
+  function addToBlacklist() {
+    const input = document.getElementById('blacklistInput');
+    if (input.value.trim()) {
+      showToast(input.value.trim() + ' добавлен в чёрный список', 'success');
+      input.value = '';
+    }
+  }
+
+  // F9: Select conversation
+  function selectConversation(id) {
+    document.querySelectorAll('.conv-item').forEach(el => {
+      el.style.background = 'transparent';
+    });
+    event.currentTarget.style.background = '#ECFDF5';
+  }
+
+  // Toggle timeline
+  function toggleTimeline() {
+    const body = document.getElementById('tlBody');
+    const chevron = document.getElementById('tlChevron');
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+
+  // Toggle resume timeline
+  function toggleResumeTimeline() {
+    const body = document.getElementById('resBody');
+    const chevron = document.getElementById('resChevron');
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+
+  // Sub-accordion toggle for resume parsed sections
+  function toggleSub(bodyId, chevId) {
+    const body = document.getElementById(bodyId);
+    const chevron = document.getElementById(chevId);
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+
+  // Toggle cover letter block in negotiations
+  function toggleCoverLetter() {
+    const body = document.getElementById('clBody');
+    const chevron = document.getElementById('clChevron');
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+
+  // Insert AI reply (by type)
+  const aiReplies = {
+    time: 'Спасибо за приглашение! Мне удобно во вторник или среду с 10:00 до 18:00. Яндекс обычно проводит 3 этапа — готов пройти все.',
+    skills: 'Отлично! Мой стек (React, TypeScript, микрофронтенды) хорошо совпадает с требованиями. Расскажу о масштабном проекте маркетплейса.',
+    salary: 'Благодарю за приглашение! Мои ожидания по зарплате — от 300 000 руб. Готов обсудить условия на интервью.',
+    proactive: 'Спасибо! Подскажите, над каким продуктом будет работа и сколько человек в команде? Также интересно узнать про процесс code review.'
+  };
+  function insertAIReply(type) {
+    const text = aiReplies[type] || aiReplies.time;
+    const input = document.querySelector('#tab-negotiations input[type="text"]');
+    if (input) { input.value = text; input.focus(); }
+    showToast('Ответ вставлен (' + (type || 'default') + ')', 'success');
+  }
+
+  // Clear log
+  function clearLog() {
+    document.getElementById('activityLog').innerHTML = '<div style="text-align:center; padding:20px; color:#71717a; font-size:11px;">Лог очищен</div>';
+    showToast('Лог очищен', 'info');
+  }
+
+  // Toast notification
+  function showToast(message, type) {
+    const existing = document.querySelector('.toast-msg');
+    if (existing) existing.remove();
+    const colors = { success: '#059669', info: '#2563EB', error: '#DC2626', warning: '#D97706' };
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg';
+    toast.style.cssText = 'position:fixed; bottom:90px; right:580px; z-index:1001; padding:10px 16px; background:' + (colors[type]||colors.info) + '; color:#fff; border-radius:10px; font-size:12px; font-weight:500; box-shadow:0 4px 16px rgba(0,0,0,0.15); animation:fadeIn 0.25s ease; max-width:280px;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+  }
+
+  // Open panel by default for demo
+  window.addEventListener('DOMContentLoaded', () => { togglePanel(); });
+</script>
+
+</body>
+</html>

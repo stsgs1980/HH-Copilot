@@ -219,3 +219,21 @@ Stage Summary:
 - Root cause: wrong container ID (har-resume-content vs res-parsed-data)
 - All 3 files committed: AGENT_RULES.md, main.js, resumes.js
 - "Синхронизировать все" worked because it used #res-sync-list (correct ID)
+
+---
+Task ID: 5
+Agent: main
+Task: Restore repo structure + add wireframe files
+
+Work Log:
+- Analyzed git history to find the destructive commit 9842902 that deleted all extension files
+- Restored .gitignore, .gitmodules, README.md, AGENT_RULES.md, cascade-cli.sh, cascade-init.sh, cascade-state.json from commit 9853ce1
+- Restored hh-extension/hh-auto-respond-extension/ source files from gitlink commit 1a9b93c (includes v1.8.1 nbsp fix + resume load button fix)
+- Restored anti-hallucination-guard and cascade-guard as proper submodules
+- Removed broken HH-Copilot gitlink (was circular self-reference)
+- Added wireframe files to docs/wireframes/ (documentation, FAB panel, landing page)
+
+Stage Summary:
+- Repo fully restored with all extension source files, submodules, and docs
+- Wireframe files stored in docs/wireframes/ permanently
+- Extension can now be built: hh-extension/hh-auto-respond-extension/npm run build

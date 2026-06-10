@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HH Copilot — AI-помощник для поиска работы на HH.ru</title>
+    <meta name="description" content="Автоматические отклики, AI-переписка с работодателями, умный мэтчинг вакансий. Найдите работу в 10 раз быстрее с HH Copilot.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0c;
+            --surface: #111115;
+            --tertiary: #18181c;
+            --accent: #059669;
+            --accent-light: #10B981;
+            --accent-dim: rgba(5,150,105,0.15);
+            --accent-deep: rgba(5,150,105,0.08);
+            --green: #4ade80;
+            --green-dim: rgba(74,222,128,0.12);
+            --amber: #f59e0b;
+            --text: #f0f0f2;
+            --secondary: #8a8a9a;
+            --dim: #7a7a92;
+            --border: rgba(255,255,255,0.06);
+            --glass: rgba(255,255,255,0.02);
+            --glass-hover: rgba(255,255,255,0.05);
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) transparent;
+        }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent-light);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--dim);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ====== NOISE OVERLAY ====== */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.035;
+        }
+
+        /* ====== CURSOR GLOW ====== */
+        .cursor-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(5,150,105,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+        .cursor-glow.active {
+            opacity: 1;
+        }
+
+        /* ====== CONTAINER ====== */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ====== SECTION LABEL ====== */
+        .section-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .section-label.center {
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--text) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-green {
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-accent {
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ====== REVEAL ANIMATIONS ====== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .d-1 { transition-delay: 0.05s; }
+        .d-2 { transition-delay: 0.1s; }
+        .d-3 { transition-delay: 0.15s; }
+        .d-4 { transition-delay: 0.2s; }
+        .d-5 { transition-delay: 0.25s; }
+        .d-6 { transition-delay: 0.3s; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+            .marquee-inner {
+                animation: none !important;
+            }
+            .cursor-glow { display: none; }
+            .noise-overlay { display: none; }
+            .pulse-dot { animation: none; }
+            .scroll-line { animation: none; }
+        }
+
+        /* ====== NAVBAR ====== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 0;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            background: rgba(10,10,12,0.7);
+            border-bottom: 1px solid var(--border);
+            transition: background 0.3s;
+        }
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .nav-logo-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .nav-logo-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: var(--text);
+        }
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 24px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 32px rgba(5,150,105,0.3);
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+            z-index: 1001;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text);
+            border-radius: 2px;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10,10,12,0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+        }
+        .mobile-menu.active {
+            display: flex;
+        }
+        .mobile-menu a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .mobile-menu .nav-cta {
+            font-size: 1.1rem;
+            padding: 14px 32px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+        }
+
+        /* ====== HERO ====== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 100px;
+            padding-bottom: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+        }
+        .hero-bg .mesh-1 {
+            position: absolute;
+            top: -20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+        .hero-bg .mesh-2 {
+            position: absolute;
+            bottom: -10%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+        .hero-bg .mesh-3 {
+            position: absolute;
+            top: 40%;
+            left: 40%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(74,222,128,0.04) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+        .hero .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-content {
+            max-width: 560px;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(5,150,105,0.2);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-light);
+            margin-bottom: 28px;
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 5.5vw, 4rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            line-height: 1.7;
+            margin-bottom: 40px;
+            max-width: 480px;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 32px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(5,150,105,0.35);
+        }
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 14px;
+            background: transparent;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .btn-outline:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .hero-mockup {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        .glass-card-mockup {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(17,17,21,0.8);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 32px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .mockup-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .mockup-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: #fff;
+        }
+        .mockup-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .mockup-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--green);
+        }
+        .mockup-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+        .mockup-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .mockup-tab {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--secondary);
+            background: transparent;
+            white-space: nowrap;
+        }
+        .mockup-tab.active {
+            background: var(--accent-dim);
+            color: var(--accent-light);
+        }
+        .mockup-stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .mockup-stat {
+            background: var(--tertiary);
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+        }
+        .mockup-stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent-light);
+        }
+        .mockup-stat-label {
+            font-size: 0.75rem;
+            color: var(--dim);
+            margin-top: 2px;
+        }
+        .mockup-chat {
+            background: var(--tertiary);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .mockup-chat-msg {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .mockup-chat-msg:last-child {
+            margin-bottom: 0;
+        }
+        .mockup-chat-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--accent-light);
+            flex-shrink: 0;
+        }
+        .mockup-chat-bubble {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .mockup-chat-bubble.ai {
+            background: var(--accent-deep);
+            border: 1px solid rgba(5,150,105,0.15);
+        }
+        .mockup-chat-sender {
+            font-size: 0.75rem;
+            color: var(--dim);
+            margin-bottom: 4px;
+        }
+        .hero-scroll {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--dim);
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--accent), transparent);
+            animation: scrollAnim 2s ease-in-out infinite;
+        }
+        @keyframes scrollAnim {
+            0% { opacity: 0; transform: scaleY(0); transform-origin: top; }
+            50% { opacity: 1; transform: scaleY(1); transform-origin: top; }
+            100% { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
+        }
+
+        @media (max-width: 1024px) {
+            .hero .container {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+            .hero-content {
+                max-width: 100%;
+                text-align: center;
+            }
+            .hero-subtitle {
+                max-width: 100%;
+            }
+            .hero-buttons {
+                justify-content: center;
+            }
+            .hero-badge {
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .hero-buttons {
+                flex-direction: column;
+            }
+            .hero-buttons a, .hero-buttons button {
+                width: 100%;
+            }
+        }
+
+        /* ====== STATS ====== */
+        .stats {
+            padding: 80px 0;
+            position: relative;
+            z-index: 1;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+        }
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ====== MARQUEE ====== */
+        .marquee {
+            padding: 32px 0;
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .marquee-track {
+            display: flex;
+            width: max-content;
+        }
+        .marquee-inner {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            animation: marqueeScroll 30s linear infinite;
+            flex-shrink: 0;
+        }
+        .marquee-inner span {
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.08);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .marquee-inner .sep {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.4;
+            flex-shrink: 0;
+        }
+        @keyframes marqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ====== FEATURES ====== */
+        .features {
+            padding: 120px 0;
+        }
+        .features-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), border-color 0.4s, box-shadow 0.4s;
+            cursor: default;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), rgba(5,150,105,0.06), transparent 40%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px) rotateX(1deg);
+            border-color: rgba(5,150,105,0.2);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(5,150,105,0.1);
+        }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        .feature-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            line-height: 1.65;
+            margin-bottom: 20px;
+        }
+        .feature-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            cursor: pointer;
+            transition: gap 0.2s;
+        }
+        .feature-card:hover .feature-card-footer {
+            gap: 10px;
+        }
+        .feature-card-footer svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+        .feature-card:hover .feature-card-footer svg {
+            transform: translateX(2px);
+        }
+
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ====== HOW IT WORKS ====== */
+        .how-it-works {
+            padding: 120px 0;
+        }
+        .how-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .how-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        .step-card {
+            text-align: center;
+            position: relative;
+        }
+        .step-card:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: calc(50% + 32px);
+            width: calc(100% - 64px);
+            height: 1px;
+            background: linear-gradient(to right, var(--accent), var(--border));
+        }
+        .step-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #fff;
+            margin: 0 auto 20px;
+        }
+        .step-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .step-card p {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            line-height: 1.6;
+            max-width: 220px;
+            margin: 0 auto;
+        }
+
+        .timeline-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .timeline-item .t-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+        .timeline-item .t-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .timeline-item .t-sub {
+            font-size: 0.75rem;
+            color: var(--dim);
+        }
+        .timeline-arrow {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin: 0 24px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1024px) {
+            .how-steps {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 40px;
+            }
+            .step-card:not(:last-child)::after {
+                display: none;
+            }
+            .timeline-card {
+                padding: 24px;
+            }
+            .timeline-arrow {
+                margin: 0 12px;
+            }
+        }
+        @media (max-width: 768px) {
+            .how-steps {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+            .timeline-card {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .timeline-arrow {
+                transform: rotate(90deg);
+                margin: 0;
+            }
+        }
+
+        /* ====== PRODUCT PREVIEW ====== */
+        .product-preview {
+            padding: 120px 0;
+        }
+        .product-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .browser-frame {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+        }
+        .browser-topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: var(--tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+        .browser-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .browser-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .browser-dots span:nth-child(1) { background: #ef4444; }
+        .browser-dots span:nth-child(2) { background: #f59e0b; }
+        .browser-dots span:nth-child(3) { background: #22c55e; }
+        .browser-url {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            color: var(--dim);
+            text-align: center;
+        }
+        .browser-content {
+            padding: 24px;
+        }
+        .fab-panel {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .fab-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+        .fab-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .fab-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: #fff;
+        }
+        .fab-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .fab-online {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            background: var(--green-dim);
+            font-size: 0.75rem;
+            color: var(--green);
+            font-weight: 600;
+        }
+        .fab-online-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+        .fab-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .fab-tab {
+            padding: 12px 18px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--secondary);
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .fab-tab.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent);
+        }
+        .fab-body {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+        .kpi-ring-wrapper {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+        .kpi-ring-wrapper svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .kpi-ring-bg {
+            fill: none;
+            stroke: var(--tertiary);
+            stroke-width: 8;
+        }
+        .kpi-ring-fill {
+            fill: none;
+            stroke: url(#kpiGradient);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 314;
+            stroke-dashoffset: 114;
+            transition: stroke-dashoffset 1s ease;
+        }
+        .kpi-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .kpi-ring-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-light);
+            line-height: 1;
+        }
+        .kpi-ring-label {
+            font-size: 0.75rem;
+            color: var(--dim);
+            margin-top: 2px;
+        }
+        .fab-kpi-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .fab-kpi-card {
+            background: var(--tertiary);
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+        .fab-kpi-card-label {
+            font-size: 0.75rem;
+            color: var(--dim);
+            margin-bottom: 4px;
+        }
+        .fab-kpi-card-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+        .fab-kpi-card-value.green { color: var(--green); }
+        .fab-kpi-card-value.accent { color: var(--accent-light); }
+        .fab-kpi-card-value.amber { color: var(--amber); }
+        .fab-kpi-card-value.text { color: var(--text); }
+        .product-caption {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--dim);
+        }
+
+        @media (max-width: 768px) {
+            .fab-body {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                text-align: center;
+            }
+        }
+
+        /* ====== PRICING ====== */
+        .pricing {
+            padding: 120px 0;
+        }
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+        .pricing-toggle span {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        .pricing-toggle span.active {
+            color: var(--text);
+        }
+        .toggle-switch {
+            width: 52px;
+            height: 28px;
+            border-radius: 14px;
+            background: var(--tertiary);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--text);
+            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+            background: var(--accent-light);
+        }
+        .pricing-save {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            background: var(--accent-dim);
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+        .pricing-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 36px 28px;
+            position: relative;
+            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), border-color 0.4s;
+        }
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+        .pricing-card.popular {
+            border-color: rgba(5,150,105,0.3);
+            background: rgba(5,150,105,0.03);
+        }
+        .pricing-card.popular:hover {
+            border-color: rgba(5,150,105,0.5);
+            box-shadow: 0 16px 48px rgba(5,150,105,0.15);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 20px;
+            border-radius: 100px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .pricing-plan-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .pricing-plan-desc {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            margin-bottom: 24px;
+        }
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+        .pricing-price .currency {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .pricing-period {
+            font-size: 0.85rem;
+            color: var(--dim);
+            margin-bottom: 28px;
+        }
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: var(--secondary);
+            line-height: 1.5;
+        }
+        .pricing-features li svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: var(--accent-light);
+        }
+        .pricing-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            border: none;
+        }
+        .pricing-btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: #fff;
+        }
+        .pricing-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(5,150,105,0.35);
+        }
+        .pricing-btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .pricing-btn-outline:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .pricing-card:last-child {
+                grid-column: span 2;
+                max-width: 480px;
+                justify-self: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                margin: 0 auto;
+            }
+            .pricing-card:last-child {
+                grid-column: span 1;
+                max-width: 100%;
+            }
+        }
+
+        /* ====== TESTIMONIALS ====== */
+        .testimonials {
+            padding: 120px 0;
+        }
+        .testimonials-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .testimonial-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px;
+            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), border-color 0.4s;
+        }
+        .testimonial-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .testimonial-stars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+        .testimonial-stars svg {
+            width: 18px;
+            height: 18px;
+            color: var(--amber);
+        }
+        .testimonial-text {
+            font-size: 0.95rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .testimonial-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--accent-light);
+        }
+        .testimonial-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .testimonial-role {
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 1024px) {
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+        }
+
+        /* ====== FAQ ====== */
+        .faq {
+            padding: 120px 0;
+        }
+        .faq-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .faq-list {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .faq-item {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .faq-item.open {
+            border-color: rgba(5,150,105,0.15);
+        }
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text);
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+            transition: color 0.2s;
+        }
+        .faq-question:hover {
+            color: var(--accent-light);
+        }
+        .faq-chevron {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+            color: var(--dim);
+        }
+        .faq-item.open .faq-chevron {
+            transform: rotate(180deg);
+            color: var(--accent-light);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+        }
+        .faq-answer-inner {
+            padding: 0 24px 20px;
+            font-size: 0.9rem;
+            color: var(--secondary);
+            line-height: 1.7;
+        }
+
+        /* ====== FINAL CTA ====== */
+        .final-cta {
+            padding: 120px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .final-cta-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+        }
+        .final-cta-bg .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(5,150,105,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+        .final-cta .container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        .final-cta h2 {
+            font-size: clamp(2rem, 4.5vw, 3.5rem);
+            font-weight: 900;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+        }
+        .final-cta-subtitle {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 40px;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .final-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .final-cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(5,150,105,0.4);
+        }
+        .final-cta-small {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--dim);
+        }
+
+        /* ====== FOOTER ====== */
+        .footer {
+            padding: 64px 0 32px;
+            border-top: 1px solid var(--border);
+        }
+        .footer-top {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+        .footer-brand p {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            margin-top: 12px;
+            max-width: 280px;
+            line-height: 1.6;
+        }
+        .footer-col h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .footer-col a {
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .footer-col a:hover {
+            color: var(--accent-light);
+        }
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .footer-copyright {
+            font-size: 0.85rem;
+            color: var(--dim);
+        }
+        .footer-social {
+            display: flex;
+            gap: 16px;
+        }
+        .footer-social a {
+            color: var(--dim);
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .footer-social a:hover {
+            color: var(--accent-light);
+        }
+        .footer-social svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .footer-top {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+        @media (max-width: 480px) {
+            .footer-top {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ====== MISC ====== */
+        .section {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Noise Overlay -->
+<svg class="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noiseFilter">
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+</svg>
+
+<!-- Cursor Glow -->
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Мобильное меню" aria-hidden="true">
+    <a href="#features" class="mobile-link">Возможности</a>
+    <a href="#how" class="mobile-link">Как работает</a>
+    <a href="#pricing" class="mobile-link">Тарифы</a>
+    <a href="#faq" class="mobile-link">FAQ</a>
+    <a href="#" class="nav-cta mobile-link">Начать бесплатно</a>
+</div>
+
+<!-- ====== NAVBAR ====== -->
+<nav class="navbar" id="navbar" aria-label="Основная навигация">
+    <div class="container">
+        <a href="#" class="nav-logo">
+            <div class="nav-logo-icon">HC</div>
+            <span class="nav-logo-text">HH Copilot</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#features">Возможности</a></li>
+            <li><a href="#how">Как работает</a></li>
+            <li><a href="#pricing">Тарифы</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+        <a href="#" class="nav-cta" style="display:none;" id="navCtaDesktop">Начать бесплатно</a>
+        <button class="hamburger" id="hamburger" aria-label="Меню" aria-expanded="false" aria-controls="mobileMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- ====== HERO ====== -->
+<section class="hero" id="hero">
+    <div class="hero-bg">
+        <div class="mesh-1"></div>
+        <div class="mesh-2"></div>
+        <div class="mesh-3"></div>
+    </div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-badge reveal">
+                <span class="pulse-dot"></span>
+                AI-помощник для поиска работы на HH.ru
+            </div>
+            <h1 class="reveal d-1">
+                Найди работу<br>
+                <span class="gradient-text-green">в 10 раз быстрее</span>
+            </h1>
+            <p class="hero-subtitle reveal d-2">
+                Автоматические отклики на вакансии, AI-подсказки в переписке, умный мэтчинг навыков и аналитика — всё в одном расширении. Получайте офферы быстрее без лишних усилий.
+            </p>
+            <div class="hero-buttons reveal d-3">
+                <a href="#" class="btn-primary">Попробовать бесплатно</a>
+                <a href="#how" class="btn-outline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Как это работает
+                </a>
+            </div>
+        </div>
+        <div class="hero-mockup reveal d-4">
+            <div class="glass-card-mockup">
+                <div class="mockup-header">
+                    <div class="mockup-header-left">
+                        <div class="mockup-logo">HC</div>
+                        <span class="mockup-title">HH Copilot</span>
+                    </div>
+                    <div class="mockup-status">
+                        <span class="mockup-status-dot"></span>
+                        Онлайн
+                    </div>
+                </div>
+                <div class="mockup-tabs">
+                    <span class="mockup-tab active">Обзор</span>
+                    <span class="mockup-tab">Вакансии</span>
+                    <span class="mockup-tab">Переговоры</span>
+                    <span class="mockup-tab">Статистика</span>
+                </div>
+                <div class="mockup-stats-row">
+                    <div class="mockup-stat">
+                        <div class="mockup-stat-value">127</div>
+                        <div class="mockup-stat-label">откликов сегодня</div>
+                    </div>
+                    <div class="mockup-stat">
+                        <div class="mockup-stat-value">23</div>
+                        <div class="mockup-stat-label">приглашений</div>
+                    </div>
+                    <div class="mockup-stat">
+                        <div class="mockup-stat-value">89%</div>
+                        <div class="mockup-stat-label">мэтчинг</div>
+                    </div>
+                </div>
+                <div class="mockup-chat">
+                    <div class="mockup-chat-msg">
+                        <div class="mockup-chat-avatar">&#x1F916;</div>
+                        <div>
+                            <div class="mockup-chat-sender">HH Copilot AI</div>
+                            <div class="mockup-chat-bubble ai">Найдена вакансия &laquo;Senior Frontend&raquo; в Яндекс — мэтчинг 94%. Создать отклик с персонализированным сопроводительным?</div>
+                        </div>
+                    </div>
+                    <div class="mockup-chat-msg">
+                        <div class="mockup-chat-avatar">&#x1F464;</div>
+                        <div>
+                            <div class="mockup-chat-sender">Вы</div>
+                            <div class="mockup-chat-bubble">Да, отправляй!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-scroll">
+        <span>листай вниз</span>
+        <div class="scroll-line"></div>
+    </div>
+</section>
+
+<!-- ====== STATS ====== -->
+<section class="stats section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item reveal d-1">
+                <div class="stat-number gradient-text-accent" data-target="12847" data-suffix="">0</div>
+                <div class="stat-label">пользователей</div>
+            </div>
+            <div class="stat-item reveal d-2">
+                <div class="stat-number gradient-text-accent" data-target="340" data-suffix=" тыс.">0</div>
+                <div class="stat-label">откликов отправлено</div>
+            </div>
+            <div class="stat-item reveal d-3">
+                <div class="stat-number gradient-text-accent" data-target="89" data-suffix="%">0</div>
+                <div class="stat-label">получают оффер</div>
+            </div>
+            <div class="stat-item reveal d-4">
+                <div class="stat-number gradient-text-accent" data-target="4.9" data-suffix="" data-decimals="1">0</div>
+                <div class="stat-label">рейтинг в Chrome Store</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ====== MARQUEE ====== -->
+<section class="marquee">
+    <div class="marquee-track">
+        <div class="marquee-inner">
+            <span>Auto Apply</span><span class="sep"></span>
+            <span>Chatik API</span><span class="sep"></span>
+            <span>AI Interview</span><span class="sep"></span>
+            <span>Smart Replies</span><span class="sep"></span>
+            <span>Analytics</span><span class="sep"></span>
+            <span>Typing Simulation</span><span class="sep"></span>
+            <span>Rate Limiting</span><span class="sep"></span>
+            <span>Skill Matching</span><span class="sep"></span>
+            <span>HH.ru Integration</span><span class="sep"></span>
+            <span>CAPTCHA Detection</span><span class="sep"></span>
+            <!-- Duplicate for seamless loop -->
+            <span>Auto Apply</span><span class="sep"></span>
+            <span>Chatik API</span><span class="sep"></span>
+            <span>AI Interview</span><span class="sep"></span>
+            <span>Smart Replies</span><span class="sep"></span>
+            <span>Analytics</span><span class="sep"></span>
+            <span>Typing Simulation</span><span class="sep"></span>
+            <span>Rate Limiting</span><span class="sep"></span>
+            <span>Skill Matching</span><span class="sep"></span>
+            <span>HH.ru Integration</span><span class="sep"></span>
+            <span>CAPTCHA Detection</span><span class="sep"></span>
+        </div>
+    </div>
+</section>
+
+<!-- ====== FEATURES ====== -->
+<section class="features section" id="features">
+    <div class="container">
+        <div class="features-header">
+            <div class="section-label reveal">&mdash; Возможности</div>
+            <h2 class="section-title reveal d-1">
+                <span class="gradient-text">Всё что нужно для</span><br>
+                <span class="gradient-text-green">быстрого поиска работы</span>
+            </h2>
+        </div>
+        <div class="features-grid">
+            <!-- Feature 1 -->
+            <div class="feature-card reveal d-1">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                </div>
+                <h3>Авто-отклики</h3>
+                <p>AI анализирует вакансии и автоматически отправляет отклики с персонализированными сопроводительными письмами, созданными на основе вашего резюме.</p>
+                <div class="feature-card-footer">
+                    Подробнее
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+            <!-- Feature 2 -->
+            <div class="feature-card reveal d-2">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                </div>
+                <h3>AI-переписка</h3>
+                <p>Читает сообщения работодателей в Chatik и предлагает идеальные варианты ответов. Подстраивается под тон собеседника и контекст вакансии.</p>
+                <div class="feature-card-footer">
+                    Подробнее
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+            <!-- Feature 3 -->
+            <div class="feature-card reveal d-3">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                </div>
+                <h3>Умный мэтчинг</h3>
+                <p>Взвешенное сравнение навыков с требованиями вакансии. Скоринг от 0 до 100% — откликаемся только на вакансии с мэтчингом 87% и выше.</p>
+                <div class="feature-card-footer">
+                    Подробнее
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+            <!-- Feature 4 -->
+            <div class="feature-card reveal d-4">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                </div>
+                <h3>Аналитика и статистика</h3>
+                <p>Отслеживайте конверсию откликов, воронку ответов, дневные лимиты. Подробные графики и метрики для оптимизации поиска.</p>
+                <div class="feature-card-footer">
+                    Подробнее
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+            <!-- Feature 5 -->
+            <div class="feature-card reveal d-5">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>Защита от банов</h3>
+                <p>Умный rate limiting: 200/день, 30/час, интервалы от 30 секунд. Имитация человеческого набора, burst detection, распознавание CAPTCHA.</p>
+                <div class="feature-card-footer">
+                    Подробнее
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+            <!-- Feature 6 -->
+            <div class="feature-card reveal d-6">
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                </div>
+                <h3>Приватность</h3>
+                <p>Все данные обрабатываются локально на вашем устройстве. Мы не продаём и не передаём информацию третьим лицам. Полное соответствие 152-ФЗ.</p>
+                <div class="feature-card-footer">
+                    Подробнее
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ====== HOW IT WORKS ====== -->
+<section class="how-it-works section" id="how">
+    <div class="container">
+        <div class="how-header">
+            <div class="section-label reveal">&mdash; Как это работает</div>
+            <h2 class="section-title reveal d-1">
+                <span class="gradient-text">Четыре шага к</span><br>
+                <span class="gradient-text-green">новой работе</span>
+            </h2>
+        </div>
+        <div class="how-steps">
+            <div class="step-card reveal d-1">
+                <div class="step-number">1</div>
+                <h3>Установите расширение</h3>
+                <p>Добавьте HH Copilot в Chrome за один клик. Установка займёт меньше минуты.</p>
+            </div>
+            <div class="step-card reveal d-2">
+                <div class="step-number">2</div>
+                <h3>Подключите HH.ru</h3>
+                <p>Авторизуйтесь безопасно через OAuth. Ваш профиль синхронизируется автоматически.</p>
+            </div>
+            <div class="step-card reveal d-3">
+                <div class="step-number">3</div>
+                <h3>Настройте фильтры</h3>
+                <p>Задайте желаемую зарплату, локацию, навыки и чёрный список компаний.</p>
+            </div>
+            <div class="step-card reveal d-4">
+                <div class="step-number">4</div>
+                <h3>Запустите автопоиск</h3>
+                <p>AI отправляет отклики 24/7. Вы просто принимаете приглашения и ходите на собеседования.</p>
+            </div>
+        </div>
+        <div class="timeline-card reveal d-2">
+            <div class="timeline-item">
+                <div class="t-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                </div>
+                <div>
+                    <div class="t-text">Подключение</div>
+                    <div class="t-sub">1 клик</div>
+                </div>
+            </div>
+            <span class="timeline-arrow">&rarr;</span>
+            <div class="timeline-item">
+                <div class="t-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div>
+                    <div class="t-text">Парсинг</div>
+                    <div class="t-sub">30 сек</div>
+                </div>
+            </div>
+            <span class="timeline-arrow">&rarr;</span>
+            <div class="timeline-item">
+                <div class="t-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                </div>
+                <div>
+                    <div class="t-text">Мэтчинг</div>
+                    <div class="t-sub">AI-скоринг</div>
+                </div>
+            </div>
+            <span class="timeline-arrow">&rarr;</span>
+            <div class="timeline-item">
+                <div class="t-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                </div>
+                <div>
+                    <div class="t-text">Отклик</div>
+                    <div class="t-sub">авто</div>
+                </div>
+            </div>
+            <span class="timeline-arrow">&rarr;</span>
+            <div class="timeline-item">
+                <div class="t-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                </div>
+                <div>
+                    <div class="t-text">Собеседование</div>
+                    <div class="t-sub">подсказки</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ====== PRODUCT PREVIEW ====== -->
+<section class="product-preview section" id="panel">
+    <div class="container">
+        <div class="product-header">
+            <div class="section-label reveal">&mdash; Панель управления</div>
+            <h2 class="section-title reveal d-1">
+                <span class="gradient-text">Весь контроль в</span><br>
+                <span class="gradient-text-green">одной панели</span>
+            </h2>
+        </div>
+        <div class="browser-frame reveal d-2">
+            <div class="browser-topbar">
+                <div class="browser-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="browser-url">hh.ru &#8212; HH Copilot Panel</div>
+            </div>
+            <div class="browser-content">
+                <div class="fab-panel">
+                    <div class="fab-header">
+                        <div class="fab-header-left">
+                            <div class="fab-logo">HC</div>
+                            <span class="fab-name">HH Copilot</span>
+                        </div>
+                        <div class="fab-online">
+                            <span class="fab-online-dot"></span>
+                            Онлайн
+                        </div>
+                    </div>
+                    <div class="fab-tabs">
+                        <span class="fab-tab active">Обзор</span>
+                        <span class="fab-tab">Резюме</span>
+                        <span class="fab-tab">Вакансии</span>
+                        <span class="fab-tab">Переговоры</span>
+                        <span class="fab-tab">Настройки</span>
+                        <span class="fab-tab">Статистика</span>
+                    </div>
+                    <div class="fab-body">
+                        <div class="kpi-ring-wrapper">
+                            <svg viewBox="0 0 120 120">
+                                <defs>
+                                    <linearGradient id="kpiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#059669"/>
+                                        <stop offset="100%" style="stop-color:#4ade80"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="kpi-ring-bg" cx="60" cy="60" r="50"/>
+                                <circle class="kpi-ring-fill" cx="60" cy="60" r="50"/>
+                            </svg>
+                            <div class="kpi-ring-text">
+                                <div class="kpi-ring-value">127</div>
+                                <div class="kpi-ring-label">/ 200</div>
+                            </div>
+                        </div>
+                        <div class="fab-kpi-cards">
+                            <div class="fab-kpi-card">
+                                <div class="fab-kpi-card-label">Отправлено сегодня</div>
+                                <div class="fab-kpi-card-value green">127</div>
+                            </div>
+                            <div class="fab-kpi-card">
+                                <div class="fab-kpi-card-label">Приглашений</div>
+                                <div class="fab-kpi-card-value accent">23</div>
+                            </div>
+                            <div class="fab-kpi-card">
+                                <div class="fab-kpi-card-label">Ответов</div>
+                                <div class="fab-kpi-card-value text">45</div>
+                            </div>
+                            <div class="fab-kpi-card">
+                                <div class="fab-kpi-card-label">Ожидает ответа</div>
+                                <div class="fab-kpi-card-value amber">59</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="product-caption reveal d-3">750px панель с 6 вкладками и 16 функциями</p>
+    </div>
+</section>
+
+<!-- ====== PRICING ====== -->
+<section class="pricing section" id="pricing">
+    <div class="container">
+        <div class="pricing-header">
+            <div class="section-label center reveal">&mdash; Тарифы</div>
+            <h2 class="section-title reveal d-1">
+                <span class="gradient-text">Выберите</span> <span class="gradient-text-green">свой план</span>
+            </h2>
+        </div>
+        <div class="pricing-toggle reveal d-2">
+            <span id="monthlyLabel" class="active">Помесячно</span>
+            <div class="toggle-switch" id="pricingToggle" role="switch" aria-checked="false" tabindex="0" aria-label="Переключить период оплаты"></div>
+            <span id="yearlyLabel">Ежегодно</span>
+            <span class="pricing-save" id="pricingSave" style="opacity:0.5;">&#8722;30%</span>
+        </div>
+        <div class="pricing-grid">
+            <!-- Free -->
+            <div class="pricing-card reveal d-1">
+                <div class="pricing-plan-name">Бесплатный</div>
+                <div class="pricing-plan-desc">Для знакомства</div>
+                <div class="pricing-price">
+                    <span class="currency">0</span>&#8381;<span class="currency">/мес</span>
+                </div>
+                <div class="pricing-period">Навсегда бесплатно</div>
+                <ul class="pricing-features">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        20 откликов в день
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Базовый поиск вакансий
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Шаблоны сопроводительных
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Базовая статистика
+                    </li>
+                </ul>
+                <a href="#" class="pricing-btn pricing-btn-outline">Начать бесплатно</a>
+            </div>
+            <!-- Pro -->
+            <div class="pricing-card popular reveal d-2">
+                <div class="popular-badge">Популярный</div>
+                <div class="pricing-plan-name">Про</div>
+                <div class="pricing-plan-desc">Максимальная эффективность</div>
+                <div class="pricing-price" id="proPrice">
+                    <span class="currency">990</span>&#8381;<span class="currency" id="proPeriod">/мес</span>
+                </div>
+                <div class="pricing-period" id="proSubtext">отменить в любой момент</div>
+                <ul class="pricing-features">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Безлимитные отклики
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        AI-автоотклики
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        AI-переписка в Chatik
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Расширенная аналитика
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Приоритетная поддержка
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Typing simulation
+                    </li>
+                </ul>
+                <a href="#" class="pricing-btn pricing-btn-primary">Выбрать Про</a>
+            </div>
+            <!-- Business -->
+            <div class="pricing-card reveal d-3">
+                <div class="pricing-plan-name">Бизнес</div>
+                <div class="pricing-plan-desc">Для HR и рекрутеров</div>
+                <div class="pricing-price">
+                    <span class="currency">2 990</span>&#8381;<span class="currency">/мес</span>
+                </div>
+                <div class="pricing-period">индивидуальные условия</div>
+                <ul class="pricing-features">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Всё из плана Про
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Командный дашборд
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        API доступ
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        SSO авторизация
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Персональный менеджер
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        White-label решение
+                    </li>
+                </ul>
+                <a href="#" class="pricing-btn pricing-btn-outline">Связаться с нами</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ====== TESTIMONIALS ====== -->
+<section class="testimonials section" id="testimonials">
+    <div class="container">
+        <div class="testimonials-header">
+            <div class="section-label reveal">&mdash; Отзывы</div>
+            <h2 class="section-title reveal d-1">
+                <span class="gradient-text">Что говорят</span> <span class="gradient-text-green">пользователи</span>
+            </h2>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card reveal d-1">
+                <div class="testimonial-stars">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </div>
+                <p class="testimonial-text">&laquo;Получил оффер от Яндекса за 5 дней. AI написал идеальное сопроводительное, которое выделило меня среди 200 кандидатов. Раньше я рассылал резюме неделями.&raquo;</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">АК</div>
+                    <div>
+                        <div class="testimonial-name">Алексей К.</div>
+                        <div class="testimonial-role">Frontend Developer</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal d-2">
+                <div class="testimonial-stars">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </div>
+                <p class="testimonial-text">&laquo;Отправила 340 откликов за неделю, получила 12 приглашений на собеседование. AI-переписка сэкономила мне часы — подсказки в Chatik просто великолепны.&raquo;</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">МС</div>
+                    <div>
+                        <div class="testimonial-name">Мария С.</div>
+                        <div class="testimonial-role">Product Manager</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal d-3">
+                <div class="testimonial-stars">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </div>
+                <p class="testimonial-text">&laquo;AI-подсказки на собеседовании — это чит-код. Расширение подсказывало ответы на технические вопросы в реальном времени. Оффер получил на следующий день.&raquo;</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">ДВ</div>
+                    <div>
+                        <div class="testimonial-name">Дмитрий В.</div>
+                        <div class="testimonial-role">Backend Developer</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ====== FAQ ====== -->
+<section class="faq section" id="faq">
+    <div class="container">
+        <div class="faq-header">
+            <div class="section-label reveal">&mdash; FAQ</div>
+            <h2 class="section-title reveal d-1">
+                <span class="gradient-text">Частые</span> <span class="gradient-text-green">вопросы</span>
+            </h2>
+        </div>
+        <div class="faq-list">
+            <div class="faq-item reveal d-1">
+                <button class="faq-question" aria-expanded="false">
+                    <span>Безопасно ли использовать расширение?</span>
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Абсолютно безопасно. Все данные обрабатываются локально на вашем компьютере — мы не отправляем и не храним вашу информацию на серверах. Расширение полностью соответствует Федеральному закону 152-ФЗ &laquo;О персональных данных&raquo;.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal d-2">
+                <button class="faq-question" aria-expanded="false">
+                    <span>Не забанит ли HH.ru за автоотклики?</span>
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Нет. HH Copilot использует умный rate limiting: не более 200 откликов в день, 30 в час, с интервалами от 30 секунд между запросами. Встроенная имитация человеческого набора текста (typing simulation) и burst detection делают поведение неотличимым от ручного.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal d-3">
+                <button class="faq-question" aria-expanded="false">
+                    <span>Как работает AI-переписка?</span>
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">AI подключается к Chatik API и анализирует 3 источника контекста: историю переписки, описание вакансии и ваше резюме. На основе этого генерируются варианты ответов, которые подстраиваются под тон и стиль работодателя. Вы остаётесь в контроле — решаете, отправлять ли подсказку.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal d-4">
+                <button class="faq-question" aria-expanded="false">
+                    <span>Сколько откликов можно отправлять?</span>
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Лимиты зависят от тарифа. Бесплатный план: 20 откликов в день. План Про и Бизнес: до 200 откликов в день (30 в час, интервал от 30 секунд). Все лимиты настроены для безопасной работы без риска блокировки аккаунта.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal d-5">
+                <button class="faq-question" aria-expanded="false">
+                    <span>Поддерживается ли мобильная версия?</span>
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Сейчас HH Copilot доступен только для десктопной версии Google Chrome. Мы планируем выпуск мобильной веб-версии (PWA) в ближайших обновлениях. Следите за новостями в нашем Telegram-канале.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal d-6">
+                <button class="faq-question" aria-expanded="false">
+                    <span>Можно ли вернуть деньги?</span>
+                    <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Да, мы предоставляем гарантию возврата средств в течение 14 дней после покупки. Если расширение вам не подошло — просто напишите в поддержку, и мы вернём 100% оплаты без вопросов.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ====== FINAL CTA ====== -->
+<section class="final-cta section">
+    <div class="final-cta-bg">
+        <div class="glow"></div>
+    </div>
+    <div class="container">
+        <h2 class="reveal">
+            <span class="gradient-text-green">Готовы найти</span><br>
+            <span>идеальную работу?</span>
+        </h2>
+        <p class="final-cta-subtitle reveal d-1">Присоединяйтесь к 12 000+ пользователям, которые уже нашли работу мечты с HH Copilot.</p>
+        <a href="#" class="final-cta-btn reveal d-2">Начать бесплатно</a>
+        <p class="final-cta-small reveal d-3">Без кредитной карты &bull; Настроите за 2 минуты &bull; Отмена в любой момент</p>
+    </div>
+</section>
+
+<!-- ====== FOOTER ====== -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a href="#" class="nav-logo" style="margin-bottom:4px;">
+                    <div class="nav-logo-icon">HC</div>
+                    <span class="nav-logo-text">HH Copilot</span>
+                </a>
+                <p>AI-помощник для автоматизации поиска работы на HH.ru. Экономьте время и находите лучшие офферы.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Продукт</h4>
+                <ul>
+                    <li><a href="#features">Возможности</a></li>
+                    <li><a href="#pricing">Тарифы</a></li>
+                    <li><a href="#">Chrome Web Store</a></li>
+                    <li><a href="#">Обновления</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Компания</h4>
+                <ul>
+                    <li><a href="#">О нас</a></li>
+                    <li><a href="#">Блог</a></li>
+                    <li><a href="#">Карьера</a></li>
+                    <li><a href="#">Контакты</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Поддержка</h4>
+                <ul>
+                    <li><a href="#">Документация</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Telegram</a></li>
+                    <li><a href="#">Email</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-copyright">&copy; 2026 HH Copilot. Все права защищены.</div>
+            <div class="footer-social">
+                <a href="#" aria-label="Telegram">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.94z"/></svg>
+                </a>
+                <a href="#" aria-label="VK">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.391 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.864-.525-2.05-1.727-1.033-1-1.49-1.135-1.744-1.135-.356 0-.458.102-.458.593v1.575c0 .424-.135.678-1.253.678-1.846 0-3.896-1.12-5.338-3.202C4.624 10.857 4.03 8.57 4.03 8.096c0-.254.102-.491.593-.491h1.744c.44 0 .61.203.78.678.863 2.49 2.303 4.675 2.896 4.675.22 0 .322-.102.322-.66V9.721c-.068-1.186-.695-1.287-.695-1.71 0-.203.17-.407.44-.407h2.744c.373 0 .508.203.508.644v3.473c0 .372.17.508.271.508.22 0 .407-.136.813-.542 1.27-1.422 2.18-3.61 2.18-3.61.119-.254.322-.491.763-.491h1.744c.525 0 .644.27.525.644-.22 1.017-2.354 4.031-2.354 4.031-.186.305-.254.44 0 .78.186.254.796.78 1.203 1.253.745.847 1.32 1.558 1.473 2.05.17.49-.085.744-.576.744z"/></svg>
+                </a>
+                <a href="#" aria-label="GitHub">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+(function() {
+    'use strict';
+
+    // ====== CURSOR GLOW ======
+    var glow = document.getElementById('cursorGlow');
+    var glowActive = false;
+    document.addEventListener('mousemove', function(e) {
+        if (!glowActive) {
+            glow.classList.add('active');
+            glowActive = true;
+        }
+        glow.style.left = e.clientX + 'px';
+        glow.style.top = e.clientY + 'px';
+    });
+    document.addEventListener('mouseleave', function() {
+        glow.classList.remove('active');
+        glowActive = false;
+    });
+
+    // ====== FEATURE CARD MOUSE TRACKING ======
+    var featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(function(card) {
+        card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            card.style.setProperty('--mx', x + 'px');
+            card.style.setProperty('--my', y + 'px');
+        });
+    });
+
+    // ====== SCROLL REVEAL ======
+    var revealEls = document.querySelectorAll('.reveal');
+    var revealObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(function(el) {
+        revealObserver.observe(el);
+    });
+
+    // ====== STAT COUNT-UP ======
+    var statNumbers = document.querySelectorAll('.stat-number[data-target]');
+    var statAnimated = new Set();
+    var statObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting && !statAnimated.has(entry.target)) {
+                statAnimated.add(entry.target);
+                animateCount(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+    statNumbers.forEach(function(el) {
+        statObserver.observe(el);
+    });
+
+    function animateCount(el) {
+        var target = parseFloat(el.getAttribute('data-target'));
+        var suffix = el.getAttribute('data-suffix') || '';
+        var decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
+        var duration = 2000;
+        var startTime = null;
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        function step(timestamp) {
+            if (!startTime) startTime = timestamp;
+            var progress = Math.min((timestamp - startTime) / duration, 1);
+            var easedProgress = easeOutCubic(progress);
+            var current = easedProgress * target;
+            var formatted = decimals > 0 ? current.toFixed(decimals) : Math.floor(current).toLocaleString('ru-RU');
+            el.textContent = formatted + suffix;
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            }
+        }
+        requestAnimationFrame(step);
+    }
+
+    // ====== HAMBURGER MENU ======
+    var hamburger = document.getElementById('hamburger');
+    var mobileMenu = document.getElementById('mobileMenu');
+    var mobileLinks = mobileMenu.querySelectorAll('.mobile-link');
+
+    hamburger.addEventListener('click', function() {
+        hamburger.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
+        var isOpen = mobileMenu.classList.contains('active');
+        hamburger.setAttribute('aria-expanded', isOpen);
+        mobileMenu.setAttribute('aria-hidden', !isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+
+    mobileLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    });
+
+    // ====== FAQ ACCORDION ======
+    var faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(function(item) {
+        var question = item.querySelector('.faq-question');
+        question.addEventListener('click', function() {
+            var isOpen = item.classList.contains('open');
+            // Close all
+            faqItems.forEach(function(i) {
+                i.classList.remove('open');
+                i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+            });
+            // Toggle clicked
+            if (!isOpen) {
+                item.classList.add('open');
+                question.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+
+    // ====== PRICING TOGGLE ======
+    var toggle = document.getElementById('pricingToggle');
+    var monthlyLabel = document.getElementById('monthlyLabel');
+    var yearlyLabel = document.getElementById('yearlyLabel');
+    var pricingSave = document.getElementById('pricingSave');
+    toggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggle.click();
+        }
+    });
+
+    var proPrice = document.getElementById('proPrice');
+    var proPeriod = document.getElementById('proPeriod');
+    var proSubtext = document.getElementById('proSubtext');
+    var isYearly = false;
+
+    toggle.addEventListener('click', function() {
+        isYearly = !isYearly;
+        toggle.classList.toggle('active', isYearly);
+        toggle.setAttribute('aria-checked', isYearly);
+        monthlyLabel.classList.toggle('active', !isYearly);
+        yearlyLabel.classList.toggle('active', isYearly);
+        pricingSave.style.opacity = isYearly ? '1' : '0.5';
+
+        if (isYearly) {
+            proPrice.innerHTML = '<span class="currency">690</span>&#8381;<span class="currency" id="proPeriod">/мес</span>';
+            proSubtext.textContent = '8 280₽/год (экономия 3 600₽)';
+        } else {
+            proPrice.innerHTML = '<span class="currency">990</span>&#8381;<span class="currency" id="proPeriod">/мес</span>';
+            proSubtext.textContent = 'отменить в любой момент';
+        }
+    });
+
+    // ====== SMOOTH SCROLL FOR ANCHOR LINKS ======
+    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+        anchor.addEventListener('click', function(e) {
+            var target = this.getAttribute('href');
+            if (target && target.length > 1) {
+                var el = document.querySelector(target);
+                if (el) {
+                    e.preventDefault();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    });
+
+    // ====== NAV CTA (show on larger screens) ======
+    var navCta = document.getElementById('navCtaDesktop');
+    function checkNavCta() {
+        if (window.innerWidth > 768) {
+            navCta.style.display = 'inline-flex';
+        } else {
+            navCta.style.display = 'none';
+        }
+    }
+    checkNavCta();
+    window.addEventListener('resize', checkNavCta);
+
+})();
+</script>
+
+</body>
+</html>
