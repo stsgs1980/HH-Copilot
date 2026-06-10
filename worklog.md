@@ -89,3 +89,14 @@ Stage Summary:
   - docs/hh-bot-src/hh/ -- 9 Python файлов бэкенда
   - docs/hh-bot-src/app/api/hh/resumes/ -- 6 Next.js API route файлов
   - UNICODE_POLICY.md -- политика форматирования
+
+---
+Task ID: 3
+Agent: Main
+Task: Обновление cascade-guard и anti-hallucination-guard
+
+Work Log:
+- cascade-guard обновлён: 378adbc -> 5f58eb5 (перевод AGENT_RULES на английский)
+- anti-hallucination-guard обновлён: d6428a0 -> e67a2d7 (verify-docs tool, новый update.sh)
+- Оба setup.sh перепрогнаны, хуки переустановлены
+- Коммит и пуш обновлений сабмодулей
