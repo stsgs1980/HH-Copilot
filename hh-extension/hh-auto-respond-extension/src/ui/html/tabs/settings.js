@@ -1,0 +1,90 @@
+/**
+ * TAB 5: SETTINGS
+ */
+import { ICONS } from '../icons.js';
+import { settingRow, settingToggle } from '../helpers.js';
+
+export function getSettingsSection() {
+  return `<div class="tab-section" id="tab-settings">
+    ${settingsRateLimits()}
+    ${settingsCaptcha()}
+    ${settingsBlacklist()}
+    ${settingsDailyReset()}
+    ${settingsGeneral()}
+  </div>`;
+}
+
+function settingsRateLimits() {
+  return `<div class="card fade-in" style="margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Лимиты и рейт-лимитинг</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${settingRow('Дневной лимит', 'Макс. откликов в день', 'number', 's-daily-limit', 200, '/ день')}
+      ${settingRow('Часовой лимит', 'Макс. откликов в час', 'number', 's-hourly-limit', 30, '/ час')}
+      ${settingRow('Мин. интервал', 'Между откликами', 'number', 's-min-interval', 30, 'сек')}
+      ${settingToggle('Детекция всплесков', 'Остановка при всплеске 429', 's-burst', true)}
+      ${settingToggle('Адаптивное замедление', 'Увеличение интервала при 429/CAPTCHA', 's-adaptive', true)}
+    </div>
+  </div>`;
+}
+
+function settingsCaptcha() {
+  return `<div class="card fade-in" style="margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">CAPTCHA обработка</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${settingToggle('Авто-пауза при CAPTCHA', 'Остановить отклики и уведомить', 's-captcha', true)}
+      ${settingRow('Время паузы', 'Перед продолжением', 'number', 's-captcha-time', 5, 'мин')}
+    </div>
+  </div>`;
+}
+
+function settingsBlacklist() {
+  return `<div class="card fade-in" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;">Чёрный список</div>
+        <div style="font-size:11px;color:#71717a;margin-top:2px;">Работодатели, которые будут пропущены</div>
+      </div>
+      <span id="bl-count-badge" class="badge badge-zinc">0 компаний</span>
+    </div>
+    <div id="bl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="bl-input" placeholder="Название компании..." style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;">
+      <button class="btn btn-outline btn-sm" data-action="bl-add">+ Добавить</button>
+    </div>
+  </div>`;
+}
+
+function settingsDailyReset() {
+  return `<div class="card fade-in" style="margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Ежедневный сброс</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:12px;font-weight:500;">Авто-сброс счётчиков</div>
+          <div style="font-size:11px;color:#71717a;">Время сброса (chrome.alarms)</div>
+        </div>
+        <input type="time" id="s-reset-time" value="00:00" style="padding:4px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:12px;font-weight:500;">Следующий сброс</div>
+          <div style="font-size:11px;color:#71717a;">Через chrome.alarms API</div>
+        </div>
+        <span id="s-reset-countdown" style="font-size:11px;font-weight:600;color:#71717a;">--</span>
+      </div>
+      <button class="btn btn-outline" style="align-self:flex-start;" data-action="reset-daily">${ICONS.refresh} Сбросить сейчас</button>
+    </div>
+  </div>`;
+}
+
+function settingsGeneral() {
+  return `<div class="card fade-in">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Общие настройки</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${settingToggle('Авто-проверка авторизации', '', 's-auth-check', true)}
+      ${settingToggle('Уведомления', '', 's-notifications', true)}
+      ${settingToggle('Логирование действий', '', 's-logging', true)}
+      ${settingToggle('Shadow DOM изоляция', '', 's-shadow-dom', true)}
+    </div>
+  </div>`;
+}
