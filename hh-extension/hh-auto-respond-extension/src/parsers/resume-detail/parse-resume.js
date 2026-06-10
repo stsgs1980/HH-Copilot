@@ -8,7 +8,7 @@
 import { safeGetText, createLogger } from '../../lib/anti-hallucination.js';
 import { parsePersonalData, parseSalaryConditions, parseSkills, parseExperience, parseLanguagesAndAbout, parseContacts } from './parse-resume-sections.js';
 import { parseEducation } from './parse-resume-education.js';
-import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from '../../lib/resume-constants.js';
+import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE, VISIBILITY_HIDDEN } from '../../lib/resume-constants.js';
 
 const resumeLog = createLogger('Resume');
 
@@ -72,6 +72,19 @@ export function parseResume() {
   parseEducation(dbg, resume);
   parseLanguagesAndAbout(dbg, resume);
   parseContacts(dbg, resume);
+
+  // ═════════════════════════════════════════
+  // VISIBILITY — detect from DOM on the resume page itself
+  // ═════════════════════════════════════════
+  const hiddenMsg = document.querySelector('[data-qa="resume-hidden-message"], [data-qa*="resume-hidden"]');
+  if (hiddenMsg) {
+    resume.visibility = VISIBILITY_HIDDEN;
+    resume.hidden = true;
+  } else {
+    // If we're on the resume page and there's no hidden indicator, it's visible
+    resume.visibility = VISIBILITY_VISIBLE;
+    resume.hidden = false;
+  }
 
   // ═════════════════════════════════════════
   // ИТОГО

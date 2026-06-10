@@ -160,7 +160,8 @@ export function detectVisibilityFromLinkText(linkText) {
   if (isHidden) {
     return { visibility: VISIBILITY_HIDDEN, hidden: true, method: 'link-text' };
   }
-  return { visibility: VISIBILITY_UNKNOWN, hidden: false, method: 'link-text-clean' };
+  // If link text is clean (no hidden markers), the resume is visible
+  return { visibility: VISIBILITY_VISIBLE, hidden: false, method: 'link-text-clean' };
 }
 
 /**
