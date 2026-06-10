@@ -677,3 +677,8 @@ Task ID: 1
 Agent: main
 Task: Resume UI rename and selector
 Wed Jun 10 20:43:51 UTC 2026
+Wed Jun 10 21:03:45 UTC 2026
+Task ID: 2
+Agent: main
+Task: Fix Telegram parsing + filter hidden resumes in sync
+Date: Wed Jun 10 21:03:45 UTC 2026

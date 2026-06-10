@@ -348,20 +348,21 @@ export function parseContacts(dbg, resume) {
     }
   }
 
-  // Telegram — search for @username or t.me links
-  const allLinks = document.querySelectorAll('a[href*="t.me/"]');
-  for (const link of allLinks) {
-    const href = link.getAttribute('href') || '';
-    const match = href.match(/t\.me\/(\w+)/);
-    if (match) {
-      resume.telegram = dbg('telegram', '@' + match[1]);
-      break;
+  // Telegram — search ONLY within resume contacts block to avoid picking up
+  // hh.ru's own footer/sidebar links (e.g. @hh_ru_official)
+  const contactBlock = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+  if (contactBlock) {
+    const contactLinks = contactBlock.querySelectorAll('a[href*="t.me/"]');
+    for (const link of contactLinks) {
+      const href = link.getAttribute('href') || '';
+      const match = href.match(/t\.me\/(\w+)/);
+      if (match) {
+        resume.telegram = dbg('telegram', '@' + match[1]);
+        break;
+      }
     }
-  }
-  // Fallback: text search for @username pattern in contacts area
-  if (!resume.telegram) {
-    const contactBlock = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
-    if (contactBlock) {
+    // Fallback: text search for @username pattern within contacts area
+    if (!resume.telegram) {
       const text = (contactBlock.textContent || '');
       const m = text.match(/@(\w{4,})/);
       if (m) resume.telegram = dbg('telegram', '@' + m[1]);
