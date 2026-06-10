@@ -619,6 +619,24 @@ Stage Summary:
 - Experience section now scrollable with full text descriptions
 
 ---
+Task ID: 17
+Agent: main
+Task: v1.9.7 — Fix button spinners (load-resume, sync-resumes, reparse)
+
+Work Log:
+- Added CSS: .btn:disabled (opacity, cursor, no-events), .btn-primary:disabled (gray bg), .btn-spinner (12px spinning circle)
+- Fixed load-resume: wrapped all code paths in try/finally — hh-ar-load-resume-done ALWAYS dispatched
+- Fixed load-resume: replaced inline spinner styles with .btn-spinner CSS class
+- Added sync-resumes button spinner: shows "Синхронизация..." with spinner, disabled while syncing
+- Added hh-ar-sync-done event dispatch in handleSyncResumes() finally block
+- Safety timeouts: load-resume 30s, sync-resumes 60s
+
+Stage Summary:
+- 3 files modified: styles.js, events.js, main.js
+- All 3 buttons now show spinning indicator + disabled state while working
+- Buttons restore original content when operation completes or times out
+
+---
 Task ID: 3
 Agent: main
 Task: Commit v1.9.5 code changes

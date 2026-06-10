@@ -200,6 +200,8 @@ async function handleSyncResumes() {
     setStatus('Ошибка синхронизации: ' + err.message);
   } finally {
     syncInProgress = false;
+    // Signal completion for button loading state
+    window.dispatchEvent(new CustomEvent('hh-ar-sync-done'));
   }
 }
 
@@ -298,6 +300,7 @@ async function init() {
     // Show loading spinner in the panel content area
     showResumeLoading('Загрузка резюме...');
 
+    try {
     if (/\/resume\/[a-f0-9]+/.test(path)) {
       let resume;
 
@@ -381,8 +384,13 @@ async function init() {
         mainLog.info('No synced resumes available on non-resume page');
       }
     }
-    // Signal completion for button loading state
-    window.dispatchEvent(new CustomEvent('hh-ar-load-resume-done'));
+    } catch (err) {
+      mainLog.error('Load resume error: ' + err.message);
+      setStatus('Ошибка: ' + err.message);
+    } finally {
+      // Signal completion for button loading state — ALWAYS dispatch
+      window.dispatchEvent(new CustomEvent('hh-ar-load-resume-done'));
+    }
   });
 
   // Sync all resumes -- works from ANY hh.ru page

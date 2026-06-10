@@ -100,14 +100,13 @@ function bindSidebarClicks(container) {
     /* Resume */
     if (t.closest('[data-action="load-resume"]')) {
       console.log('[HH-AR][Events] load-resume clicked, dispatching hh-ar-load-resume');
-      // Show loading state on the button
       const btn = t.closest('[data-action="load-resume"]');
       if (btn) {
         const origHTML = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner" style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:har-spin 0.6s linear infinite;vertical-align:middle;"></span> Загрузка...';
-        // Reset button after event completes (max 10s safety)
-        setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 10000);
+        btn.innerHTML = '<span class="btn-spinner"></span> Загрузка...';
+        // Reset button after event completes (max 30s safety)
+        setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 30000);
         // Listen for completion to restore button
         const onDone = () => {
           setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 300);
@@ -118,7 +117,25 @@ function bindSidebarClicks(container) {
       window.dispatchEvent(new CustomEvent('hh-ar-load-resume'));
       return;
     }
-    if (t.closest('[data-action="sync-resumes"]')) { console.log('[HH-AR][Events] sync-resumes clicked'); window.dispatchEvent(new CustomEvent('hh-ar-sync-resumes')); return; }
+    if (t.closest('[data-action="sync-resumes"]')) {
+      console.log('[HH-AR][Events] sync-resumes clicked');
+      const btn = t.closest('[data-action="sync-resumes"]');
+      if (btn) {
+        const origHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-spinner"></span> Синхронизация...';
+        // Listen for completion to restore button
+        const onDone = () => {
+          setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 300);
+          window.removeEventListener('hh-ar-sync-done', onDone);
+        };
+        window.addEventListener('hh-ar-sync-done', onDone);
+        // Safety timeout: 60s
+        setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; window.removeEventListener('hh-ar-sync-done', onDone); }, 60000);
+      }
+      window.dispatchEvent(new CustomEvent('hh-ar-sync-resumes'));
+      return;
+    }
     if (t.closest('[data-action="analyze-skills"]')) { import('../tabs/resumes/resume-helpers.js').then(m => m.updateSkillGapSection(panelState.resume)); return; }
     if (t.closest('[data-action="clear-resume"]')) { clearResumeData(); return; }
     if (t.closest('[data-action="dump-resume"]')) { dumpResumeToConsole(); return; }

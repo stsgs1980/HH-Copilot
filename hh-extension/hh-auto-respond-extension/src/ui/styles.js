@@ -120,6 +120,10 @@ export function getSidebarCSS() {
 .btn-danger:active { transform: translateY(0);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.1); }
 .btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none !important; pointer-events: none; }
+.btn-primary:disabled { background: #94a3b8; box-shadow: none; }
+.btn .btn-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: har-spin 0.6s linear infinite; vertical-align: middle; }
+.btn-outline .btn-spinner { border-color: rgba(0,0,0,0.12); border-top-color: #059669; }
 
 /* Vacancy items */
 .vacancy-item { display: flex; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05);
