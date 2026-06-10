@@ -139,6 +139,19 @@ export function renderResumePanel() {
   }
 
   // Build 6 accordion sections matching wireframe
+  const vis = r.visibility || (r.hidden ? 'hidden' : 'unknown');
+  const isActiveHidden = vis === 'hidden';
+  const reparseBtn = isActiveHidden
+    ? '<button class="btn btn-outline btn-sm" data-action="load-resume" style="width:100%;color:#b45309;border-color:#fbbf24;">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>' +
+        ' Перепарсить (скрытое)' +
+      '</button>' +
+      '<div style="font-size:10px;color:#92400e;margin-top:4px;padding-left:4px;">Скрытое резюме не видно работодателям — мэтчинг недоступен</div>'
+    : '<button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>' +
+        ' Перепарсить действующее' +
+      '</button>';
+
   container.innerHTML =
     '<div class="tl-item">' + buildPersonalSection(r) + '</div>' +
     '<div class="tl-item">' + buildSalarySection(r) + '</div>' +
@@ -146,13 +159,8 @@ export function renderResumePanel() {
     '<div class="tl-item">' + buildEducationSection(r) + '</div>' +
     '<div class="tl-item">' + buildLanguagesSection(r) + '</div>' +
     '<div class="tl-item">' + buildContactsSection(r) + '</div>' +
-    // Reparse button
-    '<div style="padding-top:12px;padding-left:24px;">' +
-      '<button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>' +
-        ' Перепарсить действующее' +
-      '</button>' +
-    '</div>';
+    // Reparse button (context-aware)
+    '<div style="padding-top:12px;padding-left:24px;">' + reparseBtn + '</div>';
 
   // Attach sub-accordion toggle listeners
   attachSubToggle('subPersonal', 'chevPersonal');

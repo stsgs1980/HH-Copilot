@@ -728,3 +728,20 @@ Stage Summary:
 - Visibility detection now has TWO layers: list page + detail page
 - Detail page result overrides list page result (more reliable source)
 - Should fix the "re-hide" bug where hidden resumes still showed as visible
+
+---
+Task ID: 4
+Agent: main
+Task: Fix reparse button logic — context-aware for hidden resumes
+
+Work Log:
+- Button "Перепарсить действующее" was always green regardless of resume visibility
+- When hidden resume selected as active, button now shows "Перепарсить (скрытое)" with amber outline
+- Added warning text: "Скрытое резюме не видно работодателям — мэтчинг недоступен"
+- For visible resumes, button stays green "Перепарсить действующее" as before
+- Build successful: 211.2kb
+
+Stage Summary:
+- Reparse button is now context-aware based on active resume visibility
+- Hidden resume = amber outline + warning text about matching unavailability
+- Visible resume = green primary button as before
