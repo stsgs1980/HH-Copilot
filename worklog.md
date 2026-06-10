@@ -179,6 +179,18 @@ Work Log:
   - Auto-saves migrated data back to chrome.storage
 - Old data without `visibility` gets `VISIBILITY_UNKNOWN` → shows "Статус неизвестен" badge
 - After re-sync, full visibility status (visible/hidden) is populated
+
+---
+Task ID: 7
+Agent: Main
+Task: Fix &nbsp; (U+00A0) non-breaking space in visibility detection
+
+Work Log:
+- ROOT CAUSE: hh.ru uses &nbsp; (U+00A0) in "Многие\u00A0не\u00A0видят", code compared with regular spaces → NEVER matched
+- Added normalizeWs() + hasHiddenIndicator() to resume-constants.js
+- Fixed Strategy 3 proximity in resume-detail/index.js: raw .includes() → hasHiddenIndicator()
+- Fixed debugVisibility(): normalize whitespace before searching indicators
+- Build successful
 - Build successful: v1.7.8, 0 lint errors
 
 Stage Summary:
