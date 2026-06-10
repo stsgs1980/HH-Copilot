@@ -247,3 +247,38 @@ Stage Summary:
 - README consistent: v1.9.8, 13 fields, resume-fetch-helpers.js listed
 - version.js correctly documented as NOT the source of truth
 - No TODO/FIXME/HACK comments in codebase
+
+---
+Task ID: v1.9.9-visibility-fix
+Agent: main
+Task: Fix hidden resumes incorrectly marked as visible — three bugs in visibility detection chain
+
+Work Log:
+- Root cause analysis: three bugs in the visibility detection pipeline
+  1. `extractVisibilityStatus()` in resume-fetch-helpers.js: UNKNOWN→VISIBLE fallback too early
+     List page SSR HTML lacks hidden indicators (client-rendered by React), so all resumes
+     were UNKNOWN and immediately defaulted to VISIBLE before detail page check
+  2. `parseResumeList()` in resume-detail/index.js: same UNKNOWN→VISIBLE premature fallback
+  3. `detectVisibilityFromResumePage()` Strategy 2: `text.includes('скрыть')` too broad
+     Matched "скрыть контакты", "скрыть раздел" etc. → false VISIBLE override
+  4. `fetchAndParseResume()`: page VISIBLE override list HIDDEN — wrong priority
+- Fix 1: Removed UNKNOWN→VISIBLE fallback from `extractVisibilityStatus()` — keep UNKNOWN
+- Fix 2: Removed UNKNOWN→VISIBLE fallback from `parseResumeList()` — keep UNKNOWN
+- Fix 3: Strategy 2 now only matches "скрыть резюме" exactly (not just "скрыть")
+- Fix 4: New priority logic in `fetchAndParseResume()`:
+  - Page HIDDEN always wins (most reliable)
+  - List HIDDEN wins over Page VISIBLE (list saw the indicator directly)
+  - Page VISIBLE wins over List UNKNOWN
+  - List VISIBLE wins over Page UNKNOWN
+  - Both UNKNOWN → stays UNKNOWN
+- Fix 5: Final UNKNOWN→VISIBLE fallback moved to `syncAllResumes()` — only after ALL
+  detection (list + detail page) has been tried
+- Updated version: 1.9.8 → 1.9.9 (manifest, package.json, version.js)
+- Updated CHANGELOG.md with v1.9.9 entry
+- Build verified: 324.3kb, 0 errors
+
+Stage Summary:
+- 4 files modified: resume-fetch-helpers.js, resume-fetch-resume.js, resume-fetch.js, resume-detail/index.js
+- 1 file added to imports: resume-constants.js (VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE) in resume-fetch.js
+- Hidden resumes should now correctly show "Скрыто" badge after sync
+- Visibility priority: HIDDEN > VISIBLE > UNKNOWN (UNKNOWN→VISIBLE only as last resort in syncAllResumes)

@@ -228,14 +228,13 @@ export function parseResumeList() {
     }
   }
 
-  // ═══ FINAL FALLBACK: Default UNKNOWN → VISIBLE ═══
-  const finalFallback = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
-  if (finalFallback.length > 0) {
-    resumeLog.info('Final fallback: ' + finalFallback.length + ' resumes still UNKNOWN → defaulting to VISIBLE');
-    finalFallback.forEach(r => {
-      r.visibility = VISIBILITY_VISIBLE;
-      r.hidden = false;
-    });
+  // ═══ NO EARLY FALLBACK: Keep UNKNOWN as UNKNOWN ═══
+  // Defaulting UNKNOWN→VISIBLE here is premature — the detail page detection
+  // in fetchAndParseResume() hasn't run yet. The final UNKNOWN→VISIBLE fallback
+  // is in syncAllResumes() after ALL detection has completed.
+  const stillUnknown = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
+  if (stillUnknown.length > 0) {
+    resumeLog.info('List visibility: ' + stillUnknown.length + ' resumes still UNKNOWN — will be resolved by detail page detection');
   }
 
   // ═══ SUMMARY ═══

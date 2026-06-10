@@ -90,29 +90,42 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   };
 
   // ═══ Detect visibility from resume detail page HTML ═══
-  // This is MORE RELIABLE than the list page because the resume detail page
-  // includes visibility indicators even in SSR HTML (e.g. "Многие не видят",
-  // "Сделать видимым" button, data-qa attributes).
+  // Priority rules (list HIDDEN is strong — don't override it lightly):
+  //   - Page HIDDEN always wins (most reliable)
+  //   - List HIDDEN wins over Page VISIBLE (page detection can false-positive)
+  //   - Page VISIBLE wins over List UNKNOWN
+  //   - List VISIBLE wins over Page UNKNOWN
+  //   - Both UNKNOWN → UNKNOWN (resolved later in syncAllResumes)
   const pageVis = detectVisibilityFromResumePage(doc, html);
+  0 && fetchLog.info('Visibility sources: page=' + pageVis + ', list=' + (listMeta ? listMeta.visibility : 'no-list-meta'));
+
   if (pageVis === VISIBILITY_HIDDEN) {
+    // Page says HIDDEN — most reliable, always wins
     resume.visibility = VISIBILITY_HIDDEN;
     resume.hidden = true;
-    fetchLog.info('Resume page visibility: HIDDEN (overrides list)');
+    fetchLog.info('Final visibility: HIDDEN (page detected)');
+  } else if (listMeta && listMeta.visibility === VISIBILITY_HIDDEN) {
+    // List says HIDDEN, page didn't detect HIDDEN → trust the list
+    // (page detection can miss hidden indicators in SSR HTML, but if the
+    // list page saw "Многие не видят" in link text, that's authoritative)
+    resume.visibility = VISIBILITY_HIDDEN;
+    resume.hidden = true;
+    fetchLog.info('Final visibility: HIDDEN (list detected, page=' + pageVis + ')');
   } else if (pageVis === VISIBILITY_VISIBLE) {
-    // Page explicitly shows visible — override list meta too
+    // Page says VISIBLE, list doesn't say HIDDEN → trust page
     resume.visibility = VISIBILITY_VISIBLE;
     resume.hidden = false;
-    fetchLog.info('Resume page visibility: VISIBLE');
+    fetchLog.info('Final visibility: VISIBLE (page detected)');
+  } else if (listMeta && listMeta.visibility === VISIBILITY_VISIBLE) {
+    // List says VISIBLE, page is UNKNOWN → trust list
+    resume.visibility = VISIBILITY_VISIBLE;
+    resume.hidden = false;
+    fetchLog.info('Final visibility: VISIBLE (list detected, page=UNKNOWN)');
   } else {
-    // UNKNOWN from page — fall back to list metadata
-    if (listMeta) {
-      if (listMeta.visibility) resume.visibility = listMeta.visibility;
-      if (listMeta.hidden !== undefined) resume.hidden = listMeta.hidden;
-      if (listMeta.title && listMeta.title !== 'Untitled') {
-        resume._listTitle = listMeta.title;
-      }
-    }
-    fetchLog.info('Resume page visibility: UNKNOWN, using list meta: ' + resume.visibility);
+    // Both UNKNOWN — will be resolved later in syncAllResumes()
+    resume.visibility = VISIBILITY_UNKNOWN;
+    resume.hidden = false;
+    fetchLog.info('Final visibility: UNKNOWN (both sources unknown)');
   }
   // Always carry over list title
   if (listMeta && listMeta.title && listMeta.title !== 'Untitled') {
@@ -304,16 +317,15 @@ function detectVisibilityFromResumePage(doc, html) {
   for (const btn of allButtons) {
     const text = normalizeWs((btn.textContent || '')).toLowerCase();
     if (text.includes('сделать видимым')) {
-      fetchLog.info('PageVis: found "Сделать видимым" button');
+      fetchLog.info('PageVis: found "Сделать видимым" button → HIDDEN');
       return VISIBILITY_HIDDEN;
     }
     // "Скрыть резюме" button means the resume IS currently visible
-    if (text.includes('скрыть резюме') || text.includes('скрыть')) {
-      const qa = btn.getAttribute('data-qa') || '';
-      if (qa.includes('hide') || qa.includes('hidden') || text.includes('скрыть резюме')) {
-        fetchLog.info('PageVis: found "Скрыть резюме" button → visible');
-        return VISIBILITY_VISIBLE;
-      }
+    // CRITICAL: Only match "скрыть резюме" EXACTLY — not just "скрыть"
+    // ("скрыть" alone matches random UI elements like "скрыть контакты", "скрыть раздел")
+    if (text.includes('скрыть резюме')) {
+      fetchLog.info('PageVis: found "Скрыть резюме" button → VISIBLE');
+      return VISIBILITY_VISIBLE;
     }
   }
 

@@ -809,6 +809,25 @@ Stage Summary:
 - worklog: complete from v1.9.5 to present — every commit documented
 
 ---
+Task ID: v1.9.9-visibility-fix
+Agent: main
+Task: Fix hidden resumes incorrectly marked as visible — three bugs in visibility detection chain
+
+Work Log:
+- Root cause: three bugs causing hidden resumes to show as "Видимо"
+  1. UNKNOWN→VISIBLE fallback in extractVisibilityStatus() + parseResumeList() — too early
+  2. detectVisibilityFromResumePage() Strategy 2: text.includes('скрыть') matched anything
+  3. Page VISIBLE overrode List HIDDEN in fetchAndParseResume() — wrong priority
+- Removed premature UNKNOWN→VISIBLE fallbacks from both list parsers
+- Strategy 2: exact match "скрыть резюме" only
+- New priority: HIDDEN > VISIBLE > UNKNOWN; final UNKNOWN→VISIBLE only in syncAllResumes()
+- Version: 1.9.8 → 1.9.9, build verified
+
+Stage Summary:
+- 4 source files modified + 3 version files + CHANGELOG + 2 worklogs
+- Hidden resumes should now correctly show "Скрыто" after sync
+
+---
 Task ID: v1.9.8-audit
 Agent: main
 Task: Code audit — fix getResumePageType() bug, add JSDoc, fix docs gaps, v1.9.8

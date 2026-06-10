@@ -21,6 +21,7 @@ import { createLogger } from './anti-hallucination.js';
 import { gaussianDelay } from './timing.js';
 import { fetchResumeList } from './resume-fetch-list.js';
 import { fetchAndParseResume } from './resume-fetch-resume.js';
+import { VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE } from './resume-constants.js';
 
 const fetchLog = createLogger('ResumeFetch');
 
@@ -76,6 +77,19 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
       }
 
       if (i < list.length - 1) await gaussianDelay(2000, 5000);
+    }
+
+    // ═══ FINAL FALLBACK: UNKNOWN → VISIBLE ═══
+    // Only after BOTH list and detail page detection have been tried.
+    // If a resume is still UNKNOWN (no hidden indicators found anywhere),
+    // it's reasonable to assume it's visible.
+    const stillUnknown = results.filter(r => r.visibility === VISIBILITY_UNKNOWN);
+    if (stillUnknown.length > 0) {
+      fetchLog.info('Final fallback: ' + stillUnknown.length + ' resumes still UNKNOWN after all detection → defaulting to VISIBLE');
+      stillUnknown.forEach(r => {
+        r.visibility = VISIBILITY_VISIBLE;
+        r.hidden = false;
+      });
     }
 
     fetchLog.info('Done. ' + results.length + '/' + list.length + ' parsed');

@@ -382,16 +382,15 @@ export function extractVisibilityStatus(doc, resumes, html) {
     strategyUsed = true;
   }
 
-  // ═══ FINAL FALLBACK: Default UNKNOWN → VISIBLE ═══
-  // After all strategies, any resume still UNKNOWN is assumed visible.
-  // (If no hidden indicators were found anywhere near the resume, it's visible.)
+  // ═══ NO FINAL FALLBACK: Keep UNKNOWN as UNKNOWN ═══
+  // The list page SSR HTML often lacks hidden indicators (client-rendered by React).
+  // Defaulting UNKNOWN→VISIBLE here is WRONG — it makes hidden resumes appear visible
+  // before the detail page detection has a chance to run.
+  // The final fallback UNKNOWN→VISIBLE happens in syncAllResumes() AFTER
+  // each resume's detail page has been checked by detectVisibilityFromResumePage().
   const unknownAfterAll = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
   if (unknownAfterAll.length > 0) {
-    helperLog.info('Final fallback: ' + unknownAfterAll.length + ' resumes still UNKNOWN → defaulting to VISIBLE');
-    unknownAfterAll.forEach(r => {
-      r.visibility = VISIBILITY_VISIBLE;
-      r.hidden = false;
-    });
+    helperLog.info('List visibility: ' + unknownAfterAll.length + ' resumes still UNKNOWN — will be resolved by detail page detection');
   }
 
   // ═══ SUMMARY ═══
