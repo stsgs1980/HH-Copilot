@@ -120,3 +120,45 @@ Work Log:
 - anti-hallucination-guard обновлён: d6428a0 -> e67a2d7 (verify-docs tool, новый update.sh)
 - Оба setup.sh перепрогнаны, хуки переустановлены
 - Коммит и пуш обновлений сабмодулей
+
+---
+Task ID: 4
+Agent: Main
+Task: Fix resume title noise + add visibility status badges (scale-ready for 1000+ users)
+
+Work Log:
+- Identified 2 problems: (1) title contains "Постоянная работа" garbage, (2) hidden resumes need visibility status
+- Created shared constants module `src/lib/resume-constants.js` with:
+  - `MIN_HASH_LEN` — minimum hash length for valid resume IDs
+  - `UI_NOISE` regex — patterns to filter from link text
+  - `TITLE_SUFFIX_NOISE` regex — patterns to strip from parsed titles
+  - `cleanResumeTitle()` — shared title cleaning function
+  - `VISIBILITY_VISIBLE/HIDDEN/UNKNOWN` — string constants for visibility
+  - `detectVisibilityFromCardText()` — shared visibility detection
+- Updated `resume-fetch-helpers.js`: uses `cleanResumeTitle()` and shared constants
+- Updated `resume-fetch.js`:
+  - `fetchAndParseResume()` now accepts `listMeta` param to carry visibility from list to parsed resume
+  - `syncAllResumes()` passes `item` as listMeta to preserve visibility
+  - Title cleaning uses `TITLE_SUFFIX_NOISE` from constants
+  - Resume object includes `visibility` and `hidden` fields
+- Updated `resume-detail/parse-resume.js`:
+  - Added `visibility: VISIBILITY_UNKNOWN` and `hidden: false` to default resume object
+  - Added title cleanup with `TITLE_SUFFIX_NOISE`
+- Updated `resume-detail/index.js`:
+  - `parseResumeList()` now uses `cleanResumeTitle()`, `detectVisibilityFromCardText()`, shared constants
+  - Includes visibility detection from card DOM
+- Updated UI `resumes.js`:
+  - `renderMyResumesPanel()`: 3 visibility badges (Скрыто/Видимо/Статус неизвестен) using CSS badge classes
+  - Visible/hidden counter badges in sync section header
+  - Detail card shows visibility badge next to title
+- Updated UI HTML `resume.js`:
+  - Added `res-visible-count` and `res-hidden-count` badge elements in sync section
+- Build successful, 0 lint errors (7 pre-existing warnings)
+
+Stage Summary:
+- New file: `src/lib/resume-constants.js` — shared constants for DRY across 4 files
+- 6 files modified: resume-fetch-helpers.js, resume-fetch.js, parse-resume.js, resume-detail/index.js, ui/tabs/resumes.js, ui/html/tabs/resume.js
+- Title cleanup: "Постоянная работа" and other noise words stripped from both fetch-based and DOM-based parsers
+- Visibility status: 'visible' / 'hidden' / 'unknown' — tracked through entire pipeline (list → parse → save → display)
+- UI badges: green "Видимо", amber "Скрыто", zinc "Статус неизвестен"
+- Scale-ready: visibility detection works for any number of resumes per user
