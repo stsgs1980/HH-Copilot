@@ -707,3 +707,24 @@ Stage Summary:
 - Selection is now in ONE place: "Все резюме" list with explicit radio buttons
 - Top block is informational only — shows which resume is active, no hidden click actions
 - Button wording clearer — no "текущее/действующее" confusion
+
+---
+Task ID: 3
+Agent: main
+Task: Fix visibility detection — detect from resume detail page HTML (more reliable than list page)
+
+Work Log:
+- Root cause: /applicant/resumes list page uses client-side rendering for visibility indicators
+- fetch() gets SSR HTML which lacks "Многие не видят" — it's rendered by React after hydration
+- Added detectVisibilityFromResumePage() function with 6 strategies for the detail page
+- Strategies: data-qa attrs, button text, body text, raw HTML search, script JSON, hide action
+- resume detail page includes visibility indicators in SSR HTML (more reliable)
+- Page-level visibility overrides list-level metadata (page > list in reliability)
+- Falls back to list meta only if page detection returns UNKNOWN
+- Build successful: 210.3kb
+
+Stage Summary:
+- New function: detectVisibilityFromResumePage() — 6 strategies for resume detail page
+- Visibility detection now has TWO layers: list page + detail page
+- Detail page result overrides list page result (more reliable source)
+- Should fix the "re-hide" bug where hidden resumes still showed as visible

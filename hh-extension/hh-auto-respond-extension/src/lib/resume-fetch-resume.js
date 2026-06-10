@@ -7,7 +7,7 @@
 import { createLogger } from './anti-hallucination.js';
 import { fetchHtml, htmlToDoc, safeGetText } from './resume-fetch-helpers.js';
 import { parsePersonalDataFromDoc } from './resume-fetch-parse.js';
-import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from './resume-constants.js';
+import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, hasHiddenIndicator, normalizeWs, VISIBILITY_HIDDEN_DATA_QA } from './resume-constants.js';
 import { parseExperienceFromDocStrategies1to3 } from './resume-fetch-experience.js';
 import { parseExperienceFromHtmlText } from './resume-fetch-strategy4-text.js';
 import { parseExperienceFromScripts } from './resume-fetch-strategy5-scripts.js';
@@ -89,13 +89,34 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
     _debug: { found: [], missing: [] }
   };
 
-  // Carry over metadata from the resume list (visibility status, etc.)
-  if (listMeta) {
-    if (listMeta.visibility) resume.visibility = listMeta.visibility;
-    if (listMeta.hidden !== undefined) resume.hidden = listMeta.hidden;
-    if (listMeta.title && listMeta.title !== 'Untitled') {
-      resume._listTitle = listMeta.title;
+  // ═══ Detect visibility from resume detail page HTML ═══
+  // This is MORE RELIABLE than the list page because the resume detail page
+  // includes visibility indicators even in SSR HTML (e.g. "Многие не видят",
+  // "Сделать видимым" button, data-qa attributes).
+  const pageVis = detectVisibilityFromResumePage(doc, html);
+  if (pageVis === VISIBILITY_HIDDEN) {
+    resume.visibility = VISIBILITY_HIDDEN;
+    resume.hidden = true;
+    fetchLog.info('Resume page visibility: HIDDEN (overrides list)');
+  } else if (pageVis === VISIBILITY_VISIBLE) {
+    // Page explicitly shows visible — override list meta too
+    resume.visibility = VISIBILITY_VISIBLE;
+    resume.hidden = false;
+    fetchLog.info('Resume page visibility: VISIBLE');
+  } else {
+    // UNKNOWN from page — fall back to list metadata
+    if (listMeta) {
+      if (listMeta.visibility) resume.visibility = listMeta.visibility;
+      if (listMeta.hidden !== undefined) resume.hidden = listMeta.hidden;
+      if (listMeta.title && listMeta.title !== 'Untitled') {
+        resume._listTitle = listMeta.title;
+      }
     }
+    fetchLog.info('Resume page visibility: UNKNOWN, using list meta: ' + resume.visibility);
+  }
+  // Always carry over list title
+  if (listMeta && listMeta.title && listMeta.title !== 'Untitled') {
+    resume._listTitle = listMeta.title;
   }
 
   const dbg = (key, val) => {
@@ -210,4 +231,93 @@ async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) {
   resume.experience = entries;
   if (entries.length > 0) resume._debug.found.push('experience: ' + entries.length);
   else resume._debug.missing.push('experience (0 entries)');
+}
+
+// ═══════════════════════════════════════════════
+// VISIBILITY DETECTION FROM RESUME DETAIL PAGE
+// ═══════════════════════════════════════════════
+
+/**
+ * Detect visibility status from the resume detail page HTML.
+ * This is MORE RELIABLE than the list page because hh.ru includes
+ * visibility indicators in the resume detail SSR HTML.
+ *
+ * Strategies:
+ * 1. data-qa attributes (e.g. data-qa="resume-make-visible")
+ * 2. Text indicators in the page body (Многие не видят, Сделать видимым)
+ * 3. Script/hydration JSON (hidden: true)
+ * 4. Specific button text (Скрыть резюме = visible, Сделать видимым = hidden)
+ *
+ * @param {Document} doc - Parsed document from DOMParser
+ * @param {string} html - Raw HTML string
+ * @returns {string} VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, or VISIBILITY_UNKNOWN
+ */
+function detectVisibilityFromResumePage(doc, html) {
+  // Strategy 1: Check for hidden-specific data-qa attributes
+  for (const sel of VISIBILITY_HIDDEN_DATA_QA) {
+    const found = doc.querySelector(sel);
+    if (found) {
+      fetchLog.info('PageVis: found hidden via data-qa: ' + sel);
+      return VISIBILITY_HIDDEN;
+    }
+  }
+
+  // Strategy 2: Check for "Сделать видимым" button or link
+  // This button appears on hidden resumes in the owner's view
+  const allButtons = doc.querySelectorAll('button, a');
+  for (const btn of allButtons) {
+    const text = normalizeWs((btn.textContent || '')).toLowerCase();
+    if (text.includes('сделать видимым')) {
+      fetchLog.info('PageVis: found "Сделать видимым" button');
+      return VISIBILITY_HIDDEN;
+    }
+    // "Скрыть резюме" button means the resume IS currently visible
+    if (text.includes('скрыть резюме') || text.includes('скрыть')) {
+      const qa = btn.getAttribute('data-qa') || '';
+      if (qa.includes('hide') || qa.includes('hidden') || text.includes('скрыть резюме')) {
+        fetchLog.info('PageVis: found "Скрыть резюме" button → visible');
+        return VISIBILITY_VISIBLE;
+      }
+    }
+  }
+
+  // Strategy 3: Check page text for hidden indicators (in body, not scripts)
+  const bodyText = doc.body ? normalizeWs(doc.body.textContent || '') : '';
+  if (hasHiddenIndicator(bodyText)) {
+    fetchLog.info('PageVis: found hidden indicator in body text');
+    return VISIBILITY_HIDDEN;
+  }
+
+  // Strategy 4: Check raw HTML for hidden indicators (with &nbsp; normalization)
+  const htmlForSearch = html.replace(/&nbsp;/g, ' ').toLowerCase();
+  const htmlNorm = normalizeWs(htmlForSearch);
+  if (hasHiddenIndicator(htmlNorm)) {
+    fetchLog.info('PageVis: found hidden indicator in raw HTML');
+    return VISIBILITY_HIDDEN;
+  }
+
+  // Strategy 5: Check script/hydration JSON for hidden status
+  const scriptEls = doc.querySelectorAll('script:not([src])');
+  for (const script of scriptEls) {
+    const t = script.textContent || '';
+    if (t.length < 50) continue;
+    // Look for visibility-related JSON near resume data
+    if (/"hidden"\s*:\s*true/.test(t) || /"isHidden"\s*:\s*true/.test(t) ||
+        /"visibility"\s*:\s*"hidden"/.test(t) || /"status"\s*:\s*"hidden"/.test(t)) {
+      // Verify this is about the current resume, not something else
+      // For now, presence of these patterns in resume page scripts is a strong signal
+      fetchLog.info('PageVis: found hidden pattern in script JSON');
+      return VISIBILITY_HIDDEN;
+    }
+  }
+
+  // Strategy 6: If we find a "Скрыть" action link/button specific to this resume
+  const hideLink = doc.querySelector('[data-qa="resume-action-hide"], [data-qa*="resume-hide"], a[data-qa*="hide-resume"]');
+  if (hideLink) {
+    fetchLog.info('PageVis: found "hide resume" action → resume is VISIBLE');
+    return VISIBILITY_VISIBLE;
+  }
+
+  fetchLog.info('PageVis: no visibility indicators found → UNKNOWN');
+  return VISIBILITY_UNKNOWN;
 }
