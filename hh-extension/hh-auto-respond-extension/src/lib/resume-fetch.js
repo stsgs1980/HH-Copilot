@@ -95,6 +95,33 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
     fetchLog.info('ExpCard HTML snippet (first 2000 chars): ' + snippet);
   }
 
+  // Debug: count ALL date-range patterns in the full HTML (not just experience section)
+  const MONTHS_RE = /(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}\s*[—\-–]\s*(?:(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}|настоящее\s*время|по\s+настоящее\s+время)/gi;
+  const allDateRanges = html.match(MONTHS_RE) || [];
+  fetchLog.info('Full HTML date ranges: ' + allDateRanges.length + ' found: ' + JSON.stringify(allDateRanges));
+
+  // Debug: also check for numeric date patterns like "01.2020" or "2020-2023"
+  const numDateRanges = html.match(/\d{2}\.\d{4}\s*[—\-–]\s*(?:\d{2}\.\d{4}|настоящее\s*время)/gi) || [];
+  fetchLog.info('Numeric date ranges: ' + numDateRanges.length + ' found: ' + JSON.stringify(numDateRanges));
+
+  // Debug: search for "experience" or "работ" in script tags
+  const scripts = preDoc.querySelectorAll('script:not([src])');
+  let expScriptCount = 0;
+  scripts.forEach(s => {
+    const t = s.textContent || '';
+    if (/experience|работ[аеы]|компани|должност|career/i.test(t)) {
+      expScriptCount++;
+      if (expScriptCount <= 3) {
+        fetchLog.info('Script with experience keywords (first 500 chars): ' + t.substring(0, 500));
+      }
+    }
+  });
+  fetchLog.info('Scripts with experience keywords: ' + expScriptCount + ' of ' + scripts.length);
+
+  // Store HTML for diagnostic access
+  window.__hhLastFetchHtml = html;
+  window.__hhLastFetchDoc = doc;
+
   // Extract id from URL: /resume/{hex} or ?resume={hex}
   let hashMatch = resumeUrl.match(/\/resume\/([a-f0-9]+)/);
   if (!hashMatch) hashMatch = resumeUrl.match(/[?&]resume=([a-f0-9]+)/);
@@ -300,17 +327,39 @@ function parseExperienceFromHtmlText(html, alreadyFound) {
     'gi'
   );
 
-  // Find the experience section boundaries in HTML
+  // Also try numeric date patterns: "01.2020 — настоящее время"
+  const NUM_DATE_RE = /\d{2}\.\d{4}\s*[—\-–]\s*(?:\d{2}\.\d{4}|настоящее\s*время|по\s+настоящее\s+время)/gi;
+
+  // Search the ENTIRE HTML for date ranges first (section boundaries may be wrong)
+  const allDateRanges = [];
+  let match;
+  while ((match = DATE_RANGE_RE.exec(html)) !== null) {
+    allDateRanges.push({ index: match.index, text: match[0] });
+  }
+  // Also search for numeric dates
+  while ((match = NUM_DATE_RE.exec(html)) !== null) {
+    allDateRanges.push({ index: match.index, text: match[0] });
+  }
+
+  fetchLog.info('Text pattern: found ' + allDateRanges.length + ' date ranges in FULL HTML');
+
+  if (allDateRanges.length <= alreadyFound) {
+    fetchLog.info('Text pattern: no more date ranges than already found (' + alreadyFound + ')');
+    return [];
+  }
+
+  // Try to find the experience section boundaries for context extraction
   const expStartPatterns = [
     /data-qa="resume-list-card-experience"/i,
     /<h[23][^>]*>.*?опыт\s+работы.*?<\/h[23]>/i,
     /data-qa="resume-block-experience"/i,
+    /Опыт\s+работы/i,
   ];
   const expEndPatterns = [
     /data-qa="resume-list-card-education"/i,
     /data-qa="resume-block-education"/i,
     /<h[23][^>]*>.*?образование.*?<\/h[23]>/i,
-    /data-qa="resume-list-card-/i,
+    /Образование/i,
   ];
 
   let expStart = -1;
@@ -318,78 +367,70 @@ function parseExperienceFromHtmlText(html, alreadyFound) {
     const m = html.match(pat);
     if (m) { expStart = m.index; break; }
   }
-  if (expStart === -1) {
-    // No experience section found — can't parse
-    return [];
-  }
 
   let expEnd = html.length;
-  for (const pat of expEndPatterns) {
-    const m = html.match(pat);
-    if (m && m.index > expStart && m.index < expEnd) {
-      expEnd = m.index;
+  if (expStart !== -1) {
+    for (const pat of expEndPatterns) {
+      const m = html.match(pat);
+      if (m && m.index > expStart && m.index < expEnd) {
+        expEnd = m.index;
+      }
     }
   }
 
-  const expHtml = html.substring(expStart, expEnd);
-  fetchLog.info('Text pattern: experience section ' + expStart + '-' + expEnd + ' (' + expHtml.length + ' chars)');
+  fetchLog.info('Text pattern: experience section ' + expStart + '-' + expEnd);
 
-  // Find all date ranges in the experience section
-  const dateRanges = [];
-  let match;
-  while ((match = DATE_RANGE_RE.exec(expHtml)) !== null) {
-    dateRanges.push({
-      index: match.index,
-      text: match[0]
-    });
-  }
+  // Filter date ranges that are within the experience section (or near it)
+  // If expStart is -1 (section not found), use all date ranges
+  const expDateRanges = allDateRanges.filter(dr => {
+    if (expStart === -1) return true;
+    // Date range should be after the section start (with some margin)
+    // and before the section end (with some margin)
+    return dr.index >= expStart - 200 && dr.index <= expEnd + 200;
+  });
 
-  fetchLog.info('Text pattern: found ' + dateRanges.length + ' date ranges in experience section');
+  fetchLog.info('Text pattern: ' + expDateRanges.length + ' date ranges in experience section');
 
-  if (dateRanges.length <= alreadyFound) {
-    // No additional date ranges found beyond what we already parsed
+  if (expDateRanges.length <= alreadyFound) {
     return [];
   }
 
   // For each date range, extract the surrounding text to find position and company
   const entries = [];
-  for (let i = 0; i < dateRanges.length; i++) {
-    const dr = dateRanges[i];
-    // Look backward from the date range for position/company text
-    // The position is usually 50-500 chars before the date range
-    const lookBack = expHtml.substring(Math.max(0, dr.index - 600), dr.index);
-    // The description is usually after the date range until the next entry
-    const nextIdx = (i + 1 < dateRanges.length) ? dateRanges[i + 1].index : expHtml.length;
-    const lookForward = expHtml.substring(dr.index + dr.text.length, Math.min(nextIdx, dr.index + dr.text.length + 500));
+  for (let i = 0; i < expDateRanges.length; i++) {
+    const dr = expDateRanges[i];
+    const searchBase = (expStart !== -1) ? html.substring(expStart, expEnd) : html;
+    const searchOffset = (expStart !== -1) ? expStart : 0;
+    const relIndex = dr.index - searchOffset;
 
-    // Strip HTML tags for text extraction
+    const lookBack = searchBase.substring(Math.max(0, relIndex - 800), relIndex);
+    const nextIdx = (i + 1 < expDateRanges.length) ? expDateRanges[i + 1].index - searchOffset : searchBase.length;
+    const lookForward = searchBase.substring(relIndex + dr.text.length, Math.min(nextIdx, relIndex + dr.text.length + 800));
+
     const textBefore = stripHtmlTags(lookBack);
     const textAfter = stripHtmlTags(lookForward);
 
     const job = {};
     job.period = dr.text;
 
-    // Try to find position: usually the last meaningful text before the date
-    // Position is typically on a separate line or in a <b>/<strong> tag
+    // Try to find position: last meaningful text before the date
     const linesBefore = textBefore.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);
-    // Last non-date line before the date range is likely the position
     for (let j = linesBefore.length - 1; j >= 0; j--) {
       const line = linesBefore[j];
-      // Skip if it looks like a date or duration
       if (/^\d{4}/.test(line) || /\d+\s*(год|лет|мес)/.test(line)) continue;
-      // Skip if too short or too long
+      if (/^(Показать|Смотреть|Развернуть|Ещё|Все)/i.test(line)) continue;
       if (line.length < 3 || line.length > 200) continue;
-      // This is likely the position
       job.position = line;
       break;
     }
 
-    // Try to find company: usually 1-2 lines before the position
+    // Try to find company: 1-3 lines before the position
     if (job.position) {
       const posIdx = linesBefore.lastIndexOf(job.position);
-      for (let j = posIdx - 1; j >= Math.max(0, posIdx - 3); j--) {
+      for (let j = posIdx - 1; j >= Math.max(0, posIdx - 4); j--) {
         const line = linesBefore[j];
         if (/^\d{4}/.test(line) || /\d+\s*(год|лет|мес)/.test(line)) continue;
+        if (/^(Показать|Смотреть|Развернуть|Ещё|Все)/i.test(line)) continue;
         if (line.length < 3 || line.length > 200) continue;
         if (line === job.position) continue;
         job.company = line;
@@ -397,7 +438,7 @@ function parseExperienceFromHtmlText(html, alreadyFound) {
       }
     }
 
-    // Description: text after the date range (first meaningful paragraph)
+    // Description: text after the date range
     const linesAfter = textAfter.split(/\n/).map(l => l.trim()).filter(l => l.length > 10);
     if (linesAfter.length > 0 && linesAfter[0].length > 20) {
       job.description = linesAfter[0].substring(0, 300);

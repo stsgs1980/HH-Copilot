@@ -479,3 +479,28 @@ Stage Summary:
 - 5 parsing strategies now: company-cards → stepper supplement → stepper fallback → text patterns → script JSON
 - Text pattern strategy should find ALL date ranges in the HTML even without data-qa
 - Diagnostic dump will help identify exact HTML structure for further refinement
+
+---
+Task ID: 12
+Agent: Main
+Task: Add loading indicator + comprehensive experience diagnostics (v1.9.2)
+
+Work Log:
+- Added loading spinner for "Загрузить с текущей страницы" button
+  Button shows spinner + "Загрузка..." while processing, restored after completion
+  Dispatches hh-ar-load-resume-done event for button state restoration
+- Added comprehensive diagnostic logging in fetchAndParseResume():
+  - Full HTML date range count (all month+year patterns)
+  - Numeric date pattern search (01.2020 format)
+  - Script tag analysis (finds scripts with experience keywords, dumps first 500 chars)
+  - Stores HTML on window.__hhLastFetchHtml for console debugging
+- Fixed Strategy 4 (parseExperienceFromHtmlText) to search ENTIRE HTML first
+  (not just within experience section boundaries)
+  Added numeric date format support and more fallback section patterns
+- Version: 1.9.0 → 1.9.2
+
+Stage Summary:
+- Loading indicator now works for "Загрузить с текущей страницы"
+- Diagnostic logs will reveal: how many date ranges exist in full HTML,
+  what script tags contain, and what date formats are used
+- window.__hhLastFetchHtml available for manual console analysis

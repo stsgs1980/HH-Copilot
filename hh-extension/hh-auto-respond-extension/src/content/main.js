@@ -378,6 +378,8 @@ async function init() {
         mainLog.info('No synced resumes available on non-resume page');
       }
     }
+    // Signal completion for button loading state
+    window.dispatchEvent(new CustomEvent('hh-ar-load-resume-done'));
   });
 
   // Sync all resumes -- works from ANY hh.ru page
