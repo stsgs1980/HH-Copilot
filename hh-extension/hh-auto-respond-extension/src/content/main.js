@@ -295,6 +295,9 @@ async function init() {
     const path = window.location.pathname;
     setStatus('Загрузка резюме...');
 
+    // Show loading spinner in the panel content area
+    showResumeLoading('Загрузка резюме...');
+
     if (/\/resume\/[a-f0-9]+/.test(path)) {
       let resume;
 
@@ -398,6 +401,28 @@ function renderSyncProgress(done, total, msg) {
       '</div>' +
       '<div style="font-size:10px;color:#71717a;margin-top:4px;">' + done + ' / ' + total + '</div>' +
     '</div>';
+}
+
+/**
+ * Show a loading spinner in the resume panel content area.
+ * Replaces #res-parsed-data with spinner + message.
+ * renderResumePanel() will later replace this with actual data.
+ */
+function showResumeLoading(message) {
+  const container = refs.shadowRoot?.getElementById('res-parsed-data');
+  if (!container) return;
+  container.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;gap:12px;">' +
+      '<div class="har-spinner"></div>' +
+      '<div style="font-size:12px;color:#71717a;font-weight:500;">' + esc(message || 'Загрузка...') + '</div>' +
+    '</div>';
+  // Auto-expand accordion if collapsed
+  const body = refs.shadowRoot?.getElementById('res-parsing-body');
+  if (body && !body.classList.contains('open')) {
+    body.classList.add('open');
+    const chevron = body.previousElementSibling?.querySelector('.timeline-chevron');
+    if (chevron) chevron.classList.add('open');
+  }
 }
 
 function esc(s) {

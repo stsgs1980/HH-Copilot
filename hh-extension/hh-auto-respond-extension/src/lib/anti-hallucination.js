@@ -108,7 +108,7 @@ export function safeInput(el, text, label) {
 
 export function createLogger(module) {
   return {
-    info: (action, data) => console.debug('[HH-AR][' + module + '] ' + action, data || ''),
+    info: (action, data) => console.log('[HH-AR][' + module + '] ' + action, data || ''),
     warn: (action, data) => console.warn('[HH-AR][' + module + '] ' + action, data || ''),
     error: (action, data) => console.error('[HH-AR][' + module + '] ' + action, data || ''),
   };

@@ -504,3 +504,92 @@ Stage Summary:
 - Diagnostic logs will reveal: how many date ranges exist in full HTML,
   what script tags contain, and what date formats are used
 - window.__hhLastFetchHtml available for manual console analysis
+
+---
+Task ID: 13
+Agent: Main
+Task: Add panel spinner + fix invisible logger + Strategy 6 expanded experience fetch (v1.9.3)
+
+Work Log:
+- Added loading spinner in #res-parsed-data panel when "Загрузить с текущей страницы" clicked
+  Shows .har-spinner (40px circle) + "Загрузка резюме..." text, auto-expands accordion
+  Replaced by actual resume data when renderResumePanel() runs after load completes
+- Fixed logger: console.debug → console.log in createLogger()
+  Chrome DevTools hides debug messages by default — all [HH-AR][*] logs now visible
+- Added Strategy 6: fetchExpandedExperience() — tries multiple approaches to get hidden experience:
+  (a) Find "Показать все" button URLs (href, data-url, data-action-url attributes)
+  (b) Search Magritte script tags for expansion URLs (loadMore, fetchUrl, nextPage patterns)
+  (c) Try known API endpoints (/applicant/api/v1/resumes/{id}, api.hh.ru/resumes/{id})
+  (d) Try query parameters (?expand=all, ?expand=experience, ?showAll=true, ?full=true)
+  (e) Look for data-qa="profile-experience-viewAll" and check ancestors for data-url
+  (f) Parse JSON API responses with recursive experience array finder
+  (g) Parse expanded HTML docs with company-cards + stepper + text pattern strategies
+- parseExperienceFromDoc() made async to support Strategy 6 (fetch requests)
+- fetchAndParseResume() now uses await parseExperienceFromDoc()
+- Version: 1.9.2 → 1.9.3, build successful
+
+Stage Summary:
+- Panel loading spinner now visible (not just button inline spinner)
+- ALL logger messages now visible in Chrome DevTools (no Verbose level needed)
+- Strategy 6 attempts 6+ different methods to find hidden experience entries
+- Next step: test and check Strategy 6 console output to see which URLs/approaches work
+
+---
+Task ID: 14
+Agent: Main
+Task: Fix fetch-based experience parsing (3→6) — "Развернуть" button causes SSR to only render 3 entries
+
+Work Log:
+- User identified root cause: hh.ru resume page has "Свернуть"/"Развернуть" button
+  SSR HTML only renders 3 company-cards; remaining 3 loaded via AJAX on "Развернуть" click
+- Strategy 5 (script JSON) was SKIPPING because entries.length > 0 (3 > 0) — only ran when 0 entries
+  Fixed: Strategy 5 now runs ALWAYS; if it finds more entries than DOM parsing, uses those
+- Completely rewrote Strategy 5 (parseExperienceFromScripts) with 4 passes:
+  Pass 1: Structured JSON in script tags (type="application/json" + inline scripts)
+  Pass 2: window.__INITIAL_STATE__ / __PRELOADED_STATE__ / __NEXT_DATA__
+  Pass 3: "resumeStore" / "resume" patterns in raw HTML
+  Pass 4: Deep scan — find ANY JSON array with date+position fields
+- Added robust JSON array extraction: extractJsonArray() with proper string/bracket tracking
+- Added findExperienceInObject() — recursive search prioritizing known keys (experience, jobs, career, etc.)
+- Added deepScanForExperience() — scans raw HTML for JSON arrays with year+position fields
+- Completely rewrote Strategy 6 (fetchExpandedExperience):
+  New architecture: findExpansionUrls() discovers URLs from 3 sources:
+    Source 1: "Развернуть" button data-attributes (href, data-url, data-action-url, etc. on button + ancestors)
+    Source 2: Magritte script state (url, fetchUrl, loadMore, apiUrl patterns)
+    Source 3: Known API patterns (expand=experience_items, /mine/{id}/experience)
+  Then tryFetchExpandedUrl() tries each URL with proper headers (X-Requested-With: XMLHttpRequest)
+  Falls back to applicant internal API (/applicant/api/v1/resumes/{id}, /applicant/api/resumes/{id})
+  Falls back to re-fetch with expansion query parameters
+- Fixed bug in buildEntryFromApiItem(): item.current check had wrong operator precedence
+  Was: `item.end || item.endDate || item.current ? 'настоящее время' : ''`
+  Now: `isCurrent = !!(item.current || item.untilNow); end = rawEnd || (isCurrent ? 'настоящее время' : '')`
+- Added resumeUrl parameter to parseExperienceFromDoc and fetchExpandedExperience
+- Version: 1.9.3 → 1.9.4, build successful (305.9kb)
+
+Stage Summary:
+- Strategy 5 now runs ALWAYS (not just when 0 entries), with 4-pass deep scan
+- Strategy 6 completely rewritten with modular URL discovery + fetch approach
+- buildEntryFromApiItem() bug fixed (operator precedence for current/untilNow)
+- Next: test to see if Strategy 5 finds experience data in Magritte script state,
+  or if Strategy 6 finds the AJAX endpoint for "Развернуть"
+
+---
+Task ID: 15
+Agent: Main
+Task: Version sync + commit + push v1.9.4
+
+Work Log:
+- User asked to verify all changes are committed and pushed before pulling
+- Found 8 uncommitted files with 853 insertions, 76 deletions
+- Fixed CHANGELOG version mismatch: was [1.9.3], code was 1.9.4 — aligned to 1.9.4
+- Verified version consistency: version.js=1.9.4, manifest.json=1.9.4, package.json=1.9.4, CHANGELOG=[1.9.4]
+- Verified build: esbuild bundle succeeds (289.7kb, 0 errors)
+- Verified bracket balance: all JS files balanced
+- Verified function references: no broken imports or missing functions
+- Verified .har-spinner CSS class exists in styles.js
+- Committing and pushing v1.9.4
+
+Stage Summary:
+- All 8 files committed, no dangling references
+- Version 1.9.4 consistent across all 4 version sources
+- Build passes, ready for user to pull

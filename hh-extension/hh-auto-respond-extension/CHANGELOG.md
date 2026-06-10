@@ -5,6 +5,33 @@
 
 ---
 
+## [1.9.4] — 2026-06-11
+
+### Добавлено
+- **Спиннер загрузки в панели** — при нажатии «Загрузить с текущей страницы» в `#res-parsed-data`
+  показывается `.har-spinner` + текст «Загрузка резюме...» вместо пустого состояния
+- **Strategy 6: расширенный парсинг опыта через AJAX/API** — новая стратегия для получения
+  скрытых записей опыта (3→6), которые hh.ru подгружает лениво через «Показать все»:
+  - (a) Поиск URL кнопок «Показать все» (href, data-url, data-action-url)
+  - (b) Поиск Magritte expansion URLs в `<script>` тегах
+  - (c) Пробуем известные API-эндпоинты (`/applicant/api/v1/resumes/{id}`, `api.hh.ru/resumes/{id}`)
+  - (d) Пробуем параметры расширения (`?expand=all`, `?expand=experience`, `?showAll=true`)
+  - (e) Парсинг JSON API ответов (hh.ru API формат: position, company, start/end dates)
+  - (f) Парсинг expanded HTML документов (company-cards + stepper + text patterns)
+- **JSON API парсер** — `parseExperienceFromJson()` с рекурсивным поиском массива опыта
+  в произвольной структуре JSON + `buildEntryFromApiItem()` для конвертации hh.ru API полей
+
+### Исправлено
+- **Логгер невидимый в Chrome DevTools** — `console.debug` скрыт по умолчанию, заменён на
+  `console.log` — теперь все `[HH-AR][ResumeFetch]` сообщения видны без включения Verbose
+
+### Изменено
+- `parseExperienceFromDoc()` стала `async` для поддержки Strategy 6 (fetch-запросы)
+- `fetchAndParseResume()` теперь `await parseExperienceFromDoc()`
+- Версия: 1.9.2 → 1.9.4
+
+---
+
 ## [1.9.0] — 2026-06-11
 
 ### Добавлено
