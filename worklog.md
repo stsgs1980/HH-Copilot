@@ -457,3 +457,25 @@ Stage Summary:
 - Experience parsing now finds all entries (3→6) on both live DOM and fetch paths
 - Auth log noise eliminated
 - CHANGELOG.md fully up to date
+
+---
+Task ID: 11
+Agent: Main
+Task: Add Strategy 4 (text pattern) + Strategy 5 (script JSON) for experience parsing (v1.9.0)
+
+Work Log:
+- User confirmed: sync still returns 3 experiences after v1.8.9
+- Root cause: fetched SSR HTML only contains 3 company-cards with data-qa
+  The remaining 3 experiences are in the HTML but without data-qa wrappers
+- Added Strategy 4: parseExperienceFromHtmlText() - finds date ranges in raw HTML
+  (e.g. "январь 2020 — настоящее время") then extracts surrounding text for position/company
+- Added Strategy 5: parseExperienceFromScripts() - looks for JSON in <script> tags
+  (Magritte hydration state, window.__INITIAL_STATE__, etc.)
+- Added diagnostic HTML snippet dump (first 2000 chars of expCard) for debugging
+- If Strategy 4 finds more entries than Strategies 1-3, it replaces them
+- Version bump to 1.9.0
+
+Stage Summary:
+- 5 parsing strategies now: company-cards → stepper supplement → stepper fallback → text patterns → script JSON
+- Text pattern strategy should find ALL date ranges in the HTML even without data-qa
+- Diagnostic dump will help identify exact HTML structure for further refinement

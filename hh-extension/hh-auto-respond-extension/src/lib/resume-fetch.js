@@ -88,6 +88,13 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
     preStepperItems.length + ' stepper-items, ' +
     (preShowAll ? preShowAll.length : 0) + ' "show all" buttons in HTML');
 
+  // Debug: dump experience section HTML snippet for analysis
+  const expCardHtml = preDoc.querySelector('[data-qa="resume-list-card-experience"]');
+  if (expCardHtml) {
+    const snippet = expCardHtml.outerHTML.substring(0, 2000);
+    fetchLog.info('ExpCard HTML snippet (first 2000 chars): ' + snippet);
+  }
+
   // Extract id from URL: /resume/{hex} or ?resume={hex}
   let hashMatch = resumeUrl.match(/\/resume\/([a-f0-9]+)/);
   if (!hashMatch) hashMatch = resumeUrl.match(/[?&]resume=([a-f0-9]+)/);
@@ -127,7 +134,7 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   }
   parsePersonalDataFromDoc(doc, doc.querySelector('[data-qa="resume-block-title-position"]'), dbg, resume);
   parseSkillsFromDoc(doc, dbg, resume);
-  parseExperienceFromDoc(doc, dbg, resume);
+  parseExperienceFromDoc(doc, dbg, resume, html);
   parseEducationFromDocSection(doc, dbg, resume);
   parseLanguagesAndAbout(doc, dbg, resume);
 
@@ -180,7 +187,7 @@ function parseSkillsFromDoc(doc, dbg, resume) {
   }
 }
 
-function parseExperienceFromDoc(doc, dbg, resume) {
+function parseExperienceFromDoc(doc, dbg, resume, html) {
   const allCards = doc.querySelectorAll('[data-qa="profile-experience-company-card"]');
   const seen = new Set();
   const uniqueCards = [];
@@ -203,15 +210,11 @@ function parseExperienceFromDoc(doc, dbg, resume) {
     resume._debug.found.push('experienceBlock');
 
     // Strategy 2: parse remaining stepper items NOT covered by company cards
-    // hh.ru may render some experiences only as stepper items without company-card wrapper
-    // (e.g. when "Показать все" sections are SSR'd but not wrapped in company-card)
     const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
     const alreadyParsed = entries.length;
 
     stepperItems.forEach(step => {
-      // Skip stepper items already covered by company cards
       if (usedStepperElements.has(step)) return;
-      // Skip if this stepper is nested inside a company card we already parsed
       let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
       if (parentCard && uniqueCards.includes(parentCard)) return;
 
@@ -248,9 +251,287 @@ function parseExperienceFromDoc(doc, dbg, resume) {
   } else {
     resume._debug.missing.push('experienceBlock (no container, ' + uniqueCards.length + ' cards)');
   }
+
+  // Strategy 4: Parse experience from raw HTML text patterns
+  // hh.ru SSR may only render 3 company-cards but ALL date ranges are in the HTML
+  // Look for date patterns like "январь 2020 — настоящее время" to find ALL experiences
+  if (html && entries.length > 0) {
+    const textParsed = parseExperienceFromHtmlText(html, entries.length);
+    if (textParsed.length > entries.length) {
+      fetchLog.info('Strategy 4 (text patterns): found ' + textParsed.length + ' experiences (was ' + entries.length + ')');
+      resume._debug.found.push('experience (text pattern supplement): ' + textParsed.length);
+      entries.length = 0;
+      entries.push(...textParsed);
+    }
+  }
+
+  // Strategy 5: Parse experience from Magritte <script> hydration JSON
+  if (html && entries.length === 0) {
+    const scriptParsed = parseExperienceFromScripts(doc, html);
+    if (scriptParsed.length > 0) {
+      fetchLog.info('Strategy 5 (script JSON): found ' + scriptParsed.length + ' experiences');
+      resume._debug.found.push('experience (script JSON): ' + scriptParsed.length);
+      entries.push(...scriptParsed);
+    }
+  }
+
   resume.experience = entries;
   if (entries.length > 0) resume._debug.found.push('experience: ' + entries.length);
   else resume._debug.missing.push('experience (0 entries)');
+}
+
+// ═══════════════════════════════════════════════
+// STRATEGY 4: TEXT-BASED EXPERIENCE PARSING
+// ═══════════════════════════════════════════════
+
+/**
+ * Parse experience entries from raw HTML using date-range text patterns.
+ * hh.ru renders ALL experiences in the SSR HTML, but only the first N
+ * have data-qa="profile-experience-company-card". The rest are in the HTML
+ * but without proper data-qa wrappers.
+ *
+ * Strategy: find date ranges → extract surrounding text → build experience entries
+ */
+function parseExperienceFromHtmlText(html, alreadyFound) {
+  // Russian month names used by hh.ru in date ranges
+  const MONTHS = 'январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья]';
+  const DATE_RANGE_RE = new RegExp(
+    '(' + MONTHS + ')\\s*\\d{4}\\s*[—\\-–]\\s*(?:(' + MONTHS + ')\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)',
+    'gi'
+  );
+
+  // Find the experience section boundaries in HTML
+  const expStartPatterns = [
+    /data-qa="resume-list-card-experience"/i,
+    /<h[23][^>]*>.*?опыт\s+работы.*?<\/h[23]>/i,
+    /data-qa="resume-block-experience"/i,
+  ];
+  const expEndPatterns = [
+    /data-qa="resume-list-card-education"/i,
+    /data-qa="resume-block-education"/i,
+    /<h[23][^>]*>.*?образование.*?<\/h[23]>/i,
+    /data-qa="resume-list-card-/i,
+  ];
+
+  let expStart = -1;
+  for (const pat of expStartPatterns) {
+    const m = html.match(pat);
+    if (m) { expStart = m.index; break; }
+  }
+  if (expStart === -1) {
+    // No experience section found — can't parse
+    return [];
+  }
+
+  let expEnd = html.length;
+  for (const pat of expEndPatterns) {
+    const m = html.match(pat);
+    if (m && m.index > expStart && m.index < expEnd) {
+      expEnd = m.index;
+    }
+  }
+
+  const expHtml = html.substring(expStart, expEnd);
+  fetchLog.info('Text pattern: experience section ' + expStart + '-' + expEnd + ' (' + expHtml.length + ' chars)');
+
+  // Find all date ranges in the experience section
+  const dateRanges = [];
+  let match;
+  while ((match = DATE_RANGE_RE.exec(expHtml)) !== null) {
+    dateRanges.push({
+      index: match.index,
+      text: match[0]
+    });
+  }
+
+  fetchLog.info('Text pattern: found ' + dateRanges.length + ' date ranges in experience section');
+
+  if (dateRanges.length <= alreadyFound) {
+    // No additional date ranges found beyond what we already parsed
+    return [];
+  }
+
+  // For each date range, extract the surrounding text to find position and company
+  const entries = [];
+  for (let i = 0; i < dateRanges.length; i++) {
+    const dr = dateRanges[i];
+    // Look backward from the date range for position/company text
+    // The position is usually 50-500 chars before the date range
+    const lookBack = expHtml.substring(Math.max(0, dr.index - 600), dr.index);
+    // The description is usually after the date range until the next entry
+    const nextIdx = (i + 1 < dateRanges.length) ? dateRanges[i + 1].index : expHtml.length;
+    const lookForward = expHtml.substring(dr.index + dr.text.length, Math.min(nextIdx, dr.index + dr.text.length + 500));
+
+    // Strip HTML tags for text extraction
+    const textBefore = stripHtmlTags(lookBack);
+    const textAfter = stripHtmlTags(lookForward);
+
+    const job = {};
+    job.period = dr.text;
+
+    // Try to find position: usually the last meaningful text before the date
+    // Position is typically on a separate line or in a <b>/<strong> tag
+    const linesBefore = textBefore.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);
+    // Last non-date line before the date range is likely the position
+    for (let j = linesBefore.length - 1; j >= 0; j--) {
+      const line = linesBefore[j];
+      // Skip if it looks like a date or duration
+      if (/^\d{4}/.test(line) || /\d+\s*(год|лет|мес)/.test(line)) continue;
+      // Skip if too short or too long
+      if (line.length < 3 || line.length > 200) continue;
+      // This is likely the position
+      job.position = line;
+      break;
+    }
+
+    // Try to find company: usually 1-2 lines before the position
+    if (job.position) {
+      const posIdx = linesBefore.lastIndexOf(job.position);
+      for (let j = posIdx - 1; j >= Math.max(0, posIdx - 3); j--) {
+        const line = linesBefore[j];
+        if (/^\d{4}/.test(line) || /\d+\s*(год|лет|мес)/.test(line)) continue;
+        if (line.length < 3 || line.length > 200) continue;
+        if (line === job.position) continue;
+        job.company = line;
+        break;
+      }
+    }
+
+    // Description: text after the date range (first meaningful paragraph)
+    const linesAfter = textAfter.split(/\n/).map(l => l.trim()).filter(l => l.length > 10);
+    if (linesAfter.length > 0 && linesAfter[0].length > 20) {
+      job.description = linesAfter[0].substring(0, 300);
+    }
+
+    if (job.position || job.company || job.period) {
+      entries.push(job);
+    }
+  }
+
+  return entries;
+}
+
+/**
+ * Strip HTML tags from a string, replacing them with newlines.
+ */
+function stripHtmlTags(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ═══════════════════════════════════════════════
+// STRATEGY 5: SCRIPT JSON EXPERIENCE PARSING
+// ═══════════════════════════════════════════════
+
+/**
+ * Try to extract experience data from Magritte <script> hydration JSON.
+ * hh.ru may embed full resume data in <script type="application/json"> or
+ * in BEM/React hydration state.
+ */
+function parseExperienceFromScripts(doc, html) {
+  const entries = [];
+
+  // Look for JSON blobs in script tags that contain experience data
+  const scripts = doc.querySelectorAll('script[type="application/json"], script:not([src])');
+  for (const script of scripts) {
+    const text = script.textContent || '';
+    if (text.length < 200) continue;
+
+    // Check if this script contains experience-related data
+    if (!/experience|работ[аеы]|компани|должност/i.test(text)) continue;
+
+    try {
+      // Try to find experience array in JSON
+      // Pattern: "experience":[{...}] or "experience":[{...}]
+      const expMatch = text.match(/"experience"\s*:\s*\[/);
+      if (expMatch) {
+        // Try to extract the array
+        const startIdx = text.indexOf('[', expMatch.index + 12);
+        if (startIdx !== -1) {
+          // Find matching closing bracket
+          let depth = 0;
+          let endIdx = startIdx;
+          for (let i = startIdx; i < text.length; i++) {
+            if (text[i] === '[') depth++;
+            if (text[i] === ']') depth--;
+            if (depth === 0) { endIdx = i + 1; break; }
+          }
+          const jsonStr = text.substring(startIdx, endIdx);
+          try {
+            const expArray = JSON.parse(jsonStr);
+            if (Array.isArray(expArray)) {
+              expArray.forEach(item => {
+                const job = {};
+                if (item.position || item.name) job.position = item.position || item.name;
+                if (item.company || item.organization) job.company = item.company || item.organization;
+                if (item.start || item.startDate) {
+                  const end = item.end || item.endDate || 'настоящее время';
+                  job.period = (item.start || item.startDate) + ' — ' + end;
+                }
+                if (item.description) job.description = item.description;
+                if (job.position || job.company) entries.push(job);
+              });
+              if (entries.length > 0) {
+                fetchLog.info('Script JSON: found ' + entries.length + ' experiences from embedded JSON');
+                return entries;
+              }
+            }
+          } catch (e) {
+            // JSON parse failed, continue to next script
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to next script
+    }
+  }
+
+  // Fallback: try to extract from raw HTML using window.__INITIAL_STATE__ or similar patterns
+  const statePatterns = [
+    /window\.__INITIAL_STATE__\s*=\s*(\{.+?\});?\s*<\/script>/s,
+    /window\.__PRELOADED_STATE__\s*=\s*(\{.+?\});?\s*<\/script>/s,
+    /"resumeStore"\s*:\s*(\{.+?\})\s*[,}]/s,
+  ];
+
+  for (const pat of statePatterns) {
+    const m = html.match(pat);
+    if (m) {
+      try {
+        const state = JSON.parse(m[1]);
+        // Navigate to experience data
+        const exp = state?.resume?.experience || state?.experience ||
+                    state?.resumeStore?.resume?.experience;
+        if (Array.isArray(exp)) {
+          exp.forEach(item => {
+            const job = {};
+            if (item.position) job.position = item.position;
+            if (item.company) job.company = item.company;
+            if (item.startDate) {
+              job.period = item.startDate + ' — ' + (item.endDate || 'настоящее время');
+            }
+            if (job.position || job.company) entries.push(job);
+          });
+          if (entries.length > 0) return entries;
+        }
+      } catch (e) {
+        // JSON parse failed, continue
+      }
+    }
+  }
+
+  return entries;
 }
 
 function parseEducationFromDocSection(doc, dbg, resume) {
