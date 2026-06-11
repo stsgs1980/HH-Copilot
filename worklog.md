@@ -864,3 +864,19 @@ Stage Summary:
 - 17 functions documented with JSDoc
 - README consistent at v1.9.8
 - No TODO/FIXME/HACK in codebase
+
+---
+Task ID: 8
+Agent: main
+Task: Fix VISIBILITY_HIDDEN not defined crash during sync
+
+Work Log:
+- Diagnosed `Fatal: VISIBILITY_HIDDEN is not defined` from user's console log
+- Found missing import in resume-fetch.js — only imported VISIBILITY_UNKNOWN and VISIBILITY_VISIBLE
+- Added VISIBILITY_HIDDEN to the import from resume-constants.js
+- Rebuilt extension, committed and pushed fix
+
+Stage Summary:
+- Bug: resume-fetch.js line 24 was missing VISIBILITY_HIDDEN import
+- Fix: added VISIBILITY_HIDDEN to import statement
+- Build successful, pushed to origin/main
