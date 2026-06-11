@@ -8,6 +8,7 @@
 import { createLogger } from '../lib/anti-hallucination.js';
 import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue } from '../lib/storage.js';
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
+import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
 import { continueApply } from '../engine/index.js';
@@ -112,6 +113,15 @@ async function handleResumeListPage() {
 
 async function handleVacancyDetailPage(path) {
   pageLog.info('Vacancy detail page detected');
+
+  // Run vacancy page diagnostic (sends data to __hhVacDiagData)
+  try {
+    const diag = diagnoseVacancyPage();
+    pageLog.info('Vacancy diagnostic: ' + Object.keys(diag.autoDetect || {}).filter(k => diag.autoDetect[k] && diag.autoDetect[k].value).length + ' auto-detected fields');
+  } catch (e) {
+    pageLog.warn('Vacancy diagnostic failed: ' + e.message);
+  }
+
   try {
     const queue = await getApplyQueue();
     if (queue.length > 0) {

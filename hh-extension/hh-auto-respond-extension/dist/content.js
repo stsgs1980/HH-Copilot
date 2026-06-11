@@ -8888,6 +8888,230 @@
     }
   });
 
+  // src/parsers/vacancy-diagnostic.js
+  function diagnoseVacancyPage() {
+    const path = window.location.pathname;
+    const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
+    const result = {
+      url: window.location.href,
+      vacancyId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      selectors: {},
+      autoDetect: {},
+      rawData: {}
+    };
+    const vacSelectors = [
+      "vacancyTitleOnPage",
+      "vacancyCompanyOnPage",
+      "vacancyDescription",
+      "vacancyDescriptionContent",
+      "vacancySkills",
+      "vacancySkillsOnPage",
+      "vacancyApplyButton",
+      "responsePopup",
+      "addCoverLetter",
+      "coverLetterInput",
+      "submitButton"
+    ];
+    vacSelectors.forEach((name) => {
+      const el = findElement(name);
+      const selectors = HH_SELECTORS[name] || [];
+      const matchIdx = el ? selectors.findIndex((sel) => {
+        try {
+          return document.querySelector(sel) === el;
+        } catch {
+          return false;
+        }
+      }) : -1;
+      result.selectors[name] = {
+        found: el !== null,
+        matchedSelector: matchIdx >= 0 ? selectors[matchIdx] : null,
+        text: el ? safeGetText(el, "").substring(0, 200) : null,
+        tag: el ? el.tagName : null,
+        dataQa: el ? safeGetAttr(el, "data-qa", "") : null,
+        className: el ? (el.className || "").substring(0, 100) : null
+      };
+      if ((name === "vacancySkills" || name === "vacancySkillsOnPage") && el) {
+        const items = el.querySelectorAll('.bloko-tag__text, [data-qa="skills-element__skill"], [data-qa*="skill"]');
+        const texts = [];
+        items.forEach((item) => {
+          const t = (item.textContent || "").trim();
+          if (t) texts.push(t);
+        });
+        result.selectors[name].items = texts;
+        result.selectors[name].count = texts.length;
+      }
+      if (name === "vacancyDescription" && el) {
+        result.selectors[name].htmlLength = el.innerHTML.length;
+        result.selectors[name].textLength = el.textContent.length;
+        result.selectors[name].textSnippet = el.textContent.substring(0, 500).trim();
+      }
+    });
+    const allDataQa = /* @__PURE__ */ new Map();
+    document.querySelectorAll("[data-qa]").forEach((el) => {
+      const qa = el.getAttribute("data-qa");
+      if (!qa) return;
+      const prefix = qa.replace(/[-_][^-_]+$/, "");
+      if (!allDataQa.has(prefix)) {
+        allDataQa.set(prefix, []);
+      }
+      allDataQa.get(prefix).push({
+        qa,
+        tag: el.tagName,
+        text: (el.textContent || "").substring(0, 80).trim().replace(/\s+/g, " ")
+      });
+    });
+    result.autoDetect.dataQaGroups = Object.fromEntries(allDataQa);
+    result.autoDetect.dataQaCount = allDataQa.size;
+    result.autoDetect.title = detectTitle();
+    result.autoDetect.company = detectCompany();
+    result.autoDetect.salary = detectSalary();
+    result.autoDetect.location = detectLocation();
+    result.autoDetect.experience = detectExperience();
+    result.autoDetect.employment = detectEmployment();
+    result.autoDetect.schedule = detectSchedule();
+    result.autoDetect.keySkills = detectKeySkills();
+    result.autoDetect.description = detectDescription();
+    result.autoDetect.brandedDescription = detectBrandedDescription();
+    result.rawData.infoBlocks = detectInfoBlocks();
+    window.postMessage({ type: "HH-AR-VAC-DIAG", payload: result }, "*");
+    diagLog2.info("Vacancy diagnostic complete \u2014 use __hhVacDiag() in console");
+    return result;
+  }
+  function detectTitle() {
+    const qa = document.querySelector('[data-qa="vacancy-title"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim(), tag: qa.tagName };
+    const h1 = document.querySelector("h1");
+    if (h1) return { source: "h1", value: h1.textContent.trim(), tag: "H1" };
+    return { source: null, value: null };
+  }
+  function detectCompany() {
+    const qa = document.querySelector('[data-qa="vacancy-company-name"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim(), tag: qa.tagName, href: qa.href || null };
+    const sideCompany = document.querySelector('.vacancy-company-name a, [class*="company-name"] a');
+    if (sideCompany) return { source: "class-heuristic", value: sideCompany.textContent.trim(), tag: sideCompany.tagName, href: sideCompany.href || null };
+    return { source: null, value: null };
+  }
+  function detectSalary() {
+    const qa = document.querySelector('[data-qa="vacancy-salary"], [data-qa="vacancy-serp__compensation"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    const bloko = document.querySelector('.vacancy-salary, [class*="vacancy-salary"]');
+    if (bloko) return { source: "class-heuristic", value: bloko.textContent.trim() };
+    const h1 = document.querySelector("h1");
+    if (h1) {
+      const parent = h1.parentElement;
+      if (parent) {
+        const salaryEl = Array.from(parent.children).find(
+          (c) => /[\d\u00A0]+\s*₽|[\d\u00A0]+\s*руб/i.test(c.textContent)
+        );
+        if (salaryEl) return { source: "sibling-heuristic", value: salaryEl.textContent.trim() };
+      }
+    }
+    return { source: null, value: null };
+  }
+  function detectLocation() {
+    const qa = document.querySelector('[data-qa="vacancy-view-location"], [data-qa*="location"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectExperience() {
+    const qa = document.querySelector('[data-qa="vacancy-experience"], [data-qa*="experience"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectEmployment() {
+    const qa = document.querySelector('[data-qa="vacancy-employment-mode"], [data-qa*="employment"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectSchedule() {
+    const qa = document.querySelector('[data-qa="vacancy-work-schedule"], [data-qa*="schedule"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectKeySkills() {
+    const qaSkills = document.querySelectorAll('[data-qa="skills-element"] .bloko-tag__text, [data-qa="skills-element__skill"]');
+    if (qaSkills.length > 0) {
+      const texts = [];
+      qaSkills.forEach((el) => {
+        const t = (el.textContent || "").trim();
+        if (t) texts.push(t);
+      });
+      return { source: "data-qa", value: texts, count: texts.length };
+    }
+    const tagSection = document.querySelector('[data-qa="skills-element"]');
+    if (tagSection) {
+      const tags = tagSection.querySelectorAll(".bloko-tag__text");
+      const texts = [];
+      tags.forEach((el) => {
+        const t = (el.textContent || "").trim();
+        if (t) texts.push(t);
+      });
+      return { source: "bloko-tags", value: texts, count: texts.length };
+    }
+    return { source: null, value: null, count: 0 };
+  }
+  function detectDescription() {
+    const qa = document.querySelector('[data-qa="vacancy-description"]');
+    if (qa) {
+      return {
+        source: "data-qa",
+        found: true,
+        textLength: qa.textContent.length,
+        htmlLength: qa.innerHTML.length,
+        textSnippet: qa.textContent.substring(0, 800).trim(),
+        headings: extractHeadings(qa)
+      };
+    }
+    return { source: null, found: false };
+  }
+  function detectBrandedDescription() {
+    const branded = document.querySelector('[data-qa="vacancy-branded-description"], .vacancy-branded-description, [class*="branded"]');
+    if (branded) {
+      return {
+        source: "data-qa/class",
+        found: true,
+        textLength: branded.textContent.length,
+        htmlLength: branded.innerHTML.length,
+        textSnippet: branded.textContent.substring(0, 300).trim()
+      };
+    }
+    return { source: null, found: false };
+  }
+  function extractHeadings(root) {
+    const headings = [];
+    root.querySelectorAll("p > strong, h2, h3, h4, p > b").forEach((el) => {
+      const t = (el.textContent || "").trim();
+      if (t.length > 5 && t.length < 150) headings.push(t);
+    });
+    return headings;
+  }
+  function detectInfoBlocks() {
+    const blocks = [];
+    const infoItems = document.querySelectorAll('[data-qa*="vacancy-"]');
+    const seen = /* @__PURE__ */ new Set();
+    infoItems.forEach((el) => {
+      const qa = el.getAttribute("data-qa");
+      if (!qa || seen.has(qa)) return;
+      seen.add(qa);
+      blocks.push({
+        dataQa: qa,
+        tag: el.tagName,
+        text: (el.textContent || "").substring(0, 120).trim().replace(/\s+/g, " "),
+        children: el.children.length
+      });
+    });
+    return blocks;
+  }
+  var diagLog2;
+  var init_vacancy_diagnostic = __esm({
+    "src/parsers/vacancy-diagnostic.js"() {
+      init_selectors();
+      init_anti_hallucination();
+      diagLog2 = createLogger("VacDiag");
+    }
+  });
+
   // src/content/main-page-handlers.js
   async function initPageLogic() {
     if (pageInitialized) return;
@@ -8960,6 +9184,12 @@
   async function handleVacancyDetailPage(path) {
     pageLog.info("Vacancy detail page detected");
     try {
+      const diag = diagnoseVacancyPage();
+      pageLog.info("Vacancy diagnostic: " + Object.keys(diag.autoDetect || {}).filter((k) => diag.autoDetect[k] && diag.autoDetect[k].value).length + " auto-detected fields");
+    } catch (e) {
+      pageLog.warn("Vacancy diagnostic failed: " + e.message);
+    }
+    try {
       const queue = await getApplyQueue();
       if (queue.length > 0) {
         const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
@@ -8997,6 +9227,7 @@
       init_anti_hallucination();
       init_storage();
       init_vacancy_list();
+      init_vacancy_diagnostic();
       init_resume_detail2();
       init_resume_fetch();
       init_engine();
