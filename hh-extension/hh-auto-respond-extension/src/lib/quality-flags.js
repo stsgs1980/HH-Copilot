@@ -177,9 +177,11 @@ export function buildRecommendations(ats, exp, flags, r) {
     const descText = (r.experience || []).map(e => e.description || '').join(' ').toLowerCase();
     const uncovered = skillLower.filter(s => s.length > 2 && !descText.includes(s));
     if (uncovered.length > 3) {
+      const sample = uncovered.slice(0, 5).map(s => '«' + s + '»').join(', ');
+      const suffix = uncovered.length > 5 ? ' и ещё ' + (uncovered.length - 5) : '';
       recs.push({
         priority: 'medium',
-        text: uncovered.length + ' навыков не упоминаются в описаниях опыта — добавьте их в контекст'
+        text: uncovered.length + ' навыков не в описаниях опыта: ' + sample + suffix + ' — упомяните, чтобы HR их увидел'
       });
     }
   }

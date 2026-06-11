@@ -5127,9 +5127,11 @@
       const descText = (r.experience || []).map((e) => e.description || "").join(" ").toLowerCase();
       const uncovered = skillLower.filter((s) => s.length > 2 && !descText.includes(s));
       if (uncovered.length > 3) {
+        const sample = uncovered.slice(0, 5).map((s) => "\xAB" + s + "\xBB").join(", ");
+        const suffix = uncovered.length > 5 ? " \u0438 \u0435\u0449\u0451 " + (uncovered.length - 5) : "";
         recs.push({
           priority: "medium",
-          text: uncovered.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432 \u043D\u0435 \u0443\u043F\u043E\u043C\u0438\u043D\u0430\u044E\u0442\u0441\u044F \u0432 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u044F\u0445 \u043E\u043F\u044B\u0442\u0430 \u2014 \u0434\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0438\u0445 \u0432 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442"
+          text: uncovered.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432 \u043D\u0435 \u0432 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u044F\u0445 \u043E\u043F\u044B\u0442\u0430: " + sample + suffix + " \u2014 \u0443\u043F\u043E\u043C\u044F\u043D\u0438\u0442\u0435, \u0447\u0442\u043E\u0431\u044B HR \u0438\u0445 \u0443\u0432\u0438\u0434\u0435\u043B"
         });
       }
     }
