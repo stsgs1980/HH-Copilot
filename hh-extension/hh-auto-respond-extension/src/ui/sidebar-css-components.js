@@ -155,17 +155,20 @@ export const SIDEBAR_CSS_COMPONENTS = `
 .score-ring.low span { color: #DC2626; }
 
 /* ═══ Guided Tour ═══ */
-.hh-tour-overlay { cursor: pointer; }
-.hh-tour-spotlight { pointer-events: none; }
+/* Overlay, spotlight, tooltip use position:absolute inside .fab-panel
+   because the sidebar host has CSS transform, which makes position:fixed
+   relative to the host instead of the viewport. */
+.hh-tour-overlay { position: absolute; cursor: pointer; z-index: 9999998; }
+.hh-tour-spotlight { position: absolute; pointer-events: none; z-index: 9999999; }
 .hh-tour-tooltip {
-  width: 320px; max-width: calc(100vw - 32px);
+  position: absolute; width: 320px; max-width: calc(100% - 32px);
   background: #ffffff; border-radius: 12px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
   border: 1px solid rgba(0,0,0,0.06);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow: hidden; animation: tourFadeIn 0.25s ease;
+  overflow: hidden; z-index: 10000001;
+  /* NO animation — transform:scale() in keyframes breaks position:absolute coords */
 }
-@keyframes tourFadeIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
 .hh-tour-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 14px 0; }

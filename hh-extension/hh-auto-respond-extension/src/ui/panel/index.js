@@ -20,6 +20,7 @@ import { renderBlacklist } from '../tabs/settings.js';
 
 import { renderSidebarContent, renderInitialData } from './render.js';
 import { bindAllEvents, bindTabClicks } from './events.js';
+import { bindTourEvents, isTourActive } from '../../lib/tour-engine.js';
 
 const panelLog = createLogger('Panel');
 
@@ -33,7 +34,8 @@ export function updateAuthState(forceUI = false) {
   if (was !== now || forceUI) {
     setAuthState(now);
     panelLog.info('Auth: ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
-    renderSidebarContent();
+    // Skip DOM rebuild while tour is active — it would destroy tour elements
+    if (!isTourActive()) renderSidebarContent();
     if (panelState.isLoggedIn) {
       const container = refs.shadowRoot?.querySelector('.fab-panel');
       if (container) {
@@ -57,7 +59,7 @@ export async function updateAuthStateAsync() {
   if (was !== now) {
     setAuthState(now);
     panelLog.info('Auth (async): ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
-    renderSidebarContent();
+    if (!isTourActive()) renderSidebarContent();
     if (panelState.isLoggedIn) {
       const container = refs.shadowRoot?.querySelector('.fab-panel');
       if (container) {
@@ -123,6 +125,8 @@ export function createSidebar() {
 
   /* Initial bind: close button, retry-auth, tab clicks */
   bindTabClicks(container);
+  /* Bind tour click delegation inside shadowRoot */
+  bindTourEvents();
   document.body.appendChild(refs.backdropEl);
   document.body.appendChild(refs.sidebarEl);
 }

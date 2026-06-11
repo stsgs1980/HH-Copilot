@@ -2543,17 +2543,20 @@
 .score-ring.low span { color: #DC2626; }
 
 /* \u2550\u2550\u2550 Guided Tour \u2550\u2550\u2550 */
-.hh-tour-overlay { cursor: pointer; }
-.hh-tour-spotlight { pointer-events: none; }
+/* Overlay, spotlight, tooltip use position:absolute inside .fab-panel
+   because the sidebar host has CSS transform, which makes position:fixed
+   relative to the host instead of the viewport. */
+.hh-tour-overlay { position: absolute; cursor: pointer; z-index: 9999998; }
+.hh-tour-spotlight { position: absolute; pointer-events: none; z-index: 9999999; }
 .hh-tour-tooltip {
-  width: 320px; max-width: calc(100vw - 32px);
+  position: absolute; width: 320px; max-width: calc(100% - 32px);
   background: #ffffff; border-radius: 12px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
   border: 1px solid rgba(0,0,0,0.06);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow: hidden; animation: tourFadeIn 0.25s ease;
+  overflow: hidden; z-index: 10000001;
+  /* NO animation \u2014 transform:scale() in keyframes breaks position:absolute coords */
 }
-@keyframes tourFadeIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
 .hh-tour-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 14px 0; }
@@ -4335,35 +4338,51 @@
   });
 
   // src/lib/tour-tooltip.js
+  function getPanel() {
+    return refs.shadowRoot?.querySelector(".fab-panel") || null;
+  }
   function getTooltip() {
     return tooltip;
   }
   function removeTooltip() {
-    const root = refs.shadowRoot;
-    if (tooltip && root?.contains(tooltip)) root.removeChild(tooltip);
+    const panel = getPanel();
+    if (tooltip && panel?.contains(tooltip)) panel.removeChild(tooltip);
     tooltip = null;
   }
   function renderTooltip(targetEl, step, idx, stepsLen) {
     removeTooltip();
-    const root = refs.shadowRoot;
-    if (!root) return;
+    const panel = getPanel();
+    if (!panel) {
+      console.warn("[Tour] renderTooltip: no .fab-panel");
+      return;
+    }
     tooltip = document.createElement("div");
     tooltip.className = "hh-tour-tooltip";
-    const rect = targetEl.getBoundingClientRect();
-    const pos = step.position || autoPosition(rect);
     tooltip.innerHTML = buildTooltipHTML(step, idx, stepsLen);
-    root.appendChild(tooltip);
-    positionTooltip(tooltip, rect, pos);
+    tooltip.style.cssText = "position:absolute;z-index:" + (TOUR_Z + 2) + ";visibility:hidden;top:0;left:0;pointer-events:auto;";
+    panel.appendChild(tooltip);
+    console.log("[Tour] renderTooltip appended, target=", step.target, "pos=", step.position || "auto");
+    requestAnimationFrame(() => {
+      const targetRect = targetEl.getBoundingClientRect();
+      const pos = step.position || autoPosition(targetRect);
+      positionTooltip(tooltip, targetRect, pos);
+      tooltip.style.visibility = "visible";
+      console.log("[Tour] tooltip visible \u2014 positioned and shown");
+    });
   }
   function renderCenteredTooltip(step, idx, stepsLen) {
     removeTooltip();
-    const root = refs.shadowRoot;
-    if (!root) return;
+    const panel = getPanel();
+    if (!panel) {
+      console.warn("[Tour] renderCenteredTooltip: no .fab-panel");
+      return;
+    }
     tooltip = document.createElement("div");
     tooltip.className = "hh-tour-tooltip";
     tooltip.innerHTML = buildTooltipHTML(step, idx, stepsLen);
-    root.appendChild(tooltip);
-    tooltip.style.cssText += "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:" + (TOUR_Z + 1) + ";";
+    tooltip.style.cssText = "position:absolute;z-index:" + (TOUR_Z + 2) + ";top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:auto;";
+    panel.appendChild(tooltip);
+    console.log("[Tour] renderCenteredTooltip done");
   }
   function buildTooltipHTML(step, idx, stepsLen) {
     const isLast = idx === stepsLen - 1;
@@ -4372,41 +4391,56 @@
     return '<div class="hh-tour-header"><span class="hh-tour-counter">' + counter + '</span><button class="hh-tour-skip" data-tour="skip">\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C</button></div>' + (step.title ? '<div class="hh-tour-title">' + step.title + "</div>" : "") + '<div class="hh-tour-text">' + step.text + '</div><div class="hh-tour-footer">' + (isFirst ? "" : '<button class="hh-tour-prev" data-tour="prev">\u2190 \u041D\u0430\u0437\u0430\u0434</button>') + '<button class="hh-tour-next" data-tour="next">' + (isLast ? "\u0413\u043E\u0442\u043E\u0432\u043E \u2713" : "\u0414\u0430\u043B\u0435\u0435 \u2192") + "</button></div>";
   }
   function positionTooltip(tipEl, targetRect, pos) {
-    tipEl.style.position = "fixed";
-    tipEl.style.zIndex = TOUR_Z + 1;
+    const panel = getPanel();
+    if (!panel) return;
+    const panelRect = panel.getBoundingClientRect();
+    const tipRect = tipEl.getBoundingClientRect();
+    const tTop = targetRect.top - panelRect.top;
+    const tBottom = targetRect.bottom - panelRect.top;
+    const tLeft = targetRect.left - panelRect.left;
     const gap = 12;
-    tipEl.style.visibility = "hidden";
-    tipEl.style.top = "0";
-    tipEl.style.left = "0";
-    requestAnimationFrame(() => {
-      const tipRect = tipEl.getBoundingClientRect();
-      let top, left;
-      if (pos === "bottom") {
-        top = targetRect.bottom + gap;
-        left = targetRect.left + targetRect.width / 2 - tipRect.width / 2;
-      } else if (pos === "top") {
-        top = targetRect.top - tipRect.height - gap;
-        left = targetRect.left + targetRect.width / 2 - tipRect.width / 2;
-      } else if (pos === "left") {
-        top = targetRect.top + targetRect.height / 2 - tipRect.height / 2;
-        left = targetRect.left - tipRect.width - gap;
-      } else if (pos === "right") {
-        top = targetRect.top + targetRect.height / 2 - tipRect.height / 2;
-        left = targetRect.right + gap;
-      } else {
-        top = window.innerHeight / 2 - tipRect.height / 2;
-        left = window.innerWidth / 2 - tipRect.width / 2;
-      }
-      left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
-      top = Math.max(8, Math.min(top, window.innerHeight - tipRect.height - 8));
-      tipEl.style.top = top + "px";
-      tipEl.style.left = left + "px";
-      tipEl.style.visibility = "";
-    });
+    let top, left;
+    if (pos === "bottom") {
+      top = tBottom + gap;
+      left = tLeft + targetRect.width / 2 - tipRect.width / 2;
+    } else if (pos === "top") {
+      top = tTop - tipRect.height - gap;
+      left = tLeft + targetRect.width / 2 - tipRect.width / 2;
+    } else if (pos === "left") {
+      top = tTop + targetRect.height / 2 - tipRect.height / 2;
+      left = tLeft - tipRect.width - gap;
+    } else if (pos === "right") {
+      top = tTop + targetRect.height / 2 - tipRect.height / 2;
+      left = targetRect.right - panelRect.left + gap;
+    } else {
+      top = panelRect.height / 2 - tipRect.height / 2;
+      left = panelRect.width / 2 - tipRect.width / 2;
+    }
+    left = Math.max(8, Math.min(left, panelRect.width - tipRect.width - 8));
+    top = Math.max(8, Math.min(top, panelRect.height - tipRect.height - 8));
+    tipEl.style.top = top + "px";
+    tipEl.style.left = left + "px";
+    console.log(
+      "[Tour] positionTooltip: top=",
+      Math.round(top),
+      "left=",
+      Math.round(left),
+      "tipW=",
+      Math.round(tipRect.width),
+      "tipH=",
+      Math.round(tipRect.height),
+      "panelW=",
+      Math.round(panelRect.width),
+      "panelH=",
+      Math.round(panelRect.height)
+    );
   }
   function autoPosition(rect) {
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
+    const panel = getPanel();
+    if (!panel) return "bottom";
+    const panelRect = panel.getBoundingClientRect();
+    const spaceBelow = panelRect.bottom - rect.bottom;
+    const spaceAbove = rect.top - panelRect.top;
     return spaceBelow > 200 ? "bottom" : spaceAbove > 200 ? "top" : "right";
   }
   var TOUR_Z, tooltip;
@@ -4424,6 +4458,7 @@
     steps = tourSteps;
     currentStep = 0;
     onDone = onFinish || null;
+    console.log("[Tour] startTour, steps=", steps.length, "shadowRoot=", !!refs.shadowRoot);
     createOverlay();
     showStep(0);
   }
@@ -4457,23 +4492,31 @@
       onDone = null;
     }
   }
+  function isTourActive() {
+    return overlay !== null;
+  }
   function createOverlay() {
-    const root = refs.shadowRoot;
-    if (!root) return;
+    const panel = refs.shadowRoot?.querySelector(".fab-panel");
+    if (!panel) {
+      console.warn("[Tour] createOverlay: no .fab-panel");
+      return;
+    }
+    if (!panel.style.position) panel.style.position = "fixed";
     overlay = document.createElement("div");
     overlay.className = "hh-tour-overlay";
-    overlay.style.cssText = "position:fixed;inset:0;z-index:" + (TOUR_Z2 - 1) + ";background:rgba(0,0,0,0.45);transition:opacity 0.2s;";
+    overlay.style.cssText = "position:absolute;inset:0;background:rgba(0,0,0,0.45);transition:opacity 0.2s;";
     spotlight = document.createElement("div");
     spotlight.className = "hh-tour-spotlight";
-    spotlight.style.cssText = "position:fixed;z-index:" + TOUR_Z2 + ";border-radius:6px;box-shadow:0 0 0 4px rgba(59,130,246,0.5),0 0 20px rgba(59,130,246,0.2);transition:all 0.3s ease;pointer-events:none;";
-    root.appendChild(overlay);
-    root.appendChild(spotlight);
+    spotlight.style.cssText = "position:absolute;border-radius:6px;box-shadow:0 0 0 4px rgba(59,130,246,0.5),0 0 20px rgba(59,130,246,0.2);transition:all 0.3s ease;pointer-events:none;";
+    panel.appendChild(overlay);
+    panel.appendChild(spotlight);
+    console.log("[Tour] createOverlay: overlay+spotlight added to .fab-panel");
     overlay.addEventListener("click", () => endTour(true));
   }
   function removeOverlay() {
-    const root = refs.shadowRoot;
-    if (overlay && root?.contains(overlay)) root.removeChild(overlay);
-    if (spotlight && root?.contains(spotlight)) root.removeChild(spotlight);
+    const panel = refs.shadowRoot?.querySelector(".fab-panel");
+    if (overlay && panel?.contains(overlay)) panel.removeChild(overlay);
+    if (spotlight && panel?.contains(spotlight)) panel.removeChild(spotlight);
     removeTooltip();
     overlay = spotlight = null;
   }
@@ -4484,9 +4527,11 @@
     }
     currentStep = idx;
     const step = steps[idx];
+    console.log("[Tour] showStep", idx, "target=", step.target, "tab=", step.tab);
     if (step.tab) switchToTab(step.tab);
     setTimeout(() => {
       const el = findTarget(step.target);
+      console.log("[Tour] findTarget(", step.target, ") =", el ? el.tagName + "." + (el.className || "") : "NULL");
       if (el) {
         positionSpotlight(el);
         renderTooltip(el, step, idx, steps.length);
@@ -4501,12 +4546,15 @@
     return root.querySelector(selector) || document.querySelector(selector);
   }
   function positionSpotlight(el) {
-    const rect = el.getBoundingClientRect();
+    const panel = refs.shadowRoot?.querySelector(".fab-panel");
+    if (!panel) return;
+    const panelRect = panel.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
     const pad = 4;
-    spotlight.style.top = rect.top - pad + "px";
-    spotlight.style.left = rect.left - pad + "px";
-    spotlight.style.width = rect.width + pad * 2 + "px";
-    spotlight.style.height = rect.height + pad * 2 + "px";
+    spotlight.style.top = elRect.top - panelRect.top - pad + "px";
+    spotlight.style.left = elRect.left - panelRect.left - pad + "px";
+    spotlight.style.width = elRect.width + pad * 2 + "px";
+    spotlight.style.height = elRect.height + pad * 2 + "px";
   }
   function switchToTab(tabId) {
     const root = refs.shadowRoot;
@@ -4518,26 +4566,37 @@
     if (btn) btn.classList.add("active");
     if (section) section.classList.add("active");
   }
-  var STORAGE_KEY, TOUR_Z2, currentStep, steps, overlay, spotlight, onDone;
+  function handleTourClick(e) {
+    const btn = e.target.closest("[data-tour]");
+    if (!btn) return;
+    const action = btn.getAttribute("data-tour");
+    if (action === "next") showStep(currentStep + 1);
+    else if (action === "prev") showStep(currentStep - 1);
+    else if (action === "skip") endTour(true);
+  }
+  function bindTourEvents() {
+    if (_tourEventsBound) return;
+    const root = refs.shadowRoot;
+    if (root) {
+      root.addEventListener("click", handleTourClick);
+      _tourEventsBound = true;
+    }
+  }
+  var STORAGE_KEY, currentStep, steps, overlay, spotlight, onDone, _tourEventsBound;
   var init_tour_engine = __esm({
     "src/lib/tour-engine.js"() {
       init_state();
       init_tour_tooltip();
       STORAGE_KEY = "hh-copilot-tour-done";
-      TOUR_Z2 = 9999999;
       currentStep = 0;
       steps = [];
       overlay = null;
       spotlight = null;
       onDone = null;
-      document.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-tour]");
-        if (!btn) return;
-        const action = btn.getAttribute("data-tour");
-        if (action === "next") showStep(currentStep + 1);
-        else if (action === "prev") showStep(currentStep - 1);
-        else if (action === "skip") endTour(true);
-      });
+      _tourEventsBound = false;
+      if (typeof document !== "undefined") {
+        document.addEventListener("click", handleTourClick);
+      }
     }
   });
 
@@ -4724,9 +4783,14 @@
     renderSettingsValues();
     renderNegotiationList();
     if (!isTourDone()) {
-      setTimeout(() => startTour(getWelcomeTourSteps()), 800);
+      if (_tourTimer) clearTimeout(_tourTimer);
+      _tourTimer = setTimeout(() => {
+        _tourTimer = null;
+        startTour(getWelcomeTourSteps());
+      }, 800);
     }
   }
+  var _tourTimer;
   var init_render = __esm({
     "src/ui/panel/render.js"() {
       init_state();
@@ -4739,6 +4803,7 @@
       init_settings2();
       init_tour_engine();
       init_tour_steps();
+      _tourTimer = null;
     }
   });
 
@@ -8664,7 +8729,7 @@
     if (was !== now || forceUI) {
       setAuthState(now);
       panelLog.info("Auth: " + (now ? "LOGGED IN" : "NOT LOGGED IN"));
-      renderSidebarContent();
+      if (!isTourActive()) renderSidebarContent();
       if (panelState.isLoggedIn) {
         const container = refs.shadowRoot?.querySelector(".fab-panel");
         if (container) {
@@ -8686,7 +8751,7 @@
     if (was !== now) {
       setAuthState(now);
       panelLog.info("Auth (async): " + (now ? "LOGGED IN" : "NOT LOGGED IN"));
-      renderSidebarContent();
+      if (!isTourActive()) renderSidebarContent();
       if (panelState.isLoggedIn) {
         const container = refs.shadowRoot?.querySelector(".fab-panel");
         if (container) {
@@ -8746,6 +8811,7 @@
     container.innerHTML = getSidebarHTML();
     refs.shadowRoot.appendChild(container);
     bindTabClicks(container);
+    bindTourEvents();
     document.body.appendChild(refs.backdropEl);
     document.body.appendChild(refs.sidebarEl);
   }
@@ -8807,6 +8873,7 @@
       init_settings2();
       init_render();
       init_events();
+      init_tour_engine();
       panelLog = createLogger("Panel");
     }
   });

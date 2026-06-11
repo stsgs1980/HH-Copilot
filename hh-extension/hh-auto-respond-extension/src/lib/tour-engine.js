@@ -3,19 +3,25 @@
  *
  * Core: step management, overlay, spotlight, tab switching.
  * Tooltip rendering → tour-tooltip.js
+ *
+ * Z-index stack (all inside .fab-panel):
+ *   overlay   = 9999998  (dark backdrop)
+ *   spotlight = 9999999  (glow around target)
+ *   tooltip   = 10000001 (on top of everything)
+ * CSS classes set z-index — no inline z-index needed.
  */
 
 import { refs } from '../ui/state.js';
 import { renderTooltip, renderCenteredTooltip, removeTooltip } from './tour-tooltip.js';
 
 const STORAGE_KEY = 'hh-copilot-tour-done';
-const TOUR_Z = 9999999;
 
 let currentStep = 0;
 let steps = [];
 let overlay = null;
 let spotlight = null;
 let onDone = null;
+let _tourEventsBound = false;
 
 // ═══════════════════════════════════════════════
 // PUBLIC API
@@ -27,6 +33,7 @@ export function startTour(tourSteps, onFinish) {
   steps = tourSteps;
   currentStep = 0;
   onDone = onFinish || null;
+  console.log('[Tour] startTour, steps=', steps.length, 'shadowRoot=', !!refs.shadowRoot);
   createOverlay();
   showStep(0);
 }
@@ -56,35 +63,47 @@ export function endTour(save = true) {
   if (onDone) { onDone(); onDone = null; }
 }
 
+/** Check if a tour is currently active. */
+export function isTourActive() {
+  return overlay !== null;
+}
+
 // ═══════════════════════════════════════════════
 // OVERLAY + SPOTLIGHT
 // ═══════════════════════════════════════════════
 
 function createOverlay() {
-  const root = refs.shadowRoot;
-  if (!root) return;
+  const panel = refs.shadowRoot?.querySelector('.fab-panel');
+  if (!panel) { console.warn('[Tour] createOverlay: no .fab-panel'); return; }
+
+  // Make panel a positioning context for position:absolute children
+  // (it already is — position:fixed — but be explicit)
+  if (!panel.style.position) panel.style.position = 'fixed';
 
   overlay = document.createElement('div');
   overlay.className = 'hh-tour-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:' + (TOUR_Z - 1) +
-    ';background:rgba(0,0,0,0.45);transition:opacity 0.2s;';
+  overlay.style.cssText =
+    'position:absolute;inset:0;' +
+    'background:rgba(0,0,0,0.45);transition:opacity 0.2s;';
 
   spotlight = document.createElement('div');
   spotlight.className = 'hh-tour-spotlight';
-  spotlight.style.cssText = 'position:fixed;z-index:' + TOUR_Z +
-    ';border-radius:6px;box-shadow:0 0 0 4px rgba(59,130,246,0.5),0 0 20px rgba(59,130,246,0.2);' +
+  spotlight.style.cssText =
+    'position:absolute;' +
+    'border-radius:6px;box-shadow:0 0 0 4px rgba(59,130,246,0.5),0 0 20px rgba(59,130,246,0.2);' +
     'transition:all 0.3s ease;pointer-events:none;';
 
-  root.appendChild(overlay);
-  root.appendChild(spotlight);
+  panel.appendChild(overlay);
+  panel.appendChild(spotlight);
+  console.log('[Tour] createOverlay: overlay+spotlight added to .fab-panel');
 
   overlay.addEventListener('click', () => endTour(true));
 }
 
 function removeOverlay() {
-  const root = refs.shadowRoot;
-  if (overlay && root?.contains(overlay)) root.removeChild(overlay);
-  if (spotlight && root?.contains(spotlight)) root.removeChild(spotlight);
+  const panel = refs.shadowRoot?.querySelector('.fab-panel');
+  if (overlay && panel?.contains(overlay)) panel.removeChild(overlay);
+  if (spotlight && panel?.contains(spotlight)) panel.removeChild(spotlight);
   removeTooltip();
   overlay = spotlight = null;
 }
@@ -97,11 +116,13 @@ function showStep(idx) {
   if (idx < 0 || idx >= steps.length) { endTour(true); return; }
   currentStep = idx;
   const step = steps[idx];
+  console.log('[Tour] showStep', idx, 'target=', step.target, 'tab=', step.tab);
 
   if (step.tab) switchToTab(step.tab);
 
   setTimeout(() => {
     const el = findTarget(step.target);
+    console.log('[Tour] findTarget(', step.target, ') =', el ? el.tagName + '.' + (el.className || '') : 'NULL');
     if (el) {
       positionSpotlight(el);
       renderTooltip(el, step, idx, steps.length);
@@ -118,12 +139,15 @@ function findTarget(selector) {
 }
 
 function positionSpotlight(el) {
-  const rect = el.getBoundingClientRect();
+  const panel = refs.shadowRoot?.querySelector('.fab-panel');
+  if (!panel) return;
+  const panelRect = panel.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
   const pad = 4;
-  spotlight.style.top = (rect.top - pad) + 'px';
-  spotlight.style.left = (rect.left - pad) + 'px';
-  spotlight.style.width = (rect.width + pad * 2) + 'px';
-  spotlight.style.height = (rect.height + pad * 2) + 'px';
+  spotlight.style.top = (elRect.top - panelRect.top - pad) + 'px';
+  spotlight.style.left = (elRect.left - panelRect.left - pad) + 'px';
+  spotlight.style.width = (elRect.width + pad * 2) + 'px';
+  spotlight.style.height = (elRect.height + pad * 2) + 'px';
 }
 
 // ═══════════════════════════════════════════════
@@ -145,11 +169,24 @@ function switchToTab(tabId) {
 // EVENT DELEGATION
 // ═══════════════════════════════════════════════
 
-document.addEventListener('click', (e) => {
+function handleTourClick(e) {
   const btn = e.target.closest('[data-tour]');
   if (!btn) return;
   const action = btn.getAttribute('data-tour');
   if (action === 'next') showStep(currentStep + 1);
   else if (action === 'prev') showStep(currentStep - 1);
   else if (action === 'skip') endTour(true);
-});
+}
+
+/** Bind tour click delegation to shadowRoot.
+ *  Must be called AFTER refs.shadowRoot is set. Idempotent. */
+export function bindTourEvents() {
+  if (_tourEventsBound) return;
+  const root = refs.shadowRoot;
+  if (root) { root.addEventListener('click', handleTourClick); _tourEventsBound = true; }
+}
+
+// Also bind on document as fallback for non-shadow targets
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', handleTourClick);
+}

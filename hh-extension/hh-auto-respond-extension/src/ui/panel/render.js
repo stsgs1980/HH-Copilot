@@ -87,6 +87,8 @@ function updateHeaderStatus() {
   }
 }
 
+let _tourTimer = null;
+
 export function renderInitialData() {
   renderOverviewKPI();
   renderVacancyList();
@@ -96,8 +98,9 @@ export function renderInitialData() {
   renderSettingsValues();
   renderNegotiationList();
 
-  // Auto-start tour for first-time users
+  // Auto-start tour for first-time users (guard against duplicate calls)
   if (!isTourDone()) {
-    setTimeout(() => startTour(getWelcomeTourSteps()), 800);
+    if (_tourTimer) clearTimeout(_tourTimer);
+    _tourTimer = setTimeout(() => { _tourTimer = null; startTour(getWelcomeTourSteps()); }, 800);
   }
 }
