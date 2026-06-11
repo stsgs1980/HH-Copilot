@@ -1103,3 +1103,20 @@ Task: Vacancy links navigate in current tab
 
 Stage Summary:
 - target="_blank" → data-action="navigate" → closes sidebar + navigates current tab
+
+---
+Task ID: 1
+Agent: main
+Task: Fix skills parser — 5 fallback strategies when skills-card missing from hh.ru DOM
+
+Work Log:
+- Diagnosed: parseSkills() relied entirely on [data-qa=skills-card] which is absent on current hh.ru Magritte pages
+- Added 4 fallback strategies in parseSkills() DOM path + parseSkillsFromDoc() fetch path
+- Extracted _extractSkillsFromContainer() / _extractSkillsFromDocContainer() helpers
+- Added 4 new skill-dictionary entries: B2C продажи, аналитика продаж, P&L, LLM
+- v1.9.17.0 built
+
+Stage Summary:
+- Skills like P&L, B2C продажи were on resume page but invisible to parser — now found via fallback
+- 5 total strategies: skills-card → skills-table → heading detection → data-qa*='skill' scan → Magritte tag scan
+
