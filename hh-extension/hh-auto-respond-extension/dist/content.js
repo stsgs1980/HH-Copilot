@@ -9114,11 +9114,43 @@
 
   // src/content/main-page-handlers.js
   async function initPageLogic() {
-    if (pageInitialized) return;
-    pageInitialized = true;
-    pageLog.info("User logged in -- initializing page logic");
-    const path = window.location.pathname;
-    pageLog.info("Page: " + path);
+    const currentPath = window.location.pathname;
+    await routeToHandler(currentPath);
+    lastHandledPath = currentPath;
+    setupSPARouting();
+    pageLog.info("Page logic initialized, SPA routing active");
+  }
+  function resetPageInit() {
+    lastHandledPath = "";
+  }
+  function setupSPARouting() {
+    window.addEventListener("popstate", () => {
+      onSPANavigate(window.location.pathname);
+    });
+    const origPush = history.pushState;
+    history.pushState = function() {
+      origPush.apply(this, arguments);
+      onSPANavigate(window.location.pathname);
+    };
+    const origReplace = history.replaceState;
+    history.replaceState = function() {
+      origReplace.apply(this, arguments);
+      onSPANavigate(window.location.pathname);
+    };
+  }
+  function onSPANavigate(newPath) {
+    if (newPath === lastHandledPath) return;
+    clearTimeout(spaTimer);
+    spaTimer = setTimeout(async () => {
+      if (window.location.pathname === lastHandledPath) return;
+      const path = window.location.pathname;
+      pageLog.info("SPA navigate: " + lastHandledPath + " \u2192 " + path);
+      await routeToHandler(path);
+      lastHandledPath = path;
+    }, 300);
+  }
+  async function routeToHandler(path) {
+    pageLog.info("Routing: " + path);
     if (path.startsWith("/search/vacancy")) {
       await handleVacancySearchPage();
     } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
@@ -9129,23 +9161,24 @@
       await handleVacancyDetailPage(path);
     }
   }
-  function resetPageInit() {
-    pageInitialized = false;
-  }
   async function handleVacancySearchPage() {
     const vacancies = parseVacanciesFromPage();
     updateVacancies(vacancies);
     const stats = getStats();
     updateStats2(stats);
-    let timer = null;
-    new MutationObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        const fresh = parseVacanciesFromPage();
-        updateVacancies(fresh);
-      }, 1500);
-    }).observe(document.body, { childList: true, subtree: true });
-    pageLog.info("SPA observer active");
+    if (!searchObserverActive) {
+      searchObserverActive = true;
+      let timer = null;
+      new MutationObserver(() => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (!window.location.pathname.startsWith("/search/vacancy")) return;
+          const fresh = parseVacanciesFromPage();
+          updateVacancies(fresh);
+        }, 1500);
+      }).observe(document.body, { childList: true, subtree: true });
+      pageLog.info("SPA observer active");
+    }
   }
   async function handleResumeDetailPage(path) {
     if (/\/resume\/edit\//.test(path)) {
@@ -9185,7 +9218,8 @@
     pageLog.info("Vacancy detail page detected");
     try {
       const diag = diagnoseVacancyPage();
-      pageLog.info("Vacancy diagnostic: " + Object.keys(diag.autoDetect || {}).filter((k) => diag.autoDetect[k] && diag.autoDetect[k].value).length + " auto-detected fields");
+      const fieldCount = Object.keys(diag.autoDetect || {}).filter((k) => diag.autoDetect[k] && (diag.autoDetect[k].value || diag.autoDetect[k].found)).length;
+      pageLog.info("Vacancy diagnostic: " + fieldCount + " fields detected");
     } catch (e) {
       pageLog.warn("Vacancy diagnostic failed: " + e.message);
     }
@@ -9221,7 +9255,7 @@
       });
     });
   }
-  var pageLog, pageInitialized;
+  var pageLog, lastHandledPath, spaTimer, searchObserverActive;
   var init_main_page_handlers = __esm({
     "src/content/main-page-handlers.js"() {
       init_anti_hallucination();
@@ -9235,7 +9269,9 @@
       init_resumes2();
       init_state();
       pageLog = createLogger("Main");
-      pageInitialized = false;
+      lastHandledPath = "";
+      spaTimer = null;
+      searchObserverActive = false;
     }
   });
 

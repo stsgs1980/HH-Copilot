@@ -3,6 +3,10 @@
  * ========================
  * URL-based page initialization logic.
  * Routes to the correct parser/handler based on the current page path.
+ *
+ * SPA support: hh.ru uses History API for navigation.
+ * We detect URL changes via popstate + pushState/replaceState patches
+ * and re-route to the appropriate handler.
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
@@ -17,19 +21,84 @@ import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.js';
 
 const pageLog = createLogger('Main');
-let pageInitialized = false;
+
+/** Tracks which URL path was last handled — prevents duplicate SPA triggers */
+let lastHandledPath = '';
 
 /**
  * Initialize page-specific logic (parsers, observers).
  * Called ONCE when auth state changes from false/null to true.
+ * Also sets up SPA navigation listener.
  */
 export async function initPageLogic() {
-  if (pageInitialized) return;
-  pageInitialized = true;
-  pageLog.info('User logged in -- initializing page logic');
+  const currentPath = window.location.pathname;
 
-  const path = window.location.pathname;
-  pageLog.info('Page: ' + path);
+  // Handle initial page
+  await routeToHandler(currentPath);
+  lastHandledPath = currentPath;
+
+  // Set up SPA navigation detection
+  setupSPARouting();
+
+  pageLog.info('Page logic initialized, SPA routing active');
+}
+
+/** Reset state (for testing). */
+export function resetPageInit() {
+  lastHandledPath = '';
+}
+
+// ═══════════════════════════════════════════════
+// SPA ROUTING
+// ═══════════════════════════════════════════════
+
+/**
+ * Detect SPA navigation on hh.ru.
+ * - popstate: browser back/forward
+ * - pushState/replaceState: hh.ru's client-side routing
+ */
+function setupSPARouting() {
+  // Browser back/forward
+  window.addEventListener('popstate', () => {
+    onSPANavigate(window.location.pathname);
+  });
+
+  // Patch pushState / replaceState
+  const origPush = history.pushState;
+  history.pushState = function() {
+    origPush.apply(this, arguments);
+    onSPANavigate(window.location.pathname);
+  };
+
+  const origReplace = history.replaceState;
+  history.replaceState = function() {
+    origReplace.apply(this, arguments);
+    onSPANavigate(window.location.pathname);
+  };
+}
+
+/**
+ * Called on every SPA navigation. Debounced to avoid duplicate triggers.
+ */
+let spaTimer = null;
+function onSPANavigate(newPath) {
+  if (newPath === lastHandledPath) return;
+  clearTimeout(spaTimer);
+  spaTimer = setTimeout(async () => {
+    if (window.location.pathname === lastHandledPath) return;
+    const path = window.location.pathname;
+    pageLog.info('SPA navigate: ' + lastHandledPath + ' → ' + path);
+    await routeToHandler(path);
+    lastHandledPath = path;
+  }, 300);
+}
+
+// ═══════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════
+
+async function routeToHandler(path) {
+  pageLog.info('Routing: ' + path);
 
   if (path.startsWith('/search/vacancy')) {
     await handleVacancySearchPage();
@@ -42,12 +111,13 @@ export async function initPageLogic() {
   }
 }
 
-/** Reset page init flag (for testing or re-init). */
-export function resetPageInit() {
-  pageInitialized = false;
-}
+// ═══════════════════════════════════════════════
+// PAGE HANDLERS
+// ═══════════════════════════════════════════════
 
 // ── Vacancy search page ──
+
+let searchObserverActive = false;
 
 async function handleVacancySearchPage() {
   const vacancies = parseVacanciesFromPage();
@@ -55,23 +125,27 @@ async function handleVacancySearchPage() {
   const stats = getStats();
   updateStats(stats);
 
-  // SPA observer -- debounce mutations to avoid excessive re-parsing
-  let timer = null;
-  new MutationObserver(() => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      const fresh = parseVacanciesFromPage();
-      updateVacancies(fresh);
-    }, 1500);
-  }).observe(document.body, { childList: true, subtree: true });
-  pageLog.info('SPA observer active');
+  // Set up SPA MutationObserver only once
+  if (!searchObserverActive) {
+    searchObserverActive = true;
+    let timer = null;
+    new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Only re-parse if still on search page
+        if (!window.location.pathname.startsWith('/search/vacancy')) return;
+        const fresh = parseVacanciesFromPage();
+        updateVacancies(fresh);
+      }, 1500);
+    }).observe(document.body, { childList: true, subtree: true });
+    pageLog.info('SPA observer active');
+  }
 }
 
 // ── Resume detail page ──
 
 async function handleResumeDetailPage(path) {
   if (/\/resume\/edit\//.test(path)) {
-    // EDIT page: DOM differs from view page, use fetch-based parser instead
     const editMatch = path.match(/\/resume\/([a-f0-9]+)/);
     if (editMatch) {
       const resumeId = editMatch[1];
@@ -88,7 +162,6 @@ async function handleResumeDetailPage(path) {
       }
     }
   } else {
-    // VIEW page: parse the live DOM directly
     await expandHiddenSections();
     const resume = parseResume();
     if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
@@ -117,11 +190,15 @@ async function handleVacancyDetailPage(path) {
   // Run vacancy page diagnostic (sends data to __hhVacDiagData)
   try {
     const diag = diagnoseVacancyPage();
-    pageLog.info('Vacancy diagnostic: ' + Object.keys(diag.autoDetect || {}).filter(k => diag.autoDetect[k] && diag.autoDetect[k].value).length + ' auto-detected fields');
+    const fieldCount = Object.keys(diag.autoDetect || {})
+      .filter(k => diag.autoDetect[k] && (diag.autoDetect[k].value || diag.autoDetect[k].found))
+      .length;
+    pageLog.info('Vacancy diagnostic: ' + fieldCount + ' fields detected');
   } catch (e) {
     pageLog.warn('Vacancy diagnostic failed: ' + e.message);
   }
 
+  // Process apply queue
   try {
     const queue = await getApplyQueue();
     if (queue.length > 0) {
@@ -145,11 +222,10 @@ async function handleVacancyDetailPage(path) {
   }
 }
 
-// ── Helpers ──
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
 
-/**
- * Save a parsed resume to panelState and storage, then re-render.
- */
 async function saveResumeToState(resume) {
   setActiveResumeState(resume);
   await setActiveResume(resume);
