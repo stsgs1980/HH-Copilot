@@ -16,7 +16,7 @@ import { checkDailyReset, getStats, getAllSettings, getMyResumes, saveMyResume, 
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { parseResume, parseResumeList, expandHiddenSections, diagnoseResumeDOM, debugVisibility, getResumePageType } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
-import { continueApply } from '../engine/auto-respond.js';
+import { continueApply } from '../engine/index.js';
 import { panelState, updateAuthState, createPanel, updateVacancies, updateStats, setStatus } from '../ui/panel.js';
 import { renderMyResumesPanel, renderResumePanel, renderResumeListPanel } from '../ui/tabs/resumes.js';
 import { refs } from '../ui/state.js';
@@ -288,13 +288,13 @@ async function init() {
   // Events
   window.addEventListener('hh-ar-apply', async (e) => {
     if (!panelState.isLoggedIn) return;
-    const { applyToVacancy } = await import('../engine/auto-respond.js');
+    const { applyToVacancy } = await import('../engine/index.js');
     await applyToVacancy(e.detail.vacancyId);
   });
 
   window.addEventListener('hh-ar-apply-all', async () => {
     if (!panelState.isLoggedIn) return;
-    const { applyToAll } = await import('../engine/auto-respond.js');
+    const { applyToAll } = await import('../engine/index.js');
     await applyToAll(panelState.vacancies);
   });
 

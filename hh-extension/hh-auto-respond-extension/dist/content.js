@@ -116,133 +116,6 @@
     }
   });
 
-  // src/lib/selectors.js
-  function getSelectors(name) {
-    const s = HH_SELECTORS[name];
-    return s && Array.isArray(s) ? [...s] : [];
-  }
-  function findElement(name, root) {
-    root = root || document;
-    const selectors = getSelectors(name);
-    for (const sel of selectors) {
-      try {
-        const el = root.querySelector(sel);
-        if (!el) continue;
-        if (root === document) {
-          if (!document.body.contains(el)) continue;
-        } else {
-          if (!root.contains(el)) continue;
-        }
-        const style = window.getComputedStyle(el);
-        if (style.display !== "none" && style.visibility !== "hidden") return el;
-      } catch (e) {
-      }
-    }
-    return null;
-  }
-  function findAllElements(name, root) {
-    root = root || document;
-    const selectors = getSelectors(name);
-    for (const sel of selectors) {
-      try {
-        const els = root.querySelectorAll(sel);
-        if (els && els.length > 0) return Array.from(els);
-      } catch (e) {
-      }
-    }
-    return [];
-  }
-  var HH_SELECTORS;
-  var init_selectors = __esm({
-    "src/lib/selectors.js"() {
-      HH_SELECTORS = {
-        // ── Vacancy Search ──
-        vacancyCard: ['[data-qa="vacancy-serp__vacancy"]', '[class*="vacancy-serp-item"]'],
-        vacancyTitleLink: ['a[data-qa="serp-item__title"]', 'a[data-qa="vacancy-serp__vacancy-title"]'],
-        vacancyTitleText: ['[data-qa="serp-item__title-text"]'],
-        vacancyCompany: ['[data-qa="vacancy-serp__vacancy-employer-text"]', 'a[data-qa="vacancy-serp__vacancy-employer"]'],
-        vacancySalary: ['[data-qa="vacancy-serp__compensation"]'],
-        vacancyLocation: ['[data-qa="vacancy-serp__vacancy-address"]'],
-        vacancyExperience: ['[data-qa^="vacancy-serp__vacancy-work-experience"]'],
-        vacancyTags: [".bloko-tag__text", '[data-qa*="tag"]'],
-        replyButton: ['[data-qa="vacancy-serp__vacancy_response"]', '[data-qa="vacancy-response-link-top"]'],
-        nextPage: ['[data-qa="pager-next"]'],
-        // ── Vacancy Page ──
-        vacancyTitleOnPage: ['[data-qa="vacancy-title"]', "h1.bloko-header-section-1"],
-        vacancyCompanyOnPage: ['[data-qa="vacancy-company-name"]', 'a[data-qa="vacancy-company-name"]'],
-        vacancyDescription: ['[data-qa="vacancy-description"]'],
-        vacancyDescriptionContent: ['[data-qa="vacancy-description"] .vacancy-description-content'],
-        vacancySkills: ['[data-qa="skills-element"]'],
-        vacancySkillsOnPage: ['[data-qa="vacancy-serp__vacancy-skills"] .bloko-tag__text', '[data-qa="skills-element"]'],
-        // Apply button on vacancy detail page
-        vacancyApplyButton: [
-          '[data-qa="vacancy-response-apply"]',
-          '[data-qa="vacancy-response-link-top"]',
-          'a[data-qa="vacancy-response-apply"]',
-          'button[data-qa="vacancy-response-apply"]',
-          'a[href*="/vacancy/response"]',
-          '[class*="vacancy-response"] button',
-          '[class*="vacancy-response"] a'
-        ],
-        // Popup / modal that appears after clicking apply
-        responsePopup: ['[data-qa="vacancy-response-submit-popup"]', '[data-qa="vacancy-response-popup-submit"]'],
-        addCoverLetter: ['[data-qa="add-cover-letter"]'],
-        coverLetterInput: ['textarea[data-qa="vacancy-response-popup-form-letter-input"]'],
-        submitButton: ['button[data-qa="vacancy-response-submit-popup"]', '[data-qa="vacancy-response-popup-submit"]', '[class*="response-popup"] button[type="submit"]'],
-        alertMagritte: ['[data-qa="magritte-alert"]'],
-        relocationConfirm: ['[data-qa="relocation-warning-confirm"]'],
-        testTaskWarning: ['[data-qa="test-task-required"]'],
-        alreadyApplied: ['[data-qa="already-applied"]', '[data-qa="vacancy-response-already-sent"]'],
-        indirectEmployerAlert: ['[data-qa="indirect-employer-alert"]'],
-        // ── Resume Page ──
-        // MAGRITE: hashed CSS-classes НЕ работают!
-        // Только data-qa и Bloko BEM (бесхэшовые) классы.
-        // parseResume() дополнительно использует автообнаружение по h2-заголовкам.
-        resumeTitle: [
-          '[data-qa="resume-block-title-position"]',
-          'h2[data-qa="resume-block-title-position"]'
-        ],
-        resumeSalary: [
-          '[data-qa="resume-block-salary"]',
-          '[data-qa*="salary"]'
-        ],
-        resumeSkillsTable: [
-          '[data-qa="skills-table"]',
-          '[data-qa*="skill"]'
-        ],
-        resumeSkillTag: [
-          ".bloko-tag__text",
-          '[data-qa="bloko-tag__text"]'
-        ],
-        resumeSkillLevel3: ['[data-qa="skill-level-title-3"]'],
-        resumeSkillLevel2: ['[data-qa="skill-level-title-2"]'],
-        resumeSkillLevel1: ['[data-qa="skill-level-title-1"]'],
-        resumePersonalName: [
-          '[data-qa="resume-personal-name"]'
-        ],
-        // ── Resume List Page (applicant/resumes) ──
-        resumeListItem: [
-          '[data-qa="resume-list-item"]'
-        ],
-        resumeListTitle: [
-          '[data-qa="resume-list-item-title"]',
-          'a[href*="/resume/"]'
-        ],
-        resumeListLink: [
-          'a[href*="/resume/"]'
-        ],
-        // ── Negotiations ──
-        negotiationsChatItem: ['[data-qa="negotiations-chat-item"]', '[class*="negotiations-chat"]'],
-        negotiationsChatUnread: ['[data-qa="negotiations-chat-unread"]', '[class*="unread"]'],
-        // ── Auth ──
-        loginEmailInput: ['input[name="username"]', 'input[type="email"]', 'input[data-qa="login-input-username"]'],
-        loginPasswordInput: ['input[name="password"]', 'input[type="password"]', 'input[data-qa="login-input-password"]'],
-        loginCaptchaImage: ['img[src*="captcha"]', ".g-recaptcha"],
-        logged_in_indicator: ['[data-qa="mainmenu_applicant"]', '[data-qa="mainmenu_user_name"]', 'a[data-qa="mainmenu_myResumes"]']
-      };
-    }
-  });
-
   // src/lib/storage.js
   async function getAllSettings() {
     try {
@@ -458,13 +331,7 @@
     }
   });
 
-  // src/engine/auto-respond.js
-  var auto_respond_exports = {};
-  __export(auto_respond_exports, {
-    applyToAll: () => applyToAll,
-    applyToVacancy: () => applyToVacancy,
-    continueApply: () => continueApply
-  });
+  // src/engine/apply-queue.js
   async function getQueue() {
     try {
       const d = await chrome.storage.local.get("applyQueue");
@@ -486,196 +353,6 @@
   async function clearQueue() {
     await chrome.storage.local.remove("applyQueue");
   }
-  async function applyToVacancy(vacancyId) {
-    autoLog.info("Apply to vacancy: " + vacancyId);
-    const rateCheck = await rate_limiter_default.check();
-    if (!rateCheck.allowed) {
-      autoLog.warn(rateCheck.reason);
-      return { success: false, reason: rateCheck.reason };
-    }
-    if (await isAlreadyApplied(vacancyId)) return { success: false, reason: "\u0423\u0436\u0435 \u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u043B\u0441\u044F" };
-    const queue = await getQueue();
-    if (!queue.find((q) => q.vacancyId === vacancyId)) {
-      queue.push({ vacancyId, timestamp: Date.now() });
-      await setQueue(queue);
-    }
-    const url = "https://hh.ru/vacancy/" + vacancyId;
-    autoLog.info("Navigating to: " + url);
-    window.location.href = url;
-    return { success: false, reason: "\u041F\u0435\u0440\u0435\u0445\u043E\u0434 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438..." };
-  }
-  async function continueApply(pending) {
-    autoLog.info("Continue apply on vacancy page: " + pending.vacancyId);
-    const expectedPath = "/vacancy/" + pending.vacancyId;
-    const actualPath = window.location.pathname;
-    if (!actualPath.includes(pending.vacancyId)) {
-      autoLog.warn("Wrong page: expected " + expectedPath + " got " + actualPath);
-      return { success: false, reason: "\u041D\u0435 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438" };
-    }
-    await waitForPageReady();
-    autoLog.info("Page ready, looking for apply button...");
-    const applyResult = await clickApplyButton();
-    if (!applyResult.clicked) {
-      autoLog.error("Could not find/click apply button: " + applyResult.reason);
-      await markAsApplied(pending.vacancyId);
-      return { success: false, reason: applyResult.reason };
-    }
-    autoLog.info("Apply button clicked, waiting for popup...");
-    const popupResult = await waitForPopupAndSubmit();
-    if (!popupResult.success) {
-      autoLog.warn("Popup handling: " + popupResult.reason);
-      await markAsApplied(pending.vacancyId);
-      rate_limiter_default.recordAction();
-      return { success: true, reason: "\u041A\u043B\u0438\u043A \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D (\u043F\u043E\u043F\u0430\u043F \u043D\u0435 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D)" };
-    }
-    rate_limiter_default.recordAction();
-    await incrementApplied();
-    await markAsApplied(pending.vacancyId);
-    autoLog.info("Successfully applied to vacancy " + pending.vacancyId);
-    await processNextInQueue();
-    return { success: true };
-  }
-  async function waitForPageReady() {
-    for (let i = 0; i < 30; i++) {
-      const title = findElement("vacancyTitleOnPage");
-      if (title) return;
-      await new Promise((r) => setTimeout(r, 500));
-    }
-    autoLog.warn("Timeout waiting for vacancy title, proceeding anyway");
-  }
-  async function clickApplyButton() {
-    const applySelectors = [
-      // Primary: Magritte-style button
-      '[data-qa="vacancy-response-apply"]',
-      // Alternative: link/button variants
-      '[data-qa="vacancy-response-link-top"]',
-      'a[data-qa="vacancy-response-apply"]',
-      'button[data-qa="vacancy-response-apply"]',
-      // Fallback: look for text content "Откликнуться"
-      'a[href*="/vacancy/response"]',
-      // Bloko-style older UI
-      ".vacancy-response-btn",
-      '[class*="vacancy-response"] button',
-      '[class*="vacancy-response"] a'
-    ];
-    const alreadyApplied = findElement("alreadyApplied");
-    if (alreadyApplied) {
-      return { clicked: false, reason: "\u0412\u044B \u0443\u0436\u0435 \u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u043B\u0438\u0441\u044C" };
-    }
-    const vacancyBody = document.querySelector('[data-qa="vacancy-description"]');
-    if (!vacancyBody && document.body.textContent.includes("\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u044F \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430")) {
-      return { clicked: false, reason: "\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u044F \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430/\u0443\u0434\u0430\u043B\u0435\u043D\u0430" };
-    }
-    for (let attempt = 0; attempt < 3; attempt++) {
-      for (const sel of applySelectors) {
-        try {
-          const el = document.querySelector(sel);
-          if (!el) continue;
-          if (!document.body.contains(el)) continue;
-          const style = window.getComputedStyle(el);
-          if (style.display === "none" || style.visibility === "hidden") continue;
-          autoLog.info("Found apply button: " + sel + " (attempt " + (attempt + 1) + ")");
-          await randomDelay();
-          el.click();
-          autoLog.info("Clicked apply button");
-          return { clicked: true };
-        } catch (e) {
-        }
-      }
-      if (attempt < 2) {
-        autoLog.info("Apply button not found, retrying in 1s...");
-        await new Promise((r) => setTimeout(r, 1e3));
-      }
-    }
-    const allLinks = document.querySelectorAll("a, button");
-    for (const el of allLinks) {
-      const text = (el.textContent || "").trim().toLowerCase();
-      if (text === "\u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F" || text === "\u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F \u043D\u0430 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044E") {
-        autoLog.info('Found apply button via text search: "' + text + '"');
-        await randomDelay();
-        el.click();
-        return { clicked: true };
-      }
-    }
-    autoLog.warn("No apply button found. URL: " + window.location.href);
-    const bodySnippet = document.body?.innerText?.substring(0, 500) || "empty";
-    autoLog.warn("Page snippet: " + bodySnippet);
-    return { clicked: false, reason: '\u041A\u043D\u043E\u043F\u043A\u0430 "\u041E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435' };
-  }
-  async function waitForPopupAndSubmit() {
-    const popupSelectors = [
-      '[data-qa="vacancy-response-submit-popup"]',
-      '[data-qa="vacancy-response-popup-submit"]',
-      'button[data-qa="vacancy-response-submit-popup"]',
-      '[class*="response-popup"] button[type="submit"]',
-      '[class*="response-popup"] [data-qa*="submit"]'
-    ];
-    for (let i = 0; i < 16; i++) {
-      await new Promise((r) => setTimeout(r, 500));
-      for (const sel of popupSelectors) {
-        try {
-          const btn = document.querySelector(sel);
-          if (!btn) continue;
-          if (!document.body.contains(btn)) continue;
-          const style = window.getComputedStyle(btn);
-          if (style.display === "none" || style.visibility === "hidden") continue;
-          autoLog.info("Found submit button in popup: " + sel);
-          const letterInput = findElement("coverLetterInput");
-          if (letterInput) {
-            autoLog.info("Cover letter input found (skipping \u2014 empty letter)");
-          }
-          const relocationBtn = findElement("relocationConfirm");
-          if (relocationBtn) {
-            autoLog.info("Confirming relocation warning...");
-            relocationBtn.click();
-            await new Promise((r) => setTimeout(r, 500));
-          }
-          await randomDelay();
-          btn.click();
-          autoLog.info("Clicked submit button");
-          return { success: true };
-        } catch (e) {
-        }
-      }
-    }
-    const alreadyEl = findElement("alreadyApplied");
-    if (alreadyEl) {
-      autoLog.info("Popup not needed \u2014 already applied indicator found");
-      return { success: true };
-    }
-    autoLog.warn("Popup/submit button not found after 8s");
-    return { success: false, reason: "\u041F\u043E\u043F\u0430\u043F \u043D\u0435 \u043F\u043E\u044F\u0432\u0438\u043B\u0441\u044F \u0438\u043B\u0438 \u043A\u043D\u043E\u043F\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" };
-  }
-  async function applyToAll(vacancies, minScore) {
-    minScore = minScore || 70;
-    const eligible = vacancies.filter((v) => v.status === "new" && v.hasReply).filter((v) => v.matchScore === null || v.matchScore >= minScore).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-    if (eligible.length === 0) {
-      autoLog.info("No eligible vacancies for mass apply");
-      return { processed: 0, reason: "\u041D\u0435\u0442 \u043F\u043E\u0434\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0439" };
-    }
-    autoLog.info("Mass apply: " + eligible.length + " vacancies (score >= " + minScore + ")");
-    const queue = [];
-    for (const v of eligible) {
-      if (!await isAlreadyApplied(v.id)) {
-        queue.push({ vacancyId: v.id, timestamp: Date.now() });
-      }
-    }
-    if (queue.length === 0) {
-      return { processed: 0, reason: "\u0412\u0441\u0435 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u0443\u0436\u0435 \u0432 \u043E\u0447\u0435\u0440\u0435\u0434\u0438/\u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044B" };
-    }
-    await setQueue(queue);
-    autoLog.info("Queue set: " + queue.length + " vacancies");
-    const first = queue[0];
-    const rateCheck = await rate_limiter_default.check();
-    if (!rateCheck.allowed) {
-      autoLog.warn("Rate limit: " + rateCheck.reason);
-      return { processed: 0, reason: rateCheck.reason };
-    }
-    const url = "https://hh.ru/vacancy/" + first.vacancyId;
-    autoLog.info("Starting mass apply, navigating to: " + url);
-    window.location.href = url;
-    return { processed: 0, reason: "\u041F\u0435\u0440\u0435\u0445\u043E\u0434 \u043D\u0430 \u043F\u0435\u0440\u0432\u0443\u044E \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044E (\u043E\u0447\u0435\u0440\u0435\u0434\u044C: " + queue.length + ")" };
-  }
   async function processNextInQueue() {
     const queue = await getQueue();
     if (queue.length === 0) {
@@ -692,7 +369,7 @@
     const next = await dequeueNext();
     if (!next) return;
     const age = Date.now() - (next.timestamp || 0);
-    if (age > 6e5) {
+    if (age > QUEUE_ITEM_MAX_AGE) {
       autoLog.warn("Queue item too old, skipping");
       await processNextInQueue();
       return;
@@ -701,15 +378,373 @@
     const url = "https://hh.ru/vacancy/" + next.vacancyId;
     window.location.href = url;
   }
-  var autoLog;
-  var init_auto_respond = __esm({
-    "src/engine/auto-respond.js"() {
+  var autoLog, QUEUE_ITEM_MAX_AGE;
+  var init_apply_queue = __esm({
+    "src/engine/apply-queue.js"() {
       init_anti_hallucination();
-      init_selectors();
       init_rate_limiter();
-      init_storage();
       init_timing();
       autoLog = createLogger("AutoRespond");
+      QUEUE_ITEM_MAX_AGE = 6e5;
+    }
+  });
+
+  // src/lib/selectors.js
+  function getSelectors(name) {
+    const s = HH_SELECTORS[name];
+    return s && Array.isArray(s) ? [...s] : [];
+  }
+  function findElement(name, root) {
+    root = root || document;
+    const selectors = getSelectors(name);
+    for (const sel of selectors) {
+      try {
+        const el = root.querySelector(sel);
+        if (!el) continue;
+        if (root === document) {
+          if (!document.body.contains(el)) continue;
+        } else {
+          if (!root.contains(el)) continue;
+        }
+        const style = window.getComputedStyle(el);
+        if (style.display !== "none" && style.visibility !== "hidden") return el;
+      } catch (e) {
+      }
+    }
+    return null;
+  }
+  function findAllElements(name, root) {
+    root = root || document;
+    const selectors = getSelectors(name);
+    for (const sel of selectors) {
+      try {
+        const els = root.querySelectorAll(sel);
+        if (els && els.length > 0) return Array.from(els);
+      } catch (e) {
+      }
+    }
+    return [];
+  }
+  var HH_SELECTORS;
+  var init_selectors = __esm({
+    "src/lib/selectors.js"() {
+      HH_SELECTORS = {
+        // ── Vacancy Search ──
+        vacancyCard: ['[data-qa="vacancy-serp__vacancy"]', '[class*="vacancy-serp-item"]'],
+        vacancyTitleLink: ['a[data-qa="serp-item__title"]', 'a[data-qa="vacancy-serp__vacancy-title"]'],
+        vacancyTitleText: ['[data-qa="serp-item__title-text"]'],
+        vacancyCompany: ['[data-qa="vacancy-serp__vacancy-employer-text"]', 'a[data-qa="vacancy-serp__vacancy-employer"]'],
+        vacancySalary: ['[data-qa="vacancy-serp__compensation"]'],
+        vacancyLocation: ['[data-qa="vacancy-serp__vacancy-address"]'],
+        vacancyExperience: ['[data-qa^="vacancy-serp__vacancy-work-experience"]'],
+        vacancyTags: [".bloko-tag__text", '[data-qa*="tag"]'],
+        replyButton: ['[data-qa="vacancy-serp__vacancy_response"]', '[data-qa="vacancy-response-link-top"]'],
+        nextPage: ['[data-qa="pager-next"]'],
+        // ── Vacancy Page ──
+        vacancyTitleOnPage: ['[data-qa="vacancy-title"]', "h1.bloko-header-section-1"],
+        vacancyCompanyOnPage: ['[data-qa="vacancy-company-name"]', 'a[data-qa="vacancy-company-name"]'],
+        vacancyDescription: ['[data-qa="vacancy-description"]'],
+        vacancyDescriptionContent: ['[data-qa="vacancy-description"] .vacancy-description-content'],
+        vacancySkills: ['[data-qa="skills-element"]'],
+        vacancySkillsOnPage: ['[data-qa="vacancy-serp__vacancy-skills"] .bloko-tag__text', '[data-qa="skills-element"]'],
+        // Apply button on vacancy detail page
+        vacancyApplyButton: [
+          '[data-qa="vacancy-response-apply"]',
+          '[data-qa="vacancy-response-link-top"]',
+          'a[data-qa="vacancy-response-apply"]',
+          'button[data-qa="vacancy-response-apply"]',
+          'a[href*="/vacancy/response"]',
+          '[class*="vacancy-response"] button',
+          '[class*="vacancy-response"] a'
+        ],
+        // Popup / modal that appears after clicking apply
+        responsePopup: ['[data-qa="vacancy-response-submit-popup"]', '[data-qa="vacancy-response-popup-submit"]'],
+        addCoverLetter: ['[data-qa="add-cover-letter"]'],
+        coverLetterInput: ['textarea[data-qa="vacancy-response-popup-form-letter-input"]'],
+        submitButton: ['button[data-qa="vacancy-response-submit-popup"]', '[data-qa="vacancy-response-popup-submit"]', '[class*="response-popup"] button[type="submit"]'],
+        alertMagritte: ['[data-qa="magritte-alert"]'],
+        relocationConfirm: ['[data-qa="relocation-warning-confirm"]'],
+        testTaskWarning: ['[data-qa="test-task-required"]'],
+        alreadyApplied: ['[data-qa="already-applied"]', '[data-qa="vacancy-response-already-sent"]'],
+        indirectEmployerAlert: ['[data-qa="indirect-employer-alert"]'],
+        // ── Resume Page ──
+        // MAGRITE: hashed CSS-classes НЕ работают!
+        // Только data-qa и Bloko BEM (бесхэшовые) классы.
+        // parseResume() дополнительно использует автообнаружение по h2-заголовкам.
+        resumeTitle: [
+          '[data-qa="resume-block-title-position"]',
+          'h2[data-qa="resume-block-title-position"]'
+        ],
+        resumeSalary: [
+          '[data-qa="resume-block-salary"]',
+          '[data-qa*="salary"]'
+        ],
+        resumeSkillsTable: [
+          '[data-qa="skills-table"]',
+          '[data-qa*="skill"]'
+        ],
+        resumeSkillTag: [
+          ".bloko-tag__text",
+          '[data-qa="bloko-tag__text"]'
+        ],
+        resumeSkillLevel3: ['[data-qa="skill-level-title-3"]'],
+        resumeSkillLevel2: ['[data-qa="skill-level-title-2"]'],
+        resumeSkillLevel1: ['[data-qa="skill-level-title-1"]'],
+        resumePersonalName: [
+          '[data-qa="resume-personal-name"]'
+        ],
+        // ── Resume List Page (applicant/resumes) ──
+        resumeListItem: [
+          '[data-qa="resume-list-item"]'
+        ],
+        resumeListTitle: [
+          '[data-qa="resume-list-item-title"]',
+          'a[href*="/resume/"]'
+        ],
+        resumeListLink: [
+          'a[href*="/resume/"]'
+        ],
+        // ── Negotiations ──
+        negotiationsChatItem: ['[data-qa="negotiations-chat-item"]', '[class*="negotiations-chat"]'],
+        negotiationsChatUnread: ['[data-qa="negotiations-chat-unread"]', '[class*="unread"]'],
+        // ── Auth ──
+        loginEmailInput: ['input[name="username"]', 'input[type="email"]', 'input[data-qa="login-input-username"]'],
+        loginPasswordInput: ['input[name="password"]', 'input[type="password"]', 'input[data-qa="login-input-password"]'],
+        loginCaptchaImage: ['img[src*="captcha"]', ".g-recaptcha"],
+        logged_in_indicator: ['[data-qa="mainmenu_applicant"]', '[data-qa="mainmenu_user_name"]', 'a[data-qa="mainmenu_myResumes"]']
+      };
+    }
+  });
+
+  // src/engine/apply-actions.js
+  async function waitForPageReady() {
+    for (let i = 0; i < 30; i++) {
+      const title = findElement("vacancyTitleOnPage");
+      if (title) return;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    autoLog2.warn("Timeout waiting for vacancy title, proceeding anyway");
+  }
+  async function clickApplyButton() {
+    const alreadyApplied = findElement("alreadyApplied");
+    if (alreadyApplied) {
+      return { clicked: false, reason: "\u0412\u044B \u0443\u0436\u0435 \u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u043B\u0438\u0441\u044C" };
+    }
+    const vacancyBody = document.querySelector('[data-qa="vacancy-description"]');
+    if (!vacancyBody && document.body.textContent.includes("\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u044F \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430")) {
+      return { clicked: false, reason: "\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u044F \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430/\u0443\u0434\u0430\u043B\u0435\u043D\u0430" };
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      for (const sel of APPLY_BUTTON_SELECTORS) {
+        try {
+          const el = document.querySelector(sel);
+          if (!el) continue;
+          if (!document.body.contains(el)) continue;
+          const style = window.getComputedStyle(el);
+          if (style.display === "none" || style.visibility === "hidden") continue;
+          autoLog2.info("Found apply button: " + sel + " (attempt " + (attempt + 1) + ")");
+          await randomDelay();
+          el.click();
+          autoLog2.info("Clicked apply button");
+          return { clicked: true };
+        } catch (e) {
+        }
+      }
+      if (attempt < 2) {
+        autoLog2.info("Apply button not found, retrying in 1s...");
+        await new Promise((r) => setTimeout(r, 1e3));
+      }
+    }
+    const allLinks = document.querySelectorAll("a, button");
+    for (const el of allLinks) {
+      const text = (el.textContent || "").trim().toLowerCase();
+      if (text === "\u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F" || text === "\u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F \u043D\u0430 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044E") {
+        autoLog2.info('Found apply button via text search: "' + text + '"');
+        await randomDelay();
+        el.click();
+        return { clicked: true };
+      }
+    }
+    autoLog2.warn("No apply button found. URL: " + window.location.href);
+    const bodySnippet = document.body?.innerText?.substring(0, 500) || "empty";
+    autoLog2.warn("Page snippet: " + bodySnippet);
+    return { clicked: false, reason: '\u041A\u043D\u043E\u043F\u043A\u0430 "\u041E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F" \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435' };
+  }
+  async function waitForPopupAndSubmit() {
+    for (let i = 0; i < 16; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      for (const sel of POPUP_SUBMIT_SELECTORS) {
+        try {
+          const btn = document.querySelector(sel);
+          if (!btn) continue;
+          if (!document.body.contains(btn)) continue;
+          const style = window.getComputedStyle(btn);
+          if (style.display === "none" || style.visibility === "hidden") continue;
+          autoLog2.info("Found submit button in popup: " + sel);
+          const letterInput = findElement("coverLetterInput");
+          if (letterInput) {
+            autoLog2.info("Cover letter input found (skipping \u2014 empty letter)");
+          }
+          const relocationBtn = findElement("relocationConfirm");
+          if (relocationBtn) {
+            autoLog2.info("Confirming relocation warning...");
+            relocationBtn.click();
+            await new Promise((r) => setTimeout(r, 500));
+          }
+          await randomDelay();
+          btn.click();
+          autoLog2.info("Clicked submit button");
+          return { success: true };
+        } catch (e) {
+        }
+      }
+    }
+    const alreadyEl = findElement("alreadyApplied");
+    if (alreadyEl) {
+      autoLog2.info("Popup not needed \u2014 already applied indicator found");
+      return { success: true };
+    }
+    autoLog2.warn("Popup/submit button not found after 8s");
+    return { success: false, reason: "\u041F\u043E\u043F\u0430\u043F \u043D\u0435 \u043F\u043E\u044F\u0432\u0438\u043B\u0441\u044F \u0438\u043B\u0438 \u043A\u043D\u043E\u043F\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" };
+  }
+  var autoLog2, APPLY_BUTTON_SELECTORS, POPUP_SUBMIT_SELECTORS;
+  var init_apply_actions = __esm({
+    "src/engine/apply-actions.js"() {
+      init_anti_hallucination();
+      init_selectors();
+      init_timing();
+      autoLog2 = createLogger("AutoRespond");
+      APPLY_BUTTON_SELECTORS = [
+        '[data-qa="vacancy-response-apply"]',
+        '[data-qa="vacancy-response-link-top"]',
+        'a[data-qa="vacancy-response-apply"]',
+        'button[data-qa="vacancy-response-apply"]',
+        'a[href*="/vacancy/response"]',
+        ".vacancy-response-btn",
+        '[class*="vacancy-response"] button',
+        '[class*="vacancy-response"] a'
+      ];
+      POPUP_SUBMIT_SELECTORS = [
+        '[data-qa="vacancy-response-submit-popup"]',
+        '[data-qa="vacancy-response-popup-submit"]',
+        'button[data-qa="vacancy-response-submit-popup"]',
+        '[class*="response-popup"] button[type="submit"]',
+        '[class*="response-popup"] [data-qa*="submit"]'
+      ];
+    }
+  });
+
+  // src/engine/apply-orchestrator.js
+  async function applyToVacancy(vacancyId) {
+    autoLog3.info("Apply to vacancy: " + vacancyId);
+    const rateCheck = await rate_limiter_default.check();
+    if (!rateCheck.allowed) {
+      autoLog3.warn(rateCheck.reason);
+      return { success: false, reason: rateCheck.reason };
+    }
+    if (await isAlreadyApplied(vacancyId)) return { success: false, reason: "\u0423\u0436\u0435 \u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u043B\u0441\u044F" };
+    const queue = await getQueue();
+    if (!queue.find((q) => q.vacancyId === vacancyId)) {
+      queue.push({ vacancyId, timestamp: Date.now() });
+      await setQueue(queue);
+    }
+    const url = "https://hh.ru/vacancy/" + vacancyId;
+    autoLog3.info("Navigating to: " + url);
+    window.location.href = url;
+    return { success: false, reason: "\u041F\u0435\u0440\u0435\u0445\u043E\u0434 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438..." };
+  }
+  async function continueApply(pending) {
+    autoLog3.info("Continue apply on vacancy page: " + pending.vacancyId);
+    const expectedPath = "/vacancy/" + pending.vacancyId;
+    const actualPath = window.location.pathname;
+    if (!actualPath.includes(pending.vacancyId)) {
+      autoLog3.warn("Wrong page: expected " + expectedPath + " got " + actualPath);
+      return { success: false, reason: "\u041D\u0435 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438" };
+    }
+    await waitForPageReady();
+    autoLog3.info("Page ready, looking for apply button...");
+    const applyResult = await clickApplyButton();
+    if (!applyResult.clicked) {
+      autoLog3.error("Could not find/click apply button: " + applyResult.reason);
+      await markAsApplied(pending.vacancyId);
+      return { success: false, reason: applyResult.reason };
+    }
+    autoLog3.info("Apply button clicked, waiting for popup...");
+    const popupResult = await waitForPopupAndSubmit();
+    if (!popupResult.success) {
+      autoLog3.warn("Popup handling: " + popupResult.reason);
+      await markAsApplied(pending.vacancyId);
+      rate_limiter_default.recordAction();
+      return { success: true, reason: "\u041A\u043B\u0438\u043A \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D (\u043F\u043E\u043F\u0430\u043F \u043D\u0435 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D)" };
+    }
+    rate_limiter_default.recordAction();
+    await incrementApplied();
+    await markAsApplied(pending.vacancyId);
+    autoLog3.info("Successfully applied to vacancy " + pending.vacancyId);
+    await processNextInQueue();
+    return { success: true };
+  }
+  async function applyToAll(vacancies, minScore) {
+    minScore = minScore || 70;
+    const eligible = vacancies.filter((v) => v.status === "new" && v.hasReply).filter((v) => v.matchScore === null || v.matchScore >= minScore).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    if (eligible.length === 0) {
+      autoLog3.info("No eligible vacancies for mass apply");
+      return { processed: 0, reason: "\u041D\u0435\u0442 \u043F\u043E\u0434\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0439" };
+    }
+    autoLog3.info("Mass apply: " + eligible.length + " vacancies (score >= " + minScore + ")");
+    const queue = [];
+    for (const v of eligible) {
+      if (!await isAlreadyApplied(v.id)) {
+        queue.push({ vacancyId: v.id, timestamp: Date.now() });
+      }
+    }
+    if (queue.length === 0) {
+      return { processed: 0, reason: "\u0412\u0441\u0435 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u0443\u0436\u0435 \u0432 \u043E\u0447\u0435\u0440\u0435\u0434\u0438/\u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044B" };
+    }
+    await setQueue(queue);
+    autoLog3.info("Queue set: " + queue.length + " vacancies");
+    const first = queue[0];
+    const rateCheck = await rate_limiter_default.check();
+    if (!rateCheck.allowed) {
+      autoLog3.warn("Rate limit: " + rateCheck.reason);
+      return { processed: 0, reason: rateCheck.reason };
+    }
+    const url = "https://hh.ru/vacancy/" + first.vacancyId;
+    autoLog3.info("Starting mass apply, navigating to: " + url);
+    window.location.href = url;
+    return { processed: 0, reason: "\u041F\u0435\u0440\u0435\u0445\u043E\u0434 \u043D\u0430 \u043F\u0435\u0440\u0432\u0443\u044E \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044E (\u043E\u0447\u0435\u0440\u0435\u0434\u044C: " + queue.length + ")" };
+  }
+  var autoLog3;
+  var init_apply_orchestrator = __esm({
+    "src/engine/apply-orchestrator.js"() {
+      init_anti_hallucination();
+      init_rate_limiter();
+      init_storage();
+      init_apply_queue();
+      init_apply_actions();
+      autoLog3 = createLogger("AutoRespond");
+    }
+  });
+
+  // src/engine/index.js
+  var engine_exports = {};
+  __export(engine_exports, {
+    applyToAll: () => applyToAll,
+    applyToVacancy: () => applyToVacancy,
+    clearQueue: () => clearQueue,
+    clickApplyButton: () => clickApplyButton,
+    continueApply: () => continueApply,
+    dequeueNext: () => dequeueNext,
+    getQueue: () => getQueue,
+    setQueue: () => setQueue,
+    waitForPageReady: () => waitForPageReady,
+    waitForPopupAndSubmit: () => waitForPopupAndSubmit
+  });
+  var init_engine = __esm({
+    "src/engine/index.js"() {
+      init_apply_orchestrator();
+      init_apply_queue();
+      init_apply_actions();
     }
   });
 
@@ -7168,12 +7203,12 @@
     }
     window.addEventListener("hh-ar-apply", async (e) => {
       if (!panelState.isLoggedIn) return;
-      const { applyToVacancy: applyToVacancy2 } = await Promise.resolve().then(() => (init_auto_respond(), auto_respond_exports));
+      const { applyToVacancy: applyToVacancy2 } = await Promise.resolve().then(() => (init_engine(), engine_exports));
       await applyToVacancy2(e.detail.vacancyId);
     });
     window.addEventListener("hh-ar-apply-all", async () => {
       if (!panelState.isLoggedIn) return;
-      const { applyToAll: applyToAll2 } = await Promise.resolve().then(() => (init_auto_respond(), auto_respond_exports));
+      const { applyToAll: applyToAll2 } = await Promise.resolve().then(() => (init_engine(), engine_exports));
       await applyToAll2(panelState.vacancies);
     });
     window.addEventListener("hh-ar-refresh", async () => {
@@ -7296,7 +7331,7 @@
       init_vacancy_list();
       init_resume_detail2();
       init_resume_fetch();
-      init_auto_respond();
+      init_engine();
       init_panel2();
       init_resumes2();
       init_state();
