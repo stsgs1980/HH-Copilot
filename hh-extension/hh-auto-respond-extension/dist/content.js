@@ -913,6 +913,7 @@
     const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
     const details = {
       matchingSkills: skillResult.matching,
+      derivedMatchSkills: skillResult.derivedMatch,
       missingSkills: skillResult.missing,
       extraSkills: skillResult.extra,
       titleSimilarity: titleResult.similarity,
@@ -924,26 +925,35 @@
   }
   function scoreSkills(resume, vacancy) {
     const resumeSkills = normalizeSkillSet(resume.skills || []);
+    const derivedSkills = normalizeSkillSet(resume.derivedSkills || []);
     const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
+    const allResumeSkills = /* @__PURE__ */ new Set([...resumeSkills, ...derivedSkills]);
     if (vacancySkills.size === 0) {
-      return { score: 20, matching: [], missing: [], extra: [] };
+      return { score: 20, matching: [], missing: [], extra: [], derivedMatch: [] };
     }
     const matching = [];
+    const derivedMatch = [];
     const missing = [];
     for (const skill of vacancySkills) {
       if (resumeSkills.has(skill)) {
         matching.push(skill);
+      } else if (derivedSkills.has(skill)) {
+        derivedMatch.push(skill);
       } else {
         missing.push(skill);
       }
     }
     const extra = [];
-    for (const skill of resumeSkills) {
+    for (const skill of allResumeSkills) {
       if (!vacancySkills.has(skill)) extra.push(skill);
     }
-    const ratio = vacancySkills.size > 0 ? matching.length / vacancySkills.size : 0;
-    const score = Math.round(ratio * 40);
-    return { score, matching, missing, extra };
+    const explicitWeight = 1;
+    const derivedWeight = 0.7;
+    const effectiveMatches = matching.length * explicitWeight + derivedMatch.length * derivedWeight;
+    const ratio = vacancySkills.size > 0 ? effectiveMatches / vacancySkills.size : 0;
+    const score = Math.min(40, Math.round(ratio * 40));
+    scoreLog.info("Skills: explicit=" + matching.length + " derived=" + derivedMatch.length + " missing=" + missing.length + " \u2192 " + score + "/40");
+    return { score, matching, missing, extra, derivedMatch };
   }
   function scoreTitle(resume, vacancy) {
     const resumeTitle = (resume.title || "").toLowerCase().trim();
@@ -1307,6 +1317,514 @@
       init_anti_hallucination();
       init_parse_company_card();
       resumeLog = createLogger("Resume");
+    }
+  });
+
+  // src/lib/skill-dictionary.js
+  function getAllSkillNames() {
+    return SKILL_PATTERNS.map((s) => s.skill);
+  }
+  function countPatterns() {
+    return SKILL_PATTERNS.reduce((sum, s) => sum + s.patterns.length, 0);
+  }
+  var SKILL_PATTERNS;
+  var init_skill_dictionary = __esm({
+    "src/lib/skill-dictionary.js"() {
+      SKILL_PATTERNS = [
+        // ═══════════════════════════════════════════
+        // УПРАВЛЕНИЕ / МЕНЕДЖМЕНТ
+        // ═══════════════════════════════════════════
+        { skill: "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0439", patterns: [
+          /управлен(?:ие|ием|ию)\s+(?:команд|коллектив)/i,
+          /руководств(?:о|ом|у)\s+команд/i,
+          /руководител(?:ь|я|ю)\s+(?:отдел|групп|направлен)/i,
+          /создан(?:ие|ии)\s+(?:и\s+)?управлен/i,
+          /команд(?:ы|у)\s+(?:с\s+\d|до\s+\d|от\s+\d|вырос|рост|расшир)/i,
+          /управлен(?:ие|ием)\s+сотрудник/i
+        ] },
+        { skill: "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0430\u043C\u0438", patterns: [
+          /управлен(?:ие|ием|ию)\s+продаж/i,
+          /руководств(?:о|ом|у)\s+(?:отдел(?:ом|\s+продаж))/i,
+          /управлен(?:ие|ием)\s+отдел(?:ом|\s+)?продаж/i
+        ] },
+        { skill: "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0447\u0435\u0441\u043A\u0438\u0435 \u043D\u0430\u0432\u044B\u043A\u0438", patterns: [
+          /управленческ/i,
+          /менеджмент/i,
+          /KPI/i,
+          /СОП/i,
+          /грейд(?:ы|овая|ов)/i,
+          /систем(?:а|ы|у)\s+оценк/i
+        ] },
+        { skill: "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E \u043E\u0442\u0434\u0435\u043B\u043E\u043C", patterns: [
+          /руководств(?:о|ом|у)\s+отдел/i,
+          /начальник\s+отдел/i,
+          /заведующ/i
+        ] },
+        { skill: "\u0440\u0430\u0437\u0432\u0438\u0442\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u044B", patterns: [
+          /развити[ея]\s+команд/i,
+          /обучен(?:ие|ием|ию)\s+(?:команд|сотрудник|менеджер|персонал)/i,
+          /наставничество/i,
+          /менторство/i,
+          /коучинг/i
+        ] },
+        { skill: "\u043E\u0431\u0443\u0447\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430", patterns: [
+          /обучен(?:ие|ием|ию)\s+(?:персонал|сотрудник|менеджер|команд)/i,
+          /тренинг/i,
+          /повышени[ея]\s+квалифик/i,
+          /проведени[ея]\s+обучен/i,
+          /систем(?:а|ы|у)\s+обучен/i,
+          /обучен(?:ие|ием)\s*[\+,]/i,
+          /обратн(?:ая|ой)\s+связь/i,
+          /наставнич/i
+        ] },
+        { skill: "\u043D\u0430\u0432\u044B\u043A\u0438 \u043F\u0440\u0435\u0437\u0435\u043D\u0442\u0430\u0446\u0438\u0438", patterns: [
+          /презентац/i,
+          /выступлен/i,
+          /питчинг/i,
+          /публичн(?:ые|ым|ая)\s+выступлен/i,
+          /демонстрац(?:ия|ии|ию)\s+(?:продукт|решен|услуг)/i,
+          /показ(?:ал|ала|ывать)?\s+(?:продукт|решен|возможност)/i
+        ] },
+        { skill: "\u0434\u0435\u043B\u043E\u0432\u043E\u0435 \u043E\u0431\u0449\u0435\u043D\u0438\u0435", patterns: [
+          /делов(?:ое|ым|ая|ые)\s+(?:общен|коммуник|переговор)/i,
+          /переговор(?:ы|ам|ами|ная)/i,
+          /коммуникабельн/i
+        ] },
+        { skill: "\u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435", patterns: [
+          /стратегиче/i,
+          /стратеги[яю]\s+(?:развит|продаж|маркетинг)/i,
+          /долгосрочн/i,
+          /стратегич/i
+        ] },
+        { skill: "\u043E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\u043D\u043E\u0435 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435", patterns: [
+          /операционн/i,
+          /оптимизац/i,
+          /бизнес-процесс/i,
+          /процессн/i
+        ] },
+        { skill: "\u0434\u0435\u043B\u0435\u0433\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435", patterns: [
+          /делегирован/i,
+          /распределени[ея]\s+задач/i,
+          /постановк[ае]\s+задач/i
+        ] },
+        { skill: "\u043C\u043E\u0442\u0438\u0432\u0430\u0446\u0438\u044F \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430", patterns: [
+          /мотивац/i,
+          /стимулирован/i,
+          /поощрени[ея]/i
+        ] },
+        // ═══════════════════════════════════════════
+        // ПРОДАЖИ
+        // ═══════════════════════════════════════════
+        { skill: "\u043F\u0440\u044F\u043C\u044B\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0438", patterns: [
+          /прям(?:ые|ых|ым)\s+продаж/i,
+          /холодн(?:ые|ых|ым)\s+(?:звонк|контакт|продаж)/i,
+          /активн(?:ые|ых|ым)\s+продаж/i,
+          /исходящ/i,
+          /торгов(?:ый|ая|ые)\s+представител/i,
+          /менеджер\s+по\s+продаж/i,
+          /территориальн(?:ый|ая|ые)\s+менеджер/i
+        ] },
+        { skill: "B2B \u043F\u0440\u043E\u0434\u0430\u0436\u0438", patterns: [
+          /B2B/i,
+          /бизнес[\s-]*(?:для|to)\s*бизнес/i,
+          /корпоративн(?:ые|ым|ая)\s+(?:клиент|продаж)/i,
+          /крупн(?:ые|ых|ым)\s+(?:клиент|B2B)/i
+        ] },
+        { skill: "\u0432\u043E\u0440\u043E\u043D\u043A\u0430 \u043F\u0440\u043E\u0434\u0430\u0436", patterns: [
+          /воронк[аеу]\s+продаж/i,
+          /воронк[аеу]\s+конверс/i,
+          /sales\s+funnel/i,
+          /конверси[яю]\s+продаж/i
+        ] },
+        { skill: "\u043F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B", patterns: [
+          /переговор(?:ы|ам|ами|ная)/i,
+          /ведени[ея]\s+переговор/i,
+          /заключени[ея]\s+(?:договор|контракт|сделок)/i
+        ] },
+        { skill: "\u0440\u0430\u0431\u043E\u0442\u0430 \u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430\u043C\u0438", patterns: [
+          /работ[аеу]\s+(?:с\s+)?клиент/i,
+          /клиент(?:о|а)(?:ориентир|оориентир)/i,
+          /обслуживан(?:ие|ием|ию)\s+клиент/i,
+          /удержан(?:ие|ием|ию)\s+клиент/i
+        ] },
+        { skill: "\u0440\u0430\u0431\u043E\u0442\u0430 \u0441 \u0432\u043E\u0437\u0440\u0430\u0436\u0435\u043D\u0438\u044F\u043C\u0438", patterns: [
+          /возражени/i,
+          /отработк[аеу]\s+возражен/i
+        ] },
+        { skill: "CRM", patterns: [
+          /CRM/i,
+          /crm/i,
+          /customer\s+relationship/i,
+          /управлен(?:ие|ием)\s+отношен/i
+        ] },
+        { skill: "\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043A\u043B\u0438\u0435\u043D\u0442\u0441\u043A\u043E\u0439 \u0431\u0430\u0437\u044B", patterns: [
+          /клиентск(?:ая|ой|ую)\s+баз/i,
+          /баз[аеу]\s+(?:клиент|данных)/i,
+          /ведени[ея]\s+баз/i
+        ] },
+        { skill: "\u043A\u043E\u043C\u043C\u0435\u0440\u0447\u0435\u0441\u043A\u0438\u0435 \u043F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B", patterns: [
+          /коммерческ/i,
+          /услови[яю]\s+(?:сотрудничеств|контракт|договор)/i
+        ] },
+        { skill: "\u0430\u043D\u0430\u043B\u0438\u0437 \u043A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u043E\u0432", patterns: [
+          /конкурент/i,
+          /конкурент(?:н|оспособ)/i,
+          /анализ\s+рынк/i,
+          /исследован(?:ие|ием|ию)\s+рынк/i
+        ] },
+        // ═══════════════════════════════════════════
+        // МАРКЕТИНГ
+        // ═══════════════════════════════════════════
+        { skill: "\u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433", patterns: [
+          /маркетинг/i,
+          /продвижени[ея]\s+(?:продукт|бренд|услуг)/i
+        ] },
+        { skill: "\u0446\u0438\u0444\u0440\u043E\u0432\u043E\u0439 \u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433", patterns: [
+          /digital/i,
+          /цифров/i,
+          /интернет[\s-]*маркетинг/i,
+          /онлайн[\s-]*маркетинг/i
+        ] },
+        { skill: "SMM", patterns: [
+          /SMM/i,
+          /социальн(?:ые|ых|ым)\s+сет/i,
+          /social\s+media/i
+        ] },
+        { skill: "\u043A\u043E\u043D\u0442\u0435\u043D\u0442-\u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433", patterns: [
+          /контент[\s-]*маркетинг/i,
+          /контент[\s-]*план/i,
+          /контент[\s-]*стратег/i
+        ] },
+        { skill: "\u0430\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430", patterns: [
+          /аналитик/i,
+          /Google\s+Analytics/i,
+          /Яндекс\s*Метрик/i,
+          /веб[\s-]*аналитик/i
+        ] },
+        // ═══════════════════════════════════════════
+        // ФИНАНСЫ / АНАЛИЗ
+        // ═══════════════════════════════════════════
+        { skill: "\u0444\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437", patterns: [
+          /финансов[iыйе]\s+анализ/i,
+          /P&L/i,
+          /прибыл(?:ь|и|ью)/i,
+          /бюджетир/i
+        ] },
+        { skill: "\u0431\u0438\u0437\u043D\u0435\u0441-\u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435", patterns: [
+          /бизнес[\s-]*план/i,
+          /бюджетир/i,
+          /финансовое\s+планирован/i
+        ] },
+        { skill: "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u0430\u043C\u0438", patterns: [
+          /проектн/i,
+          /управлен(?:ие|ием|ию)\s+проект/i,
+          /PM/i,
+          /project\s+manag/i,
+          /Agile/i,
+          /Scrum/i,
+          /Kanban/i,
+          /спринт/i
+        ] },
+        { skill: "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0440\u0438\u0441\u043A\u0430\u043C\u0438", patterns: [
+          /управлен(?:ие|ием)\s+риск/i,
+          /риск[\s-]*менеджмент/i,
+          /минимизац/i
+        ] },
+        // ═══════════════════════════════════════════
+        // IT / РАЗРАБОТКА
+        // ═══════════════════════════════════════════
+        { skill: "Python", patterns: [
+          /python/i,
+          /django/i,
+          /flask/i,
+          /fastapi/i
+        ] },
+        { skill: "JavaScript", patterns: [
+          /javascript/i,
+          /\bJS\b/i,
+          /ECMAScript/i
+        ] },
+        { skill: "TypeScript", patterns: [
+          /typescript/i,
+          /\bTS\b/
+        ] },
+        { skill: "React", patterns: [
+          /\breact\b/i,
+          /\bredux\b/i,
+          /\bnext\.?js\b/i
+        ] },
+        { skill: "SQL", patterns: [
+          /\bsql\b/i,
+          /mysql/i,
+          /postgresql/i,
+          /\bpostgres\b/i,
+          /sqlite/i
+        ] },
+        { skill: "Git", patterns: [
+          /\bgit\b/i,
+          /github/i,
+          /gitlab/i
+        ] },
+        { skill: "Docker", patterns: [
+          /docker/i,
+          /контейнеризац/i
+        ] },
+        { skill: "CI/CD", patterns: [
+          /CI\/CD/i,
+          /continuous\s+integr/i,
+          /jenkins/i,
+          /gitlab\s+ci/i
+        ] },
+        { skill: "Linux", patterns: [
+          /linux/i,
+          /ubuntu/i,
+          /centos/i,
+          /debian/i
+        ] },
+        { skill: "AWS", patterns: [
+          /\bAWS\b/i,
+          /amazon\s+web\s+services/i
+        ] },
+        // ═══════════════════════════════════════════
+        // ПРОДУКТ / АНАЛИТИКА
+        // ═══════════════════════════════════════════
+        { skill: "\u043F\u0440\u043E\u0434\u0443\u043A\u0442\u043E\u0432\u044B\u0439 \u043C\u0435\u043D\u0435\u0434\u0436\u043C\u0435\u043D\u0442", patterns: [
+          /продуктов/i,
+          /product\s+manag/i,
+          /продакт[\s-]*менеджер/i,
+          /product\s+owner/i
+        ] },
+        { skill: "A/B \u0442\u0435\u0441\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435", patterns: [
+          /A\/B[\s-]*тест/i,
+          /сплит[\s-]*тест/i,
+          /мультивариантн/i
+        ] },
+        { skill: "\u0438\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439", patterns: [
+          /пользовател(?:ь|ей|ям)\s+исслед/i,
+          /UX[\s-]*исслед/i,
+          /custdev/i,
+          /CustDev/i,
+          /глубинн/i,
+          /интервью/i
+        ] },
+        { skill: "Data-driven", patterns: [
+          /data[\s-]*driven/i,
+          /данные[\s-]*ориентир/i,
+          /управлен(?:ие|ием)\s+на\s+основ/i
+        ] },
+        // ═══════════════════════════════════════════
+        // HR / КАДРЫ
+        // ═══════════════════════════════════════════
+        { skill: "\u043F\u043E\u0434\u0431\u043E\u0440 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430", patterns: [
+          /подбор\s+персонал/i,
+          /рекрутинг/i,
+          /найм\s+сотрудник/i,
+          /интервьюирован/i,
+          /собеседован/i
+        ] },
+        { skill: "\u0430\u0434\u0430\u043F\u0442\u0430\u0446\u0438\u044F \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430", patterns: [
+          /адаптац/i,
+          /онбординг/i,
+          /onboarding/i
+        ] },
+        { skill: "\u043E\u0446\u0435\u043D\u043A\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430", patterns: [
+          /оценк[аеу]\s+персонал/i,
+          /оценк[аеу]\s+сотрудник/i,
+          /ассессмент/i,
+          /performance\s+review/i
+        ] },
+        // ═══════════════════════════════════════════
+        // ЛОГИСТИКА / СЕТЬ
+        // ═══════════════════════════════════════════
+        { skill: "\u043B\u043E\u0433\u0438\u0441\u0442\u0438\u043A\u0430", patterns: [
+          /логистик/i,
+          /склад/i,
+          /доставка/i,
+          /цепочк[аеу]\s+постав/i,
+          /supply\s+chain/i
+        ] },
+        { skill: "\u0440\u0430\u0431\u043E\u0442\u0430 \u0441 \u043F\u043E\u0441\u0442\u0430\u0432\u0449\u0438\u043A\u0430\u043C\u0438", patterns: [
+          /поставщик/i,
+          /закупк/i,
+          /vendor\s+manag/i,
+          /партн[её]р/i
+        ] },
+        { skill: "\u0440\u0438\u0442\u0435\u0439\u043B", patterns: [
+          /ритейл/i,
+          /розничн/i,
+          /торгов[аяые]+\s+сет/i,
+          /FMCG/i
+        ] },
+        // ═══════════════════════════════════════════
+        // ОБЩИЕ / SOFT SKILLS
+        // ═══════════════════════════════════════════
+        { skill: "\u0430\u043D\u0433\u043B\u0438\u0439\u0441\u043A\u0438\u0439 \u044F\u0437\u044B\u043A", patterns: [
+          /английск/i,
+          /English/i
+        ] },
+        { skill: "\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043E\u0442\u0447\u0451\u0442\u043D\u043E\u0441\u0442\u0438", patterns: [
+          /отч[её]тн/i,
+          /отч[её]т(?:ы|ам|ами)/i,
+          /dashboard/i,
+          /дашборд/i,
+          /метрик/i
+        ] },
+        { skill: "Excel", patterns: [
+          /excel/i,
+          /эксель/i,
+          /Google\s+Sheets/i,
+          /таблиц[аеу]\s+(?:excel|google)/i
+        ] },
+        { skill: "PowerPoint", patterns: [
+          /powerpoint/i,
+          /презентац/i,
+          /keynote/i
+        ] },
+        { skill: "\u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0432", patterns: [
+          /автоматизац/i,
+          /роботизац/i,
+          /интеграции?\s+(?:с\s+)?CRM/i,
+          /автоматизир/i
+        ] },
+        { skill: "\u043C\u0430\u0441\u0448\u0442\u0430\u0431\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435", patterns: [
+          /масштабир/i,
+          /масштабирован/i,
+          /scaling/i,
+          /расширени[ея]\s+(?:команд|бизнес|отдел|продаж)/i
+        ] },
+        { skill: "\u0437\u0430\u043F\u0443\u0441\u043A \u043F\u0440\u043E\u0434\u0443\u043A\u0442\u0430", patterns: [
+          /запуск\s+(?:продукт|проект|бизнес|направлен)/i,
+          /go[\s-]*to[\s-]*market/i,
+          /GTM/i,
+          /вывод\s+(?:на\s+рынок|продукт)/i
+        ] },
+        { skill: "\u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u043A\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0438", patterns: [
+          /разработк[аеу]\s+стратег/i,
+          /стратегиче/i,
+          /формировани[ея]\s+стратег/i
+        ] },
+        { skill: "\u0430\u043D\u0430\u043B\u0438\u0437 \u0434\u0430\u043D\u043D\u044B\u0445", patterns: [
+          /анализ\s+данн/i,
+          /data\s+analysis/i,
+          /big\s+data/i,
+          /BI/i
+        ] },
+        // ═══════════════════════════════════════════
+        // ДОП. ПОЛЕЗНЫЕ
+        // ═══════════════════════════════════════════
+        { skill: "1\u0421", patterns: [
+          /1С/i,
+          /1с/i
+        ] },
+        { skill: "SAP", patterns: [
+          /\bSAP\b/i
+        ] },
+        { skill: " Salesforce", patterns: [
+          /salesforce/i
+        ] },
+        { skill: "\u043C\u043D\u043E\u0433\u043E\u0437\u0430\u0434\u0430\u0447\u043D\u043E\u0441\u0442\u044C", patterns: [
+          /многозадачн/i,
+          /мульти[\s-]*таск/i,
+          /приоритизац/i
+        ] },
+        { skill: "\u0441\u0442\u0440\u0435\u0441\u0441\u043E\u0443\u0441\u0442\u043E\u0439\u0447\u0438\u0432\u043E\u0441\u0442\u044C", patterns: [
+          /стресс/i
+        ] },
+        { skill: "\u0446\u0435\u043B\u0435\u043F\u043E\u043B\u0430\u0433\u0430\u043D\u0438\u0435", patterns: [
+          /целеполаган/i,
+          /KPI/i,
+          /OKR/i,
+          /постановк[аеу]\s+целей/i
+        ] }
+      ];
+    }
+  });
+
+  // src/lib/derive-skills.js
+  function deriveSkillsFromExperience(resume) {
+    if (!resume) return [];
+    const textParts = [];
+    if (resume.title) textParts.push(resume.title);
+    if (Array.isArray(resume.experience)) {
+      for (const exp of resume.experience) {
+        if (exp.description) textParts.push(exp.description);
+        if (exp.position) textParts.push(exp.position);
+        if (exp.duties) textParts.push(exp.duties);
+        if (exp.achievements) textParts.push(exp.achievements);
+      }
+    }
+    if (resume.additionalInfo) textParts.push(resume.additionalInfo);
+    if (resume.about) textParts.push(resume.about);
+    const corpus = textParts.join("\n");
+    if (!corpus || corpus.length < 10) {
+      deriveLog.info("No text corpus for skill derivation");
+      resume.derivedSkills = [];
+      return [];
+    }
+    const existingSkills = new Set(
+      (resume.skills || []).map((s) => s.toLowerCase().trim().replace(/\s+/g, " "))
+    );
+    const derived = [];
+    for (const entry of SKILL_PATTERNS) {
+      if (existingSkills.has(entry.skill.toLowerCase().trim())) continue;
+      for (const pattern of entry.patterns) {
+        if (pattern.test(corpus)) {
+          derived.push(entry.skill);
+          break;
+        }
+      }
+    }
+    resume.derivedSkills = derived;
+    deriveLog.info("Derived " + derived.length + " skills from experience text (" + corpus.length + " chars scanned)");
+    if (derived.length > 0) {
+      deriveLog.info("Derived skills: " + derived.join(", "));
+    }
+    return derived;
+  }
+  function matchVacancySkillsToExperience(resume, vacancySkillNames) {
+    if (!resume || !Array.isArray(vacancySkillNames)) return [];
+    const textParts = [];
+    if (resume.title) textParts.push(resume.title);
+    if (Array.isArray(resume.experience)) {
+      for (const exp of resume.experience) {
+        if (exp.description) textParts.push(exp.description);
+        if (exp.position) textParts.push(exp.position);
+      }
+    }
+    if (resume.additionalInfo) textParts.push(resume.additionalInfo);
+    const corpus = textParts.join("\n").toLowerCase();
+    if (!corpus) return [];
+    const existingSkills = new Set(
+      (resume.skills || []).map((s) => s.toLowerCase().trim())
+    );
+    const matched = [];
+    for (const skill of vacancySkillNames) {
+      const normalized = skill.toLowerCase().trim();
+      if (existingSkills.has(normalized)) continue;
+      if (corpus.includes(normalized)) {
+        matched.push(skill);
+        continue;
+      }
+      for (const entry of SKILL_PATTERNS) {
+        if (entry.skill.toLowerCase() === normalized) {
+          for (const pattern of entry.patterns) {
+            if (pattern.test(corpus)) {
+              matched.push(skill);
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+    return matched;
+  }
+  var deriveLog;
+  var init_derive_skills = __esm({
+    "src/lib/derive-skills.js"() {
+      init_skill_dictionary();
+      init_anti_hallucination();
+      deriveLog = createLogger("DeriveSkills");
     }
   });
 
@@ -1843,6 +2361,7 @@
       specializations: [],
       skills: [],
       skillLevels: {},
+      derivedSkills: [],
       experience: [],
       education: [],
       languages: [],
@@ -1881,6 +2400,7 @@
     parseEducation(dbg, resume);
     parseLanguagesAndAbout(dbg, resume);
     parseContacts(dbg, resume);
+    deriveSkillsFromExperience(resume);
     const visCard = document.querySelector('[data-qa="resume-visibility-card"]');
     if (visCard) {
       const cardText = normalizeWs(visCard.textContent || "").toLowerCase();
@@ -1939,7 +2459,7 @@
     const elapsed = (performance.now() - t0).toFixed(1);
     resumeLog4.info("Resume parsed in " + elapsed + "ms");
     resumeLog4.info("Found: " + resume._debug.found.length + " | Missing: " + resume._debug.missing.length);
-    resumeLog4.info("Skills: " + resume.skills.length + " | Experience: " + resume.experience.length + " | Education: " + resume.education.length);
+    resumeLog4.info("Skills: " + resume.skills.length + " | Derived: " + (resume.derivedSkills ? resume.derivedSkills.length : 0) + " | Experience: " + resume.experience.length + " | Education: " + resume.education.length);
     console.log("[HH-AR][Resume] Parsed resume:", JSON.stringify({
       id: resume.id,
       title: resume.title,
@@ -1957,6 +2477,7 @@
     "src/parsers/resume-detail/parse-resume.js"() {
       init_anti_hallucination();
       init_parse_resume_sections();
+      init_derive_skills();
       init_parse_resume_personal();
       init_parse_resume_conditions();
       init_parse_resume_contacts();
@@ -3312,6 +3833,13 @@
           </div>
           <div id="vac-match-matching-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
         </div>
+        <div id="vac-match-derived-skills" style="margin-bottom:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#B45309;flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:600;color:#B45309;">\u0418\u0437 \u043E\u043F\u044B\u0442\u0430 \u0440\u0430\u0431\u043E\u0442\u044B</span>
+          </div>
+          <div id="vac-match-derived-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+        </div>
         <div id="vac-match-missing-skills" style="margin-bottom:6px;display:none;">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>
@@ -3638,7 +4166,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.8"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.9"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3657,7 +4185,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.8"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.9"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -4068,11 +4596,13 @@
   function updateSkillGapSection(r) {
     const section = refs.shadowRoot?.getElementById("res-gap-section");
     if (!section) return;
-    if (!r || !r.skills || r.skills.length === 0) {
+    if (!r || (!r.skills || r.skills.length === 0) && (!r.derivedSkills || r.derivedSkills.length === 0)) {
       section.style.display = "none";
       return;
     }
     const resumeSkills = normalizeSkills(r.skills);
+    const derivedSkills = normalizeSkills(r.derivedSkills || []);
+    const allResumeSkills = /* @__PURE__ */ new Set([...resumeSkills, ...derivedSkills]);
     const vacancySkills = collectVacancySkills();
     if (vacancySkills.size === 0) {
       section.style.display = "none";
@@ -4081,16 +4611,16 @@
     const match = [];
     const miss = [];
     const extra = [];
-    for (const skill of resumeSkills) {
+    for (const skill of allResumeSkills) {
       if (vacancySkills.has(skill)) match.push(skill);
     }
     for (const skill of vacancySkills) {
-      if (!resumeSkills.has(skill)) miss.push(skill);
+      if (!allResumeSkills.has(skill)) miss.push(skill);
     }
-    for (const skill of resumeSkills) {
+    for (const skill of allResumeSkills) {
       if (!vacancySkills.has(skill)) extra.push(skill);
     }
-    const total = resumeSkills.size + miss.length;
+    const total = allResumeSkills.size + miss.length;
     const matchPct = total > 0 ? Math.round(match.length / total * 100) : 0;
     section.style.display = "";
     const ring = refs.shadowRoot?.getElementById("res-gap-ring");
@@ -4245,13 +4775,25 @@
     const list = refs.shadowRoot?.getElementById("res-skills-list");
     const count = refs.shadowRoot?.getElementById("res-skills-count");
     if (!section || !list) return;
-    if (!r || !r.skills || r.skills.length === 0) {
+    const explicit = r && r.skills ? r.skills : [];
+    const derived = r && r.derivedSkills ? r.derivedSkills : [];
+    if (explicit.length === 0 && derived.length === 0) {
       section.style.display = "none";
       return;
     }
     section.style.display = "";
-    if (count) count.textContent = r.skills.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432";
-    list.innerHTML = r.skills.map((s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>").join("");
+    const totalCount = explicit.length + derived.length;
+    if (count) count.textContent = totalCount + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432";
+    let html = explicit.map(
+      (s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>"
+    ).join("");
+    if (derived.length > 0) {
+      html += '<div style="font-size:10px;color:#B45309;margin:6px 0 2px 0;font-weight:500;">\u0418\u0437 \u043E\u043F\u044B\u0442\u0430 \u0440\u0430\u0431\u043E\u0442\u044B:</div>';
+      html += derived.map(
+        (s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + "</span>"
+      ).join("");
+    }
+    list.innerHTML = html;
   }
   var init_resume_helpers = __esm({
     "src/ui/tabs/resumes/resume-helpers.js"() {
@@ -4313,8 +4855,9 @@
     const detailsSection = el("vac-match-details");
     if (detailsSection && details) {
       const matching = details.matchingSkills || [];
+      const derived = details.derivedMatchSkills || [];
       const missing = details.missingSkills || [];
-      if (matching.length > 0 || missing.length > 0) {
+      if (matching.length > 0 || derived.length > 0 || missing.length > 0) {
         detailsSection.style.display = "";
         const matchingRow = el("vac-match-matching-skills");
         const matchingList = el("vac-match-matching-list");
@@ -4326,6 +4869,18 @@
             matchingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
           } else {
             matchingRow.style.display = "none";
+          }
+        }
+        const derivedRow = el("vac-match-derived-skills");
+        const derivedList = el("vac-match-derived-list");
+        if (derivedRow && derivedList) {
+          if (derived.length > 0) {
+            derivedRow.style.display = "";
+            const visible = derived.slice(0, 6);
+            const remainder = derived.length - visible.length;
+            derivedList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+          } else {
+            derivedRow.style.display = "none";
           }
         }
         const missingRow = el("vac-match-missing-skills");
@@ -4389,7 +4944,7 @@
     </div>`;
     }).join("");
     const r = panelState.resume;
-    if (r && r.skills && r.skills.length > 0) {
+    if (r && (r.skills && r.skills.length > 0 || r.derivedSkills && r.derivedSkills.length > 0)) {
       updateSkillGapSection(r);
     }
   }
@@ -8308,6 +8863,7 @@
       specializations: [],
       skills: [],
       skillLevels: {},
+      derivedSkills: [],
       experience: [],
       education: [],
       languages: [],
@@ -8350,8 +8906,9 @@
     parseEducationFromDocSection(doc, dbg, resume);
     parseLanguagesAndAbout2(doc, dbg, resume);
     parseContactsFromDoc(doc, dbg, resume);
+    deriveSkillsFromExperience(resume);
     if (resume._visDiag) resume._visDiag.title = resume.title || "(no title)";
-    fetchLog12.info("Parsed: " + resume.title + " | Skills: " + resume.skills.length + " | Exp: " + resume.experience.length + " | Edu: " + resume.education.length);
+    fetchLog12.info("Parsed: " + resume.title + " | Skills: " + resume.skills.length + " | Derived: " + (resume.derivedSkills ? resume.derivedSkills.length : 0) + " | Exp: " + resume.experience.length + " | Edu: " + resume.education.length);
     return resume;
   }
   function parseHeader(doc, dbg, resume) {
@@ -8476,6 +9033,7 @@
       init_resume_fetch_resume_exp_orch();
       init_resume_fetch_education_languages();
       init_resume_fetch_resume_diag();
+      init_derive_skills();
       fetchLog12 = createLogger("ResumeFetch");
     }
   });

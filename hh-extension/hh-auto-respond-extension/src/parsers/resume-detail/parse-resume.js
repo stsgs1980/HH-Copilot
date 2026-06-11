@@ -7,6 +7,7 @@
 
 import { safeGetText, createLogger } from '../../lib/anti-hallucination.js';
 import { parseSkills, parseExperience, parseLanguagesAndAbout } from './parse-resume-sections.js';
+import { deriveSkillsFromExperience } from '../../lib/derive-skills.js';
 import { parsePersonalData } from './parse-resume-personal.js';
 import { parseSalaryConditions } from './parse-resume-conditions.js';
 import { parseContacts } from './parse-resume-contacts.js';
@@ -26,7 +27,7 @@ export function parseResume() {
     name: '', title: '', salary: '', gender: '', age: '', address: '',
     employmentType: '', workFormat: '', schedule: '', relocation: '',
     phone: '', email: '', telegram: '',
-    specializations: [], skills: [], skillLevels: {},
+    specializations: [], skills: [], skillLevels: {}, derivedSkills: [],
     experience: [], education: [], languages: [],
     additionalInfo: '', parsedAt: new Date().toISOString(),
     visibility: VISIBILITY_UNKNOWN, hidden: false,
@@ -75,6 +76,9 @@ export function parseResume() {
   parseEducation(dbg, resume);
   parseLanguagesAndAbout(dbg, resume);
   parseContacts(dbg, resume);
+
+  // Derive skills from experience descriptions (after parseExperience populated them)
+  deriveSkillsFromExperience(resume);
 
   // ═════════════════════════════════════════
   // VISIBILITY — detect from DOM on the resume page itself
@@ -155,7 +159,7 @@ export function parseResume() {
   const elapsed = (performance.now() - t0).toFixed(1);
   resumeLog.info('Resume parsed in ' + elapsed + 'ms');
   resumeLog.info('Found: ' + resume._debug.found.length + ' | Missing: ' + resume._debug.missing.length);
-  resumeLog.info('Skills: ' + resume.skills.length + ' | Experience: ' + resume.experience.length + ' | Education: ' + resume.education.length);
+  resumeLog.info('Skills: ' + resume.skills.length + ' | Derived: ' + (resume.derivedSkills ? resume.derivedSkills.length : 0) + ' | Experience: ' + resume.experience.length + ' | Education: ' + resume.education.length);
   console.log('[HH-AR][Resume] Parsed resume:', JSON.stringify({
     id: resume.id, title: resume.title, salary: resume.salary,
     skills: resume.skills, experienceCount: resume.experience.length,

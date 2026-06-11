@@ -20,12 +20,14 @@ export function updateSkillGapSection(r) {
   const section = refs.shadowRoot?.getElementById('res-gap-section');
   if (!section) return;
 
-  if (!r || !r.skills || r.skills.length === 0) {
+  if (!r || ((!r.skills || r.skills.length === 0) && (!r.derivedSkills || r.derivedSkills.length === 0))) {
     section.style.display = 'none';
     return;
   }
 
   const resumeSkills = normalizeSkills(r.skills);
+  const derivedSkills = normalizeSkills(r.derivedSkills || []);
+  const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
   const vacancySkills = collectVacancySkills();
 
   if (vacancySkills.size === 0) {
@@ -38,17 +40,17 @@ export function updateSkillGapSection(r) {
   const miss = [];
   const extra = [];
 
-  for (const skill of resumeSkills) {
+  for (const skill of allResumeSkills) {
     if (vacancySkills.has(skill)) match.push(skill);
   }
   for (const skill of vacancySkills) {
-    if (!resumeSkills.has(skill)) miss.push(skill);
+    if (!allResumeSkills.has(skill)) miss.push(skill);
   }
-  for (const skill of resumeSkills) {
+  for (const skill of allResumeSkills) {
     if (!vacancySkills.has(skill)) extra.push(skill);
   }
 
-  const total = resumeSkills.size + miss.length;
+  const total = allResumeSkills.size + miss.length;
   const matchPct = total > 0 ? Math.round((match.length / total) * 100) : 0;
 
   section.style.display = '';

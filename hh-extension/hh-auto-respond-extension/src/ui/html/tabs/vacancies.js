@@ -101,6 +101,13 @@ export function getVacanciesSection() {
           </div>
           <div id="vac-match-matching-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
         </div>
+        <div id="vac-match-derived-skills" style="margin-bottom:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#B45309;flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:600;color:#B45309;">Из опыта работы</span>
+          </div>
+          <div id="vac-match-derived-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+        </div>
         <div id="vac-match-missing-skills" style="margin-bottom:6px;display:none;">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>

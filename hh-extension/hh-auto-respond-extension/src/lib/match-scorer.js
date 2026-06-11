@@ -47,6 +47,7 @@ export function computeMatchScore(resume, vacancy) {
 
   const details = {
     matchingSkills: skillResult.matching,
+    derivedMatchSkills: skillResult.derivedMatch,
     missingSkills: skillResult.missing,
     extraSkills: skillResult.extra,
     titleSimilarity: titleResult.similarity,
@@ -65,34 +66,48 @@ export function computeMatchScore(resume, vacancy) {
 
 function scoreSkills(resume, vacancy) {
   const resumeSkills = normalizeSkillSet(resume.skills || []);
+  const derivedSkills = normalizeSkillSet(resume.derivedSkills || []);
   const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
+
+  // Merge explicit + derived skills (derived at lower weight)
+  const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
 
   if (vacancySkills.size === 0) {
     // No skills listed in vacancy — give neutral score
-    return { score: 20, matching: [], missing: [], extra: [] };
+    return { score: 20, matching: [], missing: [], extra: [], derivedMatch: [] };
   }
 
-  const matching = [];
+  const matching = [];      // explicit skill match
+  const derivedMatch = [];  // derived skill match
   const missing = [];
 
   for (const skill of vacancySkills) {
     if (resumeSkills.has(skill)) {
       matching.push(skill);
+    } else if (derivedSkills.has(skill)) {
+      derivedMatch.push(skill);
     } else {
       missing.push(skill);
     }
   }
 
   const extra = [];
-  for (const skill of resumeSkills) {
+  for (const skill of allResumeSkills) {
     if (!vacancySkills.has(skill)) extra.push(skill);
   }
 
-  // Score: (matching / total_vacancy_skills) * 40
-  const ratio = vacancySkills.size > 0 ? matching.length / vacancySkills.size : 0;
-  const score = Math.round(ratio * 40);
+  // Score: explicit matches count full, derived matches count 70%
+  // (derived skills are inferred, not self-declared)
+  const explicitWeight = 1.0;
+  const derivedWeight = 0.7;
+  const effectiveMatches = matching.length * explicitWeight + derivedMatch.length * derivedWeight;
+  const ratio = vacancySkills.size > 0 ? effectiveMatches / vacancySkills.size : 0;
+  const score = Math.min(40, Math.round(ratio * 40));
 
-  return { score, matching, missing, extra };
+  scoreLog.info('Skills: explicit=' + matching.length + ' derived=' + derivedMatch.length +
+    ' missing=' + missing.length + ' → ' + score + '/40');
+
+  return { score, matching, missing, extra, derivedMatch };
 }
 
 // ═══════════════════════════════════════════════

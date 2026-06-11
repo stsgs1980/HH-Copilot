@@ -94,14 +94,30 @@ export function updateSkillsSection(r) {
   const count = refs.shadowRoot?.getElementById('res-skills-count');
   if (!section || !list) return;
 
-  if (!r || !r.skills || r.skills.length === 0) {
+  const explicit = (r && r.skills) ? r.skills : [];
+  const derived = (r && r.derivedSkills) ? r.derivedSkills : [];
+
+  if (explicit.length === 0 && derived.length === 0) {
     section.style.display = 'none';
     return;
   }
 
   section.style.display = '';
-  if (count) count.textContent = r.skills.length + ' навыков';
-  list.innerHTML = r.skills.map(s => '<span class="skill-tag skill-match">' + esc(s) + '</span>').join('');
+  const totalCount = explicit.length + derived.length;
+  if (count) count.textContent = totalCount + ' навыков';
+
+  let html = explicit.map(s =>
+    '<span class="skill-tag skill-match">' + esc(s) + '</span>'
+  ).join('');
+
+  if (derived.length > 0) {
+    html += '<div style="font-size:10px;color:#B45309;margin:6px 0 2px 0;font-weight:500;">Из опыта работы:</div>';
+    html += derived.map(s =>
+      '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + '</span>'
+    ).join('');
+  }
+
+  list.innerHTML = html;
 }
 
 // Re-export from gap module

@@ -70,11 +70,13 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
   const detailsSection = el('vac-match-details');
   if (detailsSection && details) {
     const matching = details.matchingSkills || [];
+    const derived = details.derivedMatchSkills || [];
     const missing = details.missingSkills || [];
 
-    if (matching.length > 0 || missing.length > 0) {
+    if (matching.length > 0 || derived.length > 0 || missing.length > 0) {
       detailsSection.style.display = '';
 
+      // Explicit matching skills (green)
       const matchingRow = el('vac-match-matching-skills');
       const matchingList = el('vac-match-matching-list');
       if (matchingRow && matchingList) {
@@ -89,6 +91,22 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
         }
       }
 
+      // Derived matching skills (amber — inferred from experience)
+      const derivedRow = el('vac-match-derived-skills');
+      const derivedList = el('vac-match-derived-list');
+      if (derivedRow && derivedList) {
+        if (derived.length > 0) {
+          derivedRow.style.display = '';
+          const visible = derived.slice(0, 6);
+          const remainder = derived.length - visible.length;
+          derivedList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + '</span>').join('') +
+            (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
+        } else {
+          derivedRow.style.display = 'none';
+        }
+      }
+
+      // Missing skills (red)
       const missingRow = el('vac-match-missing-skills');
       const missingList = el('vac-match-missing-list');
       if (missingRow && missingList) {
@@ -172,7 +190,7 @@ export function renderVacancyList() {
 
   // Update skill gap analysis after vacancy list is rendered
   const r = panelState.resume;
-  if (r && r.skills && r.skills.length > 0) {
+  if (r && ((r.skills && r.skills.length > 0) || (r.derivedSkills && r.derivedSkills.length > 0))) {
     updateSkillGapSection(r);
   }
 }

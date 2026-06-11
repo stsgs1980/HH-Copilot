@@ -17,6 +17,7 @@ import { detectVisibilityFromResumePage } from './resume-fetch-resume-page-vis.j
 import { parseExperienceFromDoc } from './resume-fetch-resume-exp-orch.js';
 import { parseEducationFromDocSection, parseLanguagesAndAbout } from './resume-fetch-education-languages.js';
 import { logPreParseDiagnostics, resolveVisibilityDecision } from './resume-fetch-resume-diag.js';
+import { deriveSkillsFromExperience } from './derive-skills.js';
 
 const fetchLog = createLogger('ResumeFetch');
 
@@ -46,7 +47,7 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
     title: '', salary: '', gender: '', age: '', address: '',
     phone: '', email: '', telegram: '',
     employmentType: '', workFormat: '', schedule: '', relocation: '',
-    specializations: [], skills: [], skillLevels: {},
+    specializations: [], skills: [], skillLevels: {}, derivedSkills: [],
     experience: [], education: [], languages: [],
     additionalInfo: '', parsedAt: new Date().toISOString(),
     visibility: VISIBILITY_UNKNOWN,
@@ -93,9 +94,13 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   parseLanguagesAndAbout(doc, dbg, resume);
   parseContactsFromDoc(doc, dbg, resume);
 
+  // Derive skills from experience descriptions (after parseExperienceFromDoc populated them)
+  deriveSkillsFromExperience(resume);
+
   if (resume._visDiag) resume._visDiag.title = resume.title || '(no title)';
 
   fetchLog.info('Parsed: ' + resume.title + ' | Skills: ' + resume.skills.length +
+    ' | Derived: ' + (resume.derivedSkills ? resume.derivedSkills.length : 0) +
     ' | Exp: ' + resume.experience.length + ' | Edu: ' + resume.education.length);
   return resume;
 }
