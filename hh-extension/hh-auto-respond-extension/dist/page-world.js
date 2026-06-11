@@ -139,4 +139,45 @@
     return d;
   };
   console.log("%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable() / __hhVacDiag()", "color:#71717a;font-size:11px");
+  (function setupSPANavigation() {
+    var origPush = history.pushState;
+    history.pushState = function() {
+      origPush.apply(this, arguments);
+      document.dispatchEvent(new CustomEvent("hh-ar-spa-navigate", {
+        detail: { path: window.location.pathname, source: "pushState" }
+      }));
+    };
+    var origReplace = history.replaceState;
+    history.replaceState = function() {
+      origReplace.apply(this, arguments);
+      document.dispatchEvent(new CustomEvent("hh-ar-spa-navigate", {
+        detail: { path: window.location.pathname, source: "replaceState" }
+      }));
+    };
+    document.addEventListener("click", function(e) {
+      if (e.button !== 0) return;
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      var link = e.target.closest("a[href]");
+      if (!link) return;
+      var href = link.getAttribute("href");
+      if (!href) return;
+      if (link.target === "_blank") return;
+      var isVacancy = /^\/vacancy\/\d+/.test(href) || /hh\.ru\/vacancy\/\d+/.test(href);
+      var isResume = /^\/resume\/[a-f0-9]+/.test(href);
+      if (!isVacancy && !isResume) return;
+      var targetPath;
+      try {
+        targetPath = new URL(href, window.location.origin).pathname;
+      } catch (_) {
+        return;
+      }
+      if (window.location.pathname === targetPath) return;
+      e.preventDefault();
+      setTimeout(function() {
+        if (window.location.pathname !== targetPath) return;
+        history.pushState({}, "", href);
+      }, 150);
+    }, true);
+    console.log("%c[HH-AR][SPA] Navigation interception active", "color:#71717a;font-size:11px");
+  })();
 })();

@@ -4166,7 +4166,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.9"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.16.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -4185,7 +4185,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.9"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.16.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -9399,7 +9399,10 @@
         const href = navLink.getAttribute("href");
         if (href) {
           toggleSidebar();
-          window.location.href = href;
+          history.pushState({}, "", href);
+          document.dispatchEvent(new CustomEvent("hh-ar-spa-navigate", {
+            detail: { path: href, source: "sidebar" }
+          }));
         }
         return;
       }
@@ -10364,6 +10367,11 @@
       origReplace.apply(this, arguments);
       onSPANavigate(window.location.pathname);
     };
+    document.addEventListener("hh-ar-spa-navigate", (e) => {
+      const path = e.detail?.path || window.location.pathname;
+      pageLog.info("MAIN world SPA navigate: " + path);
+      onSPANavigate(path);
+    });
   }
   var spaTimer = null;
   function onSPANavigate(newPath) {

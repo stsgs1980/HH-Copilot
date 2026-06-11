@@ -76,7 +76,7 @@ function setupSPARouting() {
     onSPANavigate(window.location.pathname);
   });
 
-  // Patch pushState / replaceState
+  // Patch pushState / replaceState in content script's own context
   const origPush = history.pushState;
   history.pushState = function() {
     origPush.apply(this, arguments);
@@ -88,6 +88,15 @@ function setupSPARouting() {
     origReplace.apply(this, arguments);
     onSPANavigate(window.location.pathname);
   };
+
+  // Listen for SPA navigations triggered from MAIN world (page-world.js)
+  // This catches pushState/replaceState calls made by hh.ru's own JS,
+  // which the content script patch above can't intercept.
+  document.addEventListener('hh-ar-spa-navigate', (e) => {
+    const path = e.detail?.path || window.location.pathname;
+    pageLog.info('MAIN world SPA navigate: ' + path);
+    onSPANavigate(path);
+  });
 }
 
 /**

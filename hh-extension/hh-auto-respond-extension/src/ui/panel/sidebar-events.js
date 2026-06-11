@@ -42,14 +42,19 @@ export function bindSidebarClicks(container) {
     if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
 
-    /* Navigate — open link in current tab + close sidebar */
+    /* Navigate — SPA-style pushState + close sidebar */
     const navLink = t.closest('[data-action="navigate"]');
     if (navLink) {
       e.preventDefault();
       const href = navLink.getAttribute('href');
       if (href) {
         toggleSidebar(); // close panel
-        window.location.href = href; // navigate current tab
+        history.pushState({}, '', href);
+        // pushState patch in main-page-handlers.js will fire onSPANavigate
+        // Also dispatch for MAIN-world compatibility
+        document.dispatchEvent(new CustomEvent('hh-ar-spa-navigate', {
+          detail: { path: href, source: 'sidebar' }
+        }));
       }
       return;
     }
