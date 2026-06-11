@@ -1114,7 +1114,7 @@
         if (t && t.length > 0 && t.length < 200 && !personalText.includes(t)) personalText.push(t);
       });
     }
-    const genderPatterns = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
+    const genderPatterns = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
     const agePattern = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
     const agePattern2 = /(\d{2})\s*years?\s*old/i;
     for (const t of personalText) {
@@ -1167,19 +1167,28 @@
       if (t && t.length > 2 && t.length < 100) texts.push(t);
     });
     const empPatterns = [
-      /\b(Полная занятость|Постоянная работа)\b/i,
-      /\b(Частичная занятость)\b/i,
-      /\b(Проектная работа)\b/i,
-      /\b(Стажировка)\b/i,
-      /\b(Волонтёрство)\b/i
+      /(?:^|\s)(Полная занятость|Постоянная работа)(?:$|[,;\s])/i,
+      /(?:^|\s)(Частичная занятость)(?:$|[,;\s])/i,
+      /(?:^|\s)(Проектная работа)(?:$|[,;\s])/i,
+      /(?:^|\s)(Стажировка)(?:$|[,;\s])/i,
+      /(?:^|\s)(Волонтёрство)(?:$|[,;\s])/i
     ];
     const fmtPatterns = [
-      /\b(На месте работодателя|Офис|В офисе)\b/i,
-      /\b(Удал[а-яё]+(?: работа)?|Удалённо)\b/i,
-      /\b(Гибрид|Смешанный формат)\b/i
+      /(?:^|\s)(На месте работодателя|Офис|В офисе)(?:$|[,;\s])/i,
+      /(?:^|\s)(Удал[а-яё]+(?: работа)?|Удалённо)(?:$|[,;\s])/i,
+      /(?:^|\s)(Гибрид|Смешанный формат)(?:$|[,;\s])/i
     ];
-    const schedPatterns = [/\b(Гибкий график)\b/i, /\b(Полный день)\b/i, /\b(Сменный график)\b/i, /\b(Вахтовый метод)\b/i];
-    const relocPatterns = [/\b(Не готов к переезду)\b/i, /\b(Готов к переезду)\b/i, /\b(Хочу переехать)\b/i];
+    const schedPatterns = [
+      /(?:^|\s)(Гибкий график)(?:$|[,;\s])/i,
+      /(?:^|\s)(Полный день)(?:$|[,;\s])/i,
+      /(?:^|\s)(Сменный график)(?:$|[,;\s])/i,
+      /(?:^|\s)(Вахтовый метод)(?:$|[,;\s])/i
+    ];
+    const relocPatterns = [
+      /(?:^|\s)(Не готов к переезду)(?:$|[,;\s])/i,
+      /(?:^|\s)(Готов к переезду)(?:$|[,;\s])/i,
+      /(?:^|\s)(Хочу переехать)(?:$|[,;\s])/i
+    ];
     for (const t of texts) {
       if (!resume.employmentType) {
         for (const p of empPatterns) {
@@ -4918,10 +4927,10 @@
     if (positions.length < 2) return false;
     const lvl = (p) => {
       const pl = p.toLowerCase();
-      if (/\b(intern|стажёр|стажер|junior|младш|trainee)\b/.test(pl)) return 1;
-      if (/\b(middle|средн|middle\s*\+?\s*senior)\b/.test(pl)) return 2;
-      if (/\b(senior|ведущ|старш|lead|principal|staff)\b/.test(pl)) return 3;
-      if (/\b(head|руководител|руководств|director|директор|начальник|cто|cto|vp)\b/.test(pl)) return 4;
+      if (/(?:^|[\s/(-])(intern|стажёр|стажер|junior|младш|trainee)(?:$|[\s/)-,.])/i.test(pl)) return 1;
+      if (/(?:^|[\s/(-])(middle|средн)(?:$|[\s/)-,.])/i.test(pl)) return 2;
+      if (/(?:^|[\s/(-])(senior|ведущ|старш|lead|principal|staff)(?:$|[\s/)-,.])/i.test(pl)) return 3;
+      if (/(?:^|[\s/(-])(head|руководител|руководств|director|директор|начальник|cто|cto|vp)(?:$|[\s/)-,.])/i.test(pl)) return 4;
       return 2;
     };
     for (let i = 0; i < positions.length - 1; i++) {
@@ -5858,7 +5867,7 @@
   var init_resume_fetch_parse = __esm({
     "src/lib/resume-fetch-parse.js"() {
       init_resume_fetch_helpers();
-      GENDER_PATTERNS = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
+      GENDER_PATTERNS = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
       AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
       AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
       HH_SYSTEM_ACCOUNTS2 = ["hh_ru_official", "hhru", "hh_ru", "hhcareers", "headhunter_ru"];
@@ -7532,19 +7541,28 @@
       if (t && t.length > 2 && t.length < 100) texts.push(t);
     });
     const empPatterns = [
-      /\b(Полная занятость|Постоянная работа)\b/i,
-      /\b(Частичная занятость)\b/i,
-      /\b(Проектная работа)\b/i,
-      /\b(Стажировка)\b/i,
-      /\b(Волонтёрство)\b/i
+      /(?:^|\s)(Полная занятость|Постоянная работа)(?:$|[,;\s])/i,
+      /(?:^|\s)(Частичная занятость)(?:$|[,;\s])/i,
+      /(?:^|\s)(Проектная работа)(?:$|[,;\s])/i,
+      /(?:^|\s)(Стажировка)(?:$|[,;\s])/i,
+      /(?:^|\s)(Волонтёрство)(?:$|[,;\s])/i
     ];
     const fmtPatterns = [
-      /\b(На месте работодателя|Офис|В офисе)\b/i,
-      /\b(Удал[а-яё]+(?: работа)?|Удалённо)\b/i,
-      /\b(Гибрид|Смешанный формат)\b/i
+      /(?:^|\s)(На месте работодателя|Офис|В офисе)(?:$|[,;\s])/i,
+      /(?:^|\s)(Удал[а-яё]+(?: работа)?|Удалённо)(?:$|[,;\s])/i,
+      /(?:^|\s)(Гибрид|Смешанный формат)(?:$|[,;\s])/i
     ];
-    const schedPatterns = [/\b(Гибкий график)\b/i, /\b(Полный день)\b/i, /\b(Сменный график)\b/i, /\b(Вахтовый метод)\b/i];
-    const relocPatterns = [/\b(Не готов к переезду)\b/i, /\b(Готов к переезду)\b/i, /\b(Хочу переехать)\b/i];
+    const schedPatterns = [
+      /(?:^|\s)(Гибкий график)(?:$|[,;\s])/i,
+      /(?:^|\s)(Полный день)(?:$|[,;\s])/i,
+      /(?:^|\s)(Сменный график)(?:$|[,;\s])/i,
+      /(?:^|\s)(Вахтовый метод)(?:$|[,;\s])/i
+    ];
+    const relocPatterns = [
+      /(?:^|\s)(Не готов к переезду)(?:$|[,;\s])/i,
+      /(?:^|\s)(Готов к переезду)(?:$|[,;\s])/i,
+      /(?:^|\s)(Хочу переехать)(?:$|[,;\s])/i
+    ];
     for (const t of texts) {
       if (!resume.employmentType) {
         for (const p of empPatterns) {

@@ -62,7 +62,7 @@ export function parseCompanyCardFromDoc(card) {
 // PERSONAL DATA PARSER
 // ═══════════════════════════════════════════════
 
-const GENDER_PATTERNS = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
+const GENDER_PATTERNS = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
 const AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
 const AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
 

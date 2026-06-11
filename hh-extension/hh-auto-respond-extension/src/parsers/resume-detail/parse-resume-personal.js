@@ -55,7 +55,7 @@ export function parsePersonalData(titleEl, dbg, resume) {
     });
   }
 
-  const genderPatterns = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
+  const genderPatterns = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
   const agePattern = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
   const agePattern2 = /(\d{2})\s*years?\s*old/i;
 

@@ -134,10 +134,10 @@ export function detectProgression(positions) {
 
   const lvl = (p) => {
     const pl = p.toLowerCase();
-    if (/\b(intern|стажёр|стажер|junior|младш|trainee)\b/.test(pl)) return 1;
-    if (/\b(middle|средн|middle\s*\+?\s*senior)\b/.test(pl)) return 2;
-    if (/\b(senior|ведущ|старш|lead|principal|staff)\b/.test(pl)) return 3;
-    if (/\b(head|руководител|руководств|director|директор|начальник|cто|cto|vp)\b/.test(pl)) return 4;
+    if (/(?:^|[\s/(-])(intern|стажёр|стажер|junior|младш|trainee)(?:$|[\s/)-,.])/i.test(pl)) return 1;
+    if (/(?:^|[\s/(-])(middle|средн)(?:$|[\s/)-,.])/i.test(pl)) return 2;
+    if (/(?:^|[\s/(-])(senior|ведущ|старш|lead|principal|staff)(?:$|[\s/)-,.])/i.test(pl)) return 3;
+    if (/(?:^|[\s/(-])(head|руководител|руководств|director|директор|начальник|cто|cto|vp)(?:$|[\s/)-,.])/i.test(pl)) return 4;
     return 2;
   };
 
