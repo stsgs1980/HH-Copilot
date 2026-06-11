@@ -1145,6 +1145,15 @@
       }
     }
   }
+  var resumeLog2;
+  var init_parse_resume_personal = __esm({
+    "src/parsers/resume-detail/parse-resume-personal.js"() {
+      init_anti_hallucination();
+      resumeLog2 = createLogger("Resume");
+    }
+  });
+
+  // src/parsers/resume-detail/parse-resume-conditions.js
   function parseSalaryConditions(dbg, resume) {
     const posCard = document.querySelector('[data-qa="resume-position-card"]');
     if (!posCard) {
@@ -1157,8 +1166,18 @@
       const t = (el.textContent || "").trim();
       if (t && t.length > 2 && t.length < 100) texts.push(t);
     });
-    const empPatterns = [/\b(Полная занятость)\b/i, /\b(Частичная занятость)\b/i, /\b(Проектная работа)\b/i, /\b(Стажировка)\b/i];
-    const fmtPatterns = [/\b(Удал[а-яё]+ работа)\b/i, /\b(Офис)\b/i, /\b(Гибрид)\b/i, /\b(Смешанный формат)\b/i];
+    const empPatterns = [
+      /\b(Полная занятость|Постоянная работа)\b/i,
+      /\b(Частичная занятость)\b/i,
+      /\b(Проектная работа)\b/i,
+      /\b(Стажировка)\b/i,
+      /\b(Волонтёрство)\b/i
+    ];
+    const fmtPatterns = [
+      /\b(На месте работодателя|Офис|В офисе)\b/i,
+      /\b(Удал[а-яё]+(?: работа)?|Удалённо)\b/i,
+      /\b(Гибрид|Смешанный формат)\b/i
+    ];
     const schedPatterns = [/\b(Гибкий график)\b/i, /\b(Полный день)\b/i, /\b(Сменный график)\b/i, /\b(Вахтовый метод)\b/i];
     const relocPatterns = [/\b(Не готов к переезду)\b/i, /\b(Готов к переезду)\b/i, /\b(Хочу переехать)\b/i];
     for (const t of texts) {
@@ -1172,12 +1191,13 @@
         }
       }
       if (!resume.workFormat) {
+        const fmtMatches = [];
         for (const p of fmtPatterns) {
           const m = t.match(p);
-          if (m) {
-            resume.workFormat = dbg("workFormat", m[1]);
-            break;
-          }
+          if (m) fmtMatches.push(m[1]);
+        }
+        if (fmtMatches.length > 0) {
+          resume.workFormat = dbg("workFormat", fmtMatches.join(", "));
         }
       }
       if (!resume.schedule) {
@@ -1200,6 +1220,12 @@
       }
     }
   }
+  var init_parse_resume_conditions = __esm({
+    "src/parsers/resume-detail/parse-resume-conditions.js"() {
+    }
+  });
+
+  // src/parsers/resume-detail/parse-resume-contacts.js
   function parseContacts(dbg, resume) {
     const phoneSelectors = [
       '[data-qa="resume-contact-phone"] a',
@@ -1302,11 +1328,9 @@
       }
     }
   }
-  var resumeLog2, HH_SYSTEM_ACCOUNTS;
-  var init_parse_resume_personal = __esm({
-    "src/parsers/resume-detail/parse-resume-personal.js"() {
-      init_anti_hallucination();
-      resumeLog2 = createLogger("Resume");
+  var HH_SYSTEM_ACCOUNTS;
+  var init_parse_resume_contacts = __esm({
+    "src/parsers/resume-detail/parse-resume-contacts.js"() {
       HH_SYSTEM_ACCOUNTS = ["hh_ru_official", "hhru", "hh_ru", "hhcareers", "headhunter_ru"];
     }
   });
@@ -1691,6 +1715,8 @@
       init_anti_hallucination();
       init_parse_resume_sections();
       init_parse_resume_personal();
+      init_parse_resume_conditions();
+      init_parse_resume_contacts();
       init_parse_resume_education();
       init_resume_constants();
       resumeLog4 = createLogger("Resume");
@@ -7430,6 +7456,10 @@
       phone: "",
       email: "",
       telegram: "",
+      employmentType: "",
+      workFormat: "",
+      schedule: "",
+      relocation: "",
       specializations: [],
       skills: [],
       skillLevels: {},
@@ -7467,6 +7497,7 @@
       return val;
     };
     parseHeader(doc, dbg, resume);
+    parseSalaryConditionsFromDoc(doc, dbg, resume);
     if (resume.title) resume.title = resume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
     parsePersonalDataFromDoc(doc, doc.querySelector('[data-qa="resume-block-title-position"]'), dbg, resume);
     parseSkillsFromDoc(doc, dbg, resume);
@@ -7487,6 +7518,70 @@
     }
     const salaryEl = doc.querySelector('[data-qa="resume-block-salary"]');
     if (salaryEl) resume.salary = dbg("resumeSalary (data-qa)", safeGetText2(salaryEl));
+  }
+  function parseSalaryConditionsFromDoc(doc, dbg, resume) {
+    const posCard = doc.querySelector('[data-qa="resume-position-card"]');
+    if (!posCard) {
+      resume._debug.missing.push("salaryConditions (no position-card)");
+      return;
+    }
+    const texts = [];
+    posCard.querySelectorAll("span, p, div").forEach((el) => {
+      if (el.children.length > 5) return;
+      const t = (el.textContent || "").trim();
+      if (t && t.length > 2 && t.length < 100) texts.push(t);
+    });
+    const empPatterns = [
+      /\b(Полная занятость|Постоянная работа)\b/i,
+      /\b(Частичная занятость)\b/i,
+      /\b(Проектная работа)\b/i,
+      /\b(Стажировка)\b/i,
+      /\b(Волонтёрство)\b/i
+    ];
+    const fmtPatterns = [
+      /\b(На месте работодателя|Офис|В офисе)\b/i,
+      /\b(Удал[а-яё]+(?: работа)?|Удалённо)\b/i,
+      /\b(Гибрид|Смешанный формат)\b/i
+    ];
+    const schedPatterns = [/\b(Гибкий график)\b/i, /\b(Полный день)\b/i, /\b(Сменный график)\b/i, /\b(Вахтовый метод)\b/i];
+    const relocPatterns = [/\b(Не готов к переезду)\b/i, /\b(Готов к переезду)\b/i, /\b(Хочу переехать)\b/i];
+    for (const t of texts) {
+      if (!resume.employmentType) {
+        for (const p of empPatterns) {
+          const m = t.match(p);
+          if (m) {
+            resume.employmentType = dbg("employmentType", m[1]);
+            break;
+          }
+        }
+      }
+      if (!resume.workFormat) {
+        const fmtMatches = [];
+        for (const p of fmtPatterns) {
+          const m = t.match(p);
+          if (m) fmtMatches.push(m[1]);
+        }
+        if (fmtMatches.length > 0) resume.workFormat = dbg("workFormat", fmtMatches.join(", "));
+      }
+      if (!resume.schedule) {
+        for (const p of schedPatterns) {
+          const m = t.match(p);
+          if (m) {
+            resume.schedule = dbg("schedule", m[1]);
+            break;
+          }
+        }
+      }
+      if (!resume.relocation) {
+        for (const p of relocPatterns) {
+          const m = t.match(p);
+          if (m) {
+            resume.relocation = dbg("relocation", m[1]);
+            break;
+          }
+        }
+      }
+    }
   }
   function parseSkillsFromDoc(doc, dbg, resume) {
     const skillsCard = doc.querySelector('[data-qa="skills-card"]');
