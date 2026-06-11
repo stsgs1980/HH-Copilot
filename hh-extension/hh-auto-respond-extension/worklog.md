@@ -310,3 +310,32 @@ Work Log:
 Stage Summary:
 - 3 files modified: resume-fetch-resume.js, resume-fetch.js, resume-fetch-helpers.js
 - Filter console by [VIS-DIAG] to see full visibility decision path for every resume
+
+---
+Task ID: anti-monolith-final
+Agent: main
+Task: Anti-Monolith compliance sweep — all files ≤200 lines, panelState centralised
+
+Work Log:
+- Scanned all source files: 9 files exceeded 200-line limit
+- diagnose.js (173 lines, single 158-line function) → split into 3 sub-modules + orchestrator
+- Added 12 accessor functions to state.js for panelState mutations
+- Migrated 18 direct panelState mutations across 7 files to use accessor functions
+- Split resume-helpers.js (292→97): skill gap analysis → resume-helpers-gap.js
+- Split storage.js (217→23 barrel): settings → storage-settings.js, queues → storage-queue.js
+- Split panel/events.js (209→125): sidebar click handler → sidebar-events.js
+- Split render-resume-panel.js (205→97): accordion header → resume-accordion-header.js
+- Split resume-fetch-list-vis.js (263→133): strategies 2&3 → resume-fetch-list-vis-strategies.js
+- Split resume-fetch.js (236→120): visibility fallback → resume-fetch-vis-fallback.js
+- Split resume-fetch-parse.js (204→95): education parser → resume-fetch-parse-edu.js
+- Split resume-fetch-resume.js (203→92): diagnostics → resume-fetch-resume-diag.js
+- Split sidebar-css.js (247→14): CSS split into sidebar-css-core.js + sidebar-css-components.js
+- Fixed import: resume-fetch-education-languages.js → resume-fetch-parse-edu.js
+- Build verified: esbuild compiles cleanly, 0 errors
+- Committed and pushed to origin/main
+
+Stage Summary:
+- ALL source files now ≤200 lines (0 violations remaining)
+- ALL panelState mutations centralised through accessor functions (0 external direct mutations)
+- 14 new files created, 21 files modified
+- Build passes: dist/content.js 364.4kb
