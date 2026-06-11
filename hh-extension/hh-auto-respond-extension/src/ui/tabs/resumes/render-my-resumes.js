@@ -9,6 +9,7 @@ import { panelState, refs } from '../../state.js';
 import { esc } from '../../html.js';
 import { renderResumePanel } from './render-resume-panel.js';
 import { getResumePageType } from '../../../parsers/resume-detail.js';
+import { setActiveResume } from '../../../lib/storage.js';
 
 // ═══════════════════════════════════════════════
 // MY RESUMES PANEL
@@ -114,7 +115,7 @@ export function renderMyResumesPanel() {
       if (!resume) return;
       panelState.resume = resume;
       panelState._resumeCleared = false;
-      chrome.storage.local.set({ myResume: resume });
+      setActiveResume(resume);
       renderResumePanel();
       renderMyResumesPanel();
     });

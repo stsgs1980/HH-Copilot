@@ -128,6 +128,69 @@ export async function clearSyncQueue() {
 }
 
 // ═══════════════════════════════════════════════
+// ACTIVE RESUME (single)
+// ═══════════════════════════════════════════════
+
+export async function getActiveResume() {
+  try {
+    const d = await chrome.storage.local.get('myResume');
+    return d.myResume || null;
+  } catch (e) { return null; }
+}
+
+export async function setActiveResume(resume) {
+  await chrome.storage.local.set({ myResume: resume });
+}
+
+export async function clearActiveResume() {
+  await chrome.storage.local.remove('myResume');
+}
+
+// ═══════════════════════════════════════════════
+// APPLY QUEUE
+// ═══════════════════════════════════════════════
+
+export async function getApplyQueue() {
+  try {
+    const d = await chrome.storage.local.get('applyQueue');
+    return d.applyQueue || [];
+  } catch (e) { return []; }
+}
+
+export async function setApplyQueue(queue) {
+  await chrome.storage.local.set({ applyQueue: queue });
+}
+
+// ═══════════════════════════════════════════════
+// BLACKLISTED COMPANIES
+// ═══════════════════════════════════════════════
+
+export async function getBlacklistedCompanies() {
+  try {
+    const d = await chrome.storage.local.get('blacklistedCompanies');
+    return d.blacklistedCompanies || [];
+  } catch (e) { return []; }
+}
+
+export async function setBlacklistedCompanies(list) {
+  await chrome.storage.local.set({ blacklistedCompanies: list });
+}
+
+export async function addBlacklistedCompany(name) {
+  const list = await getBlacklistedCompanies();
+  if (!list.includes(name)) {
+    list.push(name);
+    await setBlacklistedCompanies(list);
+  }
+}
+
+export async function removeBlacklistedCompany(name) {
+  const list = await getBlacklistedCompanies();
+  const filtered = list.filter(n => n !== name);
+  await setBlacklistedCompanies(filtered);
+}
+
+// ═══════════════════════════════════════════════
 // DAILY RESET
 // ═══════════════════════════════════════════════
 

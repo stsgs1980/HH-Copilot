@@ -207,6 +207,54 @@
   async function clearSyncQueue() {
     await chrome.storage.local.remove("syncQueue");
   }
+  async function getActiveResume() {
+    try {
+      const d = await chrome.storage.local.get("myResume");
+      return d.myResume || null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function setActiveResume(resume) {
+    await chrome.storage.local.set({ myResume: resume });
+  }
+  async function clearActiveResume() {
+    await chrome.storage.local.remove("myResume");
+  }
+  async function getApplyQueue() {
+    try {
+      const d = await chrome.storage.local.get("applyQueue");
+      return d.applyQueue || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  async function setApplyQueue(queue) {
+    await chrome.storage.local.set({ applyQueue: queue });
+  }
+  async function getBlacklistedCompanies() {
+    try {
+      const d = await chrome.storage.local.get("blacklistedCompanies");
+      return d.blacklistedCompanies || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  async function setBlacklistedCompanies(list) {
+    await chrome.storage.local.set({ blacklistedCompanies: list });
+  }
+  async function addBlacklistedCompany(name) {
+    const list = await getBlacklistedCompanies();
+    if (!list.includes(name)) {
+      list.push(name);
+      await setBlacklistedCompanies(list);
+    }
+  }
+  async function removeBlacklistedCompany(name) {
+    const list = await getBlacklistedCompanies();
+    const filtered = list.filter((n) => n !== name);
+    await setBlacklistedCompanies(filtered);
+  }
   async function checkDailyReset() {
     try {
       const d = await chrome.storage.local.get("dailyResetDate");
@@ -758,8 +806,7 @@
     try {
       const d1 = await chrome.storage.local.get("appliedVacancies");
       appliedIds = d1.appliedVacancies || [];
-      const d2 = await chrome.storage.local.get("blacklistedCompanies");
-      blacklisted = d2.blacklistedCompanies || [];
+      blacklisted = await getBlacklistedCompanies();
     } catch (e) {
     }
     for (let i = 0; i < cards.length; i++) {
@@ -813,6 +860,7 @@
     "src/parsers/vacancy-list.js"() {
       init_selectors();
       init_anti_hallucination();
+      init_storage();
       parserLog = createLogger("Parser");
     }
   });
@@ -4175,9 +4223,11 @@
     }
   });
 
-  // src/ui/styles.js
-  function getSidebarCSS() {
-    return `:host { all: initial; }
+  // src/ui/sidebar-css.js
+  var SIDEBAR_CSS;
+  var init_sidebar_css = __esm({
+    "src/ui/sidebar-css.js"() {
+      SIDEBAR_CSS = `:host { all: initial; }
 *, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; }
 :focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 ::-webkit-scrollbar { width: 5px; }
@@ -4416,9 +4466,16 @@
 .score-ring.medium span { color: #D97706; }
 .score-ring.low span { color: #DC2626; }
 `;
+    }
+  });
+
+  // src/ui/styles.js
+  function getSidebarCSS() {
+    return SIDEBAR_CSS;
   }
   var init_styles = __esm({
     "src/ui/styles.js"() {
+      init_sidebar_css();
     }
   });
 
@@ -5198,7 +5255,7 @@
     }
   });
 
-  // src/ui/auth.js
+  // src/ui/auth-detection.js
   function isLoggedOut() {
     const url = window.location.pathname;
     if (/\/account\/login/.test(url) || /\/login/.test(url) || /\/signup/.test(url)) {
@@ -5313,6 +5370,12 @@
     }
     return false;
   }
+  var init_auth_detection = __esm({
+    "src/ui/auth-detection.js"() {
+    }
+  });
+
+  // src/ui/auth-check.js
   function checkAuth() {
     if (isLoggedOut()) {
       return false;
@@ -5378,6 +5441,13 @@
   }
   function resetAuthCache() {
   }
+  var init_auth_check = __esm({
+    "src/ui/auth-check.js"() {
+      init_auth_detection();
+    }
+  });
+
+  // src/ui/auth-user.js
   function getUserName() {
     const nameSelectors = [
       '[data-qa="mainmenu_user_name"]',
@@ -5411,8 +5481,17 @@
     }
     return "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C";
   }
+  var init_auth_user = __esm({
+    "src/ui/auth-user.js"() {
+    }
+  });
+
+  // src/ui/auth.js
   var init_auth = __esm({
     "src/ui/auth.js"() {
+      init_auth_detection();
+      init_auth_check();
+      init_auth_user();
     }
   });
 
@@ -6194,7 +6273,7 @@
         if (!resume) return;
         panelState.resume = resume;
         panelState._resumeCleared = false;
-        chrome.storage.local.set({ myResume: resume });
+        setActiveResume(resume);
         renderResumePanel();
         renderMyResumesPanel();
       });
@@ -6225,6 +6304,7 @@
       init_html2();
       init_render_resume_panel();
       init_resume_detail2();
+      init_storage();
     }
   });
 
@@ -6410,7 +6490,7 @@
       const synced = panelState.myResumes || [];
       if (!panelState._resumeCleared && synced.length > 0 && synced[0].id) {
         panelState.resume = synced[0];
-        chrome.storage.local.set({ myResume: synced[0] });
+        setActiveResume(synced[0]);
         renderResumePanel();
         return;
       }
@@ -6457,6 +6537,7 @@
       init_resume_helpers();
       init_render_my_resumes();
       init_section_builders();
+      init_storage();
     }
   });
 
@@ -6755,7 +6836,7 @@
     panelState.resume = null;
     panelState._resumeCleared = true;
     panelState.resumeList = [];
-    chrome.storage.local.remove("myResume", () => {
+    clearActiveResume().then(() => {
       console.log("[HH-AR][Diag] myResume removed from storage");
       setStatusLine("\u0420\u0435\u0437\u044E\u043C\u0435 \u043E\u0447\u0438\u0449\u0435\u043D\u043E \u0438\u0437 \u043F\u0430\u043C\u044F\u0442\u0438 \u0438 storage");
       renderResumePanel();
@@ -6809,7 +6890,7 @@
         if (hasUsefulData) {
           panelState.resume = resume;
           panelState._resumeCleared = false;
-          await chrome.storage.local.set({ myResume: resume });
+          await setActiveResume(resume);
           renderResumePanel();
           setStatusLine("\u0421\u043F\u0430\u0440\u0441\u0435\u043D\u043E: " + resume.experience?.length + " \u043C\u0435\u0441\u0442, " + resume.skills?.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432");
         } else {
@@ -6833,6 +6914,7 @@
       init_negotiations2();
       init_resume_detail2();
       init_helpers2();
+      init_storage();
       init_panel();
       init_auth();
     }
@@ -7037,7 +7119,7 @@
             if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
               panelState.resume = resume;
               panelState._resumeCleared = false;
-              chrome.storage.local.set({ myResume: resume });
+              await setActiveResume(resume);
               saveMyResume(resume).then(() => {
                 getMyResumes().then((list) => {
                   panelState.myResumes = list;
@@ -7056,7 +7138,7 @@
         if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
           panelState.resume = resume;
           panelState._resumeCleared = false;
-          chrome.storage.local.set({ myResume: resume });
+          await setActiveResume(resume);
           saveMyResume(resume).then(() => {
             getMyResumes().then((list) => {
               panelState.myResumes = list;
@@ -7077,25 +7159,23 @@
     } else if (/^\/vacancy\/\d+/.test(path)) {
       mainLog.info("Vacancy detail page detected");
       try {
-        chrome.storage.local.get("applyQueue", (data) => {
-          const queue = data.applyQueue || [];
-          if (queue.length > 0) {
-            const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
-            const pending = queue.find((q) => q.vacancyId === vacancyId);
-            if (pending) {
-              const updatedQueue = queue.filter((q) => q.vacancyId !== vacancyId);
-              chrome.storage.local.set({ applyQueue: updatedQueue });
-              mainLog.info("Processing apply for vacancy " + vacancyId);
-              setTimeout(async () => {
-                await continueApply(pending);
-              }, 2e3);
-            } else {
-              mainLog.info("Queue has items but none for current vacancy (" + vacancyId + ")");
-            }
+        const queue = await getApplyQueue();
+        if (queue.length > 0) {
+          const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
+          const pending = queue.find((q) => q.vacancyId === vacancyId);
+          if (pending) {
+            const updatedQueue = queue.filter((q) => q.vacancyId !== vacancyId);
+            await setApplyQueue(updatedQueue);
+            mainLog.info("Processing apply for vacancy " + vacancyId);
+            setTimeout(async () => {
+              await continueApply(pending);
+            }, 2e3);
           } else {
-            mainLog.info("No apply queue");
+            mainLog.info("Queue has items but none for current vacancy (" + vacancyId + ")");
           }
-        });
+        } else {
+          mainLog.info("No apply queue");
+        }
       } catch (e) {
         mainLog.error("Error processing apply queue: " + e.message);
       }
@@ -7137,7 +7217,7 @@
         const active = firstVisible || results[0];
         panelState.resume = active;
         panelState._resumeCleared = false;
-        await chrome.storage.local.set({ myResume: active });
+        await setActiveResume(active);
         renderResumePanel();
       }
       setStatus("\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043E " + results.length + " \u0440\u0435\u0437\u044E\u043C\u0435");
@@ -7163,18 +7243,18 @@
     }
     createPanel();
     try {
-      const d = await chrome.storage.local.get("myResume");
-      if (d.myResume && d.myResume.id) {
-        if (d.myResume.visibility === void 0) {
-          d.myResume.visibility = d.myResume.hidden ? "hidden" : VISIBILITY_UNKNOWN;
-          await chrome.storage.local.set({ myResume: d.myResume });
+      const savedResume = await getActiveResume();
+      if (savedResume && savedResume.id) {
+        if (savedResume.visibility === void 0) {
+          savedResume.visibility = savedResume.hidden ? "hidden" : VISIBILITY_UNKNOWN;
+          await setActiveResume(savedResume);
         }
-        if (d.myResume.title && TITLE_SUFFIX_NOISE.test(d.myResume.title)) {
-          d.myResume.title = d.myResume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
-          await chrome.storage.local.set({ myResume: d.myResume });
+        if (savedResume.title && TITLE_SUFFIX_NOISE.test(savedResume.title)) {
+          savedResume.title = savedResume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
+          await setActiveResume(savedResume);
         }
-        panelState.resume = d.myResume;
-        mainLog.info("Loaded saved resume: " + d.myResume.title);
+        panelState.resume = savedResume;
+        mainLog.info("Loaded saved resume: " + savedResume.title);
       }
     } catch (e) {
     }
@@ -7250,7 +7330,7 @@
           if (hasUsefulData) {
             panelState.resume = resume;
             panelState._resumeCleared = false;
-            await chrome.storage.local.set({ myResume: resume });
+            await setActiveResume(resume);
             await saveMyResume(resume);
             panelState.myResumes = await getMyResumes();
             renderResumePanel();
@@ -7272,7 +7352,7 @@
           if (synced.length > 0 && synced[0].id) {
             panelState.resume = synced[0];
             panelState._resumeCleared = false;
-            chrome.storage.local.set({ myResume: synced[0] });
+            setActiveResume(synced[0]);
             renderResumePanel();
             setStatus("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
           } else {
@@ -7283,7 +7363,7 @@
           if (synced.length > 0 && synced[0].id) {
             panelState.resume = synced[0];
             panelState._resumeCleared = false;
-            chrome.storage.local.set({ myResume: synced[0] });
+            setActiveResume(synced[0]);
             renderResumePanel();
             renderMyResumesPanel();
             setStatus("\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E \u0438\u0437 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u0438: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));

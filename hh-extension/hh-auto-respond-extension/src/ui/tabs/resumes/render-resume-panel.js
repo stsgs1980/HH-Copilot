@@ -17,6 +17,7 @@ import {
   buildExperienceSection, buildEducationSection,
   buildLanguagesSection, buildContactsSection
 } from './section-builders.js';
+import { setActiveResume } from '../../../lib/storage.js';
 
 // ═══════════════════════════════════════════════
 // ACCORDION HEADER UPDATE
@@ -138,7 +139,7 @@ export function renderResumePanel() {
     // Only auto-select from synced resumes if user hasn't explicitly cleared
     if (!panelState._resumeCleared && synced.length > 0 && synced[0].id) {
       panelState.resume = synced[0];
-      chrome.storage.local.set({ myResume: synced[0] });
+      setActiveResume(synced[0]);
       renderResumePanel();
       return;
     }

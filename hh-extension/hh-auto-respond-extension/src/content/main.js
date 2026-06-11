@@ -12,7 +12,7 @@
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
-import { checkDailyReset, getStats, getAllSettings, getMyResumes, saveMyResume, clearMyResumes } from '../lib/storage.js';
+import { checkDailyReset, getStats, getAllSettings, getMyResumes, saveMyResume, clearMyResumes, getActiveResume, setActiveResume, getApplyQueue, setApplyQueue } from '../lib/storage.js';
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { parseResume, parseResumeList, expandHiddenSections, diagnoseResumeDOM, debugVisibility, getResumePageType } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
@@ -81,7 +81,7 @@ export async function initPageLogic() {
           if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
             panelState.resume = resume;
             panelState._resumeCleared = false;
-            chrome.storage.local.set({ myResume: resume });
+            await setActiveResume(resume);
             saveMyResume(resume).then(() => {
               getMyResumes().then(list => {
                 panelState.myResumes = list;
@@ -101,7 +101,7 @@ export async function initPageLogic() {
       if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
         panelState.resume = resume;
         panelState._resumeCleared = false;
-        chrome.storage.local.set({ myResume: resume });
+        await setActiveResume(resume);
         saveMyResume(resume).then(() => {
           getMyResumes().then(list => {
             panelState.myResumes = list;
@@ -126,25 +126,23 @@ export async function initPageLogic() {
     // VACANCY DETAIL PAGE -- check for pending apply queue
     mainLog.info('Vacancy detail page detected');
     try {
-      chrome.storage.local.get('applyQueue', (data) => {
-        const queue = data.applyQueue || [];
-        if (queue.length > 0) {
-          const vacancyId = path.replace('/vacancy/', '').split('?')[0].split('#')[0];
-          const pending = queue.find(q => q.vacancyId === vacancyId);
-          if (pending) {
-            const updatedQueue = queue.filter(q => q.vacancyId !== vacancyId);
-            chrome.storage.local.set({ applyQueue: updatedQueue });
-            mainLog.info('Processing apply for vacancy ' + vacancyId);
-            setTimeout(async () => {
-              await continueApply(pending);
-            }, 2000);
-          } else {
-            mainLog.info('Queue has items but none for current vacancy (' + vacancyId + ')');
-          }
+      const queue = await getApplyQueue();
+      if (queue.length > 0) {
+        const vacancyId = path.replace('/vacancy/', '').split('?')[0].split('#')[0];
+        const pending = queue.find(q => q.vacancyId === vacancyId);
+        if (pending) {
+          const updatedQueue = queue.filter(q => q.vacancyId !== vacancyId);
+          await setApplyQueue(updatedQueue);
+          mainLog.info('Processing apply for vacancy ' + vacancyId);
+          setTimeout(async () => {
+            await continueApply(pending);
+          }, 2000);
         } else {
-          mainLog.info('No apply queue');
+          mainLog.info('Queue has items but none for current vacancy (' + vacancyId + ')');
         }
-      });
+      } else {
+        mainLog.info('No apply queue');
+      }
     } catch (e) {
       mainLog.error('Error processing apply queue: ' + e.message);
     }
@@ -201,7 +199,7 @@ async function handleSyncResumes() {
       const active = firstVisible || results[0];
       panelState.resume = active;
       panelState._resumeCleared = false;
-      await chrome.storage.local.set({ myResume: active });
+      await setActiveResume(active);
       renderResumePanel();
     }
 
@@ -240,19 +238,19 @@ async function init() {
 
   // Load saved resumes from storage
   try {
-    const d = await chrome.storage.local.get('myResume');
-    if (d.myResume && d.myResume.id) {
+    const savedResume = await getActiveResume();
+    if (savedResume && savedResume.id) {
       // Migrate old data: backfill visibility, clean title
-      if (d.myResume.visibility === undefined) {
-        d.myResume.visibility = d.myResume.hidden ? 'hidden' : VISIBILITY_UNKNOWN;
-        await chrome.storage.local.set({ myResume: d.myResume });
+      if (savedResume.visibility === undefined) {
+        savedResume.visibility = savedResume.hidden ? 'hidden' : VISIBILITY_UNKNOWN;
+        await setActiveResume(savedResume);
       }
-      if (d.myResume.title && TITLE_SUFFIX_NOISE.test(d.myResume.title)) {
-        d.myResume.title = d.myResume.title.replace(TITLE_SUFFIX_NOISE, '').trim();
-        await chrome.storage.local.set({ myResume: d.myResume });
+      if (savedResume.title && TITLE_SUFFIX_NOISE.test(savedResume.title)) {
+        savedResume.title = savedResume.title.replace(TITLE_SUFFIX_NOISE, '').trim();
+        await setActiveResume(savedResume);
       }
-      panelState.resume = d.myResume;
-      mainLog.info('Loaded saved resume: ' + d.myResume.title);
+      panelState.resume = savedResume;
+      mainLog.info('Loaded saved resume: ' + savedResume.title);
     }
   } catch (e) {}
 
@@ -347,7 +345,7 @@ async function init() {
       if (hasUsefulData) {
         panelState.resume = resume;
         panelState._resumeCleared = false;
-        await chrome.storage.local.set({ myResume: resume });
+        await setActiveResume(resume);
         await saveMyResume(resume);
         panelState.myResumes = await getMyResumes();
         renderResumePanel();
@@ -374,7 +372,7 @@ async function init() {
       if (synced.length > 0 && synced[0].id) {
         panelState.resume = synced[0];
         panelState._resumeCleared = false;
-        chrome.storage.local.set({ myResume: synced[0] });
+        setActiveResume(synced[0]);
         renderResumePanel();
         setStatus('Найдено резюме: ' + list.length + '. Показано: ' + (synced[0].title || 'Без названия'));
       } else {
@@ -387,7 +385,7 @@ async function init() {
       if (synced.length > 0 && synced[0].id) {
         panelState.resume = synced[0];
         panelState._resumeCleared = false;
-        chrome.storage.local.set({ myResume: synced[0] });
+        setActiveResume(synced[0]);
         renderResumePanel();
         renderMyResumesPanel();
         setStatus('Загружено из синхронизации: ' + (synced[0].title || 'Без названия'));

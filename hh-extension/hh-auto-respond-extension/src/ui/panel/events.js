@@ -12,6 +12,7 @@ import { renderStats, clearLog } from '../tabs/stats.js';
 import { renderNegotiationList } from '../tabs/negotiations.js';
 import { diagnoseResumeDOM } from '../../parsers/resume-detail.js';
 import { addBlacklistItem, removeBlacklistItem, selectConversation, filterVacancies } from './helpers.js';
+import { clearActiveResume, setActiveResume } from '../../lib/storage.js';
 
 import { toggleSidebar, updateAuthState, updateAuthStateAsync } from './index.js';
 import { resetAuthCache } from '../auth.js';
@@ -220,7 +221,7 @@ function clearResumeData() {
   panelState.resume = null;
   panelState._resumeCleared = true;
   panelState.resumeList = [];
-  chrome.storage.local.remove('myResume', () => {
+  clearActiveResume().then(() => {
     console.log('[HH-AR][Diag] myResume removed from storage');
     setStatusLine('Резюме очищено из памяти и storage');
     renderResumePanel();
@@ -283,7 +284,7 @@ async function testParseResume() {
       if (hasUsefulData) {
         panelState.resume = resume;
         panelState._resumeCleared = false;
-        await chrome.storage.local.set({ myResume: resume });
+        await setActiveResume(resume);
         renderResumePanel();
         setStatusLine('Спарсено: ' + resume.experience?.length + ' мест, ' + resume.skills?.length + ' навыков');
       } else {
