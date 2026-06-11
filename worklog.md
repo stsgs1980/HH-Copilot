@@ -967,3 +967,17 @@ Stage Summary:
 - Added "не видно" to hidden indicators for broader matching
 - 6 files modified: strategy6-expand.js, resume-constants.js, resume-fetch-resume.js,
   strategy6-iframe.js, parse-resume.js, package.json + manifest.json
+
+---
+Task ID: submodule-update
+Agent: main
+Task: Update anti-hallucination-guard + cascade-guard submodules
+
+Work Log:
+- Updated anti-hallucination-guard to 0759547
+- Updated cascade-guard to 1c99480
+- Ran setup.sh for both submodules
+- AHG + Cascade rules integrated in AGENT_RULES.md
+- Hooks installed (pre-commit, pre-push)
+
+Stage Summary:

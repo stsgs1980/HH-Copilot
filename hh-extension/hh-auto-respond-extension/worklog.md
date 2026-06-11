@@ -370,3 +370,17 @@ Stage Summary:
 - detectVisibilityFromIframeDoc() split: 161 → 95 lines (orchestrator) + 94 + 121 (strategies)
 - panelState fully centralised: updateStats/updateSettings accessors added, 3 callers migrated
 - Anti-monolith compliance: 100% — zero violations across all checks
+
+---
+Task ID: submodule-update
+Agent: main
+Task: Update anti-hallucination-guard + cascade-guard submodules
+
+Work Log:
+- Updated anti-hallucination-guard to 0759547
+- Updated cascade-guard to 1c99480
+- Ran setup.sh for both submodules
+- AHG rules (1-6) and Cascade rules (C-1..C-9) integrated in AGENT_RULES.md
+
+Stage Summary:
+- Both submodules updated and set up
