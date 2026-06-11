@@ -1008,3 +1008,22 @@ Work Log:
 Stage Summary:
 - Contacts now parsed when syncing resumes via fetch
 - Version bumped to 1.9.12
+---
+Task ID: contacts-fix-v2
+Agent: main
+Task: Fix 3 contact parsing bugs: glued label+email, missing phone, false telegram
+
+Work Log:
+- Diagnosed 3 bugs in contact parsers (both live and fetch)
+- Bug 1: textContent of data-qa element includes label "Электронная почта" glued with email
+  Fix: extract email via regex from text, prefer mailto: href
+- Bug 2: data-qa="resume-contact-phone" doesn't match actual hh.ru DOM
+  Fix: added tel: href priority, expanded selectors, tel link search in contact block
+- Bug 3: @hh_ru_official falsely detected as telegram from page footer links
+  Fix: search telegram ONLY in contact block, exclude HH_SYSTEM_ACCOUNTS list
+- Synced both parseContacts() and parseContactsFromDoc() with identical logic
+- Version bumped: 1.9.12 → 1.9.13, rebuilt dist
+
+Stage Summary:
+- Contacts now parse cleanly: phone from tel: href, email from mailto: or regex, telegram only from contact block
+- Version 1.9.13

@@ -1201,15 +1201,83 @@
     }
   }
   function parseContacts(dbg, resume) {
-    const phoneEl = document.querySelector('[data-qa="resume-contact-phone"] a, [data-qa="resume-contact-phone"]');
-    if (phoneEl) {
-      const t = (phoneEl.textContent || "").trim();
-      if (t && /[\d+\-()]/.test(t)) resume.phone = dbg("phone", t);
+    const phoneSelectors = [
+      '[data-qa="resume-contact-phone"] a',
+      '[data-qa="resume-contact-phone"]',
+      '[data-qa*="contact-phone"] a',
+      '[data-qa*="contact-phone"]'
+    ];
+    for (const sel of phoneSelectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const href = el.getAttribute("href") || "";
+        if (href.startsWith("tel:")) {
+          resume.phone = dbg("phone (tel:)", href.replace("tel:", "").trim());
+          break;
+        }
+        const text = (el.textContent || "").trim();
+        const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+        if (phoneMatch) {
+          resume.phone = dbg("phone (data-qa regex)", phoneMatch[0]);
+          break;
+        }
+      }
     }
-    const emailEl = document.querySelector('[data-qa="resume-contact-email"] a, [data-qa="resume-contact-email"]');
-    if (emailEl) {
-      const t = (emailEl.textContent || "").trim();
-      if (t && t.includes("@")) resume.email = dbg("email", t);
+    if (!resume.phone) {
+      const contactBlock2 = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+      if (contactBlock2) {
+        const telLinks = contactBlock2.querySelectorAll('a[href^="tel:"]');
+        if (telLinks.length > 0) {
+          resume.phone = dbg("phone (tel link)", telLinks[0].getAttribute("href").replace("tel:", "").trim());
+        }
+      }
+    }
+    if (!resume.phone) {
+      const contactBlock2 = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+      if (contactBlock2) {
+        const text = contactBlock2.textContent || "";
+        const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+        if (phoneMatch) resume.phone = dbg("phone (regex)", phoneMatch[0]);
+      }
+    }
+    const mailtoLink = document.querySelector('a[href^="mailto:"]');
+    if (mailtoLink) {
+      const href = mailtoLink.getAttribute("href") || "";
+      const email = href.replace("mailto:", "").split("?")[0].trim();
+      if (email && email.includes("@")) resume.email = dbg("email (mailto)", email);
+    }
+    if (!resume.email) {
+      const emailSelectors = [
+        '[data-qa="resume-contact-email"] a',
+        '[data-qa="resume-contact-email"]'
+      ];
+      for (const sel of emailSelectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          const href = el.getAttribute("href") || "";
+          if (href.startsWith("mailto:")) {
+            const email = href.replace("mailto:", "").split("?")[0].trim();
+            if (email && email.includes("@")) {
+              resume.email = dbg("email (href)", email);
+              break;
+            }
+          }
+          const text = (el.textContent || "").trim();
+          const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+          if (emailMatch) {
+            resume.email = dbg("email (regex from data-qa)", emailMatch[0]);
+            break;
+          }
+        }
+      }
+    }
+    if (!resume.email) {
+      const contactBlock2 = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+      if (contactBlock2) {
+        const text = contactBlock2.textContent || "";
+        const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch) resume.email = dbg("email (regex)", emailMatch[0]);
+      }
     }
     const contactBlock = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
     if (contactBlock) {
@@ -1217,23 +1285,29 @@
       for (const link of contactLinks) {
         const href = link.getAttribute("href") || "";
         const match = href.match(/t\.me\/(\w+)/);
-        if (match) {
+        if (match && !HH_SYSTEM_ACCOUNTS.includes(match[1].toLowerCase())) {
           resume.telegram = dbg("telegram", "@" + match[1]);
           break;
         }
       }
       if (!resume.telegram) {
         const text = contactBlock.textContent || "";
-        const m = text.match(/@(\w{4,})/);
-        if (m) resume.telegram = dbg("telegram", "@" + m[1]);
+        const matches = text.matchAll(/@(\w{4,})/g);
+        for (const m of matches) {
+          if (!HH_SYSTEM_ACCOUNTS.includes(m[1].toLowerCase())) {
+            resume.telegram = dbg("telegram (@)", "@" + m[1]);
+            break;
+          }
+        }
       }
     }
   }
-  var resumeLog2;
+  var resumeLog2, HH_SYSTEM_ACCOUNTS;
   var init_parse_resume_personal = __esm({
     "src/parsers/resume-detail/parse-resume-personal.js"() {
       init_anti_hallucination();
       resumeLog2 = createLogger("Resume");
+      HH_SYSTEM_ACCOUNTS = ["hh_ru_official", "hhru", "hh_ru", "hhcareers", "headhunter_ru"];
     }
   });
 
@@ -3141,7 +3215,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.12"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.13"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3160,7 +3234,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.12"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.13"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -4920,10 +4994,36 @@
     return job.company || job.position ? job : null;
   }
   function parseContactsFromDoc(doc, dbg, resume) {
-    const phoneEl = doc.querySelector('[data-qa="resume-contact-phone"] a, [data-qa="resume-contact-phone"]');
-    if (phoneEl) {
-      const t = (phoneEl.textContent || "").trim();
-      if (t && /[\d+\-()]/.test(t)) resume.phone = dbg("phone", t);
+    const phoneSelectors = [
+      '[data-qa="resume-contact-phone"] a',
+      '[data-qa="resume-contact-phone"]',
+      '[data-qa*="contact-phone"] a',
+      '[data-qa*="contact-phone"]'
+    ];
+    for (const sel of phoneSelectors) {
+      const el = doc.querySelector(sel);
+      if (el) {
+        const href = el.getAttribute("href") || "";
+        if (href.startsWith("tel:")) {
+          resume.phone = dbg("phone (tel:)", href.replace("tel:", "").trim());
+          break;
+        }
+        const text = (el.textContent || "").trim();
+        const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+        if (phoneMatch) {
+          resume.phone = dbg("phone (data-qa regex)", phoneMatch[0]);
+          break;
+        }
+      }
+    }
+    if (!resume.phone) {
+      const contactBlock2 = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+      if (contactBlock2) {
+        const telLinks = contactBlock2.querySelectorAll('a[href^="tel:"]');
+        if (telLinks.length > 0) {
+          resume.phone = dbg("phone (tel link)", telLinks[0].getAttribute("href").replace("tel:", "").trim());
+        }
+      }
     }
     if (!resume.phone) {
       const contactBlock2 = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
@@ -4933,17 +5033,35 @@
         if (phoneMatch) resume.phone = dbg("phone (regex)", phoneMatch[0]);
       }
     }
-    const emailEl = doc.querySelector('[data-qa="resume-contact-email"] a, [data-qa="resume-contact-email"]');
-    if (emailEl) {
-      const t = (emailEl.textContent || "").trim();
-      if (t && t.includes("@")) resume.email = dbg("email", t);
+    const mailtoLink = doc.querySelector('a[href^="mailto:"]');
+    if (mailtoLink) {
+      const href = mailtoLink.getAttribute("href") || "";
+      const email = href.replace("mailto:", "").split("?")[0].trim();
+      if (email && email.includes("@")) resume.email = dbg("email (mailto)", email);
     }
     if (!resume.email) {
-      const mailtoLink = doc.querySelector('a[href^="mailto:"]');
-      if (mailtoLink) {
-        const href = mailtoLink.getAttribute("href") || "";
-        const email = href.replace("mailto:", "").split("?")[0].trim();
-        if (email && email.includes("@")) resume.email = dbg("email (mailto)", email);
+      const emailSelectors = [
+        '[data-qa="resume-contact-email"] a',
+        '[data-qa="resume-contact-email"]'
+      ];
+      for (const sel of emailSelectors) {
+        const el = doc.querySelector(sel);
+        if (el) {
+          const href = el.getAttribute("href") || "";
+          if (href.startsWith("mailto:")) {
+            const email = href.replace("mailto:", "").split("?")[0].trim();
+            if (email && email.includes("@")) {
+              resume.email = dbg("email (href)", email);
+              break;
+            }
+          }
+          const text = (el.textContent || "").trim();
+          const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+          if (emailMatch) {
+            resume.email = dbg("email (regex from data-qa)", emailMatch[0]);
+            break;
+          }
+        }
       }
     }
     if (!resume.email) {
@@ -4960,36 +5078,19 @@
       for (const link of contactLinks) {
         const href = link.getAttribute("href") || "";
         const match = href.match(/t\.me\/(\w+)/);
-        if (match) {
+        if (match && !HH_SYSTEM_ACCOUNTS2.includes(match[1].toLowerCase())) {
           resume.telegram = dbg("telegram", "@" + match[1]);
           break;
         }
       }
       if (!resume.telegram) {
         const text = contactBlock.textContent || "";
-        const m = text.match(/@(\w{4,})/);
-        if (m) resume.telegram = dbg("telegram", "@" + m[1]);
-      }
-    }
-    if (!resume.telegram) {
-      const allLinks = doc.querySelectorAll('a[href*="t.me/"]');
-      for (const link of allLinks) {
-        const href = link.getAttribute("href") || "";
-        const match = href.match(/t\.me\/(\w+)/);
-        if (match) {
-          resume.telegram = dbg("telegram (doc)", "@" + match[1]);
-          break;
-        }
-      }
-    }
-    if (!resume.email) {
-      const allMailto = doc.querySelectorAll('a[href^="mailto:"]');
-      for (const link of allMailto) {
-        const href = link.getAttribute("href") || "";
-        const email = href.replace("mailto:", "").split("?")[0].trim();
-        if (email && email.includes("@")) {
-          resume.email = dbg("email (doc mailto)", email);
-          break;
+        const matches = text.matchAll(/@(\w{4,})/g);
+        for (const m of matches) {
+          if (!HH_SYSTEM_ACCOUNTS2.includes(m[1].toLowerCase())) {
+            resume.telegram = dbg("telegram (@)", "@" + m[1]);
+            break;
+          }
         }
       }
     }
@@ -5038,13 +5139,14 @@
       }
     }
   }
-  var GENDER_PATTERNS, AGE_PATTERN, AGE_PATTERN2;
+  var GENDER_PATTERNS, AGE_PATTERN, AGE_PATTERN2, HH_SYSTEM_ACCOUNTS2;
   var init_resume_fetch_parse = __esm({
     "src/lib/resume-fetch-parse.js"() {
       init_resume_fetch_helpers();
       GENDER_PATTERNS = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
       AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
       AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
+      HH_SYSTEM_ACCOUNTS2 = ["hh_ru_official", "hhru", "hh_ru", "hhcareers", "headhunter_ru"];
     }
   });
 
