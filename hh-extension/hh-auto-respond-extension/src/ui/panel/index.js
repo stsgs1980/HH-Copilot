@@ -43,14 +43,12 @@ export function updateAuthState(forceUI = false) {
         renderInitialData();
       }
       // Start page parsers when user logs in
+      // NOTE: We use a custom event instead of dynamic import() because
+      // esbuild's IIFE bundle doesn't support dynamic imports at runtime.
+      // main.js listens for this event and calls initPageLogic() directly.
       if (was !== true) {
-        import('../../content/main.js').then(m => {
-          if (m.initPageLogic) {
-            m.initPageLogic();
-          } else {
-            panelLog.error('initPageLogic not found in dynamic import');
-          }
-        }).catch(e => panelLog.error('Failed to import initPageLogic: ' + e.message));
+        window.dispatchEvent(new CustomEvent('hh-ar-init-page-logic'));
+        panelLog.info('Dispatched hh-ar-init-page-logic event');
       }
     }
     updateFabIcon();
@@ -73,13 +71,8 @@ export async function updateAuthStateAsync() {
         renderInitialData();
       }
       if (was !== true) {
-        import('../../content/main.js').then(m => {
-          if (m.initPageLogic) {
-            m.initPageLogic();
-          } else {
-            panelLog.error('initPageLogic not found in dynamic import (async)');
-          }
-        }).catch(e => panelLog.error('Failed to import initPageLogic (async): ' + e.message));
+        window.dispatchEvent(new CustomEvent('hh-ar-init-page-logic'));
+        panelLog.info('Dispatched hh-ar-init-page-logic event (async)');
       }
     }
     updateFabIcon();

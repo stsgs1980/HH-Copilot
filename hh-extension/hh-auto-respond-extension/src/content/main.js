@@ -111,6 +111,24 @@ async function init() {
       try { diagnoseVacancyPage(); } catch (e) {}
     }, 2000);
   }
+
+  // ── Listen for init-page-logic event from panel (replaces dynamic import) ──
+  // panel/index.js dispatches 'hh-ar-init-page-logic' when auth changes to true.
+  // This avoids dynamic import() which doesn't work in esbuild IIFE bundles.
+  window.addEventListener('hh-ar-init-page-logic', () => {
+    mainLog.info('Received hh-ar-init-page-logic event → calling initPageLogic()');
+    initPageLogic();
+  });
+
+  // ── Safety net: auto-init page logic on vacancy detail pages ──
+  // If auth was already detected before the panel dispatched the event
+  // (e.g. fast page loads), we also try after a delay.
+  if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
+    setTimeout(() => {
+      // initPageLogic is idempotent — it checks lastHandledPath to avoid duplicates
+      initPageLogic();
+    }, 3000);
+  }
 }
 
 /**

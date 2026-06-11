@@ -895,321 +895,6 @@
     }
   });
 
-  // src/lib/match-scorer.js
-  function computeMatchScore(resume, vacancy) {
-    if (!resume || !vacancy) {
-      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0 }, details: {} };
-    }
-    const skillResult = scoreSkills(resume, vacancy);
-    const titleResult = scoreTitle(resume, vacancy);
-    const salaryResult = scoreSalary(resume, vacancy);
-    const expResult = scoreExperience(resume, vacancy);
-    const breakdown = {
-      skills: skillResult.score,
-      title: titleResult.score,
-      salary: salaryResult.score,
-      experience: expResult.score
-    };
-    const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
-    const details = {
-      matchingSkills: skillResult.matching,
-      missingSkills: skillResult.missing,
-      extraSkills: skillResult.extra,
-      titleSimilarity: titleResult.similarity,
-      salaryMatch: salaryResult.reason,
-      experienceMatch: expResult.reason
-    };
-    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience);
-    return { total, breakdown, details };
-  }
-  function scoreSkills(resume, vacancy) {
-    const resumeSkills = normalizeSkillSet(resume.skills || []);
-    const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
-    if (vacancySkills.size === 0) {
-      return { score: 20, matching: [], missing: [], extra: [] };
-    }
-    const matching = [];
-    const missing = [];
-    for (const skill of vacancySkills) {
-      if (resumeSkills.has(skill)) {
-        matching.push(skill);
-      } else {
-        missing.push(skill);
-      }
-    }
-    const extra = [];
-    for (const skill of resumeSkills) {
-      if (!vacancySkills.has(skill)) extra.push(skill);
-    }
-    const ratio = vacancySkills.size > 0 ? matching.length / vacancySkills.size : 0;
-    const score = Math.round(ratio * 40);
-    return { score, matching, missing, extra };
-  }
-  function scoreTitle(resume, vacancy) {
-    const resumeTitle = (resume.title || "").toLowerCase().trim();
-    const vacancyTitle = (vacancy.title || "").toLowerCase().trim();
-    if (!resumeTitle || !vacancyTitle) {
-      return { score: 0, similarity: 0 };
-    }
-    if (resumeTitle === vacancyTitle) {
-      return { score: 30, similarity: 1 };
-    }
-    const resumeWords = tokenize(resumeTitle);
-    const vacancyWords = tokenize(vacancyTitle);
-    if (vacancyWords.length === 0) {
-      return { score: 0, similarity: 0 };
-    }
-    let overlapCount = 0;
-    for (const w of vacancyWords) {
-      if (resumeWords.has(w)) overlapCount++;
-    }
-    const similarity = overlapCount / vacancyWords.size;
-    const bonus = titleBonus(resumeTitle, vacancyTitle);
-    const rawScore = similarity * 25 + bonus;
-    const score = Math.min(30, Math.round(rawScore));
-    return { score, similarity: Math.round(similarity * 100) / 100 };
-  }
-  function titleBonus(resumeTitle, vacancyTitle) {
-    let bonus = 0;
-    const abbrMap = {
-      "\u0440\u043E\u043F": "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C \u043E\u0442\u0434\u0435\u043B\u0430 \u043F\u0440\u043E\u0434\u0430\u0436",
-      "c#": "csharp",
-      ".net": "dotnet",
-      "qa": "quality assurance",
-      "\u0441\u0438\u0441\u0430\u0434\u043C\u0438\u043D": "\u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0439 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440",
-      "\u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0438\u0441\u0442": "\u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A",
-      "devops": "devops",
-      "frontend": "\u0444\u0440\u043E\u043D\u0442\u0435\u043D\u0434",
-      "backend": "\u0431\u044D\u043A\u0435\u043D\u0434",
-      "fullstack": "\u0444\u0443\u043B\u0441\u0442\u0435\u043A"
-    };
-    for (const [abbr, full] of Object.entries(abbrMap)) {
-      const resumeHas = resumeTitle.includes(abbr) || resumeTitle.includes(full);
-      const vacancyHas = vacancyTitle.includes(abbr) || vacancyTitle.includes(full);
-      if (resumeHas && vacancyHas) {
-        bonus += 5;
-        break;
-      }
-    }
-    return Math.min(5, bonus);
-  }
-  function scoreSalary(resume, vacancy) {
-    const resumeSalary = parseResumeSalary(resume.salary || "");
-    const vacSalary = vacancy.salary || {};
-    if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
-      return { score: 8, reason: "no-data" };
-    }
-    if (!resumeSalary) {
-      return { score: 8, reason: "resume-no-salary" };
-    }
-    if (!vacSalary.min && !vacSalary.max) {
-      return { score: 8, reason: "vacancy-no-salary" };
-    }
-    const vacMin = vacSalary.min || 0;
-    const vacMax = vacSalary.max || Infinity;
-    if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
-      return { score: 15, reason: "within-range" };
-    }
-    if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
-      return { score: 12, reason: "slightly-below" };
-    }
-    if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
-      return { score: 10, reason: "slightly-above" };
-    }
-    if (resumeSalary < vacMin) {
-      return { score: 5, reason: "below-range" };
-    }
-    return { score: 3, reason: "above-range" };
-  }
-  function scoreExperience(resume, vacancy) {
-    const vacExp = vacancy.experience || {};
-    if (vacExp.min === 0 && vacExp.max === 0) {
-      return { score: 15, reason: "no-experience-required" };
-    }
-    const resumeYears = calcResumeYears(resume.experience || []);
-    if (resumeYears === null) {
-      return { score: 8, reason: "unknown-resume-exp" };
-    }
-    if (!vacExp.min && !vacExp.max && !vacExp.raw) {
-      return { score: 8, reason: "unknown-vacancy-exp" };
-    }
-    const vacMin = vacExp.min || 0;
-    const vacMax = vacExp.max || 99;
-    if (resumeYears >= vacMin && resumeYears <= vacMax) {
-      return { score: 15, reason: "within-range" };
-    }
-    if (resumeYears < vacMin && resumeYears >= vacMin - 1) {
-      return { score: 10, reason: "slightly-below" };
-    }
-    if (resumeYears > vacMax) {
-      return { score: 8, reason: "overqualified" };
-    }
-    return { score: 3, reason: "below-range" };
-  }
-  function normalizeSkillSet(skills) {
-    const set = /* @__PURE__ */ new Set();
-    for (const s of skills) {
-      const name = typeof s === "string" ? s : s.name || "";
-      if (name) set.add(name.toLowerCase().trim().replace(/\s+/g, " "));
-    }
-    return set;
-  }
-  function tokenize(text) {
-    const stopWords = /* @__PURE__ */ new Set([
-      "\u0432",
-      "\u043D\u0430",
-      "\u0438",
-      "\u0441",
-      "\u043E\u0442",
-      "\u0434\u043E",
-      "\u0437\u0430",
-      "\u043F\u043E",
-      "\u0438\u0437",
-      "\u043A",
-      "\u043E",
-      "\u043D\u0435",
-      "\u043D\u043E",
-      "\u0438\u043B\u0438",
-      "\u0434\u043B\u044F",
-      "\u043A\u0430\u043A",
-      "\u043F\u0440\u0438",
-      "\u0431\u0435\u0437",
-      "the",
-      "a",
-      "an",
-      "in",
-      "on",
-      "at",
-      "to",
-      "for",
-      "of",
-      "with",
-      "and",
-      "or",
-      "from",
-      "by"
-    ]);
-    const words = /* @__PURE__ */ new Set();
-    text.split(/[\s\-–—/,|]+/).forEach((w) => {
-      const clean = w.replace(/[^a-zа-яё0-9#+.]/g, "").trim();
-      if (clean.length >= 2 && !stopWords.has(clean)) words.add(clean);
-    });
-    return words;
-  }
-  function parseResumeSalary(salaryStr) {
-    if (!salaryStr || typeof salaryStr !== "string") return null;
-    const nums = salaryStr.match(/\d[\d\s]*\d/g);
-    if (!nums || nums.length === 0) return null;
-    return parseInt(nums[0].replace(/\s/g, ""), 10) || null;
-  }
-  function calcResumeYears(experience) {
-    if (!Array.isArray(experience) || experience.length === 0) return null;
-    let totalMonths = 0;
-    for (const exp of experience) {
-      if (exp.duration && typeof exp.duration === "object") {
-        totalMonths += (exp.duration.years || 0) * 12 + (exp.duration.months || 0);
-      } else if (typeof exp.duration === "string") {
-        const yearMatch = exp.duration.match(/(\d+)\s*(год|лет)/i);
-        const monthMatch = exp.duration.match(/(\d+)\s*мес/i);
-        if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
-        if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
-      }
-    }
-    if (totalMonths === 0) return null;
-    return Math.round(totalMonths / 12 * 10) / 10;
-  }
-  var scoreLog;
-  var init_match_scorer = __esm({
-    "src/lib/match-scorer.js"() {
-      init_anti_hallucination();
-      scoreLog = createLogger("Scorer");
-    }
-  });
-
-  // src/parsers/vacancy-list.js
-  async function parseVacanciesFromPage(resume) {
-    const cards = findAllElements("vacancyCard");
-    parserLog.info("Found " + cards.length + " vacancy cards");
-    if (cards.length === 0) return [];
-    const vacancies = [];
-    let appliedIds = [], blacklisted = [];
-    try {
-      appliedIds = await getAppliedVacancies();
-      blacklisted = await getBlacklistedCompanies();
-    } catch (e) {
-    }
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i];
-      const titleEl = findElement("vacancyTitleLink", card);
-      const title = safeGetText(titleEl);
-      if (!title) continue;
-      const url = safeGetAttr(titleEl, "href", "");
-      const id = extractVacancyId(url.startsWith("/") ? "https://hh.ru" + url : url);
-      if (!id) continue;
-      const company = safeGetText(findElement("vacancyCompany", card));
-      const salary = safeGetText(findElement("vacancySalary", card), "");
-      const location = safeGetText(findElement("vacancyLocation", card), "");
-      const experience = safeGetText(findElement("vacancyExperience", card), "");
-      const tagEls = card.querySelectorAll('.bloko-tag__text, [data-qa="bloko-tag"]');
-      const skills = [];
-      tagEls.forEach((el) => {
-        const t = (el.textContent || "").trim();
-        if (t && t.length < 50) skills.push(t);
-      });
-      const replyBtn = findElement("replyButton", card);
-      const hasReply = replyBtn !== null;
-      const vacancy = {
-        id,
-        title: title.trim(),
-        company: (company || "").trim(),
-        salary: salary || "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430",
-        location: (location || "").trim(),
-        experience: (experience || "").trim(),
-        skills,
-        url: url.startsWith("/") ? "https://hh.ru" + url : url,
-        hasReply,
-        status: "new",
-        parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
-        matchScore: null
-      };
-      const validation = validateVacancyData(vacancy);
-      if (!validation.valid) {
-        parserLog.warn("Card #" + i + " invalid: " + validation.errors.join(", "));
-        continue;
-      }
-      if (appliedIds.includes(vacancy.id)) vacancy.status = "applied";
-      if (blacklisted.includes(vacancy.company)) vacancy.status = "blacklisted";
-      if (resume) {
-        try {
-          const score = computeMatchScore(resume, vacancy);
-          vacancy.matchScore = score.total;
-        } catch (e) {
-        }
-      }
-      vacancies.push(vacancy);
-    }
-    vacancies.sort((a, b) => {
-      const scoreA = a.matchScore != null ? a.matchScore : -1;
-      const scoreB = b.matchScore != null ? b.matchScore : -1;
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      if (a.status === "new" && b.status !== "new") return -1;
-      if (b.status === "new" && a.status !== "new") return 1;
-      return 0;
-    });
-    parserLog.info("Parsed " + vacancies.length + "/" + cards.length + " valid vacancies");
-    return vacancies;
-  }
-  var parserLog;
-  var init_vacancy_list = __esm({
-    "src/parsers/vacancy-list.js"() {
-      init_selectors();
-      init_anti_hallucination();
-      init_storage();
-      init_match_scorer();
-      parserLog = createLogger("Parser");
-    }
-  });
-
   // src/parsers/resume-detail/parse-company-card.js
   function parseCompanyCard(card) {
     const job = {};
@@ -2511,232 +2196,6 @@
     }
   });
 
-  // src/parsers/vacancy-diagnostic.js
-  function diagnoseVacancyPage() {
-    const path = window.location.pathname;
-    const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
-    const result = {
-      url: window.location.href,
-      vacancyId,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      selectors: {},
-      autoDetect: {},
-      rawData: {}
-    };
-    const vacSelectors = [
-      "vacancyTitleOnPage",
-      "vacancyCompanyOnPage",
-      "vacancyDescription",
-      "vacancyDescriptionContent",
-      "vacancySkills",
-      "vacancySkillsOnPage",
-      "vacancyApplyButton",
-      "responsePopup",
-      "addCoverLetter",
-      "coverLetterInput",
-      "submitButton"
-    ];
-    vacSelectors.forEach((name) => {
-      const el = findElement(name);
-      const selectors = HH_SELECTORS[name] || [];
-      const matchIdx = el ? selectors.findIndex((sel) => {
-        try {
-          return document.querySelector(sel) === el;
-        } catch {
-          return false;
-        }
-      }) : -1;
-      result.selectors[name] = {
-        found: el !== null,
-        matchedSelector: matchIdx >= 0 ? selectors[matchIdx] : null,
-        text: el ? safeGetText(el, "").substring(0, 200) : null,
-        tag: el ? el.tagName : null,
-        dataQa: el ? safeGetAttr(el, "data-qa", "") : null,
-        className: el ? (el.className || "").substring(0, 100) : null
-      };
-      if (name === "vacancySkills" || name === "vacancySkillsOnPage") {
-        const allSkills = document.querySelectorAll('[data-qa="skills-element"]');
-        const texts = [];
-        allSkills.forEach((item) => {
-          const tagText = item.querySelector(".bloko-tag__text");
-          const t = tagText ? tagText.textContent.trim() : item.textContent.trim();
-          if (t) texts.push(t);
-        });
-        result.selectors[name].items = texts;
-        result.selectors[name].count = texts.length;
-      }
-      if (name === "vacancyDescription" && el) {
-        result.selectors[name].htmlLength = el.innerHTML.length;
-        result.selectors[name].textLength = el.textContent.length;
-        result.selectors[name].textSnippet = el.textContent.substring(0, 500).trim();
-      }
-    });
-    const allDataQa = /* @__PURE__ */ new Map();
-    document.querySelectorAll("[data-qa]").forEach((el) => {
-      const qa = el.getAttribute("data-qa");
-      if (!qa) return;
-      const prefix = qa.replace(/[-_][^-_]+$/, "");
-      if (!allDataQa.has(prefix)) {
-        allDataQa.set(prefix, []);
-      }
-      allDataQa.get(prefix).push({
-        qa,
-        tag: el.tagName,
-        text: (el.textContent || "").substring(0, 80).trim().replace(/\s+/g, " ")
-      });
-    });
-    result.autoDetect.dataQaGroups = Object.fromEntries(allDataQa);
-    result.autoDetect.dataQaCount = allDataQa.size;
-    result.autoDetect.title = detectTitle();
-    result.autoDetect.company = detectCompany();
-    result.autoDetect.salary = detectSalary();
-    result.autoDetect.location = detectLocation();
-    result.autoDetect.experience = detectExperience();
-    result.autoDetect.employment = detectEmployment();
-    result.autoDetect.schedule = detectSchedule();
-    result.autoDetect.keySkills = detectKeySkills();
-    result.autoDetect.description = detectDescription();
-    result.autoDetect.brandedDescription = detectBrandedDescription();
-    result.rawData.infoBlocks = detectInfoBlocks();
-    window.postMessage({ type: "HH-AR-VAC-DIAG", payload: result }, "*");
-    diagLog2.info("Vacancy diagnostic complete \u2014 use __hhVacDiag() in console");
-    return result;
-  }
-  function detectTitle() {
-    const qa = document.querySelector('[data-qa="vacancy-title"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim(), tag: qa.tagName };
-    const h1 = document.querySelector("h1");
-    if (h1) return { source: "h1", value: h1.textContent.trim(), tag: "H1" };
-    return { source: null, value: null };
-  }
-  function detectCompany() {
-    const qa = document.querySelector('[data-qa="vacancy-company-name"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim(), tag: qa.tagName, href: qa.href || null };
-    const sideCompany = document.querySelector('.vacancy-company-name a, [class*="company-name"] a');
-    if (sideCompany) return { source: "class-heuristic", value: sideCompany.textContent.trim(), tag: sideCompany.tagName, href: sideCompany.href || null };
-    return { source: null, value: null };
-  }
-  function detectSalary() {
-    const qa = document.querySelector('[data-qa="vacancy-salary"], [data-qa="vacancy-serp__compensation"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
-    const bloko = document.querySelector('.vacancy-salary, [class*="vacancy-salary"]');
-    if (bloko) return { source: "class-heuristic", value: bloko.textContent.trim() };
-    const h1 = document.querySelector("h1");
-    if (h1) {
-      const parent = h1.parentElement;
-      if (parent) {
-        const salaryEl = Array.from(parent.children).find(
-          (c) => /[\d\u00A0]+\s*₽|[\d\u00A0]+\s*руб/i.test(c.textContent)
-        );
-        if (salaryEl) return { source: "sibling-heuristic", value: salaryEl.textContent.trim() };
-      }
-    }
-    return { source: null, value: null };
-  }
-  function detectLocation() {
-    const qa = document.querySelector('[data-qa="vacancy-view-location"], [data-qa*="location"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
-    return { source: null, value: null };
-  }
-  function detectExperience() {
-    const qa = document.querySelector('[data-qa="vacancy-experience"], [data-qa*="experience"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
-    return { source: null, value: null };
-  }
-  function detectEmployment() {
-    const qa = document.querySelector('[data-qa="vacancy-employment-mode"], [data-qa*="employment"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
-    return { source: null, value: null };
-  }
-  function detectSchedule() {
-    const qa = document.querySelector('[data-qa="vacancy-work-schedule"], [data-qa*="schedule"]');
-    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
-    return { source: null, value: null };
-  }
-  function detectKeySkills() {
-    const qaItems = document.querySelectorAll('[data-qa="skills-element"]');
-    if (qaItems.length > 0) {
-      const texts = [];
-      qaItems.forEach((el) => {
-        const tagText = el.querySelector(".bloko-tag__text");
-        const t = tagText ? tagText.textContent.trim() : el.textContent.trim();
-        if (t) texts.push(t);
-      });
-      if (texts.length > 0) return { source: "data-qa", value: texts, count: texts.length };
-    }
-    const tagSection = document.querySelector('[data-qa="skills-element"]');
-    if (tagSection) {
-      const tags = tagSection.querySelectorAll(".bloko-tag__text");
-      const texts = [];
-      tags.forEach((el) => {
-        const t = (el.textContent || "").trim();
-        if (t) texts.push(t);
-      });
-      if (texts.length > 0) return { source: "bloko-tags", value: texts, count: texts.length };
-    }
-    return { source: null, value: null, count: 0 };
-  }
-  function detectDescription() {
-    const qa = document.querySelector('[data-qa="vacancy-description"]');
-    if (qa) {
-      return {
-        source: "data-qa",
-        found: true,
-        textLength: qa.textContent.length,
-        htmlLength: qa.innerHTML.length,
-        textSnippet: qa.textContent.substring(0, 800).trim(),
-        headings: extractHeadings(qa)
-      };
-    }
-    return { source: null, found: false };
-  }
-  function detectBrandedDescription() {
-    const branded = document.querySelector('[data-qa="vacancy-branded-description"], .vacancy-branded-description, [class*="branded"]');
-    if (branded) {
-      return {
-        source: "data-qa/class",
-        found: true,
-        textLength: branded.textContent.length,
-        htmlLength: branded.innerHTML.length,
-        textSnippet: branded.textContent.substring(0, 300).trim()
-      };
-    }
-    return { source: null, found: false };
-  }
-  function extractHeadings(root) {
-    const headings = [];
-    root.querySelectorAll("p > strong, h2, h3, h4, p > b").forEach((el) => {
-      const t = (el.textContent || "").trim();
-      if (t.length > 5 && t.length < 150) headings.push(t);
-    });
-    return headings;
-  }
-  function detectInfoBlocks() {
-    const blocks = [];
-    const infoItems = document.querySelectorAll('[data-qa*="vacancy-"]');
-    const seen = /* @__PURE__ */ new Set();
-    infoItems.forEach((el) => {
-      const qa = el.getAttribute("data-qa");
-      if (!qa || seen.has(qa)) return;
-      seen.add(qa);
-      blocks.push({
-        dataQa: qa,
-        tag: el.tagName,
-        text: (el.textContent || "").substring(0, 120).trim().replace(/\s+/g, " "),
-        children: el.children.length
-      });
-    });
-    return blocks;
-  }
-  var diagLog2;
-  var init_vacancy_diagnostic = __esm({
-    "src/parsers/vacancy-diagnostic.js"() {
-      init_selectors();
-      init_anti_hallucination();
-      diagLog2 = createLogger("VacDiag");
-    }
-  });
-
   // src/ui/state.js
   function setActiveResumeState(resume) {
     panelState.resume = resume;
@@ -3897,7 +3356,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.5"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.6"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3916,7 +3375,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.5"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.6"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -9283,13 +8742,8 @@
           renderInitialData();
         }
         if (was !== true) {
-          Promise.resolve().then(() => (init_main(), main_exports)).then((m) => {
-            if (m.initPageLogic) {
-              m.initPageLogic();
-            } else {
-              panelLog.error("initPageLogic not found in dynamic import");
-            }
-          }).catch((e) => panelLog.error("Failed to import initPageLogic: " + e.message));
+          window.dispatchEvent(new CustomEvent("hh-ar-init-page-logic"));
+          panelLog.info("Dispatched hh-ar-init-page-logic event");
         }
       }
       updateFabIcon();
@@ -9310,13 +8764,8 @@
           renderInitialData();
         }
         if (was !== true) {
-          Promise.resolve().then(() => (init_main(), main_exports)).then((m) => {
-            if (m.initPageLogic) {
-              m.initPageLogic();
-            } else {
-              panelLog.error("initPageLogic not found in dynamic import (async)");
-            }
-          }).catch((e) => panelLog.error("Failed to import initPageLogic (async): " + e.message));
+          window.dispatchEvent(new CustomEvent("hh-ar-init-page-logic"));
+          panelLog.info("Dispatched hh-ar-init-page-logic event (async)");
         }
       }
       updateFabIcon();
@@ -9434,15 +8883,539 @@
     }
   });
 
-  // src/ui/panel.js
-  var init_panel2 = __esm({
-    "src/ui/panel.js"() {
-      init_panel();
-      init_render();
+  // src/lib/match-scorer.js
+  init_anti_hallucination();
+  var scoreLog = createLogger("Scorer");
+  function computeMatchScore(resume, vacancy) {
+    if (!resume || !vacancy) {
+      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0 }, details: {} };
     }
-  });
+    const skillResult = scoreSkills(resume, vacancy);
+    const titleResult = scoreTitle(resume, vacancy);
+    const salaryResult = scoreSalary(resume, vacancy);
+    const expResult = scoreExperience(resume, vacancy);
+    const breakdown = {
+      skills: skillResult.score,
+      title: titleResult.score,
+      salary: salaryResult.score,
+      experience: expResult.score
+    };
+    const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
+    const details = {
+      matchingSkills: skillResult.matching,
+      missingSkills: skillResult.missing,
+      extraSkills: skillResult.extra,
+      titleSimilarity: titleResult.similarity,
+      salaryMatch: salaryResult.reason,
+      experienceMatch: expResult.reason
+    };
+    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience);
+    return { total, breakdown, details };
+  }
+  function scoreSkills(resume, vacancy) {
+    const resumeSkills = normalizeSkillSet(resume.skills || []);
+    const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
+    if (vacancySkills.size === 0) {
+      return { score: 20, matching: [], missing: [], extra: [] };
+    }
+    const matching = [];
+    const missing = [];
+    for (const skill of vacancySkills) {
+      if (resumeSkills.has(skill)) {
+        matching.push(skill);
+      } else {
+        missing.push(skill);
+      }
+    }
+    const extra = [];
+    for (const skill of resumeSkills) {
+      if (!vacancySkills.has(skill)) extra.push(skill);
+    }
+    const ratio = vacancySkills.size > 0 ? matching.length / vacancySkills.size : 0;
+    const score = Math.round(ratio * 40);
+    return { score, matching, missing, extra };
+  }
+  function scoreTitle(resume, vacancy) {
+    const resumeTitle = (resume.title || "").toLowerCase().trim();
+    const vacancyTitle = (vacancy.title || "").toLowerCase().trim();
+    if (!resumeTitle || !vacancyTitle) {
+      return { score: 0, similarity: 0 };
+    }
+    if (resumeTitle === vacancyTitle) {
+      return { score: 30, similarity: 1 };
+    }
+    const resumeWords = tokenize(resumeTitle);
+    const vacancyWords = tokenize(vacancyTitle);
+    if (vacancyWords.length === 0) {
+      return { score: 0, similarity: 0 };
+    }
+    let overlapCount = 0;
+    for (const w of vacancyWords) {
+      if (resumeWords.has(w)) overlapCount++;
+    }
+    const similarity = overlapCount / vacancyWords.size;
+    const bonus = titleBonus(resumeTitle, vacancyTitle);
+    const rawScore = similarity * 25 + bonus;
+    const score = Math.min(30, Math.round(rawScore));
+    return { score, similarity: Math.round(similarity * 100) / 100 };
+  }
+  function titleBonus(resumeTitle, vacancyTitle) {
+    let bonus = 0;
+    const abbrMap = {
+      "\u0440\u043E\u043F": "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C \u043E\u0442\u0434\u0435\u043B\u0430 \u043F\u0440\u043E\u0434\u0430\u0436",
+      "c#": "csharp",
+      ".net": "dotnet",
+      "qa": "quality assurance",
+      "\u0441\u0438\u0441\u0430\u0434\u043C\u0438\u043D": "\u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0439 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440",
+      "\u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0438\u0441\u0442": "\u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A",
+      "devops": "devops",
+      "frontend": "\u0444\u0440\u043E\u043D\u0442\u0435\u043D\u0434",
+      "backend": "\u0431\u044D\u043A\u0435\u043D\u0434",
+      "fullstack": "\u0444\u0443\u043B\u0441\u0442\u0435\u043A"
+    };
+    for (const [abbr, full] of Object.entries(abbrMap)) {
+      const resumeHas = resumeTitle.includes(abbr) || resumeTitle.includes(full);
+      const vacancyHas = vacancyTitle.includes(abbr) || vacancyTitle.includes(full);
+      if (resumeHas && vacancyHas) {
+        bonus += 5;
+        break;
+      }
+    }
+    return Math.min(5, bonus);
+  }
+  function scoreSalary(resume, vacancy) {
+    const resumeSalary = parseResumeSalary(resume.salary || "");
+    const vacSalary = vacancy.salary || {};
+    if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
+      return { score: 8, reason: "no-data" };
+    }
+    if (!resumeSalary) {
+      return { score: 8, reason: "resume-no-salary" };
+    }
+    if (!vacSalary.min && !vacSalary.max) {
+      return { score: 8, reason: "vacancy-no-salary" };
+    }
+    const vacMin = vacSalary.min || 0;
+    const vacMax = vacSalary.max || Infinity;
+    if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
+      return { score: 15, reason: "within-range" };
+    }
+    if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
+      return { score: 12, reason: "slightly-below" };
+    }
+    if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
+      return { score: 10, reason: "slightly-above" };
+    }
+    if (resumeSalary < vacMin) {
+      return { score: 5, reason: "below-range" };
+    }
+    return { score: 3, reason: "above-range" };
+  }
+  function scoreExperience(resume, vacancy) {
+    const vacExp = vacancy.experience || {};
+    if (vacExp.min === 0 && vacExp.max === 0) {
+      return { score: 15, reason: "no-experience-required" };
+    }
+    const resumeYears = calcResumeYears(resume.experience || []);
+    if (resumeYears === null) {
+      return { score: 8, reason: "unknown-resume-exp" };
+    }
+    if (!vacExp.min && !vacExp.max && !vacExp.raw) {
+      return { score: 8, reason: "unknown-vacancy-exp" };
+    }
+    const vacMin = vacExp.min || 0;
+    const vacMax = vacExp.max || 99;
+    if (resumeYears >= vacMin && resumeYears <= vacMax) {
+      return { score: 15, reason: "within-range" };
+    }
+    if (resumeYears < vacMin && resumeYears >= vacMin - 1) {
+      return { score: 10, reason: "slightly-below" };
+    }
+    if (resumeYears > vacMax) {
+      return { score: 8, reason: "overqualified" };
+    }
+    return { score: 3, reason: "below-range" };
+  }
+  function normalizeSkillSet(skills) {
+    const set = /* @__PURE__ */ new Set();
+    for (const s of skills) {
+      const name = typeof s === "string" ? s : s.name || "";
+      if (name) set.add(name.toLowerCase().trim().replace(/\s+/g, " "));
+    }
+    return set;
+  }
+  function tokenize(text) {
+    const stopWords = /* @__PURE__ */ new Set([
+      "\u0432",
+      "\u043D\u0430",
+      "\u0438",
+      "\u0441",
+      "\u043E\u0442",
+      "\u0434\u043E",
+      "\u0437\u0430",
+      "\u043F\u043E",
+      "\u0438\u0437",
+      "\u043A",
+      "\u043E",
+      "\u043D\u0435",
+      "\u043D\u043E",
+      "\u0438\u043B\u0438",
+      "\u0434\u043B\u044F",
+      "\u043A\u0430\u043A",
+      "\u043F\u0440\u0438",
+      "\u0431\u0435\u0437",
+      "the",
+      "a",
+      "an",
+      "in",
+      "on",
+      "at",
+      "to",
+      "for",
+      "of",
+      "with",
+      "and",
+      "or",
+      "from",
+      "by"
+    ]);
+    const words = /* @__PURE__ */ new Set();
+    text.split(/[\s\-–—/,|]+/).forEach((w) => {
+      const clean = w.replace(/[^a-zа-яё0-9#+.]/g, "").trim();
+      if (clean.length >= 2 && !stopWords.has(clean)) words.add(clean);
+    });
+    return words;
+  }
+  function parseResumeSalary(salaryStr) {
+    if (!salaryStr || typeof salaryStr !== "string") return null;
+    const nums = salaryStr.match(/\d[\d\s]*\d/g);
+    if (!nums || nums.length === 0) return null;
+    return parseInt(nums[0].replace(/\s/g, ""), 10) || null;
+  }
+  function calcResumeYears(experience) {
+    if (!Array.isArray(experience) || experience.length === 0) return null;
+    let totalMonths = 0;
+    for (const exp of experience) {
+      if (exp.duration && typeof exp.duration === "object") {
+        totalMonths += (exp.duration.years || 0) * 12 + (exp.duration.months || 0);
+      } else if (typeof exp.duration === "string") {
+        const yearMatch = exp.duration.match(/(\d+)\s*(год|лет)/i);
+        const monthMatch = exp.duration.match(/(\d+)\s*мес/i);
+        if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
+        if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
+      }
+    }
+    if (totalMonths === 0) return null;
+    return Math.round(totalMonths / 12 * 10) / 10;
+  }
+
+  // src/parsers/vacancy-list.js
+  init_selectors();
+  init_anti_hallucination();
+  init_storage();
+  var parserLog = createLogger("Parser");
+  async function parseVacanciesFromPage(resume) {
+    const cards = findAllElements("vacancyCard");
+    parserLog.info("Found " + cards.length + " vacancy cards");
+    if (cards.length === 0) return [];
+    const vacancies = [];
+    let appliedIds = [], blacklisted = [];
+    try {
+      appliedIds = await getAppliedVacancies();
+      blacklisted = await getBlacklistedCompanies();
+    } catch (e) {
+    }
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const titleEl = findElement("vacancyTitleLink", card);
+      const title = safeGetText(titleEl);
+      if (!title) continue;
+      const url = safeGetAttr(titleEl, "href", "");
+      const id = extractVacancyId(url.startsWith("/") ? "https://hh.ru" + url : url);
+      if (!id) continue;
+      const company = safeGetText(findElement("vacancyCompany", card));
+      const salary = safeGetText(findElement("vacancySalary", card), "");
+      const location = safeGetText(findElement("vacancyLocation", card), "");
+      const experience = safeGetText(findElement("vacancyExperience", card), "");
+      const tagEls = card.querySelectorAll('.bloko-tag__text, [data-qa="bloko-tag"]');
+      const skills = [];
+      tagEls.forEach((el) => {
+        const t = (el.textContent || "").trim();
+        if (t && t.length < 50) skills.push(t);
+      });
+      const replyBtn = findElement("replyButton", card);
+      const hasReply = replyBtn !== null;
+      const vacancy = {
+        id,
+        title: title.trim(),
+        company: (company || "").trim(),
+        salary: salary || "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430",
+        location: (location || "").trim(),
+        experience: (experience || "").trim(),
+        skills,
+        url: url.startsWith("/") ? "https://hh.ru" + url : url,
+        hasReply,
+        status: "new",
+        parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        matchScore: null
+      };
+      const validation = validateVacancyData(vacancy);
+      if (!validation.valid) {
+        parserLog.warn("Card #" + i + " invalid: " + validation.errors.join(", "));
+        continue;
+      }
+      if (appliedIds.includes(vacancy.id)) vacancy.status = "applied";
+      if (blacklisted.includes(vacancy.company)) vacancy.status = "blacklisted";
+      if (resume) {
+        try {
+          const score = computeMatchScore(resume, vacancy);
+          vacancy.matchScore = score.total;
+        } catch (e) {
+        }
+      }
+      vacancies.push(vacancy);
+    }
+    vacancies.sort((a, b) => {
+      const scoreA = a.matchScore != null ? a.matchScore : -1;
+      const scoreB = b.matchScore != null ? b.matchScore : -1;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      if (a.status === "new" && b.status !== "new") return -1;
+      if (b.status === "new" && a.status !== "new") return 1;
+      return 0;
+    });
+    parserLog.info("Parsed " + vacancies.length + "/" + cards.length + " valid vacancies");
+    return vacancies;
+  }
+
+  // src/parsers/vacancy-diagnostic.js
+  init_selectors();
+  init_anti_hallucination();
+  var diagLog2 = createLogger("VacDiag");
+  function diagnoseVacancyPage() {
+    const path = window.location.pathname;
+    const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
+    const result = {
+      url: window.location.href,
+      vacancyId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      selectors: {},
+      autoDetect: {},
+      rawData: {}
+    };
+    const vacSelectors = [
+      "vacancyTitleOnPage",
+      "vacancyCompanyOnPage",
+      "vacancyDescription",
+      "vacancyDescriptionContent",
+      "vacancySkills",
+      "vacancySkillsOnPage",
+      "vacancyApplyButton",
+      "responsePopup",
+      "addCoverLetter",
+      "coverLetterInput",
+      "submitButton"
+    ];
+    vacSelectors.forEach((name) => {
+      const el = findElement(name);
+      const selectors = HH_SELECTORS[name] || [];
+      const matchIdx = el ? selectors.findIndex((sel) => {
+        try {
+          return document.querySelector(sel) === el;
+        } catch {
+          return false;
+        }
+      }) : -1;
+      result.selectors[name] = {
+        found: el !== null,
+        matchedSelector: matchIdx >= 0 ? selectors[matchIdx] : null,
+        text: el ? safeGetText(el, "").substring(0, 200) : null,
+        tag: el ? el.tagName : null,
+        dataQa: el ? safeGetAttr(el, "data-qa", "") : null,
+        className: el ? (el.className || "").substring(0, 100) : null
+      };
+      if (name === "vacancySkills" || name === "vacancySkillsOnPage") {
+        const allSkills = document.querySelectorAll('[data-qa="skills-element"]');
+        const texts = [];
+        allSkills.forEach((item) => {
+          const tagText = item.querySelector(".bloko-tag__text");
+          const t = tagText ? tagText.textContent.trim() : item.textContent.trim();
+          if (t) texts.push(t);
+        });
+        result.selectors[name].items = texts;
+        result.selectors[name].count = texts.length;
+      }
+      if (name === "vacancyDescription" && el) {
+        result.selectors[name].htmlLength = el.innerHTML.length;
+        result.selectors[name].textLength = el.textContent.length;
+        result.selectors[name].textSnippet = el.textContent.substring(0, 500).trim();
+      }
+    });
+    const allDataQa = /* @__PURE__ */ new Map();
+    document.querySelectorAll("[data-qa]").forEach((el) => {
+      const qa = el.getAttribute("data-qa");
+      if (!qa) return;
+      const prefix = qa.replace(/[-_][^-_]+$/, "");
+      if (!allDataQa.has(prefix)) {
+        allDataQa.set(prefix, []);
+      }
+      allDataQa.get(prefix).push({
+        qa,
+        tag: el.tagName,
+        text: (el.textContent || "").substring(0, 80).trim().replace(/\s+/g, " ")
+      });
+    });
+    result.autoDetect.dataQaGroups = Object.fromEntries(allDataQa);
+    result.autoDetect.dataQaCount = allDataQa.size;
+    result.autoDetect.title = detectTitle();
+    result.autoDetect.company = detectCompany();
+    result.autoDetect.salary = detectSalary();
+    result.autoDetect.location = detectLocation();
+    result.autoDetect.experience = detectExperience();
+    result.autoDetect.employment = detectEmployment();
+    result.autoDetect.schedule = detectSchedule();
+    result.autoDetect.keySkills = detectKeySkills();
+    result.autoDetect.description = detectDescription();
+    result.autoDetect.brandedDescription = detectBrandedDescription();
+    result.rawData.infoBlocks = detectInfoBlocks();
+    window.postMessage({ type: "HH-AR-VAC-DIAG", payload: result }, "*");
+    diagLog2.info("Vacancy diagnostic complete \u2014 use __hhVacDiag() in console");
+    return result;
+  }
+  function detectTitle() {
+    const qa = document.querySelector('[data-qa="vacancy-title"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim(), tag: qa.tagName };
+    const h1 = document.querySelector("h1");
+    if (h1) return { source: "h1", value: h1.textContent.trim(), tag: "H1" };
+    return { source: null, value: null };
+  }
+  function detectCompany() {
+    const qa = document.querySelector('[data-qa="vacancy-company-name"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim(), tag: qa.tagName, href: qa.href || null };
+    const sideCompany = document.querySelector('.vacancy-company-name a, [class*="company-name"] a');
+    if (sideCompany) return { source: "class-heuristic", value: sideCompany.textContent.trim(), tag: sideCompany.tagName, href: sideCompany.href || null };
+    return { source: null, value: null };
+  }
+  function detectSalary() {
+    const qa = document.querySelector('[data-qa="vacancy-salary"], [data-qa="vacancy-serp__compensation"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    const bloko = document.querySelector('.vacancy-salary, [class*="vacancy-salary"]');
+    if (bloko) return { source: "class-heuristic", value: bloko.textContent.trim() };
+    const h1 = document.querySelector("h1");
+    if (h1) {
+      const parent = h1.parentElement;
+      if (parent) {
+        const salaryEl = Array.from(parent.children).find(
+          (c) => /[\d\u00A0]+\s*₽|[\d\u00A0]+\s*руб/i.test(c.textContent)
+        );
+        if (salaryEl) return { source: "sibling-heuristic", value: salaryEl.textContent.trim() };
+      }
+    }
+    return { source: null, value: null };
+  }
+  function detectLocation() {
+    const qa = document.querySelector('[data-qa="vacancy-view-location"], [data-qa*="location"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectExperience() {
+    const qa = document.querySelector('[data-qa="vacancy-experience"], [data-qa*="experience"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectEmployment() {
+    const qa = document.querySelector('[data-qa="vacancy-employment-mode"], [data-qa*="employment"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectSchedule() {
+    const qa = document.querySelector('[data-qa="vacancy-work-schedule"], [data-qa*="schedule"]');
+    if (qa) return { source: "data-qa", value: qa.textContent.trim() };
+    return { source: null, value: null };
+  }
+  function detectKeySkills() {
+    const qaItems = document.querySelectorAll('[data-qa="skills-element"]');
+    if (qaItems.length > 0) {
+      const texts = [];
+      qaItems.forEach((el) => {
+        const tagText = el.querySelector(".bloko-tag__text");
+        const t = tagText ? tagText.textContent.trim() : el.textContent.trim();
+        if (t) texts.push(t);
+      });
+      if (texts.length > 0) return { source: "data-qa", value: texts, count: texts.length };
+    }
+    const tagSection = document.querySelector('[data-qa="skills-element"]');
+    if (tagSection) {
+      const tags = tagSection.querySelectorAll(".bloko-tag__text");
+      const texts = [];
+      tags.forEach((el) => {
+        const t = (el.textContent || "").trim();
+        if (t) texts.push(t);
+      });
+      if (texts.length > 0) return { source: "bloko-tags", value: texts, count: texts.length };
+    }
+    return { source: null, value: null, count: 0 };
+  }
+  function detectDescription() {
+    const qa = document.querySelector('[data-qa="vacancy-description"]');
+    if (qa) {
+      return {
+        source: "data-qa",
+        found: true,
+        textLength: qa.textContent.length,
+        htmlLength: qa.innerHTML.length,
+        textSnippet: qa.textContent.substring(0, 800).trim(),
+        headings: extractHeadings(qa)
+      };
+    }
+    return { source: null, found: false };
+  }
+  function detectBrandedDescription() {
+    const branded = document.querySelector('[data-qa="vacancy-branded-description"], .vacancy-branded-description, [class*="branded"]');
+    if (branded) {
+      return {
+        source: "data-qa/class",
+        found: true,
+        textLength: branded.textContent.length,
+        htmlLength: branded.innerHTML.length,
+        textSnippet: branded.textContent.substring(0, 300).trim()
+      };
+    }
+    return { source: null, found: false };
+  }
+  function extractHeadings(root) {
+    const headings = [];
+    root.querySelectorAll("p > strong, h2, h3, h4, p > b").forEach((el) => {
+      const t = (el.textContent || "").trim();
+      if (t.length > 5 && t.length < 150) headings.push(t);
+    });
+    return headings;
+  }
+  function detectInfoBlocks() {
+    const blocks = [];
+    const infoItems = document.querySelectorAll('[data-qa*="vacancy-"]');
+    const seen = /* @__PURE__ */ new Set();
+    infoItems.forEach((el) => {
+      const qa = el.getAttribute("data-qa");
+      if (!qa || seen.has(qa)) return;
+      seen.add(qa);
+      blocks.push({
+        dataQa: qa,
+        tag: el.tagName,
+        text: (el.textContent || "").substring(0, 120).trim().replace(/\s+/g, " "),
+        children: el.children.length
+      });
+    });
+    return blocks;
+  }
+
+  // src/ui/panel.js
+  init_panel();
+  init_render();
 
   // src/parsers/vacancy-detail.js
+  init_selectors();
+  init_anti_hallucination();
+  var vacLog = createLogger("VacDetail");
   function parseVacancyDetail() {
     const t0 = performance.now();
     const path = window.location.pathname;
@@ -9620,16 +9593,17 @@
     }
     return result;
   }
-  var vacLog;
-  var init_vacancy_detail = __esm({
-    "src/parsers/vacancy-detail.js"() {
-      init_selectors();
-      init_anti_hallucination();
-      vacLog = createLogger("VacDetail");
-    }
-  });
 
   // src/content/main-page-handlers.js
+  init_anti_hallucination();
+  init_storage();
+  init_resume_detail2();
+  init_resume_fetch();
+  init_engine();
+  init_resumes2();
+  init_state();
+  var pageLog = createLogger("Main");
+  var lastHandledPath = "";
   async function initPageLogic() {
     const currentPath = window.location.pathname;
     await routeToHandler(currentPath);
@@ -9655,6 +9629,7 @@
       onSPANavigate(window.location.pathname);
     };
   }
+  var spaTimer = null;
   function onSPANavigate(newPath) {
     if (newPath === lastHandledPath) return;
     clearTimeout(spaTimer);
@@ -9678,6 +9653,7 @@
       await handleVacancyDetailPage(path);
     }
   }
+  var searchObserverActive = false;
   async function handleVacancySearchPage() {
     const vacancies = await parseVacanciesFromPage(panelState.resume);
     updateVacancies(vacancies);
@@ -9796,29 +9772,15 @@
       });
     });
   }
-  var pageLog, lastHandledPath, spaTimer, searchObserverActive;
-  var init_main_page_handlers = __esm({
-    "src/content/main-page-handlers.js"() {
-      init_anti_hallucination();
-      init_storage();
-      init_vacancy_list();
-      init_vacancy_diagnostic();
-      init_vacancy_detail();
-      init_resume_detail2();
-      init_resume_fetch();
-      init_engine();
-      init_match_scorer();
-      init_panel2();
-      init_resumes2();
-      init_state();
-      pageLog = createLogger("Main");
-      lastHandledPath = "";
-      spaTimer = null;
-      searchObserverActive = false;
-    }
-  });
 
   // src/content/main-resume-loader.js
+  init_anti_hallucination();
+  init_storage();
+  init_resume_detail2();
+  init_resume_fetch();
+  init_resumes2();
+  init_state();
+  var loadLog = createLogger("Main");
   async function handleLoadResume() {
     if (!panelState.isLoggedIn) return;
     const path = window.location.pathname;
@@ -9955,21 +9917,15 @@
     if (!s) return "";
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
-  var loadLog;
-  var init_main_resume_loader = __esm({
-    "src/content/main-resume-loader.js"() {
-      init_anti_hallucination();
-      init_storage();
-      init_resume_detail2();
-      init_resume_fetch();
-      init_panel2();
-      init_resumes2();
-      init_state();
-      loadLog = createLogger("Main");
-    }
-  });
 
   // src/content/main-sync.js
+  init_anti_hallucination();
+  init_storage();
+  init_resume_fetch();
+  init_resumes2();
+  init_state();
+  var syncLog = createLogger("Main");
+  var syncInProgress = false;
   async function handleSyncResumes() {
     if (!panelState.isLoggedIn) return;
     if (syncInProgress) {
@@ -10028,25 +9984,18 @@
     if (!s) return "";
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
-  var syncLog, syncInProgress;
-  var init_main_sync = __esm({
-    "src/content/main-sync.js"() {
-      init_anti_hallucination();
-      init_storage();
-      init_resume_fetch();
-      init_panel2();
-      init_resumes2();
-      init_state();
-      syncLog = createLogger("Main");
-      syncInProgress = false;
-    }
-  });
 
   // src/content/main.js
-  var main_exports = {};
-  __export(main_exports, {
-    initPageLogic: () => initPageLogic
-  });
+  init_anti_hallucination();
+  init_storage();
+  init_resume_detail2();
+  init_resumes2();
+  init_resume_constants();
+  init_state();
+  var mainLog = createLogger("Main");
+  window.__hhDiagnose = diagnoseResumeDOM;
+  window.__hhDebugVisibility = debugVisibility;
+  window.__hhVisDiag = null;
   async function init() {
     mainLog.info("Loaded: " + window.location.href);
     await checkDailyReset();
@@ -10094,6 +10043,15 @@
         }
       }, 2e3);
     }
+    window.addEventListener("hh-ar-init-page-logic", () => {
+      mainLog.info("Received hh-ar-init-page-logic event \u2192 calling initPageLogic()");
+      initPageLogic();
+    });
+    if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
+      setTimeout(() => {
+        initPageLogic();
+      }, 3e3);
+    }
   }
   async function loadSavedResumes() {
     try {
@@ -10136,28 +10094,6 @@
     } catch (e) {
     }
   }
-  var mainLog;
-  var init_main = __esm({
-    "src/content/main.js"() {
-      init_anti_hallucination();
-      init_storage();
-      init_vacancy_list();
-      init_resume_detail2();
-      init_vacancy_diagnostic();
-      init_panel2();
-      init_resumes2();
-      init_resume_constants();
-      init_state();
-      init_main_page_handlers();
-      init_main_resume_loader();
-      init_main_sync();
-      mainLog = createLogger("Main");
-      window.__hhDiagnose = diagnoseResumeDOM;
-      window.__hhDebugVisibility = debugVisibility;
-      window.__hhVisDiag = null;
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-      else init();
-    }
-  });
-  init_main();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
 })();
