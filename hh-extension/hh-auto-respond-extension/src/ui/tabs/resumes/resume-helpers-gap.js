@@ -29,10 +29,8 @@ export function updateSkillGapSection(r) {
   const vacancySkills = collectVacancySkills();
 
   if (vacancySkills.size === 0) {
-    section.style.display = '';
-    const subtitle = refs.shadowRoot?.getElementById('res-gap-subtitle');
-    const resumeTitle = r.title || 'Без названия';
-    if (subtitle) subtitle.textContent = resumeTitle + ' — откройте вакансии для сравнения';
+    // No vacancies loaded — hide the gap section entirely (no point showing 0% ring)
+    section.style.display = 'none';
     return;
   }
 

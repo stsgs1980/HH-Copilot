@@ -3709,10 +3709,7 @@
     const resumeSkills = normalizeSkills(r.skills);
     const vacancySkills = collectVacancySkills();
     if (vacancySkills.size === 0) {
-      section.style.display = "";
-      const subtitle2 = refs.shadowRoot?.getElementById("res-gap-subtitle");
-      const resumeTitle = r.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F";
-      if (subtitle2) subtitle2.textContent = resumeTitle + " \u2014 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u0434\u043B\u044F \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044F";
+      section.style.display = "none";
       return;
     }
     const match = [];

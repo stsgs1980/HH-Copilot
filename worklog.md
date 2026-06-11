@@ -1027,3 +1027,15 @@ Work Log:
 Stage Summary:
 - Contacts now parse cleanly: phone from tel: href, email from mailto: or regex, telegram only from contact block
 - Version 1.9.13
+---
+Task ID: hide-empty-gap-section
+Agent: main
+Task: Hide skill gap analysis block when no vacancies loaded
+
+Work Log:
+- Identified that updateSkillGapSection() shows "0% — откройте вакансии" when vacancySkills is empty
+- Changed to hide the section entirely (display:none) when no vacancies for comparison
+- Updated CHANGELOG
+
+Stage Summary:
+- Gap section hidden until vacancies are loaded — cleaner UI
