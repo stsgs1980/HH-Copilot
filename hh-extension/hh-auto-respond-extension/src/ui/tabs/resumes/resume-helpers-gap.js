@@ -7,6 +7,7 @@
 
 import { refs, panelState } from '../../state.js';
 import { esc } from '../../html.js';
+import { collectAllVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 
 // ═══════════════════════════════════════════════
 // SKILL GAP ANALYSIS
@@ -28,7 +29,7 @@ export function updateSkillGapSection(r) {
   const resumeSkills = normalizeSkills(r.skills);
   const derivedSkills = normalizeSkills(r.derivedSkills || []);
   const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
-  const vacancySkills = collectVacancySkills();
+  const vacancySkills = collectAllVacancySkills(panelState.vacancies);
 
   if (vacancySkills.size === 0) {
     // No vacancies loaded — hide the gap section entirely (no point showing 0% ring)
@@ -132,27 +133,14 @@ function normalizeSkills(skills) {
   const set = new Set();
   for (const s of skills) {
     const name = typeof s === 'string' ? s : (s.name || '');
-    if (name) set.add(name.toLowerCase().trim());
+    if (name) {
+      set.add(
+        name.toLowerCase().trim()
+          .replace(/[-–—]/g, ' ')
+          .replace(/ё/g, 'е')
+          .replace(/\s+/g, ' ')
+      );
+    }
   }
   return set;
-}
-
-function collectVacancySkills() {
-  const skills = new Set();
-  const vacancies = panelState.vacancies || [];
-  for (const v of vacancies) {
-    if (v.tags && Array.isArray(v.tags)) {
-      for (const t of v.tags) {
-        const name = typeof t === 'string' ? t : (t.name || '');
-        if (name) skills.add(name.toLowerCase().trim());
-      }
-    }
-    if (v.skills && Array.isArray(v.skills)) {
-      for (const s of v.skills) {
-        const name = typeof s === 'string' ? s : (s.name || '');
-        if (name) skills.add(name.toLowerCase().trim());
-      }
-    }
-  }
-  return skills;
 }

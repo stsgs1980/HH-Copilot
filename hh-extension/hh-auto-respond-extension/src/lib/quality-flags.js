@@ -149,9 +149,22 @@ export function detectStrengths(r) {
 
 /**
  * Построить приоритизированные рекомендации.
- * @returns {Array<{priority: string, text: string}>}
+ *
+ * v1.9.21.0: Replaced noisy "навыков не в описаниях опыта" with
+ * actionable vacancy-skill-gap recommendations. Old logic warned about
+ * explicit skills not mentioned in experience descriptions — but those
+ * skills ARE visible to HR in the skills section, so the warning had
+ * no value. New logic shows vacancy skills that are completely missing
+ * from the resume — genuine gaps the candidate should address.
+ *
+ * @param {Object} ats — ATS analysis result
+ * @param {Object} exp — Experience analysis result
+ * @param {string[]} flags — Red flags
+ * @param {Object} r — Resume object
+ * @param {Set<string>} [vacancySkills] — Normalized vacancy skills (from vacancy-skills-collector)
+ * @returns {Array<{priority: string, text: string, tooltip?: string}>}
  */
-export function buildRecommendations(ats, exp, flags, r) {
+export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
   const recs = [];
 
   // ── Приоритет: ATS-критичные ──
@@ -171,36 +184,57 @@ export function buildRecommendations(ats, exp, flags, r) {
     recs.push({ priority: 'high', text: f });
   }
 
-  // ── Общие советы ──
-  // v1.9.19.0: Skills already in derivedSkills are "confirmed by experience text" — don't flag them
-  if ((r.skills || []).length > 0 && (r.experience || []).length > 0) {
-    const skillLower = (r.skills || []).map(s => s.toLowerCase().trim());
+  // ── Навыки вакансии, отсутствующие в резюме (v1.9.21.0) ──
+  // Vacancy skills NOT in resume's explicit skills, derived skills, or experience descriptions.
+  // These are genuine gaps — the employer requires them but the candidate doesn't show them.
+  if (vacancySkills && vacancySkills.size > 0) {
+    const resumeExplicit = normalizeSkillSet(r.skills || []);
+    const resumeDerived = normalizeSkillSet(r.derivedSkills || []);
     const descText = (r.experience || []).map(e => e.description || '').join(' ').toLowerCase();
-    // derivedSkills = skills extracted from experience descriptions by skill-dictionary
-    // If a skill is in derivedSkills, it IS mentioned in experience text (just in different wording)
-    const derivedLower = new Set((r.derivedSkills || []).map(s => s.toLowerCase().trim()));
-    const uncovered = skillLower.filter(s => {
-      if (s.length <= 2) return false;
-      if (descText.includes(s)) return false;           // directly in experience text
-      if (derivedLower.has(s)) return false;             // extracted by skill-dictionary from text
-      // v1.9.19.0: also check normalized form (hyphens/dashes/ё)
-      const norm = s.replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
-      for (const d of derivedLower) {
-        const dNorm = d.replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
-        if (norm === dNorm) return false;
-      }
-      return true;
-    });
-    if (uncovered.length > 3) {
-      const sample = uncovered.slice(0, 5).map(s => '«' + s + '»').join(', ');
-      const suffix = uncovered.length > 5 ? ' и ещё ' + (uncovered.length - 5) : '';
+    const descNorm = descText.replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
+
+    const missing = [];
+    for (const vs of vacancySkills) {
+      if (resumeExplicit.has(vs)) continue;       // already in explicit skills
+      if (resumeDerived.has(vs)) continue;        // derived from experience descriptions
+      if (vs.length > 3 && descNorm.includes(vs)) continue;  // mentioned in experience text
+      missing.push(vs);
+    }
+
+    if (missing.length > 0) {
+      const sample = missing.slice(0, 5).map(s => '«' + s + '»').join(', ');
+      const suffix = missing.length > 5 ? ' и ещё ' + (missing.length - 5) : '';
       recs.push({
-        priority: 'medium',
-        text: uncovered.length + ' навыков не в описаниях опыта: ' + sample + suffix + ' — упомяните, чтобы HR их увидел',
-        tooltip: uncovered.map(s => '«' + s + '»').join(', ')
+        priority: 'high',
+        text: missing.length + ' навыков вакансии нет в резюме: ' + sample + suffix + ' — добавьте для лучшего мэтчинга',
+        tooltip: missing.map(s => '«' + s + '»').join(', ')
       });
     }
   }
 
   return recs;
+}
+
+// ═══════════════════════════════════════════════
+// HELPER
+// ═══════════════════════════════════════════════
+
+/**
+ * Normalize skill names: lowercase, trim, unify separators.
+ * Same logic as match-scorer.normalizeSkillSet.
+ */
+function normalizeSkillSet(skills) {
+  const set = new Set();
+  for (const s of skills) {
+    const name = typeof s === 'string' ? s : (s.name || '');
+    if (name) {
+      set.add(
+        name.toLowerCase().trim()
+          .replace(/[-–—]/g, ' ')
+          .replace(/ё/g, 'е')
+          .replace(/\s+/g, ' ')
+      );
+    }
+  }
+  return set;
 }

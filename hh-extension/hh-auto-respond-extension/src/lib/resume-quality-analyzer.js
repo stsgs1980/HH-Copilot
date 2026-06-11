@@ -4,6 +4,8 @@
  *   - quality-ats.js      → ATS-совместимость
  *   - quality-experience.js → качество опыта
  *   - quality-flags.js    → красные флаги, сильные стороны, рекомендации
+ *
+ * v1.9.21.0: Added vacancySkills parameter for vacancy-skill-gap recommendations.
  */
 
 import { analyzeATS } from './quality-ats.js';
@@ -13,8 +15,11 @@ import { detectRedFlags, detectStrengths, buildRecommendations } from './quality
 /**
  * Полный анализ качества резюме.
  * Общий балл: 40% ATS + 40% опыт + 20% базис − штраф за красные флаги.
+ *
+ * @param {Object} r — Resume object
+ * @param {Set<string>} [vacancySkills] — Normalized vacancy skills (from vacancy-skills-collector)
  */
-export function analyzeResumeQuality(r) {
+export function analyzeResumeQuality(r, vacancySkills) {
   if (!r || !r.id) return {
     totalScore: 0, atsScore: 0, experienceScore: 0,
     redFlags: [], strengths: [], recommendations: [],
@@ -25,7 +30,7 @@ export function analyzeResumeQuality(r) {
   const exp = analyzeExperience(r);
   const flags = detectRedFlags(r);
   const strengths = detectStrengths(r);
-  const recommendations = buildRecommendations(ats, exp, flags, r);
+  const recommendations = buildRecommendations(ats, exp, flags, r, vacancySkills);
 
   const flagPenalty = Math.min(30, flags.length * 7);
   const totalScore = Math.max(0, Math.round(

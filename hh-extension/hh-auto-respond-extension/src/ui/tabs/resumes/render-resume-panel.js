@@ -20,6 +20,7 @@ import {
 import { setActiveResume } from '../../../lib/storage.js';
 import { updateAccordionHeader } from './resume-accordion-header.js';
 import { analyzeResumeQuality } from '../../../lib/resume-quality-analyzer.js';
+import { collectAllVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 
 // ═══════════════════════════════════════════════
 // MAIN RESUME PANEL RENDER
@@ -112,7 +113,8 @@ function updateResumeScore(r) {
   if (!r || !r.id) { section.style.display = 'none'; return; }
   section.style.display = '';
 
-  const result = analyzeResumeQuality(r);
+  const vacancySkills = collectAllVacancySkills(panelState.vacancies);
+  const result = analyzeResumeQuality(r, vacancySkills);
   const pct = result.totalScore;
 
   // ── Ring chart ──
