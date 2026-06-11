@@ -981,3 +981,15 @@ Work Log:
 - Hooks installed (pre-commit, pre-push)
 
 Stage Summary:
+
+---
+Task ID: ui-collapsible-resume-list
+Agent: main
+Task: Make 'Все резюме' block collapsible accordion
+
+Work Log:
+- Added timeline-toggle + timeline-body pattern to 'Все резюме' block
+- Added chevron icon with open state (matches body default open)
+- Uses data-timeline=res-sync, auto-handled by events.js
+
+Stage Summary:

@@ -2690,26 +2690,29 @@
   function getResumeSection() {
     return `<div class="tab-section" id="tab-resume">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync">
         <span style="font-size:12px;font-weight:600;">\u0412\u0441\u0435 \u0440\u0435\u0437\u044E\u043C\u0435</span>
         <div style="display:flex;align-items:center;gap:4px;">
           <span class="badge badge-green" id="res-visible-count" style="font-size:10px;display:none;">0 \u0432\u0438\u0434\u0438\u043C\u044B\u0445</span>
           <span class="badge badge-amber" id="res-hidden-count" style="font-size:10px;display:none;">0 \u0441\u043A\u0440\u044B\u0442\u044B\u0445</span>
           <span class="badge badge-zinc" id="res-sync-count">0</span>
+          <span class="timeline-chevron open"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
       </div>
-      <div id="res-sync-list" style="font-size:11px;color:#71717a;">
-        \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435\xBB \u0434\u043B\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0440\u0435\u0437\u044E\u043C\u0435
-      </div>
-      <div id="res-cta-load" style="padding-top:6px;display:none;">
-        <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg> \u0412\u0437\u044F\u0442\u044C \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B
-        </button>
-      </div>
-      <div style="padding-top:6px;">
-        <button class="btn btn-outline btn-sm" data-action="sync-resumes" style="width:100%;">
-          ${ICONS.refresh} \u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435
-        </button>
+      <div class="timeline-body open" id="res-sync-body" style="margin-top:10px;">
+        <div id="res-sync-list" style="font-size:11px;color:#71717a;">
+          \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435\xBB \u0434\u043B\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0440\u0435\u0437\u044E\u043C\u0435
+        </div>
+        <div id="res-cta-load" style="padding-top:6px;display:none;">
+          <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg> \u0412\u0437\u044F\u0442\u044C \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B
+          </button>
+        </div>
+        <div style="padding-top:6px;">
+          <button class="btn btn-outline btn-sm" data-action="sync-resumes" style="width:100%;">
+            ${ICONS.refresh} \u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435
+          </button>
+        </div>
       </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">

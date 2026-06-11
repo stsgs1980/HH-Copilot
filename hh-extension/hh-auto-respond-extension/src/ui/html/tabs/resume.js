@@ -6,26 +6,29 @@ import { ICONS } from '../icons.js';
 export function getResumeSection() {
   return `<div class="tab-section" id="tab-resume">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync">
         <span style="font-size:12px;font-weight:600;">Все резюме</span>
         <div style="display:flex;align-items:center;gap:4px;">
           <span class="badge badge-green" id="res-visible-count" style="font-size:10px;display:none;">0 видимых</span>
           <span class="badge badge-amber" id="res-hidden-count" style="font-size:10px;display:none;">0 скрытых</span>
           <span class="badge badge-zinc" id="res-sync-count">0</span>
+          <span class="timeline-chevron open"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
       </div>
-      <div id="res-sync-list" style="font-size:11px;color:#71717a;">
-        Нажмите «Синхронизировать все» для загрузки резюме
-      </div>
-      <div id="res-cta-load" style="padding-top:6px;display:none;">
-        <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg> Взять со страницы
-        </button>
-      </div>
-      <div style="padding-top:6px;">
-        <button class="btn btn-outline btn-sm" data-action="sync-resumes" style="width:100%;">
-          ${ICONS.refresh} Синхронизировать все
-        </button>
+      <div class="timeline-body open" id="res-sync-body" style="margin-top:10px;">
+        <div id="res-sync-list" style="font-size:11px;color:#71717a;">
+          Нажмите «Синхронизировать все» для загрузки резюме
+        </div>
+        <div id="res-cta-load" style="padding-top:6px;display:none;">
+          <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg> Взять со страницы
+          </button>
+        </div>
+        <div style="padding-top:6px;">
+          <button class="btn btn-outline btn-sm" data-action="sync-resumes" style="width:100%;">
+            ${ICONS.refresh} Синхронизировать все
+          </button>
+        </div>
       </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">
