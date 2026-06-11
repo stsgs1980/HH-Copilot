@@ -1120,3 +1120,21 @@ Stage Summary:
 - Skills like P&L, B2C продажи were on resume page but invisible to parser — now found via fallback
 - 5 total strategies: skills-card → skills-table → heading detection → data-qa*='skill' scan → Magritte tag scan
 
+
+---
+Task ID: 2
+Agent: main
+Task: Fix vacancy click navigation — FAB hides instead of navigating
+
+Work Log:
+- Diagnosed: page-world.js intercepted all vacancy link clicks with preventDefault + pushState fallback, but pushState alone doesn't trigger hh.ru's SPA router to load new content
+- Also sidebar-events.js used pushState instead of window.location.href
+- Removed click interception from page-world.js (kept pushState patch for detecting hh.ru's own SPA navigations)
+- Changed sidebar-events.js navigate handler from pushState to window.location.href (full navigation)
+- Rebuilt v1.9.17.0
+
+Stage Summary:
+- Vacancy links now work normally — clicking opens the vacancy page
+- pushState/replaceState patches remain so extension detects when hh.ru does its own SPA navigation
+- No more broken state where FAB hides and page doesn't change
+

@@ -199,8 +199,10 @@ console.log('%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable
 // Solution: Patch pushState in MAIN world and dispatch a CustomEvent
 // that the content script can listen to.
 //
-// Additionally, intercept vacancy/resume link clicks to prevent full page
-// reloads and instead let hh.ru's SPA router handle navigation via pushState.
+// NOTE: We do NOT intercept link clicks here. hh.ru has its own SPA router
+// that handles in-page navigation via pushState. Our click interception was
+// breaking navigation because pushState alone doesn't trigger hh.ru's router
+// to load new page content — it only changes the URL bar.
 
 (function setupSPANavigation() {
   // ── 1. Patch pushState & replaceState ──
@@ -220,53 +222,5 @@ console.log('%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable
     }));
   };
 
-  // ── 2. Intercept vacancy/resume link clicks ──
-  // hh.ru has its own SPA router that intercepts link clicks and calls
-  // pushState. But some links (especially in search results) might trigger
-  // a full page reload instead. We intercept these clicks, prevent the
-  // default navigation, and let hh.ru's click handler do pushState.
-  // If hh.ru doesn't handle it within 150ms, we navigate manually.
-  document.addEventListener('click', function(e) {
-    // Only left-click without modifiers
-    if (e.button !== 0) return;
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-
-    var link = e.target.closest('a[href]');
-    if (!link) return;
-
-    var href = link.getAttribute('href');
-    if (!href) return;
-
-    // Skip target=_blank (user explicitly wants new tab)
-    if (link.target === '_blank') return;
-
-    // Only intercept vacancy and resume links
-    var isVacancy = /^\/vacancy\/\d+/.test(href) || /hh\.ru\/vacancy\/\d+/.test(href);
-    var isResume = /^\/resume\/[a-f0-9]+/.test(href);
-    if (!isVacancy && !isResume) return;
-
-    // Resolve target path
-    var targetPath;
-    try {
-      targetPath = new URL(href, window.location.origin).pathname;
-    } catch (_) { return; }
-
-    // Skip if already on this page
-    if (window.location.pathname === targetPath) return;
-
-    // Prevent default browser navigation (full page reload)
-    // Event still propagates — hh.ru's click handlers will still run
-    e.preventDefault();
-
-    // If hh.ru's SPA router handles the click, it will call pushState
-    // and our patch above will fire. If not, we navigate manually.
-    setTimeout(function() {
-      if (window.location.pathname !== targetPath) return; // hh.ru handled it
-      // hh.ru didn't handle it — navigate manually
-      history.pushState({}, '', href);
-    }, 150);
-
-  }, true); // capture phase to preventDefault before browser navigation
-
-  console.log('%c[HH-AR][SPA] Navigation interception active', 'color:#71717a;font-size:11px');
+  console.log('%c[HH-AR][SPA] pushState/replaceState patches active', 'color:#71717a;font-size:11px');
 })();

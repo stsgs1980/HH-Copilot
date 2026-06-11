@@ -42,19 +42,17 @@ export function bindSidebarClicks(container) {
     if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
 
-    /* Navigate — SPA-style pushState + close sidebar */
+    /* Navigate — close sidebar + full page navigation */
     const navLink = t.closest('[data-action="navigate"]');
     if (navLink) {
       e.preventDefault();
       const href = navLink.getAttribute('href');
       if (href) {
         toggleSidebar(); // close panel
-        history.pushState({}, '', href);
-        // pushState patch in main-page-handlers.js will fire onSPANavigate
-        // Also dispatch for MAIN-world compatibility
-        document.dispatchEvent(new CustomEvent('hh-ar-spa-navigate', {
-          detail: { path: href, source: 'sidebar' }
-        }));
+        // Full navigation — hh.ru loads the page, extension re-initialises on the new URL
+        // pushState alone doesn't trigger hh.ru's SPA router, so the page content
+        // never updates and the user is left with a broken state.
+        window.location.href = href;
       }
       return;
     }

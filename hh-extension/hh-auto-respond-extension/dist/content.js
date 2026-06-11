@@ -9626,10 +9626,7 @@
         const href = navLink.getAttribute("href");
         if (href) {
           toggleSidebar();
-          history.pushState({}, "", href);
-          document.dispatchEvent(new CustomEvent("hh-ar-spa-navigate", {
-            detail: { path: href, source: "sidebar" }
-          }));
+          window.location.href = href;
         }
         return;
       }

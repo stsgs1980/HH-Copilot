@@ -154,30 +154,6 @@
         detail: { path: window.location.pathname, source: "replaceState" }
       }));
     };
-    document.addEventListener("click", function(e) {
-      if (e.button !== 0) return;
-      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-      var link = e.target.closest("a[href]");
-      if (!link) return;
-      var href = link.getAttribute("href");
-      if (!href) return;
-      if (link.target === "_blank") return;
-      var isVacancy = /^\/vacancy\/\d+/.test(href) || /hh\.ru\/vacancy\/\d+/.test(href);
-      var isResume = /^\/resume\/[a-f0-9]+/.test(href);
-      if (!isVacancy && !isResume) return;
-      var targetPath;
-      try {
-        targetPath = new URL(href, window.location.origin).pathname;
-      } catch (_) {
-        return;
-      }
-      if (window.location.pathname === targetPath) return;
-      e.preventDefault();
-      setTimeout(function() {
-        if (window.location.pathname !== targetPath) return;
-        history.pushState({}, "", href);
-      }, 150);
-    }, true);
-    console.log("%c[HH-AR][SPA] Navigation interception active", "color:#71717a;font-size:11px");
+    console.log("%c[HH-AR][SPA] pushState/replaceState patches active", "color:#71717a;font-size:11px");
   })();
 })();
