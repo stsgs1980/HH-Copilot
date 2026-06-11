@@ -3638,7 +3638,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.7"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.8"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3657,7 +3657,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.7"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.8"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -4302,18 +4302,14 @@
     set("vac-match-salary", b.salary + "/15");
     set("vac-match-exp", b.experience + "/15");
     const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
-    set("vac-match-bar-skills", (b.skills / 100 * 100).toFixed(1) + "%");
-    set("vac-match-bar-title", (b.title / 100 * 100).toFixed(1) + "%");
-    set("vac-match-bar-salary", (b.salary / 100 * 100).toFixed(1) + "%");
-    set("vac-match-bar-exp", (b.experience / 100 * 100).toFixed(1) + "%");
     const barSkills = el("vac-match-bar-skills");
     const barTitle = el("vac-match-bar-title");
     const barSalary = el("vac-match-bar-salary");
     const barExp = el("vac-match-bar-exp");
-    if (barSkills) barSkills.style.width = b.skills + "%";
-    if (barTitle) barTitle.style.width = b.title + "%";
-    if (barSalary) barSalary.style.width = b.salary + "%";
-    if (barExp) barExp.style.width = b.experience + "%";
+    if (barSkills) barSkills.style.width = (b.skills / total * 100).toFixed(1) + "%";
+    if (barTitle) barTitle.style.width = (b.title / total * 100).toFixed(1) + "%";
+    if (barSalary) barSalary.style.width = (b.salary / total * 100).toFixed(1) + "%";
+    if (barExp) barExp.style.width = (b.experience / total * 100).toFixed(1) + "%";
     const detailsSection = el("vac-match-details");
     if (detailsSection && details) {
       const matching = details.matchingSkills || [];
@@ -4327,7 +4323,7 @@
             matchingRow.style.display = "";
             const visible = matching.slice(0, 6);
             const remainder = matching.length - visible.length;
-            matchingList.innerHTML = visible.map((s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+            matchingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
           } else {
             matchingRow.style.display = "none";
           }
@@ -4339,7 +4335,7 @@
             missingRow.style.display = "";
             const visible = missing.slice(0, 6);
             const remainder = missing.length - visible.length;
-            missingList.innerHTML = visible.map((s) => '<span class="skill-tag skill-miss">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+            missingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
           } else {
             missingRow.style.display = "none";
           }

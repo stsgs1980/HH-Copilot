@@ -55,22 +55,16 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
   set('vac-match-salary', b.salary + '/15');
   set('vac-match-exp', b.experience + '/15');
 
-  // Stacked bar
+  // Stacked bar — fill 100% width proportionally
   const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
-  set('vac-match-bar-skills', ((b.skills / 100) * 100).toFixed(1) + '%');
-  set('vac-match-bar-title', ((b.title / 100) * 100).toFixed(1) + '%');
-  set('vac-match-bar-salary', ((b.salary / 100) * 100).toFixed(1) + '%');
-  set('vac-match-bar-exp', ((b.experience / 100) * 100).toFixed(1) + '%');
-
-  // Actually set widths on bar segments
   const barSkills = el('vac-match-bar-skills');
   const barTitle = el('vac-match-bar-title');
   const barSalary = el('vac-match-bar-salary');
   const barExp = el('vac-match-bar-exp');
-  if (barSkills) barSkills.style.width = (b.skills) + '%';
-  if (barTitle) barTitle.style.width = (b.title) + '%';
-  if (barSalary) barSalary.style.width = (b.salary) + '%';
-  if (barExp) barExp.style.width = (b.experience) + '%';
+  if (barSkills) barSkills.style.width = ((b.skills / total) * 100).toFixed(1) + '%';
+  if (barTitle) barTitle.style.width = ((b.title / total) * 100).toFixed(1) + '%';
+  if (barSalary) barSalary.style.width = ((b.salary / total) * 100).toFixed(1) + '%';
+  if (barExp) barExp.style.width = ((b.experience / total) * 100).toFixed(1) + '%';
 
   // Matching/missing skills details
   const detailsSection = el('vac-match-details');
@@ -88,7 +82,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
           matchingRow.style.display = '';
           const visible = matching.slice(0, 6);
           const remainder = matching.length - visible.length;
-          matchingList.innerHTML = visible.map(s => '<span class="skill-tag skill-match">' + esc(s) + '</span>').join('') +
+          matchingList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + '</span>').join('') +
             (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
         } else {
           matchingRow.style.display = 'none';
@@ -102,7 +96,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
           missingRow.style.display = '';
           const visible = missing.slice(0, 6);
           const remainder = missing.length - visible.length;
-          missingList.innerHTML = visible.map(s => '<span class="skill-tag skill-miss">' + esc(s) + '</span>').join('') +
+          missingList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">' + esc(s) + '</span>').join('') +
             (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
         } else {
           missingRow.style.display = 'none';

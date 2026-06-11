@@ -1086,3 +1086,12 @@ Stage Summary:
 - Timing fix: resume-loaded event triggers automatic re-score on vacancy detail pages
 - Match breakdown now visible in sidebar panel
 - Pushed to origin/main
+
+---
+Task ID: v1.9.15.8-root
+Agent: main
+Task: Fix stacked bar + skill tags in match card
+
+Stage Summary:
+- Progress bar fills 100% proportionally
+- Skill tags use inline styles instead of missing CSS class

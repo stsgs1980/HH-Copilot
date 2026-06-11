@@ -492,3 +492,20 @@ Stage Summary:
 - Timing fix: resume-loaded event triggers re-score automatically
 - Match breakdown now visible in sidebar panel (not just console)
 - Version: 1.9.15.7
+
+---
+Task ID: v1.9.15.8
+Agent: main
+Task: Fix stacked bar proportions + skill tag rendering in match card
+
+Work Log:
+- Fixed stacked bar: was using absolute values (20%,30%,8%,8% = 66% total with gray gap)
+  Now uses proportional fill: each segment = value/total*100, so bar always fills 100%
+- Fixed skill tags: replaced CSS class "skill-tag" (not defined in Shadow DOM) with inline styles
+  Matching: green bg #ECFDF5, border #A7F3D0, text #059669
+  Missing: red bg #FEF2F2, border #FECACA, text #DC2626
+- Removed dead code: 4 unused set() calls with toFixed on bar elements
+
+Stage Summary:
+- Stacked bar now fills full width with proportional segments
+- Skill tags render correctly with inline styles (no dependency on CSS class)
