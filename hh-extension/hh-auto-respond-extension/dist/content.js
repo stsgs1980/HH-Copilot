@@ -895,6 +895,237 @@
     }
   });
 
+  // src/lib/match-scorer.js
+  function computeMatchScore(resume, vacancy) {
+    if (!resume || !vacancy) {
+      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0 }, details: {} };
+    }
+    const skillResult = scoreSkills(resume, vacancy);
+    const titleResult = scoreTitle(resume, vacancy);
+    const salaryResult = scoreSalary(resume, vacancy);
+    const expResult = scoreExperience(resume, vacancy);
+    const breakdown = {
+      skills: skillResult.score,
+      title: titleResult.score,
+      salary: salaryResult.score,
+      experience: expResult.score
+    };
+    const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
+    const details = {
+      matchingSkills: skillResult.matching,
+      missingSkills: skillResult.missing,
+      extraSkills: skillResult.extra,
+      titleSimilarity: titleResult.similarity,
+      salaryMatch: salaryResult.reason,
+      experienceMatch: expResult.reason
+    };
+    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience);
+    return { total, breakdown, details };
+  }
+  function scoreSkills(resume, vacancy) {
+    const resumeSkills = normalizeSkillSet(resume.skills || []);
+    const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
+    if (vacancySkills.size === 0) {
+      return { score: 20, matching: [], missing: [], extra: [] };
+    }
+    const matching = [];
+    const missing = [];
+    for (const skill of vacancySkills) {
+      if (resumeSkills.has(skill)) {
+        matching.push(skill);
+      } else {
+        missing.push(skill);
+      }
+    }
+    const extra = [];
+    for (const skill of resumeSkills) {
+      if (!vacancySkills.has(skill)) extra.push(skill);
+    }
+    const ratio = vacancySkills.size > 0 ? matching.length / vacancySkills.size : 0;
+    const score = Math.round(ratio * 40);
+    return { score, matching, missing, extra };
+  }
+  function scoreTitle(resume, vacancy) {
+    const resumeTitle = (resume.title || "").toLowerCase().trim();
+    const vacancyTitle = (vacancy.title || "").toLowerCase().trim();
+    if (!resumeTitle || !vacancyTitle) {
+      return { score: 0, similarity: 0 };
+    }
+    if (resumeTitle === vacancyTitle) {
+      return { score: 30, similarity: 1 };
+    }
+    const resumeWords = tokenize(resumeTitle);
+    const vacancyWords = tokenize(vacancyTitle);
+    if (vacancyWords.length === 0) {
+      return { score: 0, similarity: 0 };
+    }
+    let overlapCount = 0;
+    for (const w of vacancyWords) {
+      if (resumeWords.has(w)) overlapCount++;
+    }
+    const similarity = overlapCount / vacancyWords.size;
+    const bonus = titleBonus(resumeTitle, vacancyTitle);
+    const rawScore = similarity * 25 + bonus;
+    const score = Math.min(30, Math.round(rawScore));
+    return { score, similarity: Math.round(similarity * 100) / 100 };
+  }
+  function titleBonus(resumeTitle, vacancyTitle) {
+    let bonus = 0;
+    const abbrMap = {
+      "\u0440\u043E\u043F": "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C \u043E\u0442\u0434\u0435\u043B\u0430 \u043F\u0440\u043E\u0434\u0430\u0436",
+      "c#": "csharp",
+      ".net": "dotnet",
+      "qa": "quality assurance",
+      "\u0441\u0438\u0441\u0430\u0434\u043C\u0438\u043D": "\u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0439 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440",
+      "\u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0438\u0441\u0442": "\u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A",
+      "devops": "devops",
+      "frontend": "\u0444\u0440\u043E\u043D\u0442\u0435\u043D\u0434",
+      "backend": "\u0431\u044D\u043A\u0435\u043D\u0434",
+      "fullstack": "\u0444\u0443\u043B\u0441\u0442\u0435\u043A"
+    };
+    for (const [abbr, full] of Object.entries(abbrMap)) {
+      const resumeHas = resumeTitle.includes(abbr) || resumeTitle.includes(full);
+      const vacancyHas = vacancyTitle.includes(abbr) || vacancyTitle.includes(full);
+      if (resumeHas && vacancyHas) {
+        bonus += 5;
+        break;
+      }
+    }
+    return Math.min(5, bonus);
+  }
+  function scoreSalary(resume, vacancy) {
+    const resumeSalary = parseResumeSalary(resume.salary || "");
+    const vacSalary = vacancy.salary || {};
+    if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
+      return { score: 8, reason: "no-data" };
+    }
+    if (!resumeSalary) {
+      return { score: 8, reason: "resume-no-salary" };
+    }
+    if (!vacSalary.min && !vacSalary.max) {
+      return { score: 8, reason: "vacancy-no-salary" };
+    }
+    const vacMin = vacSalary.min || 0;
+    const vacMax = vacSalary.max || Infinity;
+    if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
+      return { score: 15, reason: "within-range" };
+    }
+    if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
+      return { score: 12, reason: "slightly-below" };
+    }
+    if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
+      return { score: 10, reason: "slightly-above" };
+    }
+    if (resumeSalary < vacMin) {
+      return { score: 5, reason: "below-range" };
+    }
+    return { score: 3, reason: "above-range" };
+  }
+  function scoreExperience(resume, vacancy) {
+    const vacExp = vacancy.experience || {};
+    if (vacExp.min === 0 && vacExp.max === 0) {
+      return { score: 15, reason: "no-experience-required" };
+    }
+    const resumeYears = calcResumeYears(resume.experience || []);
+    if (resumeYears === null) {
+      return { score: 8, reason: "unknown-resume-exp" };
+    }
+    if (!vacExp.min && !vacExp.max && !vacExp.raw) {
+      return { score: 8, reason: "unknown-vacancy-exp" };
+    }
+    const vacMin = vacExp.min || 0;
+    const vacMax = vacExp.max || 99;
+    if (resumeYears >= vacMin && resumeYears <= vacMax) {
+      return { score: 15, reason: "within-range" };
+    }
+    if (resumeYears < vacMin && resumeYears >= vacMin - 1) {
+      return { score: 10, reason: "slightly-below" };
+    }
+    if (resumeYears > vacMax) {
+      return { score: 8, reason: "overqualified" };
+    }
+    return { score: 3, reason: "below-range" };
+  }
+  function normalizeSkillSet(skills) {
+    const set = /* @__PURE__ */ new Set();
+    for (const s of skills) {
+      const name = typeof s === "string" ? s : s.name || "";
+      if (name) set.add(name.toLowerCase().trim().replace(/\s+/g, " "));
+    }
+    return set;
+  }
+  function tokenize(text) {
+    const stopWords = /* @__PURE__ */ new Set([
+      "\u0432",
+      "\u043D\u0430",
+      "\u0438",
+      "\u0441",
+      "\u043E\u0442",
+      "\u0434\u043E",
+      "\u0437\u0430",
+      "\u043F\u043E",
+      "\u0438\u0437",
+      "\u043A",
+      "\u043E",
+      "\u043D\u0435",
+      "\u043D\u043E",
+      "\u0438\u043B\u0438",
+      "\u0434\u043B\u044F",
+      "\u043A\u0430\u043A",
+      "\u043F\u0440\u0438",
+      "\u0431\u0435\u0437",
+      "the",
+      "a",
+      "an",
+      "in",
+      "on",
+      "at",
+      "to",
+      "for",
+      "of",
+      "with",
+      "and",
+      "or",
+      "from",
+      "by"
+    ]);
+    const words = /* @__PURE__ */ new Set();
+    text.split(/[\s\-–—/,|]+/).forEach((w) => {
+      const clean = w.replace(/[^a-zа-яё0-9#+.]/g, "").trim();
+      if (clean.length >= 2 && !stopWords.has(clean)) words.add(clean);
+    });
+    return words;
+  }
+  function parseResumeSalary(salaryStr) {
+    if (!salaryStr || typeof salaryStr !== "string") return null;
+    const nums = salaryStr.match(/\d[\d\s]*\d/g);
+    if (!nums || nums.length === 0) return null;
+    return parseInt(nums[0].replace(/\s/g, ""), 10) || null;
+  }
+  function calcResumeYears(experience) {
+    if (!Array.isArray(experience) || experience.length === 0) return null;
+    let totalMonths = 0;
+    for (const exp of experience) {
+      if (exp.duration && typeof exp.duration === "object") {
+        totalMonths += (exp.duration.years || 0) * 12 + (exp.duration.months || 0);
+      } else if (typeof exp.duration === "string") {
+        const yearMatch = exp.duration.match(/(\d+)\s*(год|лет)/i);
+        const monthMatch = exp.duration.match(/(\d+)\s*мес/i);
+        if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
+        if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
+      }
+    }
+    if (totalMonths === 0) return null;
+    return Math.round(totalMonths / 12 * 10) / 10;
+  }
+  var scoreLog;
+  var init_match_scorer = __esm({
+    "src/lib/match-scorer.js"() {
+      init_anti_hallucination();
+      scoreLog = createLogger("Scorer");
+    }
+  });
+
   // src/parsers/resume-detail/parse-company-card.js
   function parseCompanyCard(card) {
     const job = {};
@@ -3039,6 +3270,57 @@
         <button id="mass-stop-btn" class="btn btn-danger btn-sm" data-action="pause" style="flex:1;opacity:0.5;" disabled>\u041F\u0430\u0443\u0437\u0430</button>
       </div>
     </div>
+    <div id="vac-match-section" class="card fade-in" style="margin-bottom:12px;display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div id="vac-match-ring" style="width:48px;height:48px;border-radius:50%;background:conic-gradient(#e4e4e7 0deg 360deg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#71717a;">0%</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u0441 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0435\u0439</div>
+          <div id="vac-match-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">\u041E\u0446\u0435\u043D\u0438\u0442\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-skills" style="font-size:16px;font-weight:700;color:#059669;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u041D\u0430\u0432\u044B\u043A\u0438</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-title" style="font-size:16px;font-weight:700;color:#2563EB;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u0414\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044C</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-salary" style="font-size:16px;font-weight:700;color:#D97706;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u0417\u0430\u0440\u043F\u043B\u0430\u0442\u0430</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-exp" style="font-size:16px;font-weight:700;color:#7C3AED;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u041E\u043F\u044B\u0442</div>
+        </div>
+      </div>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:#f4f4f5;">
+        <div id="vac-match-bar-skills" style="width:0%;background:linear-gradient(90deg,#059669,#34D399);border-radius:4px 0 0 4px;"></div>
+        <div id="vac-match-bar-title" style="width:0%;background:linear-gradient(90deg,#2563EB,#60A5FA);"></div>
+        <div id="vac-match-bar-salary" style="width:0%;background:linear-gradient(90deg,#D97706,#FBBF24);"></div>
+        <div id="vac-match-bar-exp" style="width:0%;background:linear-gradient(90deg,#7C3AED,#A78BFA);border-radius:0 4px 4px 0;"></div>
+      </div>
+      <div id="vac-match-details" style="margin-top:10px;display:none;">
+        <div id="vac-match-matching-skills" style="margin-bottom:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#059669;flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:600;color:#059669;">\u0421\u043E\u0432\u043F\u0430\u0434\u0430\u044E\u0449\u0438\u0435 \u043D\u0430\u0432\u044B\u043A\u0438</span>
+          </div>
+          <div id="vac-match-matching-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+        </div>
+        <div id="vac-match-missing-skills" style="margin-bottom:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:600;color:#DC2626;">\u041D\u0435 \u0445\u0432\u0430\u0442\u0430\u0435\u0442</span>
+          </div>
+          <div id="vac-match-missing-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+        </div>
+      </div>
+    </div>
     <div id="res-gap-section" class="card fade-in" style="margin-bottom:12px;display:none;">
       <!-- Header + score ring -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
@@ -3356,7 +3638,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.6"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.7"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3375,7 +3657,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.6"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.15.7"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3980,6 +4262,104 @@
   });
 
   // src/ui/tabs/vacancies.js
+  function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
+    const section = refs.shadowRoot?.getElementById("vac-match-section");
+    if (!section) return;
+    if (!score && score !== 0) {
+      section.style.display = "none";
+      return;
+    }
+    section.style.display = "";
+    const ring = refs.shadowRoot?.getElementById("vac-match-ring");
+    if (ring) {
+      const deg = Math.round(score * 3.6);
+      const color = score >= 70 ? "#059669" : score >= 40 ? "#D97706" : "#DC2626";
+      ring.style.background = "conic-gradient(" + color + " 0deg " + deg + "deg, #e4e4e7 " + deg + "deg 360deg)";
+      const inner = ring.querySelector("div");
+      if (inner) {
+        inner.textContent = score + "%";
+        inner.style.color = color;
+      }
+    }
+    const subtitle = refs.shadowRoot?.getElementById("vac-match-subtitle");
+    if (subtitle) {
+      if (score >= 70) {
+        subtitle.textContent = "\u041E\u0442\u043B\u0438\u0447\u043D\u043E\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u2014 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C \u043E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u044C\u0441\u044F";
+      } else if (score >= 40) {
+        subtitle.textContent = "\u0427\u0430\u0441\u0442\u0438\u0447\u043D\u043E\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u2014 \u0441\u0442\u043E\u0438\u0442 \u0440\u0430\u0441\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C";
+      } else {
+        subtitle.textContent = "\u041D\u0438\u0437\u043A\u043E\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u2014 \u043D\u0430\u0432\u044B\u043A\u0438 \u043D\u0435 \u043F\u043E\u0434\u0445\u043E\u0434\u044F\u0442";
+      }
+    }
+    const el = (id) => refs.shadowRoot?.getElementById(id);
+    const b = breakdown || { skills: 0, title: 0, salary: 0, experience: 0 };
+    const set = (id, val) => {
+      const e = el(id);
+      if (e) e.textContent = val;
+    };
+    set("vac-match-skills", b.skills + "/40");
+    set("vac-match-title", b.title + "/30");
+    set("vac-match-salary", b.salary + "/15");
+    set("vac-match-exp", b.experience + "/15");
+    const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
+    set("vac-match-bar-skills", (b.skills / 100 * 100).toFixed(1) + "%");
+    set("vac-match-bar-title", (b.title / 100 * 100).toFixed(1) + "%");
+    set("vac-match-bar-salary", (b.salary / 100 * 100).toFixed(1) + "%");
+    set("vac-match-bar-exp", (b.experience / 100 * 100).toFixed(1) + "%");
+    const barSkills = el("vac-match-bar-skills");
+    const barTitle = el("vac-match-bar-title");
+    const barSalary = el("vac-match-bar-salary");
+    const barExp = el("vac-match-bar-exp");
+    if (barSkills) barSkills.style.width = b.skills + "%";
+    if (barTitle) barTitle.style.width = b.title + "%";
+    if (barSalary) barSalary.style.width = b.salary + "%";
+    if (barExp) barExp.style.width = b.experience + "%";
+    const detailsSection = el("vac-match-details");
+    if (detailsSection && details) {
+      const matching = details.matchingSkills || [];
+      const missing = details.missingSkills || [];
+      if (matching.length > 0 || missing.length > 0) {
+        detailsSection.style.display = "";
+        const matchingRow = el("vac-match-matching-skills");
+        const matchingList = el("vac-match-matching-list");
+        if (matchingRow && matchingList) {
+          if (matching.length > 0) {
+            matchingRow.style.display = "";
+            const visible = matching.slice(0, 6);
+            const remainder = matching.length - visible.length;
+            matchingList.innerHTML = visible.map((s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+          } else {
+            matchingRow.style.display = "none";
+          }
+        }
+        const missingRow = el("vac-match-missing-skills");
+        const missingList = el("vac-match-missing-list");
+        if (missingRow && missingList) {
+          if (missing.length > 0) {
+            missingRow.style.display = "";
+            const visible = missing.slice(0, 6);
+            const remainder = missing.length - visible.length;
+            missingList.innerHTML = visible.map((s) => '<span class="skill-tag skill-miss">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+          } else {
+            missingRow.style.display = "none";
+          }
+        }
+      } else {
+        detailsSection.style.display = "none";
+      }
+    }
+  }
+  function tryShowVacancyMatch() {
+    const detail = window.__hhVacDetail;
+    if (!detail || detail.matchScore === void 0) return;
+    const resume = panelState.resume;
+    if (resume) {
+      const score = computeMatchScore(resume, detail);
+      renderVacancyMatchScore(detail.id, score.total, score.breakdown, score.details);
+    } else {
+      renderVacancyMatchScore(detail.id, detail.matchScore, detail.matchBreakdown, null);
+    }
+  }
   function renderVacancyList() {
     const list = refs.shadowRoot?.getElementById("har-vlist");
     if (!list) return;
@@ -4039,6 +4419,7 @@
       init_state();
       init_html2();
       init_resume_helpers();
+      init_match_scorer();
     }
   });
 
@@ -4785,6 +5166,7 @@
     renderBlacklist();
     renderSettingsValues();
     renderNegotiationList();
+    tryShowVacancyMatch();
     if (!isTourDone()) {
       if (_tourTimer) clearTimeout(_tourTimer);
       _tourTimer = setTimeout(() => {
@@ -8851,6 +9233,13 @@
     createSidebar();
     setTimeout(updateAuthState, 1500);
     setInterval(updateAuthState, 5e3);
+    window.addEventListener("hh-ar-match-updated", (e) => {
+      const { vacancyId, score, breakdown, details } = e.detail || {};
+      if (score !== void 0) {
+        renderVacancyMatchScore(vacancyId, score, breakdown, details);
+        panelLog.info("Match UI updated: " + score + "% for vacancy " + vacancyId);
+      }
+    });
   }
   function updateVacancyCounts() {
     const el = (id) => refs.shadowRoot?.getElementById(id);
@@ -8883,236 +9272,11 @@
     }
   });
 
-  // src/lib/match-scorer.js
-  init_anti_hallucination();
-  var scoreLog = createLogger("Scorer");
-  function computeMatchScore(resume, vacancy) {
-    if (!resume || !vacancy) {
-      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0 }, details: {} };
-    }
-    const skillResult = scoreSkills(resume, vacancy);
-    const titleResult = scoreTitle(resume, vacancy);
-    const salaryResult = scoreSalary(resume, vacancy);
-    const expResult = scoreExperience(resume, vacancy);
-    const breakdown = {
-      skills: skillResult.score,
-      title: titleResult.score,
-      salary: salaryResult.score,
-      experience: expResult.score
-    };
-    const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
-    const details = {
-      matchingSkills: skillResult.matching,
-      missingSkills: skillResult.missing,
-      extraSkills: skillResult.extra,
-      titleSimilarity: titleResult.similarity,
-      salaryMatch: salaryResult.reason,
-      experienceMatch: expResult.reason
-    };
-    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience);
-    return { total, breakdown, details };
-  }
-  function scoreSkills(resume, vacancy) {
-    const resumeSkills = normalizeSkillSet(resume.skills || []);
-    const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
-    if (vacancySkills.size === 0) {
-      return { score: 20, matching: [], missing: [], extra: [] };
-    }
-    const matching = [];
-    const missing = [];
-    for (const skill of vacancySkills) {
-      if (resumeSkills.has(skill)) {
-        matching.push(skill);
-      } else {
-        missing.push(skill);
-      }
-    }
-    const extra = [];
-    for (const skill of resumeSkills) {
-      if (!vacancySkills.has(skill)) extra.push(skill);
-    }
-    const ratio = vacancySkills.size > 0 ? matching.length / vacancySkills.size : 0;
-    const score = Math.round(ratio * 40);
-    return { score, matching, missing, extra };
-  }
-  function scoreTitle(resume, vacancy) {
-    const resumeTitle = (resume.title || "").toLowerCase().trim();
-    const vacancyTitle = (vacancy.title || "").toLowerCase().trim();
-    if (!resumeTitle || !vacancyTitle) {
-      return { score: 0, similarity: 0 };
-    }
-    if (resumeTitle === vacancyTitle) {
-      return { score: 30, similarity: 1 };
-    }
-    const resumeWords = tokenize(resumeTitle);
-    const vacancyWords = tokenize(vacancyTitle);
-    if (vacancyWords.length === 0) {
-      return { score: 0, similarity: 0 };
-    }
-    let overlapCount = 0;
-    for (const w of vacancyWords) {
-      if (resumeWords.has(w)) overlapCount++;
-    }
-    const similarity = overlapCount / vacancyWords.size;
-    const bonus = titleBonus(resumeTitle, vacancyTitle);
-    const rawScore = similarity * 25 + bonus;
-    const score = Math.min(30, Math.round(rawScore));
-    return { score, similarity: Math.round(similarity * 100) / 100 };
-  }
-  function titleBonus(resumeTitle, vacancyTitle) {
-    let bonus = 0;
-    const abbrMap = {
-      "\u0440\u043E\u043F": "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C \u043E\u0442\u0434\u0435\u043B\u0430 \u043F\u0440\u043E\u0434\u0430\u0436",
-      "c#": "csharp",
-      ".net": "dotnet",
-      "qa": "quality assurance",
-      "\u0441\u0438\u0441\u0430\u0434\u043C\u0438\u043D": "\u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u0439 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440",
-      "\u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0438\u0441\u0442": "\u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A",
-      "devops": "devops",
-      "frontend": "\u0444\u0440\u043E\u043D\u0442\u0435\u043D\u0434",
-      "backend": "\u0431\u044D\u043A\u0435\u043D\u0434",
-      "fullstack": "\u0444\u0443\u043B\u0441\u0442\u0435\u043A"
-    };
-    for (const [abbr, full] of Object.entries(abbrMap)) {
-      const resumeHas = resumeTitle.includes(abbr) || resumeTitle.includes(full);
-      const vacancyHas = vacancyTitle.includes(abbr) || vacancyTitle.includes(full);
-      if (resumeHas && vacancyHas) {
-        bonus += 5;
-        break;
-      }
-    }
-    return Math.min(5, bonus);
-  }
-  function scoreSalary(resume, vacancy) {
-    const resumeSalary = parseResumeSalary(resume.salary || "");
-    const vacSalary = vacancy.salary || {};
-    if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
-      return { score: 8, reason: "no-data" };
-    }
-    if (!resumeSalary) {
-      return { score: 8, reason: "resume-no-salary" };
-    }
-    if (!vacSalary.min && !vacSalary.max) {
-      return { score: 8, reason: "vacancy-no-salary" };
-    }
-    const vacMin = vacSalary.min || 0;
-    const vacMax = vacSalary.max || Infinity;
-    if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
-      return { score: 15, reason: "within-range" };
-    }
-    if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
-      return { score: 12, reason: "slightly-below" };
-    }
-    if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
-      return { score: 10, reason: "slightly-above" };
-    }
-    if (resumeSalary < vacMin) {
-      return { score: 5, reason: "below-range" };
-    }
-    return { score: 3, reason: "above-range" };
-  }
-  function scoreExperience(resume, vacancy) {
-    const vacExp = vacancy.experience || {};
-    if (vacExp.min === 0 && vacExp.max === 0) {
-      return { score: 15, reason: "no-experience-required" };
-    }
-    const resumeYears = calcResumeYears(resume.experience || []);
-    if (resumeYears === null) {
-      return { score: 8, reason: "unknown-resume-exp" };
-    }
-    if (!vacExp.min && !vacExp.max && !vacExp.raw) {
-      return { score: 8, reason: "unknown-vacancy-exp" };
-    }
-    const vacMin = vacExp.min || 0;
-    const vacMax = vacExp.max || 99;
-    if (resumeYears >= vacMin && resumeYears <= vacMax) {
-      return { score: 15, reason: "within-range" };
-    }
-    if (resumeYears < vacMin && resumeYears >= vacMin - 1) {
-      return { score: 10, reason: "slightly-below" };
-    }
-    if (resumeYears > vacMax) {
-      return { score: 8, reason: "overqualified" };
-    }
-    return { score: 3, reason: "below-range" };
-  }
-  function normalizeSkillSet(skills) {
-    const set = /* @__PURE__ */ new Set();
-    for (const s of skills) {
-      const name = typeof s === "string" ? s : s.name || "";
-      if (name) set.add(name.toLowerCase().trim().replace(/\s+/g, " "));
-    }
-    return set;
-  }
-  function tokenize(text) {
-    const stopWords = /* @__PURE__ */ new Set([
-      "\u0432",
-      "\u043D\u0430",
-      "\u0438",
-      "\u0441",
-      "\u043E\u0442",
-      "\u0434\u043E",
-      "\u0437\u0430",
-      "\u043F\u043E",
-      "\u0438\u0437",
-      "\u043A",
-      "\u043E",
-      "\u043D\u0435",
-      "\u043D\u043E",
-      "\u0438\u043B\u0438",
-      "\u0434\u043B\u044F",
-      "\u043A\u0430\u043A",
-      "\u043F\u0440\u0438",
-      "\u0431\u0435\u0437",
-      "the",
-      "a",
-      "an",
-      "in",
-      "on",
-      "at",
-      "to",
-      "for",
-      "of",
-      "with",
-      "and",
-      "or",
-      "from",
-      "by"
-    ]);
-    const words = /* @__PURE__ */ new Set();
-    text.split(/[\s\-–—/,|]+/).forEach((w) => {
-      const clean = w.replace(/[^a-zа-яё0-9#+.]/g, "").trim();
-      if (clean.length >= 2 && !stopWords.has(clean)) words.add(clean);
-    });
-    return words;
-  }
-  function parseResumeSalary(salaryStr) {
-    if (!salaryStr || typeof salaryStr !== "string") return null;
-    const nums = salaryStr.match(/\d[\d\s]*\d/g);
-    if (!nums || nums.length === 0) return null;
-    return parseInt(nums[0].replace(/\s/g, ""), 10) || null;
-  }
-  function calcResumeYears(experience) {
-    if (!Array.isArray(experience) || experience.length === 0) return null;
-    let totalMonths = 0;
-    for (const exp of experience) {
-      if (exp.duration && typeof exp.duration === "object") {
-        totalMonths += (exp.duration.years || 0) * 12 + (exp.duration.months || 0);
-      } else if (typeof exp.duration === "string") {
-        const yearMatch = exp.duration.match(/(\d+)\s*(год|лет)/i);
-        const monthMatch = exp.duration.match(/(\d+)\s*мес/i);
-        if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
-        if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
-      }
-    }
-    if (totalMonths === 0) return null;
-    return Math.round(totalMonths / 12 * 10) / 10;
-  }
-
   // src/parsers/vacancy-list.js
   init_selectors();
   init_anti_hallucination();
   init_storage();
+  init_match_scorer();
   var parserLog = createLogger("Parser");
   async function parseVacanciesFromPage(resume) {
     const cards = findAllElements("vacancyCard");
@@ -9408,10 +9572,6 @@
     return blocks;
   }
 
-  // src/ui/panel.js
-  init_panel();
-  init_render();
-
   // src/parsers/vacancy-detail.js
   init_selectors();
   init_anti_hallucination();
@@ -9594,12 +9754,17 @@
     return result;
   }
 
+  // src/ui/panel.js
+  init_panel();
+  init_render();
+
   // src/content/main-page-handlers.js
   init_anti_hallucination();
   init_storage();
   init_resume_detail2();
   init_resume_fetch();
   init_engine();
+  init_match_scorer();
   init_resumes2();
   init_state();
   var pageLog = createLogger("Main");
@@ -9734,6 +9899,7 @@
           pageLog.info("Match score: " + score.total + "% (skills=" + score.breakdown.skills + ", title=" + score.breakdown.title + ", salary=" + score.breakdown.salary + ", exp=" + score.breakdown.experience + ")");
           saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {
           });
+          window.dispatchEvent(new CustomEvent("hh-ar-match-updated", { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
         } else {
           pageLog.info("No active resume \u2014 skip match scoring");
         }
@@ -9778,6 +9944,8 @@
         renderMyResumesPanel();
       });
     });
+    window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume } }));
+    pageLog.info("Resume loaded \u2192 dispatched hh-ar-resume-loaded");
   }
 
   // src/content/main-resume-loader.js
@@ -9829,6 +9997,7 @@
         renderMyResumesPanel();
         setStatus2("\u041F\u0435\u0440\u0435\u043F\u0430\u0440\u0441\u0435\u043D\u043E: " + (resume.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
         loadLog.info("Reparse: fetched and saved: " + resume.title);
+        window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume } }));
       } else {
         setStatus2("\u041F\u0435\u0440\u0435\u043F\u0430\u0440\u0441\u0438\u0432\u0430\u043D\u0438\u0435 \u043D\u0435 \u0434\u0430\u043B\u043E \u0434\u0430\u043D\u043D\u044B\u0445");
         loadLog.warn("Reparse: parse result has no useful data");
@@ -9873,6 +10042,7 @@
       renderMyResumesPanel();
       setStatus2("\u0414\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E: " + (resume.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
       loadLog.info("Resume loaded and saved: " + resume.title);
+      window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume } }));
     } else {
       setStatus2("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0440\u0435\u0437\u044E\u043C\u0435 \u043D\u0430 \u044D\u0442\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 (\u043D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445)");
       loadLog.warn("Parse result has no useful data \u2014 not saving. Found: " + JSON.stringify(resume._debug?.found) + " Missing: " + JSON.stringify(resume._debug?.missing));
@@ -9891,6 +10061,7 @@
       setActiveResume(synced[0]);
       renderResumePanel();
       setStatus2("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
+      window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume: synced[0] } }));
     } else {
       setStatus2("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C\xBB \u0434\u043B\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438");
     }
@@ -9904,6 +10075,7 @@
       renderMyResumesPanel();
       setStatus2("\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E \u0438\u0437 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u0438: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
       loadLog.info("Loaded resume from synced data: " + synced[0].title);
+      window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume: synced[0] } }));
     } else {
       setStatus2("\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0445 \u0440\u0435\u0437\u044E\u043C\u0435. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435\xBB");
       loadLog.info("No synced resumes available on non-resume page");
@@ -9996,6 +10168,8 @@
   init_anti_hallucination();
   init_storage();
   init_resume_detail2();
+  init_match_scorer();
+  init_storage();
   init_resumes2();
   init_resume_constants();
   init_state();
@@ -10059,6 +10233,29 @@
         initPageLogic();
       }, 3e3);
     }
+    window.addEventListener("hh-ar-resume-loaded", (e) => {
+      const resume = e.detail?.resume || panelState.resume;
+      if (!resume) return;
+      if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
+      mainLog.info("Resume loaded \u2014 re-scoring vacancy detail page");
+      try {
+        const detail = parseVacancyDetail();
+        if (detail) {
+          const score = computeMatchScore(resume, detail);
+          detail.matchScore = score.total;
+          detail.matchBreakdown = score.breakdown;
+          mainLog.info("Re-score: " + score.total + "% (skills=" + score.breakdown.skills + ", title=" + score.breakdown.title + ", salary=" + score.breakdown.salary + ", exp=" + score.breakdown.experience + ")");
+          saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {
+          });
+          saveVacancyDetail(detail).catch(() => {
+          });
+          window.__hhVacDetail = detail;
+          window.dispatchEvent(new CustomEvent("hh-ar-match-updated", { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
+        }
+      } catch (err) {
+        mainLog.warn("Re-score failed: " + err.message);
+      }
+    });
   }
   async function loadSavedResumes() {
     try {
@@ -10074,6 +10271,7 @@
         }
         setActiveResumeState(savedResume);
         mainLog.info("Loaded saved resume: " + savedResume.title);
+        window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume: savedResume } }));
       }
     } catch (e) {
     }

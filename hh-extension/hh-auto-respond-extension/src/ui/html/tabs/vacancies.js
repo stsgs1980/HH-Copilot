@@ -59,6 +59,57 @@ export function getVacanciesSection() {
         <button id="mass-stop-btn" class="btn btn-danger btn-sm" data-action="pause" style="flex:1;opacity:0.5;" disabled>Пауза</button>
       </div>
     </div>
+    <div id="vac-match-section" class="card fade-in" style="margin-bottom:12px;display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div id="vac-match-ring" style="width:48px;height:48px;border-radius:50%;background:conic-gradient(#e4e4e7 0deg 360deg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#71717a;">0%</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">Совпадение с вакансией</div>
+          <div id="vac-match-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">Оцените соответствие</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-skills" style="font-size:16px;font-weight:700;color:#059669;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">Навыки</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-title" style="font-size:16px;font-weight:700;color:#2563EB;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">Должность</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-salary" style="font-size:16px;font-weight:700;color:#D97706;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">Зарплата</div>
+        </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-exp" style="font-size:16px;font-weight:700;color:#7C3AED;">0</div>
+          <div style="font-size:10px;color:#71717a;margin-top:1px;">Опыт</div>
+        </div>
+      </div>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:#f4f4f5;">
+        <div id="vac-match-bar-skills" style="width:0%;background:linear-gradient(90deg,#059669,#34D399);border-radius:4px 0 0 4px;"></div>
+        <div id="vac-match-bar-title" style="width:0%;background:linear-gradient(90deg,#2563EB,#60A5FA);"></div>
+        <div id="vac-match-bar-salary" style="width:0%;background:linear-gradient(90deg,#D97706,#FBBF24);"></div>
+        <div id="vac-match-bar-exp" style="width:0%;background:linear-gradient(90deg,#7C3AED,#A78BFA);border-radius:0 4px 4px 0;"></div>
+      </div>
+      <div id="vac-match-details" style="margin-top:10px;display:none;">
+        <div id="vac-match-matching-skills" style="margin-bottom:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#059669;flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:600;color:#059669;">Совпадающие навыки</span>
+          </div>
+          <div id="vac-match-matching-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+        </div>
+        <div id="vac-match-missing-skills" style="margin-bottom:6px;display:none;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:600;color:#DC2626;">Не хватает</span>
+          </div>
+          <div id="vac-match-missing-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+        </div>
+      </div>
+    </div>
     <div id="res-gap-section" class="card fade-in" style="margin-bottom:12px;display:none;">
       <!-- Header + score ring -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">

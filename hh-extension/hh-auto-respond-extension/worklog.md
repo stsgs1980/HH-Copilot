@@ -455,3 +455,40 @@ Stage Summary:
 - initPageLogic() is now idempotent — no duplicate execution
 - Vacancy detail parser + match scorer now actually run on /vacancy/{id} pages
 - Remaining: "No active resume — skip match scoring" (need resume loaded for scoring)
+
+---
+Task ID: v1.9.15.7
+Agent: main
+Time: 2026-06-12T21:40:00+03:00
+Task: Fix timing (re-score on resume load) + match breakdown UI card
+
+Work Log:
+- Problem: On vacancy detail page, first scoring shows skills=0 because resume
+  hasn't been loaded from chrome.storage yet. After resume loads (async),
+  no re-score happens — user sees wrong score until page reload.
+- Solution: CustomEvent 'hh-ar-resume-loaded' dispatched from all resume load paths
+  main.js listens and re-scores vacancy detail if on /vacancy/{id}
+- Added hh-ar-resume-loaded dispatch from 5 locations:
+  1. main.js::loadSavedResumes() — resume loaded from storage at boot
+  2. main-page-handlers.js::saveResumeToState() — resume parsed from page
+  3. main-resume-loader.js::loadFromResumePage() — manual "Load from page"
+  4. main-resume-loader.js::loadFromResumeListPage() — resume list page
+  5. main-resume-loader.js::loadFromSyncedData() — non-resume page fallback
+  6. main-resume-loader.js::handleReparseResume() — reparse button
+- main.js: hh-ar-resume-loaded listener re-parses vacancy, computes score,
+  saves to storage, dispatches 'hh-ar-match-updated' with full breakdown
+- New UI: 'Совпадение с вакансией' card in vacancies tab
+  - Ring chart with color coding (green >= 70%, amber >= 40%, red < 40%)
+  - 4-axis breakdown: Навыки/40, Должность/30, Зарплата/15, Опыт/15
+  - Stacked bar visualization
+  - Matching/missing skills detail (green/red tags)
+  - Contextual recommendation subtitle
+- panel/index.js: listens for hh-ar-match-updated, calls renderVacancyMatchScore()
+- render.js: tryShowVacancyMatch() called on initial data render
+- main-page-handlers.js: dispatches hh-ar-match-updated on first score too
+- vacancies tab HTML: added vac-match-section card with ring + bars + skill lists
+
+Stage Summary:
+- Timing fix: resume-loaded event triggers re-score automatically
+- Match breakdown now visible in sidebar panel (not just console)
+- Version: 1.9.15.7

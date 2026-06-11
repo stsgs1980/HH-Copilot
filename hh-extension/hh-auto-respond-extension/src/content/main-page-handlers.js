@@ -224,6 +224,8 @@ async function handleVacancyDetailPage(path) {
         pageLog.info('Match score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');
         // Save score to storage
         saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
+        // Notify panel to display match breakdown
+        window.dispatchEvent(new CustomEvent('hh-ar-match-updated', { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
       } else {
         pageLog.info('No active resume — skip match scoring');
       }
@@ -276,4 +278,7 @@ async function saveResumeToState(resume) {
       renderMyResumesPanel();
     });
   });
+  // Notify that resume is now available — triggers re-score on vacancy pages
+  window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume } }));
+  pageLog.info('Resume loaded → dispatched hh-ar-resume-loaded');
 }

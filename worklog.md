@@ -1071,3 +1071,18 @@ Work Log:
 
 Stage Summary:
 - Vacancy detail parser + match scorer now actually run on /vacancy/{id} pages
+
+---
+Task ID: v1.9.15.7
+Agent: main
+Task: Fix timing (re-score on resume load) + match breakdown UI card
+
+Work Log:
+- Added hh-ar-resume-loaded CustomEvent for re-scoring when resume becomes available
+- Added match breakdown UI card in vacancies tab
+- Version bumped to 1.9.15.7
+
+Stage Summary:
+- Timing fix: resume-loaded event triggers automatic re-score on vacancy detail pages
+- Match breakdown now visible in sidebar panel
+- Pushed to origin/main

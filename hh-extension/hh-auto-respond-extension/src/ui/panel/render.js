@@ -8,7 +8,7 @@
 import { refs, panelState } from '../state.js';
 import { getLoggedInHTML, esc } from '../html.js';
 import { checkAuth, getUserName } from '../auth.js';
-import { renderVacancyList, renderStatsValues } from '../tabs/vacancies.js';
+import { renderVacancyList, renderStatsValues, tryShowVacancyMatch } from '../tabs/vacancies.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
 import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList } from '../tabs/negotiations.js';
@@ -97,6 +97,9 @@ export function renderInitialData() {
   renderBlacklist();
   renderSettingsValues();
   renderNegotiationList();
+
+  // Show match score card if we're on a vacancy detail page with parsed data
+  tryShowVacancyMatch();
 
   // Auto-start tour for first-time users (guard against duplicate calls)
   if (!isTourDone()) {

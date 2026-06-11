@@ -13,7 +13,7 @@ import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
 import { checkAuth, checkAuthAsync } from '../auth.js';
 import { createFab, updateFabIcon } from '../fab.js';
-import { renderVacancyList, renderStatsValues } from '../tabs/vacancies.js';
+import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
 import { renderOverviewKPI, addTimelineEvent } from '../tabs/overview.js';
 import { renderBlacklist } from '../tabs/settings.js';
@@ -176,6 +176,15 @@ export function createPanel() {
   createSidebar();
   setTimeout(updateAuthState, 1500);
   setInterval(updateAuthState, 5000);
+
+  // Listen for match score updates (from vacancy detail re-score)
+  window.addEventListener('hh-ar-match-updated', (e) => {
+    const { vacancyId, score, breakdown, details } = e.detail || {};
+    if (score !== undefined) {
+      renderVacancyMatchScore(vacancyId, score, breakdown, details);
+      panelLog.info('Match UI updated: ' + score + '% for vacancy ' + vacancyId);
+    }
+  });
 }
 
 /* Helper: update vacancy counter cards */

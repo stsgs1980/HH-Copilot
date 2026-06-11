@@ -18,6 +18,9 @@ import { checkDailyReset, getStats, getAllSettings, getMyResumes, getActiveResum
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { diagnoseResumeDOM, debugVisibility } from '../parsers/resume-detail.js';
 import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
+import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
+import { computeMatchScore } from '../lib/match-scorer.js';
+import { saveVacancyScore, saveVacancyDetail } from '../lib/storage.js';
 import { panelState, updateAuthState, createPanel, updateVacancies } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { VISIBILITY_UNKNOWN, TITLE_SUFFIX_NOISE } from '../lib/resume-constants.js';
@@ -129,6 +132,33 @@ async function init() {
       initPageLogic();
     }, 3000);
   }
+
+  // ── Re-score vacancy detail when resume becomes available ──
+  // On vacancy detail pages, the first scoring may show skills=0 because
+  // the resume hasn't been loaded from storage yet. When a resume loads
+  // (either from storage at boot, or from a page parse), we re-score.
+  window.addEventListener('hh-ar-resume-loaded', (e) => {
+    const resume = e.detail?.resume || panelState.resume;
+    if (!resume) return;
+    if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
+    mainLog.info('Resume loaded — re-scoring vacancy detail page');
+    try {
+      const detail = parseVacancyDetail();
+      if (detail) {
+        const score = computeMatchScore(resume, detail);
+        detail.matchScore = score.total;
+        detail.matchBreakdown = score.breakdown;
+        mainLog.info('Re-score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');
+        saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
+        saveVacancyDetail(detail).catch(() => {});
+        window.__hhVacDetail = detail;
+        // Notify panel to update match display
+        window.dispatchEvent(new CustomEvent('hh-ar-match-updated', { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
+      }
+    } catch (err) {
+      mainLog.warn('Re-score failed: ' + err.message);
+    }
+  });
 }
 
 /**
@@ -149,6 +179,8 @@ async function loadSavedResumes() {
       }
       setActiveResumeState(savedResume);
       mainLog.info('Loaded saved resume: ' + savedResume.title);
+      // Notify listeners (e.g. vacancy detail re-score) that resume is available
+      window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: savedResume } }));
     }
   } catch (e) {}
 

@@ -67,6 +67,8 @@ export async function handleReparseResume(e) {
       renderMyResumesPanel();
       setStatus('Перепарсено: ' + (resume.title || 'Без названия'));
       loadLog.info('Reparse: fetched and saved: ' + resume.title);
+      // Notify listeners that resume is available
+      window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume } }));
     } else {
       setStatus('Перепарсивание не дало данных');
       loadLog.warn('Reparse: parse result has no useful data');
@@ -119,6 +121,8 @@ async function loadFromResumePage(path) {
     renderMyResumesPanel();
     setStatus('Действующее резюме загружено: ' + (resume.title || 'Без названия'));
     loadLog.info('Resume loaded and saved: ' + resume.title);
+    // Notify listeners (e.g. vacancy detail re-score) that resume is available
+    window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume } }));
   } else {
     setStatus('Не удалось распознать резюме на этой странице (нет данных)');
     loadLog.warn('Parse result has no useful data — not saving. Found: ' +
@@ -142,6 +146,8 @@ async function loadFromResumeListPage() {
     setActiveResume(synced[0]);
     renderResumePanel();
     setStatus('Найдено резюме: ' + list.length + '. Показано: ' + (synced[0].title || 'Без названия'));
+    // Notify listeners that resume is available
+    window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: synced[0] } }));
   } else {
     setStatus('Найдено резюме: ' + list.length + '. Нажмите «Синхронизировать» для загрузки');
   }
@@ -156,6 +162,8 @@ async function loadFromSyncedData() {
     renderMyResumesPanel();
     setStatus('Загружено из синхронизации: ' + (synced[0].title || 'Без названия'));
     loadLog.info('Loaded resume from synced data: ' + synced[0].title);
+    // Notify listeners that resume is available
+    window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: synced[0] } }));
   } else {
     setStatus('Нет сохранённых резюме. Используйте «Синхронизировать все»');
     loadLog.info('No synced resumes available on non-resume page');

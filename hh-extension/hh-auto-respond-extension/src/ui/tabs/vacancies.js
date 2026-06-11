@@ -8,6 +8,126 @@
 import { panelState, refs } from '../state.js';
 import { esc, scoreClass } from '../html.js';
 import { updateSkillGapSection } from './resumes/resume-helpers.js';
+import { computeMatchScore } from '../../lib/match-scorer.js';
+
+export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
+  const section = refs.shadowRoot?.getElementById('vac-match-section');
+  if (!section) return;
+
+  if (!score && score !== 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = '';
+
+  // Ring chart
+  const ring = refs.shadowRoot?.getElementById('vac-match-ring');
+  if (ring) {
+    const deg = Math.round(score * 3.6);
+    const color = score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#DC2626';
+    ring.style.background = 'conic-gradient(' + color + ' 0deg ' + deg + 'deg, #e4e4e7 ' + deg + 'deg 360deg)';
+    const inner = ring.querySelector('div');
+    if (inner) {
+      inner.textContent = score + '%';
+      inner.style.color = color;
+    }
+  }
+
+  // Subtitle
+  const subtitle = refs.shadowRoot?.getElementById('vac-match-subtitle');
+  if (subtitle) {
+    if (score >= 70) {
+      subtitle.textContent = 'Отличное совпадение — рекомендуем откликнуться';
+    } else if (score >= 40) {
+      subtitle.textContent = 'Частичное совпадение — стоит рассмотреть';
+    } else {
+      subtitle.textContent = 'Низкое совпадение — навыки не подходят';
+    }
+  }
+
+  // Breakdown numbers
+  const el = (id) => refs.shadowRoot?.getElementById(id);
+  const b = breakdown || { skills: 0, title: 0, salary: 0, experience: 0 };
+  const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
+  set('vac-match-skills', b.skills + '/40');
+  set('vac-match-title', b.title + '/30');
+  set('vac-match-salary', b.salary + '/15');
+  set('vac-match-exp', b.experience + '/15');
+
+  // Stacked bar
+  const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
+  set('vac-match-bar-skills', ((b.skills / 100) * 100).toFixed(1) + '%');
+  set('vac-match-bar-title', ((b.title / 100) * 100).toFixed(1) + '%');
+  set('vac-match-bar-salary', ((b.salary / 100) * 100).toFixed(1) + '%');
+  set('vac-match-bar-exp', ((b.experience / 100) * 100).toFixed(1) + '%');
+
+  // Actually set widths on bar segments
+  const barSkills = el('vac-match-bar-skills');
+  const barTitle = el('vac-match-bar-title');
+  const barSalary = el('vac-match-bar-salary');
+  const barExp = el('vac-match-bar-exp');
+  if (barSkills) barSkills.style.width = (b.skills) + '%';
+  if (barTitle) barTitle.style.width = (b.title) + '%';
+  if (barSalary) barSalary.style.width = (b.salary) + '%';
+  if (barExp) barExp.style.width = (b.experience) + '%';
+
+  // Matching/missing skills details
+  const detailsSection = el('vac-match-details');
+  if (detailsSection && details) {
+    const matching = details.matchingSkills || [];
+    const missing = details.missingSkills || [];
+
+    if (matching.length > 0 || missing.length > 0) {
+      detailsSection.style.display = '';
+
+      const matchingRow = el('vac-match-matching-skills');
+      const matchingList = el('vac-match-matching-list');
+      if (matchingRow && matchingList) {
+        if (matching.length > 0) {
+          matchingRow.style.display = '';
+          const visible = matching.slice(0, 6);
+          const remainder = matching.length - visible.length;
+          matchingList.innerHTML = visible.map(s => '<span class="skill-tag skill-match">' + esc(s) + '</span>').join('') +
+            (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
+        } else {
+          matchingRow.style.display = 'none';
+        }
+      }
+
+      const missingRow = el('vac-match-missing-skills');
+      const missingList = el('vac-match-missing-list');
+      if (missingRow && missingList) {
+        if (missing.length > 0) {
+          missingRow.style.display = '';
+          const visible = missing.slice(0, 6);
+          const remainder = missing.length - visible.length;
+          missingList.innerHTML = visible.map(s => '<span class="skill-tag skill-miss">' + esc(s) + '</span>').join('') +
+            (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
+        } else {
+          missingRow.style.display = 'none';
+        }
+      }
+    } else {
+      detailsSection.style.display = 'none';
+    }
+  }
+}
+
+/** Try to show match score from stored vacancy detail data */
+export function tryShowVacancyMatch() {
+  const detail = window.__hhVacDetail;
+  if (!detail || detail.matchScore === undefined) return;
+  // Re-compute with current resume to get full details (matching/missing skills)
+  const resume = panelState.resume;
+  if (resume) {
+    const score = computeMatchScore(resume, detail);
+    renderVacancyMatchScore(detail.id, score.total, score.breakdown, score.details);
+  } else {
+    // No resume — show score without skill details
+    renderVacancyMatchScore(detail.id, detail.matchScore, detail.matchBreakdown, null);
+  }
+}
 
 export function renderVacancyList() {
   const list = refs.shadowRoot?.getElementById('har-vlist');
