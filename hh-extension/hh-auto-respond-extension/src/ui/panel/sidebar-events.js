@@ -15,7 +15,7 @@ import { renderStats, clearLog } from '../tabs/stats.js';
 import { renderNegotiationList } from '../tabs/negotiations.js';
 import { renderResumePanel } from '../tabs/resumes.js';
 import { startTour, restartTour, isTourDone } from '../../lib/tour-engine.js';
-import { getWelcomeTourSteps } from '../../lib/tour-steps.js';
+import { getWelcomeTourSteps, getTabTourSteps } from '../../lib/tour-steps.js';
 
 /**
  * Bind sidebar click delegation — single click handler for all panel actions.
@@ -28,7 +28,12 @@ export function bindSidebarClicks(container) {
     if (t.closest('[data-action="close-panel"]')) { toggleSidebar(); return; }
 
     /* Tour */
-    if (t.closest('[data-action="start-tour"]')) { restartTour(getWelcomeTourSteps()); return; }
+    if (t.closest('[data-action="start-tour"]')) {
+      const activeTab = refs.shadowRoot?.querySelector('.tab-btn.active');
+      const tabId = activeTab?.dataset.tab;
+      restartTour(tabId ? getTabTourSteps(tabId) : getWelcomeTourSteps());
+      return;
+    }
 
     /* Vacancy actions */
     const applyBtn = t.closest('[data-action="apply"]');

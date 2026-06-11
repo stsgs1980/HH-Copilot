@@ -8431,7 +8431,9 @@
         return;
       }
       if (t.closest('[data-action="start-tour"]')) {
-        restartTour(getWelcomeTourSteps());
+        const activeTab = refs.shadowRoot?.querySelector(".tab-btn.active");
+        const tabId = activeTab?.dataset.tab;
+        restartTour(tabId ? getTabTourSteps(tabId) : getWelcomeTourSteps());
         return;
       }
       const applyBtn = t.closest('[data-action="apply"]');
