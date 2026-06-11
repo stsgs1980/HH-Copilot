@@ -42,6 +42,18 @@ export function bindSidebarClicks(container) {
     if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
 
+    /* Navigate — open link in current tab + close sidebar */
+    const navLink = t.closest('[data-action="navigate"]');
+    if (navLink) {
+      e.preventDefault();
+      const href = navLink.getAttribute('href');
+      if (href) {
+        toggleSidebar(); // close panel
+        window.location.href = href; // navigate current tab
+      }
+      return;
+    }
+
     /* Auth — reset cache to force real async re-check */
     if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthStateAsync(); return; }
     if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthStateAsync(); return; }

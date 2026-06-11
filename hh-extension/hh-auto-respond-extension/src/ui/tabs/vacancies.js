@@ -155,7 +155,7 @@ export function renderVacancyList() {
       <div style="flex-shrink:0;">${sc}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-          <a href="${esc(v.url)}" target="_blank" style="font-weight:600;color:#059669;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(v.title)}</a>
+          <a href="${esc(v.url)}" data-action="navigate" style="font-weight:600;color:#059669;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;">${esc(v.title)}</a>
           ${badge}
         </div>
         <div style="display:flex;gap:10px;font-size:12px;color:#64748b;margin-bottom:6px;">

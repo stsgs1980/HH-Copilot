@@ -509,3 +509,18 @@ Work Log:
 Stage Summary:
 - Stacked bar now fills full width with proportional segments
 - Skill tags render correctly with inline styles (no dependency on CSS class)
+
+---
+Task ID: v1.9.15.8-nav
+Agent: main
+Task: Navigate vacancy links in current tab instead of new tab
+
+Work Log:
+- Changed vacancy title links: removed target="_blank", added data-action="navigate"
+- Added navigate handler in sidebar-events.js: closes sidebar + navigates current tab
+- SPA routing in main.js detects the URL change and runs appropriate page handler
+- No more tab clutter — clicking a vacancy navigates in place
+
+Stage Summary:
+- Vacancy links navigate in current tab, sidebar auto-closes on click
+- SPA routing handles the URL change automatically

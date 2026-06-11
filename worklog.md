@@ -1095,3 +1095,11 @@ Task: Fix stacked bar + skill tags in match card
 Stage Summary:
 - Progress bar fills 100% proportionally
 - Skill tags use inline styles instead of missing CSS class
+
+---
+Task ID: v1.9.15.8-nav-root
+Agent: main
+Task: Vacancy links navigate in current tab
+
+Stage Summary:
+- target="_blank" → data-action="navigate" → closes sidebar + navigates current tab
