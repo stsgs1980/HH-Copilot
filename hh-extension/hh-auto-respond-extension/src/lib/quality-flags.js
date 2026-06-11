@@ -181,7 +181,8 @@ export function buildRecommendations(ats, exp, flags, r) {
       const suffix = uncovered.length > 5 ? ' и ещё ' + (uncovered.length - 5) : '';
       recs.push({
         priority: 'medium',
-        text: uncovered.length + ' навыков не в описаниях опыта: ' + sample + suffix + ' — упомяните, чтобы HR их увидел'
+        text: uncovered.length + ' навыков не в описаниях опыта: ' + sample + suffix + ' — упомяните, чтобы HR их увидел',
+        tooltip: uncovered.map(s => '«' + s + '»').join(', ')
       });
     }
   }
