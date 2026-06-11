@@ -106,11 +106,17 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
 
         // Merge page-level diagnostic into our global dump
         const diagEntry = visDiag.resumes.find(r => r.id === resume.id);
-        if (diagEntry && resume._visDiag) {
-          diagEntry.pageVis = resume._visDiag.pageVis;
-          diagEntry.pageTrace = resume._visDiag.pageTrace;
-          diagEntry.decision = resume._visDiag.decision;
-          diagEntry.decisionReason = resume._visDiag.decisionReason;
+        if (diagEntry) {
+          // Update title from parsed detail page (list titles are often noisy)
+          if (resume.title && resume.title !== '' && resume.title !== 'Untitled') {
+            diagEntry.title = resume.title;
+          }
+          if (resume._visDiag) {
+            diagEntry.pageVis = resume._visDiag.pageVis;
+            diagEntry.pageTrace = resume._visDiag.pageTrace;
+            diagEntry.decision = resume._visDiag.decision;
+            diagEntry.decisionReason = resume._visDiag.decisionReason;
+          }
         }
       } catch (err) {
         fetchLog.error('Failed: ' + item.url + ': ' + err.message);

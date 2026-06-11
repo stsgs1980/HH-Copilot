@@ -135,7 +135,8 @@ export function cleanResumeTitle(rawText, fallback) {
 
   // Step 3: Split into lines and filter
   const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(l => l.length > 2);
-  let title = lines.find(l => !UI_NOISE.test(l)) || lines[0] || '';
+  // Pick first line that is NOT UI noise; if ALL lines are noise, use fallback
+  let title = lines.find(l => !UI_NOISE.test(l)) || '';
 
   // Step 4: Strip trailing employment-type suffixes
   title = title.replace(TITLE_SUFFIX_NOISE, '').trim();
