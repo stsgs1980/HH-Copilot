@@ -23,6 +23,7 @@
 
 import { createLogger } from './anti-hallucination.js';
 import { parseExperienceString } from './parse-experience.js';
+import { findSynonymMatch, SYNONYM_WEIGHT } from './skill-synonyms.js';
 
 const scoreLog = createLogger('Scorer');
 
@@ -54,6 +55,7 @@ export function computeMatchScore(resume, vacancy) {
   const details = {
     matchingSkills: skillResult.matching,
     derivedMatchSkills: skillResult.derivedMatch,
+    synonymMatchSkills: skillResult.synonymMatch,
     missingSkills: skillResult.missing,
     extraSkills: skillResult.extra,
     titleSimilarity: titleResult.similarity,
@@ -91,7 +93,11 @@ function scoreSkills(resume, vacancy) {
 
   const matching = [];      // explicit skill match
   const derivedMatch = [];  // derived skill match
+  const synonymMatch = [];  // synonym group match (v1.9.22.0)
   const missing = [];
+
+  // All resume skills combined for synonym lookup
+  const allResume = new Set([...resumeSkills, ...derivedSkills]);
 
   for (const skill of vacancySkills) {
     if (resumeSkills.has(skill)) {
@@ -99,7 +105,13 @@ function scoreSkills(resume, vacancy) {
     } else if (derivedSkills.has(skill)) {
       derivedMatch.push(skill);
     } else {
-      missing.push(skill);
+      // v1.9.22.0: Check synonym groups — "переговоры" matches "работа с возражениями"
+      const synMatch = findSynonymMatch(skill, allResume);
+      if (synMatch) {
+        synonymMatch.push(skill + ' ≈ ' + synMatch);
+      } else {
+        missing.push(skill);
+      }
     }
   }
 
@@ -108,18 +120,21 @@ function scoreSkills(resume, vacancy) {
     if (!vacancySkills.has(skill)) extra.push(skill);
   }
 
-  // Score: explicit matches count full, derived matches count 70%
+  // Score: explicit matches count full, derived matches count 70%, synonyms count 50%
   // (derived skills are inferred, not self-declared)
+  // (synonym skills are related but not identical — v1.9.22.0)
   const explicitWeight = 1.0;
   const derivedWeight = 0.7;
-  const effectiveMatches = matching.length * explicitWeight + derivedMatch.length * derivedWeight;
+  const effectiveMatches = matching.length * explicitWeight +
+    derivedMatch.length * derivedWeight +
+    synonymMatch.length * SYNONYM_WEIGHT;
   const ratio = vacancySkills.size > 0 ? effectiveMatches / vacancySkills.size : 0;
   const score = Math.min(40, Math.round(ratio * 40));
 
   scoreLog.info('Skills: explicit=' + matching.length + ' derived=' + derivedMatch.length +
-    ' missing=' + missing.length + ' → ' + score + '/40');
+    ' synonym=' + synonymMatch.length + ' missing=' + missing.length + ' → ' + score + '/40');
 
-  return { score, matching, missing, extra, derivedMatch };
+  return { score, matching, missing, extra, derivedMatch, synonymMatch };
 }
 
 // ═══════════════════════════════════════════════

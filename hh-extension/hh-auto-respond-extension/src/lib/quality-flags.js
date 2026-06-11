@@ -12,6 +12,7 @@
 import { ACHIEVEMENT_VERBS, VAGUE_PHRASES, METRIC_PATTERNS } from './quality-patterns.js';
 import { detectProgression } from './quality-experience.js';
 import { findEmploymentGaps, parseDurationToMonths } from './quality-date-helpers.js';
+import { findSynonymMatch } from './skill-synonyms.js';
 
 // ═══════════════════════════════════════════════
 // КРАСНЫЕ ФЛАГИ
@@ -184,21 +185,32 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     recs.push({ priority: 'high', text: f });
   }
 
-  // ── Навыки вакансии, отсутствующие в резюме (v1.9.21.0) ──
+  // ── Навыки вакансии, отсутствующие в резюме (v1.9.21.0, v1.9.22.0) ──
   // Vacancy skills NOT in resume's explicit skills, derived skills, or experience descriptions.
-  // These are genuine gaps — the employer requires them but the candidate doesn't show them.
+  // v1.9.22.0: Skills with synonym matches shown separately as "related" (lower priority).
+  // Only genuinely missing skills (no match, no synonym) get 'high' priority.
   if (vacancySkills && vacancySkills.size > 0) {
     const resumeExplicit = normalizeSkillSet(r.skills || []);
     const resumeDerived = normalizeSkillSet(r.derivedSkills || []);
+    const allResume = new Set([...resumeExplicit, ...resumeDerived]);
     const descText = (r.experience || []).map(e => e.description || '').join(' ').toLowerCase();
     const descNorm = descText.replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
 
-    const missing = [];
+    const missing = [];      // no match at all
+    const related = [];       // synonym match exists
+
     for (const vs of vacancySkills) {
       if (resumeExplicit.has(vs)) continue;       // already in explicit skills
       if (resumeDerived.has(vs)) continue;        // derived from experience descriptions
       if (vs.length > 3 && descNorm.includes(vs)) continue;  // mentioned in experience text
-      missing.push(vs);
+
+      // v1.9.22.0: check synonym groups
+      const synMatch = findSynonymMatch(vs, allResume);
+      if (synMatch) {
+        related.push(vs + ' ≈ ' + synMatch);
+      } else {
+        missing.push(vs);
+      }
     }
 
     if (missing.length > 0) {
@@ -208,6 +220,16 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
         priority: 'high',
         text: missing.length + ' навыков вакансии нет в резюме: ' + sample + suffix + ' — добавьте для лучшего мэтчинга',
         tooltip: missing.map(s => '«' + s + '»').join(', ')
+      });
+    }
+
+    if (related.length > 0) {
+      const sample = related.slice(0, 3).map(s => '«' + s + '»').join(', ');
+      const suffix = related.length > 3 ? ' и ещё ' + (related.length - 3) : '';
+      recs.push({
+        priority: 'medium',
+        text: 'Связанные навыки: ' + sample + suffix + ' — упомяните явно для точного мэтчинга',
+        tooltip: related.map(s => '«' + s + '»').join(', ')
       });
     }
   }

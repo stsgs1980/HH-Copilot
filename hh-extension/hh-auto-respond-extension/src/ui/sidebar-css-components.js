@@ -97,6 +97,7 @@ export const SIDEBAR_CSS_COMPONENTS = `
 .skill-match { background: #D1FAE5; color: #065F46; }
 .skill-miss { background: #FEE2E2; color: #B91C1C; }
 .skill-extra { background: #DBEAFE; color: #1E40AF; }
+.skill-synonym { background: #FEF3C7; color: #92400E; }
 
 /* Conversation items */
 .conv-item { transition: all 0.2s ease; border-radius: 8px; }

@@ -146,7 +146,16 @@ export function getVacanciesSection() {
         </div>
         <div id="res-gap-match-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
       </div>
-      <!-- Row 2: Gap -->
+      <!-- Row 2: Synonym (v1.9.22.0 — related skills) -->
+      <div id="res-gap-synonym-row" style="margin-bottom:8px;display:none;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#D97706;flex-shrink:0;"></span>
+          <span style="font-size:11px;font-weight:600;color:#D97706;">Связанные</span>
+          <span class="badge badge-amber" id="res-gap-synonym-count" style="font-size:11px;padding:1px 6px;">0</span>
+        </div>
+        <div id="res-gap-synonym-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+      </div>
+      <!-- Row 3: Gap -->
       <div id="res-gap-miss-row" style="margin-bottom:8px;display:none;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
           <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>
