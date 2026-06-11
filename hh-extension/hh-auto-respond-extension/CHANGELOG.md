@@ -5,6 +5,19 @@
 
 ---
 
+## [1.9.12] — 2026-06-11
+
+### Исправлено
+- **Контакты «Данные не найдены»** — телефон, email и telegram не парсились при загрузке через fetch (синхронизация всех резюме). `parseContactsFromDoc()` не вызывался в `fetchAndParseResume()`, хотя вызывался в `parseResume()` для живой страницы
+- Добавлен `parseContactsFromDoc()` в `resume-fetch-parse.js` — парсинг контактов из fetched HTML с fallback-стратегиями:
+  - `data-qa` селекторы (primary)
+  - `mailto:` ссылки
+  - Regex-паттерны для телефона и email
+  - Поиск `t.me/` ссылок по всему документу
+- Добавлены поля `phone`, `email`, `telegram` в модель резюме в `fetchAndParseResume()`
+
+---
+
 ## [1.9.11] — 2026-06-11
 
 ### Добавлено

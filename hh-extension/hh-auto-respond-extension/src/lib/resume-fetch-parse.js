@@ -66,6 +66,86 @@ const GENDER_PATTERNS = [/\bмужчина\b/i, /\bженщина\b/i, /\bмуж
 const AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
 const AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
 
+// ═══════════════════════════════════════════════
+// CONTACTS PARSER (phone, email, telegram)
+// ═══════════════════════════════════════════════
+
+export function parseContactsFromDoc(doc, dbg, resume) {
+  // Phone
+  const phoneEl = doc.querySelector('[data-qa="resume-contact-phone"] a, [data-qa="resume-contact-phone"]');
+  if (phoneEl) {
+    const t = (phoneEl.textContent || '').trim();
+    if (t && /[\d+\-()]/.test(t)) resume.phone = dbg('phone', t);
+  }
+  // Fallback: search for phone pattern in contact block
+  if (!resume.phone) {
+    const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+    if (contactBlock) {
+      const text = contactBlock.textContent || '';
+      const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+      if (phoneMatch) resume.phone = dbg('phone (regex)', phoneMatch[0]);
+    }
+  }
+
+  // Email
+  const emailEl = doc.querySelector('[data-qa="resume-contact-email"] a, [data-qa="resume-contact-email"]');
+  if (emailEl) {
+    const t = (emailEl.textContent || '').trim();
+    if (t && t.includes('@')) resume.email = dbg('email', t);
+  }
+  // Fallback: search for mailto: link or email pattern
+  if (!resume.email) {
+    const mailtoLink = doc.querySelector('a[href^="mailto:"]');
+    if (mailtoLink) {
+      const href = mailtoLink.getAttribute('href') || '';
+      const email = href.replace('mailto:', '').split('?')[0].trim();
+      if (email && email.includes('@')) resume.email = dbg('email (mailto)', email);
+    }
+  }
+  if (!resume.email) {
+    const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+    if (contactBlock) {
+      const text = contactBlock.textContent || '';
+      const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) resume.email = dbg('email (regex)', emailMatch[0]);
+    }
+  }
+
+  // Telegram
+  const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+  if (contactBlock) {
+    const contactLinks = contactBlock.querySelectorAll('a[href*="t.me/"]');
+    for (const link of contactLinks) {
+      const href = link.getAttribute('href') || '';
+      const match = href.match(/t\.me\/(\w+)/);
+      if (match) { resume.telegram = dbg('telegram', '@' + match[1]); break; }
+    }
+    if (!resume.telegram) {
+      const text = (contactBlock.textContent || '');
+      const m = text.match(/@(\w{4,})/);
+      if (m) resume.telegram = dbg('telegram', '@' + m[1]);
+    }
+  }
+
+  // Final fallback: search ALL links in the document for telegram / email
+  if (!resume.telegram) {
+    const allLinks = doc.querySelectorAll('a[href*="t.me/"]');
+    for (const link of allLinks) {
+      const href = link.getAttribute('href') || '';
+      const match = href.match(/t\.me\/(\w+)/);
+      if (match) { resume.telegram = dbg('telegram (doc)', '@' + match[1]); break; }
+    }
+  }
+  if (!resume.email) {
+    const allMailto = doc.querySelectorAll('a[href^="mailto:"]');
+    for (const link of allMailto) {
+      const href = link.getAttribute('href') || '';
+      const email = href.replace('mailto:', '').split('?')[0].trim();
+      if (email && email.includes('@')) { resume.email = dbg('email (doc mailto)', email); break; }
+    }
+  }
+}
+
 export function parsePersonalDataFromDoc(doc, titleEl, dbg, resume) {
   const personalText = [];
   const posCard = doc.querySelector('[data-qa="resume-position-card"]');

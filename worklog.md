@@ -993,3 +993,18 @@ Work Log:
 - Uses data-timeline=res-sync, auto-handled by events.js
 
 Stage Summary:
+---
+Task ID: contacts-fix
+Agent: main
+Task: Fix contacts (phone/email/telegram) not parsed in fetch chain
+
+Work Log:
+- Identified root cause: `parseContactsFromDoc()` was missing from `fetchAndParseResume()` chain
+- Added `parseContactsFromDoc()` to `resume-fetch-parse.js` with multi-strategy fallback (data-qa, mailto, regex, t.me links)
+- Added `phone`, `email`, `telegram` fields to resume model in `fetchAndParseResume()`
+- Updated version: 1.9.11 → 1.9.12
+- Rebuilt dist
+
+Stage Summary:
+- Contacts now parsed when syncing resumes via fetch
+- Version bumped to 1.9.12

@@ -3141,7 +3141,7 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.11"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.12"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -3160,7 +3160,7 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.11"}</span>
+      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.12"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
         <span style="font-size:11px;color:#71717a;">chrome.storage</span>
@@ -4919,6 +4919,81 @@
     }
     return job.company || job.position ? job : null;
   }
+  function parseContactsFromDoc(doc, dbg, resume) {
+    const phoneEl = doc.querySelector('[data-qa="resume-contact-phone"] a, [data-qa="resume-contact-phone"]');
+    if (phoneEl) {
+      const t = (phoneEl.textContent || "").trim();
+      if (t && /[\d+\-()]/.test(t)) resume.phone = dbg("phone", t);
+    }
+    if (!resume.phone) {
+      const contactBlock2 = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+      if (contactBlock2) {
+        const text = contactBlock2.textContent || "";
+        const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+        if (phoneMatch) resume.phone = dbg("phone (regex)", phoneMatch[0]);
+      }
+    }
+    const emailEl = doc.querySelector('[data-qa="resume-contact-email"] a, [data-qa="resume-contact-email"]');
+    if (emailEl) {
+      const t = (emailEl.textContent || "").trim();
+      if (t && t.includes("@")) resume.email = dbg("email", t);
+    }
+    if (!resume.email) {
+      const mailtoLink = doc.querySelector('a[href^="mailto:"]');
+      if (mailtoLink) {
+        const href = mailtoLink.getAttribute("href") || "";
+        const email = href.replace("mailto:", "").split("?")[0].trim();
+        if (email && email.includes("@")) resume.email = dbg("email (mailto)", email);
+      }
+    }
+    if (!resume.email) {
+      const contactBlock2 = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+      if (contactBlock2) {
+        const text = contactBlock2.textContent || "";
+        const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch) resume.email = dbg("email (regex)", emailMatch[0]);
+      }
+    }
+    const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
+    if (contactBlock) {
+      const contactLinks = contactBlock.querySelectorAll('a[href*="t.me/"]');
+      for (const link of contactLinks) {
+        const href = link.getAttribute("href") || "";
+        const match = href.match(/t\.me\/(\w+)/);
+        if (match) {
+          resume.telegram = dbg("telegram", "@" + match[1]);
+          break;
+        }
+      }
+      if (!resume.telegram) {
+        const text = contactBlock.textContent || "";
+        const m = text.match(/@(\w{4,})/);
+        if (m) resume.telegram = dbg("telegram", "@" + m[1]);
+      }
+    }
+    if (!resume.telegram) {
+      const allLinks = doc.querySelectorAll('a[href*="t.me/"]');
+      for (const link of allLinks) {
+        const href = link.getAttribute("href") || "";
+        const match = href.match(/t\.me\/(\w+)/);
+        if (match) {
+          resume.telegram = dbg("telegram (doc)", "@" + match[1]);
+          break;
+        }
+      }
+    }
+    if (!resume.email) {
+      const allMailto = doc.querySelectorAll('a[href^="mailto:"]');
+      for (const link of allMailto) {
+        const href = link.getAttribute("href") || "";
+        const email = href.replace("mailto:", "").split("?")[0].trim();
+        if (email && email.includes("@")) {
+          resume.email = dbg("email (doc mailto)", email);
+          break;
+        }
+      }
+    }
+  }
   function parsePersonalDataFromDoc(doc, titleEl, dbg, resume) {
     const personalText = [];
     const posCard = doc.querySelector('[data-qa="resume-position-card"]');
@@ -6561,6 +6636,9 @@
       gender: "",
       age: "",
       address: "",
+      phone: "",
+      email: "",
+      telegram: "",
       specializations: [],
       skills: [],
       skillLevels: {},
@@ -6604,6 +6682,7 @@
     await parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl);
     parseEducationFromDocSection(doc, dbg, resume);
     parseLanguagesAndAbout2(doc, dbg, resume);
+    parseContactsFromDoc(doc, dbg, resume);
     if (resume._visDiag) resume._visDiag.title = resume.title || "(no title)";
     fetchLog12.info("Parsed: " + resume.title + " | Skills: " + resume.skills.length + " | Exp: " + resume.experience.length + " | Edu: " + resume.education.length);
     return resume;

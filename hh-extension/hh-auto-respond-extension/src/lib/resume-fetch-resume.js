@@ -11,7 +11,7 @@
  */
 import { createLogger } from './anti-hallucination.js';
 import { fetchHtml, htmlToDoc, safeGetText } from './resume-fetch-helpers.js';
-import { parsePersonalDataFromDoc } from './resume-fetch-parse.js';
+import { parsePersonalDataFromDoc, parseContactsFromDoc } from './resume-fetch-parse.js';
 import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from './resume-constants.js';
 import { detectVisibilityFromResumePage } from './resume-fetch-resume-page-vis.js';
 import { parseExperienceFromDoc } from './resume-fetch-resume-exp-orch.js';
@@ -44,6 +44,7 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   const resume = {
     id, url: resumeUrl,
     title: '', salary: '', gender: '', age: '', address: '',
+    phone: '', email: '', telegram: '',
     specializations: [], skills: [], skillLevels: {},
     experience: [], education: [], languages: [],
     additionalInfo: '', parsedAt: new Date().toISOString(),
@@ -88,6 +89,7 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   await parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl);
   parseEducationFromDocSection(doc, dbg, resume);
   parseLanguagesAndAbout(doc, dbg, resume);
+  parseContactsFromDoc(doc, dbg, resume);
 
   if (resume._visDiag) resume._visDiag.title = resume.title || '(no title)';
 
