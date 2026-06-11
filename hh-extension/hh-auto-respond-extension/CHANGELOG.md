@@ -5,6 +5,29 @@
 
 ---
 
+## [1.9.11] — 2026-06-11
+
+### Добавлено
+- **Блок «Все резюме» — сворачиваемый аккордеон** — блок теперь можно свернуть/развернуть кликом по заголовку (data-timeline toggle + шеврон)
+- Счётчики видимых/скрытых резюме (badge) в заголовке аккордеона
+
+### Изменено
+- Порядок блоков: «Все резюме» теперь сверху, «Действующее резюме» — ниже
+- Anti-monolith рефакторинг: split iframe-vis strategies, centralize panelState mutations
+- Версия: 1.9.10 → 1.9.11
+
+---
+
+## [1.9.10] — 2026-06-11
+
+### Изменено
+- Anti-monolith рефакторинг: все файлы ≤200 строк, panelState centralised
+- Split 6 monolith файлов, centralize chrome.storage
+- Split main.js (454→139), events.js (301→209), centralize storage
+- Обновлены submodules: anti-hallucination-guard + cascade-guard
+
+---
+
 ## [1.9.9] — 2026-06-11
 
 ### Исправлено
