@@ -100,7 +100,6 @@ window.__hhVisTable = function() {
 window.__hhVacDiagData = null;
 
 window.addEventListener('message', function(event) {
-  if (event.source !== window) return;
   if (!event.data || event.data.type !== 'HH-AR-VAC-DIAG') return;
 
   window.__hhVacDiagData = event.data.payload;
@@ -112,11 +111,15 @@ window.addEventListener('message', function(event) {
  * Usage: Open any /vacancy/{id} page, then type __hhVacDiag() in console.
  */
 window.__hhVacDiag = function() {
-  var d = window.__hhVacDiagData;
-  if (!d) {
-    console.log('%c[HH-AR][VAC-DIAG] No data yet. Open a /vacancy/{id} page and wait for auto-scan, or run __hhVacDiag() after sidebar opens.', 'color:#f59e0b;font-weight:bold');
-    return;
+  // If no data yet, request it from content script via DOM event
+  if (!window.__hhVacDiagData) {
+    console.log('%c[HH-AR][VAC-DIAG] Requesting data from content script...', 'color:#3b82f6;font-weight:bold');
+    document.dispatchEvent(new CustomEvent('HH-AR-RUN-VAC-DIAG'));
+    console.log('%c[HH-AR][VAC-DIAG] Wait 1 second, then run __hhVacDiag() again.', 'color:#f59e0b;font-weight:bold');
+    return null;
   }
+
+  var d = window.__hhVacDiagData;
 
   console.log('%c[HH-AR][VAC-DIAG] ═══ VACANCY PAGE DIAGNOSTIC ═══', 'color:#3b82f6;font-weight:bold;font-size:14px');
   console.log('URL:', d.url);

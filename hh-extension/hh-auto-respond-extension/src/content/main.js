@@ -17,6 +17,7 @@ import { createLogger } from '../lib/anti-hallucination.js';
 import { checkDailyReset, getStats, getAllSettings, getMyResumes, getActiveResume, setActiveResume, saveMyResumes } from '../lib/storage.js';
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { diagnoseResumeDOM, debugVisibility } from '../parsers/resume-detail.js';
+import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
 import { panelState, updateAuthState, createPanel, updateVacancies } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { VISIBILITY_UNKNOWN, TITLE_SUFFIX_NOISE } from '../lib/resume-constants.js';
@@ -87,6 +88,26 @@ async function init() {
   window.addEventListener('hh-ar-load-resume', handleLoadResume);
   window.addEventListener('hh-ar-reparse-resume', handleReparseResume);
   window.addEventListener('hh-ar-sync-resumes', handleSyncResumes);
+
+  // ── Vacancy diagnostic: listen for manual trigger from page-world.js ──
+  // page-world __hhVacDiag() dispatches a DOM CustomEvent which crosses
+  // the isolated-world boundary. Content script handles it and runs
+  // diagnoseVacancyPage(), then sends data back via postMessage.
+  document.addEventListener('HH-AR-RUN-VAC-DIAG', () => {
+    try {
+      const result = diagnoseVacancyPage();
+      mainLog.info('Manual vac diag: ' + (result.vacancyId || 'no id'));
+    } catch (e) {
+      mainLog.warn('Manual vac diag failed: ' + e.message);
+    }
+  });
+
+  // Auto-run vacancy diagnostic if we're on a vacancy detail page
+  if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
+    setTimeout(() => {
+      try { diagnoseVacancyPage(); } catch (e) {}
+    }, 2000);
+  }
 }
 
 /**
