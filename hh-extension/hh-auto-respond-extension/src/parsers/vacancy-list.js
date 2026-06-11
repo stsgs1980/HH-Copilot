@@ -2,15 +2,22 @@
  * PARSER: VACANCY LIST
  * ======================
  * Parses vacancy cards from hh.ru search results page (/search/vacancy).
+ * Computes match score if active resume is available.
  */
 
 import { findAllElements, findElement } from '../lib/selectors.js';
 import { safeGetText, safeGetAttr, extractVacancyId, validateVacancyData, createLogger } from '../lib/anti-hallucination.js';
 import { getBlacklistedCompanies, getAppliedVacancies } from '../lib/storage.js';
+import { computeMatchScore } from '../lib/match-scorer.js';
 
 const parserLog = createLogger('Parser');
 
-export async function parseVacanciesFromPage() {
+/**
+ * Parse vacancy cards from search results page.
+ * @param {Object|null} resume — active resume for match scoring (optional)
+ * @returns {Promise<Object[]>}
+ */
+export async function parseVacanciesFromPage(resume) {
   const cards = findAllElements('vacancyCard');
   parserLog.info('Found ' + cards.length + ' vacancy cards');
   if (cards.length === 0) return [];
@@ -57,8 +64,28 @@ export async function parseVacanciesFromPage() {
 
     if (appliedIds.includes(vacancy.id)) vacancy.status = 'applied';
     if (blacklisted.includes(vacancy.company)) vacancy.status = 'blacklisted';
+
+    // Compute match score if resume available
+    if (resume) {
+      try {
+        const score = computeMatchScore(resume, vacancy);
+        vacancy.matchScore = score.total;
+      } catch (e) {}
+    }
+
     vacancies.push(vacancy);
   }
+
+  // Sort by match score (highest first), new vacancies before applied/blacklisted
+  vacancies.sort((a, b) => {
+    const scoreA = a.matchScore != null ? a.matchScore : -1;
+    const scoreB = b.matchScore != null ? b.matchScore : -1;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    if (a.status === 'new' && b.status !== 'new') return -1;
+    if (b.status === 'new' && a.status !== 'new') return 1;
+    return 0;
+  });
+
   parserLog.info('Parsed ' + vacancies.length + '/' + cards.length + ' valid vacancies');
   return vacancies;
 }

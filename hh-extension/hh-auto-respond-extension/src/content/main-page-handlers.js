@@ -10,12 +10,14 @@
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
-import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue } from '../lib/storage.js';
+import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue, saveVacancyDetail, saveVacancyScore } from '../lib/storage.js';
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
+import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
 import { continueApply } from '../engine/index.js';
+import { computeMatchScore } from '../lib/match-scorer.js';
 import { panelState, updateVacancies, updateStats } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.js';
@@ -120,7 +122,7 @@ async function routeToHandler(path) {
 let searchObserverActive = false;
 
 async function handleVacancySearchPage() {
-  const vacancies = parseVacanciesFromPage();
+  const vacancies = await parseVacanciesFromPage(panelState.resume);
   updateVacancies(vacancies);
   const stats = getStats();
   updateStats(stats);
@@ -134,8 +136,8 @@ async function handleVacancySearchPage() {
       timer = setTimeout(() => {
         // Only re-parse if still on search page
         if (!window.location.pathname.startsWith('/search/vacancy')) return;
-        const fresh = parseVacanciesFromPage();
-        updateVacancies(fresh);
+        const fresh = parseVacanciesFromPage(panelState.resume);
+        fresh.then(v => updateVacancies(v));
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
     pageLog.info('SPA observer active');
@@ -196,6 +198,34 @@ async function handleVacancyDetailPage(path) {
     pageLog.info('Vacancy diagnostic: ' + fieldCount + ' fields detected');
   } catch (e) {
     pageLog.warn('Vacancy diagnostic failed: ' + e.message);
+  }
+
+  // Parse vacancy detail
+  try {
+    const detail = parseVacancyDetail();
+    if (detail) {
+      // Compute match score against active resume
+      const resume = panelState.resume;
+      if (resume) {
+        const score = computeMatchScore(resume, detail);
+        detail.matchScore = score.total;
+        detail.matchBreakdown = score.breakdown;
+        pageLog.info('Match score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');
+        // Save score to storage
+        saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
+      } else {
+        pageLog.info('No active resume — skip match scoring');
+      }
+      pageLog.info('Vacancy parsed: ' + detail.title + ' | skills=' + detail.keySkills.length + ' | salary=' + detail.salary.raw);
+      // Store for debugging
+      window.__hhVacDetail = detail;
+      // Save detail to storage
+      saveVacancyDetail(detail).catch(() => {});
+    } else {
+      pageLog.warn('Vacancy detail parse returned null');
+    }
+  } catch (e) {
+    pageLog.error('Vacancy detail parse failed: ' + e.message);
   }
 
   // Process apply queue

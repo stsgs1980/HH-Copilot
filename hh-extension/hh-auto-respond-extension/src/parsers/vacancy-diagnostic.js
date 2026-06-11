@@ -52,12 +52,13 @@ export function diagnoseVacancyPage() {
       className: el ? (el.className || '').substring(0, 100) : null,
     };
 
-    // For skills — list all
-    if ((name === 'vacancySkills' || name === 'vacancySkillsOnPage') && el) {
-      const items = el.querySelectorAll('.bloko-tag__text, [data-qa="skills-element__skill"], [data-qa*="skill"]');
+    // For skills — collect ALL [data-qa="skills-element"] items from the page
+    if ((name === 'vacancySkills' || name === 'vacancySkillsOnPage')) {
+      const allSkills = document.querySelectorAll('[data-qa="skills-element"]');
       const texts = [];
-      items.forEach(item => {
-        const t = (item.textContent || '').trim();
+      allSkills.forEach(item => {
+        const tagText = item.querySelector('.bloko-tag__text');
+        const t = tagText ? tagText.textContent.trim() : item.textContent.trim();
         if (t) texts.push(t);
       });
       result.selectors[name].items = texts;
@@ -181,20 +182,25 @@ function detectSchedule() {
 }
 
 function detectKeySkills() {
-  // data-qa skills
-  const qaSkills = document.querySelectorAll('[data-qa="skills-element"] .bloko-tag__text, [data-qa="skills-element__skill"]');
-  if (qaSkills.length > 0) {
+  // Magritte: each [data-qa="skills-element"] IS a skill <li> with text directly on it
+  const qaItems = document.querySelectorAll('[data-qa="skills-element"]');
+  if (qaItems.length > 0) {
     const texts = [];
-    qaSkills.forEach(el => { const t = (el.textContent || '').trim(); if (t) texts.push(t); });
-    return { source: 'data-qa', value: texts, count: texts.length };
+    qaItems.forEach(el => {
+      // Try .bloko-tag__text child first (Bloko UI), then fall back to own textContent (Magritte)
+      const tagText = el.querySelector('.bloko-tag__text');
+      const t = tagText ? tagText.textContent.trim() : el.textContent.trim();
+      if (t) texts.push(t);
+    });
+    if (texts.length > 0) return { source: 'data-qa', value: texts, count: texts.length };
   }
-  // Bloko tags fallback
+  // Fallback: bloko-tag section
   const tagSection = document.querySelector('[data-qa="skills-element"]');
   if (tagSection) {
     const tags = tagSection.querySelectorAll('.bloko-tag__text');
     const texts = [];
     tags.forEach(el => { const t = (el.textContent || '').trim(); if (t) texts.push(t); });
-    return { source: 'bloko-tags', value: texts, count: texts.length };
+    if (texts.length > 0) return { source: 'bloko-tags', value: texts, count: texts.length };
   }
   return { source: null, value: null, count: 0 };
 }

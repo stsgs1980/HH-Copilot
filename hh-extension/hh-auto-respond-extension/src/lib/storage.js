@@ -5,6 +5,7 @@
  *
  *   storage-settings.js — defaults, settings, stats, daily reset
  *   storage-queue.js    — resumes, queues, blacklist, apply tracking
+ *   storage-vacancies.js — vacancy details, match scores
  */
 
 export {
@@ -20,3 +21,9 @@ export {
   getApplyQueue, setApplyQueue,
   getBlacklistedCompanies, setBlacklistedCompanies, addBlacklistedCompany, removeBlacklistedCompany
 } from './storage-queue.js';
+
+export {
+  getVacancyDetails, getVacancyDetail, saveVacancyDetail,
+  removeVacancyDetail, clearVacancyDetails,
+  getVacancyScores, saveVacancyScore, getVacancyScore
+} from './storage-vacancies.js';

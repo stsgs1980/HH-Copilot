@@ -384,3 +384,47 @@ Work Log:
 
 Stage Summary:
 - Both submodules updated and set up
+
+---
+Task ID: v1.9.15.5
+Agent: main
+Task: Vacancy detail parser + match scorer + vacancy storage
+
+Work Log:
+- Fixed keySkills bug in vacancy-diagnostic.js: [data-qa="skills-element"] items now parsed correctly
+  Each <li data-qa="skills-element"> IS the skill item (Magritte), text on element itself
+  Previously looked for .bloko-tag__text children which don't exist in Magritte UI
+- Built real vacancy-detail.js parser (was stub returning null):
+  - Title, company, companyUrl via data-qa selectors
+  - Salary parser: extracts min/max/currency/period/net from Russian salary strings
+  - Experience parser: extracts min/max years from experience requirements (handles "Нет опыта", ranges, "Более N лет")
+  - Location, employment, schedule, hiringFormat, isRemote detection
+  - Key skills: [data-qa="skills-element"] with Bloko fallback
+  - Description parser: raw text/HTML + heading extraction + section splitting
+    (responsibilities, requirements, advantages, conditions)
+- Created match-scorer.js: 4-axis scoring algorithm (0-100):
+  - skills (0-40): overlap between resume skills and vacancy keySkills
+  - title (0-30): keyword overlap + abbreviation bonus (e.g., "РОП" ↔ "руководитель отдела продаж")
+  - salary (0-15): range compatibility (within, slightly below/above, out of range)
+  - experience (0-15): resume years vs vacancy requirement match
+- Created storage-vacancies.js: vacancy details + match scores in chrome.storage
+  - getVacancyDetails/saveVacancyDetail/getVacancyDetail/removeVacancyDetail/clearVacancyDetails
+  - getVacancyScores/saveVacancyScore/getVacancyScore
+  - LRU by parsedAt (max 200 details, max 500 scores)
+- Updated storage.js barrel: re-exports from storage-vacancies.js
+- Updated vacancy-list.js: computeMatchScore for each card, sort by score descending
+  parseVacanciesFromPage(resume) now accepts optional resume parameter
+- Updated main-page-handlers.js:
+  - handleVacancyDetailPage() now calls parseVacancyDetail() + computeMatchScore()
+  - Saves detail + score to chrome.storage
+  - Logs match breakdown: skills/title/salary/experience
+  - Stores detail in window.__hhVacDetail for console access
+- Updated main.js: parseVacanciesFromPage(panelState.resume) for refresh handler
+- Build verified: 481.4kb, 0 errors, 0 warnings
+
+Stage Summary:
+- Vacancy detail parsing: from stub → full structured parser with 15+ fields
+- Match scoring: 4-axis algorithm (skills/title/salary/experience) produces 0-100 score
+- Vacancy storage: persistent details + scores in chrome.storage
+- List sorting: search results now sorted by match score (highest first)
+- Version: 1.9.15.5

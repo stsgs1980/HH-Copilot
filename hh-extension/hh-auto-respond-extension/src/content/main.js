@@ -81,7 +81,7 @@ async function init() {
 
   window.addEventListener('hh-ar-refresh', async () => {
     if (!panelState.isLoggedIn) return;
-    const v = await parseVacanciesFromPage();
+    const v = await parseVacanciesFromPage(panelState.resume);
     updateVacancies(v);
   });
 
