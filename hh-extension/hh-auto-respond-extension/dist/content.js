@@ -4890,11 +4890,16 @@
     );
     const positions = exps.map((e) => e.position || "").filter((p) => p.length > 0);
     const hasProgression = detectProgression(positions);
+    const isTopLevel = positions.some(
+      (p) => /(?:^|[\s/(-])(head|руководител|руководств|director|директор|начальник|cто|cto|vp)(?:$|[\s/)-,.])/i.test(p)
+    );
+    const progressionPassed = hasProgression || isTopLevel;
+    const progressionTip = progressionPassed ? "" : "\u0420\u043E\u0441\u0442 \u0432 \u0434\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044F\u0445 \u2014 \u0441\u0438\u043B\u044C\u043D\u044B\u0439 \u0441\u0438\u0433\u043D\u0430\u043B \u0434\u043B\u044F HR (\u0441\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0441\u0442 \u2192 \u0441\u0442\u0430\u0440\u0448\u0438\u0439 \u2192 \u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C)";
     add(
       "\u041A\u0430\u0440\u044C\u0435\u0440\u043D\u044B\u0439 \u0440\u043E\u0441\u0442",
       8,
-      hasProgression,
-      "\u0420\u043E\u0441\u0442 \u043E\u0442 Junior \u2192 Middle \u2192 Senior \u2014 \u0441\u0438\u043B\u044C\u043D\u044B\u0439 \u0441\u0438\u0433\u043D\u0430\u043B \u0434\u043B\u044F HR"
+      progressionPassed,
+      progressionTip
     );
     const titleRelevant = title.length > 0 && positions.some(
       (p) => p.toLowerCase().includes(title.toLowerCase().split(/\s+/)[0]) || title.toLowerCase().split(/\s+/).some((w) => w.length > 3 && p.toLowerCase().includes(w))

@@ -91,9 +91,17 @@ export function analyzeExperience(r) {
   // ── Карьерный рост ──
   const positions = exps.map(e => e.position || '').filter(p => p.length > 0);
   const hasProgression = detectProgression(positions);
+  // Если человек уже на руководящей позиции — считаем рост достигнутым
+  const isTopLevel = positions.some(p =>
+    /(?:^|[\s/(-])(head|руководител|руководств|director|директор|начальник|cто|cto|vp)(?:$|[\s/)-,.])/i.test(p)
+  );
+  const progressionPassed = hasProgression || isTopLevel;
+  const progressionTip = progressionPassed
+    ? ''
+    : 'Рост в должностях — сильный сигнал для HR (специалист → старший → руководитель)';
   add('Карьерный рост', 8,
-    hasProgression,
-    'Рост от Junior → Middle → Senior — сильный сигнал для HR'
+    progressionPassed,
+    progressionTip
   );
 
   // ── Релевантность заголовка ──
