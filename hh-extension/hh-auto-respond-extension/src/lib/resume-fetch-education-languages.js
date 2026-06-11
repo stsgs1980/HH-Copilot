@@ -1,7 +1,7 @@
 /**
  * Education, languages, and "about me" section parsers.
  */
-import { parseEducationFromDoc } from './resume-fetch-parse.js';
+import { parseEducationFromDoc } from './resume-fetch-parse-edu.js';
 
 /**
  * Parse education section from the resume document.

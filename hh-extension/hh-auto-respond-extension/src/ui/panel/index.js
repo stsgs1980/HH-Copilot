@@ -7,7 +7,7 @@
  */
 
 import { createLogger } from '../../lib/anti-hallucination.js';
-import { panelState, refs } from '../state.js';
+import { panelState, refs, setAuthState, togglePanelOpen, setVacancies, setStatus as setStatusInternal } from '../state.js';
 export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
@@ -31,7 +31,7 @@ export function updateAuthState(forceUI = false) {
   const was = panelState.isLoggedIn;
   const now = checkAuth();
   if (was !== now || forceUI) {
-    panelState.isLoggedIn = now;
+    setAuthState(now);
     panelLog.info('Auth: ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
     renderSidebarContent();
     if (panelState.isLoggedIn) {
@@ -55,7 +55,7 @@ export async function updateAuthStateAsync() {
   const was = panelState.isLoggedIn;
   const now = await checkAuthAsync();
   if (was !== now) {
-    panelState.isLoggedIn = now;
+    setAuthState(now);
     panelLog.info('Auth (async): ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
     renderSidebarContent();
     if (panelState.isLoggedIn) {
@@ -130,7 +130,7 @@ export function createSidebar() {
 export function toggleSidebar() {
   if (!refs.sidebarEl) createSidebar();
   if (!refs.fabEl) createFab(toggleSidebar);
-  panelState.isOpen = !panelState.isOpen;
+  togglePanelOpen();
   refs.sidebarEl.style.transform = panelState.isOpen ? 'translateX(0)' : 'translateX(100%)';
   if (refs.backdropEl) {
     refs.backdropEl.style.opacity = panelState.isOpen ? '1' : '0';
@@ -145,7 +145,7 @@ export function toggleSidebar() {
 // ═══════════════════════════════════════════════
 
 export function updateVacancies(vacancies) {
-  panelState.vacancies = (vacancies || []).filter(v => v && v.id && v.title);
+  setVacancies(vacancies);
   renderVacancyList();
   updateVacancyCounts();
   // Re-run Skill Gap Analysis when vacancies change
@@ -159,7 +159,7 @@ export function updateStats(stats) {
 }
 
 export function setStatus(status) {
-  panelState.status = status;
+  setStatusInternal(status);
 }
 
 export function createPanel() {

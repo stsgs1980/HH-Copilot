@@ -3,11 +3,12 @@
  * ==============================
  * Common utilities for resume rendering:
  * getInitials, buildSubAccordion, buildGrid, toggleSub, attachSubToggle,
- * updateSkillsSection, updateSkillGapSection
+ * updateSkillsSection
+ *
+ * Skill gap analysis is in ./resume-helpers-gap.js
  */
 
 import { refs } from '../../state.js';
-import { panelState } from '../../state.js';
 import { esc } from '../../html.js';
 
 // ═══════════════════════════════════════════════
@@ -84,7 +85,7 @@ export function attachSubToggle(bodyId, chevronId) {
 }
 
 // ═══════════════════════════════════════════════
-// UPDATE SKILLS CARD (separate section)
+// UPDATE SKILLS CARD
 // ═══════════════════════════════════════════════
 
 export function updateSkillsSection(r) {
@@ -103,190 +104,5 @@ export function updateSkillsSection(r) {
   list.innerHTML = r.skills.map(s => '<span class="skill-tag skill-match">' + esc(s) + '</span>').join('');
 }
 
-// ═══════════════════════════════════════════════
-// SKILL GAP ANALYSIS (wireframe: ring + bar + 3 categories + recommendation)
-// ═══════════════════════════════════════════════
-
-export function updateSkillGapSection(r) {
-  const section = refs.shadowRoot?.getElementById('res-gap-section');
-  if (!section) return;
-
-  // Need resume skills and at least some vacancy data
-  if (!r || !r.skills || r.skills.length === 0) {
-    section.style.display = 'none';
-    return;
-  }
-
-  const resumeSkills = normalizeSkills(r.skills);
-  const vacancySkills = collectVacancySkills();
-
-  // If no vacancy data yet, show placeholder
-  if (vacancySkills.size === 0) {
-    section.style.display = '';
-    const subtitle = refs.shadowRoot?.getElementById('res-gap-subtitle');
-    const resumeTitle = r.title || 'Без названия';
-    if (subtitle) subtitle.textContent = resumeTitle + ' — откройте вакансии для сравнения';
-    return;
-  }
-
-  // Categorize: match, miss, extra
-  const match = [];
-  const miss = [];
-  const extra = [];
-
-  for (const skill of resumeSkills) {
-    if (vacancySkills.has(skill)) {
-      match.push(skill);
-    }
-  }
-
-  for (const skill of vacancySkills) {
-    if (!resumeSkills.has(skill)) {
-      miss.push(skill);
-    }
-  }
-
-  for (const skill of resumeSkills) {
-    if (!vacancySkills.has(skill)) {
-      extra.push(skill);
-    }
-  }
-
-  const total = resumeSkills.size + miss.length;
-  const matchPct = total > 0 ? Math.round((match.length / total) * 100) : 0;
-
-  // Show section
-  section.style.display = '';
-
-  // Update ring — conic-gradient angle: matchPct * 3.6 degrees
-  const ring = refs.shadowRoot?.getElementById('res-gap-ring');
-  if (ring) {
-    const deg = Math.round(matchPct * 3.6);
-    ring.style.background = 'conic-gradient(#059669 0deg ' + deg + 'deg, #e4e4e7 ' + deg + 'deg 360deg)';
-    const inner = ring.querySelector('div');
-    if (inner) {
-      inner.textContent = matchPct + '%';
-    }
-  }
-
-  // Update subtitle — show which resume is used for matching
-  const subtitle = refs.shadowRoot?.getElementById('res-gap-subtitle');
-  if (subtitle) {
-    const resumeTitle = r.title || 'Без названия';
-    if (matchPct >= 80) {
-      subtitle.textContent = resumeTitle + ' — топ ' + Math.round(100 - matchPct) + '% кандидатов';
-    } else if (matchPct >= 50) {
-      subtitle.textContent = resumeTitle + ' — совпадение ' + matchPct + '%';
-    } else {
-      subtitle.textContent = resumeTitle + ' — рекомендуется дополнить навыки';
-    }
-  }
-
-  // Update stacked bar
-  const barMatch = refs.shadowRoot?.getElementById('res-gap-bar-match');
-  const barMiss = refs.shadowRoot?.getElementById('res-gap-bar-miss');
-  const barExtra = refs.shadowRoot?.getElementById('res-gap-bar-extra');
-  if (barMatch && barMiss && barExtra) {
-    const matchW = total > 0 ? ((match.length / total) * 100).toFixed(1) : 0;
-    const missW = total > 0 ? ((miss.length / total) * 100).toFixed(1) : 0;
-    const extraW = total > 0 ? ((extra.length / total) * 100).toFixed(1) : 0;
-    barMatch.style.width = matchW + '%';
-    barMiss.style.width = missW + '%';
-    barExtra.style.width = extraW + '%';
-  }
-
-  // Row 1: Match
-  updateGapRow('res-gap-match-row', 'res-gap-match-count', 'res-gap-match-list', match, 'skill-match');
-
-  // Row 2: Miss
-  updateGapRow('res-gap-miss-row', 'res-gap-miss-count', 'res-gap-miss-list', miss, 'skill-miss');
-
-  // Row 3: Extra
-  updateGapRow('res-gap-extra-row', 'res-gap-extra-count', 'res-gap-extra-list', extra, 'skill-extra');
-
-  // Recommendation
-  updateGapRecommendation(miss, matchPct);
-}
-
-// ═══════════════════════════════════════════════
-// GAP HELPERS
-// ═══════════════════════════════════════════════
-
-function updateGapRow(rowId, countId, listId, skills, cssClass) {
-  const row = refs.shadowRoot?.getElementById(rowId);
-  const countEl = refs.shadowRoot?.getElementById(countId);
-  const listEl = refs.shadowRoot?.getElementById(listId);
-  if (!row) return;
-
-  if (skills.length === 0) {
-    row.style.display = 'none';
-    return;
-  }
-
-  row.style.display = '';
-  if (countEl) countEl.textContent = skills.length;
-  if (listEl) {
-    // Show up to 5 tags + "+N" remainder
-    const visible = skills.slice(0, 5);
-    const remainder = skills.length - visible.length;
-    let html = visible.map(s => '<span class="skill-tag ' + cssClass + '">' + esc(s) + '</span>').join('');
-    if (remainder > 0) {
-      html += '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>';
-    }
-    listEl.innerHTML = html;
-  }
-}
-
-function updateGapRecommendation(miss, matchPct) {
-  const block = refs.shadowRoot?.getElementById('res-gap-recommendation');
-  const text = refs.shadowRoot?.getElementById('res-gap-recommendation-text');
-  if (!block || !text) return;
-
-  if (miss.length === 0 || matchPct >= 90) {
-    block.style.display = 'none';
-    return;
-  }
-
-  block.style.display = 'flex';
-  const topMiss = miss.slice(0, 3);
-  const potentialPct = Math.min(95, matchPct + topMiss.length * 5);
-  const boldSkills = topMiss.map(s => '<b>' + esc(s) + '</b>').join(', ');
-  text.innerHTML = 'Добавьте ' + boldSkills + ' для роста до <b>' + potentialPct + '%</b> совпадения с рынком.';
-}
-
-// ═══════════════════════════════════════════════
-// NORMALIZE SKILLS — lowercase for comparison
-// ═══════════════════════════════════════════════
-
-function normalizeSkills(skills) {
-  const set = new Set();
-  for (const s of skills) {
-    const name = typeof s === 'string' ? s : (s.name || '');
-    if (name) set.add(name.toLowerCase().trim());
-  }
-  return set;
-}
-
-// ═══════════════════════════════════════════════
-// COLLECT VACANCY SKILLS from parsed vacancies
-// ═══════════════════════════════════════════════
-
-function collectVacancySkills() {
-  const skills = new Set();
-  const vacancies = panelState.vacancies || [];
-  for (const v of vacancies) {
-    if (v.tags && Array.isArray(v.tags)) {
-      for (const t of v.tags) {
-        const name = typeof t === 'string' ? t : (t.name || '');
-        if (name) skills.add(name.toLowerCase().trim());
-      }
-    }
-    if (v.skills && Array.isArray(v.skills)) {
-      for (const s of v.skills) {
-        const name = typeof s === 'string' ? s : (s.name || '');
-        if (name) skills.add(name.toLowerCase().trim());
-      }
-    }
-  }
-  return skills;
-}
+// Re-export from gap module
+export { updateSkillGapSection } from './resume-helpers-gap.js';

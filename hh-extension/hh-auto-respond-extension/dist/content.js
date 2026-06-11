@@ -127,7 +127,7 @@
     }
   });
 
-  // src/lib/storage.js
+  // src/lib/storage-settings.js
   async function getAllSettings() {
     try {
       const d = await chrome.storage.local.get("settings");
@@ -155,6 +155,47 @@
     await chrome.storage.local.set({ stats });
     return { allowed: true, remaining: settings.dailyLimit - stats.appliedToday };
   }
+  async function checkDailyReset() {
+    try {
+      const d = await chrome.storage.local.get("dailyResetDate");
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      if (d.dailyResetDate !== today) {
+        const sd = await chrome.storage.local.get("stats");
+        const s = sd.stats || DEFAULT_STATS;
+        s.appliedToday = 0;
+        s.skipsToday = 0;
+        s.errorsToday = 0;
+        await chrome.storage.local.set({ stats: s, dailyResetDate: today });
+      }
+    } catch (e) {
+    }
+  }
+  var DEFAULT_SETTINGS, DEFAULT_STATS;
+  var init_storage_settings = __esm({
+    "src/lib/storage-settings.js"() {
+      DEFAULT_SETTINGS = {
+        mode: "manual",
+        dailyLimit: 200,
+        minMatchScore: 60,
+        letterTone: "formal",
+        searchInterval: 300,
+        autoScroll: true,
+        showMatchScore: true,
+        confirmBeforeApply: true
+      };
+      DEFAULT_STATS = {
+        totalApplied: 0,
+        appliedToday: 0,
+        interviewInvites: 0,
+        responsesReceived: 0,
+        skipsToday: 0,
+        errorsToday: 0,
+        lastActivity: null
+      };
+    }
+  });
+
+  // src/lib/storage-queue.js
   async function getAppliedVacancies() {
     try {
       const d = await chrome.storage.local.get("appliedVacancies");
@@ -273,43 +314,16 @@
     const filtered = list.filter((n) => n !== name);
     await setBlacklistedCompanies(filtered);
   }
-  async function checkDailyReset() {
-    try {
-      const d = await chrome.storage.local.get("dailyResetDate");
-      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-      if (d.dailyResetDate !== today) {
-        const sd = await chrome.storage.local.get("stats");
-        const s = sd.stats || DEFAULT_STATS;
-        s.appliedToday = 0;
-        s.skipsToday = 0;
-        s.errorsToday = 0;
-        await chrome.storage.local.set({ stats: s, dailyResetDate: today });
-      }
-    } catch (e) {
+  var init_storage_queue = __esm({
+    "src/lib/storage-queue.js"() {
     }
-  }
-  var DEFAULT_SETTINGS, DEFAULT_STATS;
+  });
+
+  // src/lib/storage.js
   var init_storage = __esm({
     "src/lib/storage.js"() {
-      DEFAULT_SETTINGS = {
-        mode: "manual",
-        dailyLimit: 200,
-        minMatchScore: 60,
-        letterTone: "formal",
-        searchInterval: 300,
-        autoScroll: true,
-        showMatchScore: true,
-        confirmBeforeApply: true
-      };
-      DEFAULT_STATS = {
-        totalApplied: 0,
-        appliedToday: 0,
-        interviewInvites: 0,
-        responsesReceived: 0,
-        skipsToday: 0,
-        errorsToday: 0,
-        lastActivity: null
-      };
+      init_storage_settings();
+      init_storage_queue();
     }
   });
 
@@ -1609,11 +1623,8 @@
     }
   });
 
-  // src/parsers/resume-detail/diagnose.js
-  function diagnoseResumeDOM() {
-    console.log("%c[HH-AR][DIAG] \u2550\u2550\u2550 DOM DIAGNOSTIC DUMP \u2550\u2550\u2550", "color:#2964FF;font-weight:bold;font-size:14px");
-    console.log("[HH-AR][DIAG] URL:", window.location.href);
-    console.log("[HH-AR][DIAG] Page type:", getResumePageType());
+  // src/parsers/resume-detail/diagnose-elements.js
+  function scanDataQaElements() {
     const allQa = document.querySelectorAll("[data-qa]");
     const qaMap = {};
     allQa.forEach((el) => {
@@ -1646,6 +1657,8 @@
       console.log("%c  " + prefix + " (" + groups[prefix].length + "):", "color:#f59e0b", groups[prefix].join(", "));
     });
     console.groupEnd();
+  }
+  function scanResumeBlocks() {
     console.group('%c[HH-AR][DIAG] Resume blocks (.resume-block, [data-qa*="resume"]):', "color:#2964FF");
     const resumeBlocks = document.querySelectorAll('[data-qa*="resume"], .resume-block, [class*="resume"]');
     resumeBlocks.forEach((block, i) => {
@@ -1655,6 +1668,8 @@
       console.log("  Block #" + i + ":", { qa, cls, text });
     });
     console.groupEnd();
+  }
+  function scanTags() {
     console.group('%c[HH-AR][DIAG] Bloko tags (.bloko-tag, [data-qa*="tag"]):', "color:#2964FF");
     const tags = document.querySelectorAll('.bloko-tag, .bloko-tag__text, [data-qa*="tag"], [data-qa*="skill"]');
     const tagTexts = [];
@@ -1667,6 +1682,17 @@
     });
     console.log("  Total unique tags:", tagTexts.length);
     console.groupEnd();
+  }
+  var diagLog;
+  var init_diagnose_elements = __esm({
+    "src/parsers/resume-detail/diagnose-elements.js"() {
+      init_anti_hallucination();
+      diagLog = createLogger("DIAG");
+    }
+  });
+
+  // src/parsers/resume-detail/diagnose-structure.js
+  function checkSelectors() {
     console.group("%c[HH-AR][DIAG] Selector check (resume selectors):", "color:#2964FF");
     const resumeSelectorKeys = Object.keys(HH_SELECTORS).filter((k) => k.startsWith("resume"));
     resumeSelectorKeys.forEach((key) => {
@@ -1688,11 +1714,15 @@
       }
     });
     console.groupEnd();
+  }
+  function scanHeadings() {
     console.group("%c[HH-AR][DIAG] Headings (h1-h3):", "color:#2964FF");
     document.querySelectorAll("h1, h2, h3").forEach((h) => {
       console.log("  " + h.tagName + ":", (h.textContent || "").trim().substring(0, 100), "| data-qa:", h.getAttribute("data-qa") || "(none)");
     });
     console.groupEnd();
+  }
+  function scanSections() {
     console.group('%c[HH-AR][DIAG] Page sections (section, [data-qa*="block"]):', "color:#2964FF");
     const sections = document.querySelectorAll('section, [data-qa*="block"], .bloko-column');
     sections.forEach((s, i) => {
@@ -1702,6 +1732,15 @@
       console.log("  Section #" + i + ":", qa, "| heading:", headingText);
     });
     console.groupEnd();
+  }
+  var init_diagnose_structure = __esm({
+    "src/parsers/resume-detail/diagnose-structure.js"() {
+      init_selectors();
+    }
+  });
+
+  // src/parsers/resume-detail/diagnose-blocks.js
+  function dumpExperienceBlock() {
     console.group("%c[HH-AR][DIAG] Experience block inner structure:", "color:#ef4444;font-weight:bold");
     const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
     if (expCard) {
@@ -1721,6 +1760,8 @@
       console.log("  experienceBlock NOT FOUND");
     }
     console.groupEnd();
+  }
+  function dumpEducationBlock() {
     console.group("%c[HH-AR][DIAG] Education block inner structure:", "color:#ef4444;font-weight:bold");
     const eduCard = document.querySelector('[data-qa="resume-list-card-education"]');
     if (eduCard) {
@@ -1740,14 +1781,34 @@
       console.log("  educationBlock NOT FOUND");
     }
     console.groupEnd();
+  }
+  var init_diagnose_blocks = __esm({
+    "src/parsers/resume-detail/diagnose-blocks.js"() {
+    }
+  });
+
+  // src/parsers/resume-detail/diagnose.js
+  function diagnoseResumeDOM() {
+    console.log("%c[HH-AR][DIAG] \u2550\u2550\u2550 DOM DIAGNOSTIC DUMP \u2550\u2550\u2550", "color:#2964FF;font-weight:bold;font-size:14px");
+    console.log("[HH-AR][DIAG] URL:", window.location.href);
+    console.log("[HH-AR][DIAG] Page type:", getResumePageType());
+    scanDataQaElements();
+    scanResumeBlocks();
+    scanTags();
+    checkSelectors();
+    scanHeadings();
+    scanSections();
+    dumpExperienceBlock();
+    dumpEducationBlock();
     console.log("%c[HH-AR][DIAG] \u2550\u2550\u2550 END DUMP \u2550\u2550\u2550", "color:#2964FF;font-weight:bold");
     console.log("%c[HH-AR][DIAG] \u0421\u043A\u043E\u043F\u0438\u0440\u0443\u0439 \u0412\u0415\u0421\u042C \u0432\u044B\u0432\u043E\u0434 \u0438\u0437 \u043A\u043E\u043D\u0441\u043E\u043B\u0438 \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u043C\u043D\u0435.", "color:#ef4444;font-size:13px");
   }
   var init_diagnose = __esm({
     "src/parsers/resume-detail/diagnose.js"() {
-      init_anti_hallucination();
-      init_selectors();
       init_resume_detail();
+      init_diagnose_elements();
+      init_diagnose_structure();
+      init_diagnose_blocks();
     }
   });
 
@@ -2024,6 +2085,42 @@
   });
 
   // src/ui/state.js
+  function setActiveResumeState(resume) {
+    panelState.resume = resume;
+    panelState._resumeCleared = false;
+  }
+  function clearResumeState() {
+    panelState.resume = null;
+    panelState._resumeCleared = true;
+    panelState.resumeList = [];
+  }
+  function setMyResumes(list) {
+    panelState.myResumes = list;
+  }
+  function setResumeList(list) {
+    panelState.resumeList = list;
+  }
+  function setAuthState(val) {
+    panelState.isLoggedIn = val;
+  }
+  function togglePanelOpen() {
+    panelState.isOpen = !panelState.isOpen;
+  }
+  function setVacancies(vacancies) {
+    panelState.vacancies = (vacancies || []).filter((v) => v && v.id && v.title);
+  }
+  function setStatus(status) {
+    panelState.status = status;
+  }
+  function setActiveTab(tabId) {
+    panelState.activeTab = tabId;
+  }
+  function setActiveConversation(convId) {
+    panelState.activeConversation = convId;
+  }
+  function removeFromBlacklist(name) {
+    panelState.blacklist = panelState.blacklist.filter((n) => n !== name);
+  }
   var panelState, refs;
   var init_state = __esm({
     "src/ui/state.js"() {
@@ -2077,11 +2174,11 @@
     }
   });
 
-  // src/ui/sidebar-css.js
-  var SIDEBAR_CSS;
-  var init_sidebar_css = __esm({
-    "src/ui/sidebar-css.js"() {
-      SIDEBAR_CSS = `:host { all: initial; }
+  // src/ui/sidebar-css-core.js
+  var SIDEBAR_CSS_CORE;
+  var init_sidebar_css_core = __esm({
+    "src/ui/sidebar-css-core.js"() {
+      SIDEBAR_CSS_CORE = `:host { all: initial; }
 *, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; }
 :focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 ::-webkit-scrollbar { width: 5px; }
@@ -2166,6 +2263,22 @@
 .toggle input:checked + .slider { background: #059669; box-shadow: 0 0 8px rgba(5,150,105,0.3); }
 .toggle input:checked + .slider::before { transform: translateX(18px); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 
+/* FAB pulse */
+@keyframes fabPulse { 0%, 100% { box-shadow: 0 4px 20px rgba(5,150,105,0.4); }
+  50% { box-shadow: 0 4px 20px rgba(5,150,105,0.4), 0 0 0 8px rgba(5,150,105,0.12); } }
+
+/* Spinner */
+.har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; }
+@keyframes har-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+`;
+    }
+  });
+
+  // src/ui/sidebar-css-components.js
+  var SIDEBAR_CSS_COMPONENTS;
+  var init_sidebar_css_components = __esm({
+    "src/ui/sidebar-css-components.js"() {
+      SIDEBAR_CSS_COMPONENTS = `
 /* Badges */
 .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px;
   font-size: 11px; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
@@ -2287,10 +2400,6 @@
   background: #ffffff; border: 2px solid #059669; box-shadow: 0 1px 4px rgba(0,0,0,0.12); cursor: pointer; }
 .fab-panel input[type="range"]::-moz-range-track { height: 4px; background: #e4e4e7; border-radius: 2px; border: none; }
 
-/* FAB pulse */
-@keyframes fabPulse { 0%, 100% { box-shadow: 0 4px 20px rgba(5,150,105,0.4); }
-  50% { box-shadow: 0 4px 20px rgba(5,150,105,0.4), 0 0 0 8px rgba(5,150,105,0.12); } }
-
 /* Toast */
 .toast { position: fixed; bottom: 24px; right: 24px; z-index: 10000;
   padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 500;
@@ -2307,8 +2416,6 @@
 .har-tabbar { display: flex; border-bottom: 1px solid rgba(0,0,0,0.06); flex-shrink: 0; padding: 0 4px; }
 .har-content { flex: 1; overflow-y: auto; }
 .har-footer { padding: 10px 16px; border-top: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.9)); }
-.har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; }
-@keyframes har-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
 /* Score ring (vacancy match) */
 .score-ring { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -2320,6 +2427,16 @@
 .score-ring.medium span { color: #D97706; }
 .score-ring.low span { color: #DC2626; }
 `;
+    }
+  });
+
+  // src/ui/sidebar-css.js
+  var SIDEBAR_CSS;
+  var init_sidebar_css = __esm({
+    "src/ui/sidebar-css.js"() {
+      init_sidebar_css_core();
+      init_sidebar_css_components();
+      SIDEBAR_CSS = SIDEBAR_CSS_CORE + SIDEBAR_CSS_COMPONENTS;
     }
   });
 
@@ -3498,66 +3615,7 @@
     }
   });
 
-  // src/ui/tabs/resumes/resume-helpers.js
-  var resume_helpers_exports = {};
-  __export(resume_helpers_exports, {
-    attachSubToggle: () => attachSubToggle,
-    buildGrid: () => buildGrid,
-    buildSubAccordion: () => buildSubAccordion,
-    getInitials: () => getInitials,
-    toggleSub: () => toggleSub,
-    updateSkillGapSection: () => updateSkillGapSection,
-    updateSkillsSection: () => updateSkillsSection
-  });
-  function getInitials(text) {
-    if (!text) return "?";
-    const words = text.trim().split(/\s+/);
-    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
-    return text.substring(0, 2).toUpperCase();
-  }
-  function toggleSub(sectionId, chevronId) {
-    const body = refs.shadowRoot?.getElementById(sectionId);
-    const chev = refs.shadowRoot?.getElementById(chevronId);
-    if (!body) return;
-    body.classList.toggle("open");
-    if (chev) chev.classList.toggle("open");
-  }
-  function buildSubAccordion(bodyId, chevronId, title, count, dotColor, contentHtml) {
-    return '<div class="tl-dot" style="background:' + dotColor + ';"></div><div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span><span style="font-size:11px;color:#71717a;">' + esc(count) + '</span></div><svg class="sub-chevron" id="' + chevronId + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="sub-body" id="' + bodyId + '">' + contentHtml + "</div>";
-  }
-  function buildGrid(pairs) {
-    const rows = pairs.filter(([, val]) => val).map(
-      ([label, val]) => '<span style="color:#71717a;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + "</span>"
-    ).join("");
-    if (!rows) return '<div style="padding:8px;font-size:11px;color:#71717a;">\u0414\u0430\u043D\u043D\u044B\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B</div>';
-    return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;"><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + rows + "</div></div>";
-  }
-  function attachSubToggle(bodyId, chevronId) {
-    const toggleEl = refs.shadowRoot?.querySelector('[data-sub-toggle="' + bodyId + '"]');
-    if (!toggleEl) return;
-    toggleEl.addEventListener("click", () => {
-      toggleSub(bodyId, chevronId);
-    });
-    toggleEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleSub(bodyId, chevronId);
-      }
-    });
-  }
-  function updateSkillsSection(r) {
-    const section = refs.shadowRoot?.getElementById("res-skills-section");
-    const list = refs.shadowRoot?.getElementById("res-skills-list");
-    const count = refs.shadowRoot?.getElementById("res-skills-count");
-    if (!section || !list) return;
-    if (!r || !r.skills || r.skills.length === 0) {
-      section.style.display = "none";
-      return;
-    }
-    section.style.display = "";
-    if (count) count.textContent = r.skills.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432";
-    list.innerHTML = r.skills.map((s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>").join("");
-  }
+  // src/ui/tabs/resumes/resume-helpers-gap.js
   function updateSkillGapSection(r) {
     const section = refs.shadowRoot?.getElementById("res-gap-section");
     if (!section) return;
@@ -3578,19 +3636,13 @@
     const miss = [];
     const extra = [];
     for (const skill of resumeSkills) {
-      if (vacancySkills.has(skill)) {
-        match.push(skill);
-      }
+      if (vacancySkills.has(skill)) match.push(skill);
     }
     for (const skill of vacancySkills) {
-      if (!resumeSkills.has(skill)) {
-        miss.push(skill);
-      }
+      if (!resumeSkills.has(skill)) miss.push(skill);
     }
     for (const skill of resumeSkills) {
-      if (!vacancySkills.has(skill)) {
-        extra.push(skill);
-      }
+      if (!vacancySkills.has(skill)) extra.push(skill);
     }
     const total = resumeSkills.size + miss.length;
     const matchPct = total > 0 ? Math.round(match.length / total * 100) : 0;
@@ -3600,9 +3652,7 @@
       const deg = Math.round(matchPct * 3.6);
       ring.style.background = "conic-gradient(#059669 0deg " + deg + "deg, #e4e4e7 " + deg + "deg 360deg)";
       const inner = ring.querySelector("div");
-      if (inner) {
-        inner.textContent = matchPct + "%";
-      }
+      if (inner) inner.textContent = matchPct + "%";
     }
     const subtitle = refs.shadowRoot?.getElementById("res-gap-subtitle");
     if (subtitle) {
@@ -3619,12 +3669,9 @@
     const barMiss = refs.shadowRoot?.getElementById("res-gap-bar-miss");
     const barExtra = refs.shadowRoot?.getElementById("res-gap-bar-extra");
     if (barMatch && barMiss && barExtra) {
-      const matchW = total > 0 ? (match.length / total * 100).toFixed(1) : 0;
-      const missW = total > 0 ? (miss.length / total * 100).toFixed(1) : 0;
-      const extraW = total > 0 ? (extra.length / total * 100).toFixed(1) : 0;
-      barMatch.style.width = matchW + "%";
-      barMiss.style.width = missW + "%";
-      barExtra.style.width = extraW + "%";
+      barMatch.style.width = (total > 0 ? (match.length / total * 100).toFixed(1) : 0) + "%";
+      barMiss.style.width = (total > 0 ? (miss.length / total * 100).toFixed(1) : 0) + "%";
+      barExtra.style.width = (total > 0 ? (extra.length / total * 100).toFixed(1) : 0) + "%";
     }
     updateGapRow("res-gap-match-row", "res-gap-match-count", "res-gap-match-list", match, "skill-match");
     updateGapRow("res-gap-miss-row", "res-gap-miss-count", "res-gap-miss-list", miss, "skill-miss");
@@ -3693,11 +3740,78 @@
     }
     return skills;
   }
+  var init_resume_helpers_gap = __esm({
+    "src/ui/tabs/resumes/resume-helpers-gap.js"() {
+      init_state();
+      init_html2();
+    }
+  });
+
+  // src/ui/tabs/resumes/resume-helpers.js
+  var resume_helpers_exports = {};
+  __export(resume_helpers_exports, {
+    attachSubToggle: () => attachSubToggle,
+    buildGrid: () => buildGrid,
+    buildSubAccordion: () => buildSubAccordion,
+    getInitials: () => getInitials,
+    toggleSub: () => toggleSub,
+    updateSkillGapSection: () => updateSkillGapSection,
+    updateSkillsSection: () => updateSkillsSection
+  });
+  function getInitials(text) {
+    if (!text) return "?";
+    const words = text.trim().split(/\s+/);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    return text.substring(0, 2).toUpperCase();
+  }
+  function toggleSub(sectionId, chevronId) {
+    const body = refs.shadowRoot?.getElementById(sectionId);
+    const chev = refs.shadowRoot?.getElementById(chevronId);
+    if (!body) return;
+    body.classList.toggle("open");
+    if (chev) chev.classList.toggle("open");
+  }
+  function buildSubAccordion(bodyId, chevronId, title, count, dotColor, contentHtml) {
+    return '<div class="tl-dot" style="background:' + dotColor + ';"></div><div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span><span style="font-size:11px;color:#71717a;">' + esc(count) + '</span></div><svg class="sub-chevron" id="' + chevronId + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="sub-body" id="' + bodyId + '">' + contentHtml + "</div>";
+  }
+  function buildGrid(pairs) {
+    const rows = pairs.filter(([, val]) => val).map(
+      ([label, val]) => '<span style="color:#71717a;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + "</span>"
+    ).join("");
+    if (!rows) return '<div style="padding:8px;font-size:11px;color:#71717a;">\u0414\u0430\u043D\u043D\u044B\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B</div>';
+    return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;"><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + rows + "</div></div>";
+  }
+  function attachSubToggle(bodyId, chevronId) {
+    const toggleEl = refs.shadowRoot?.querySelector('[data-sub-toggle="' + bodyId + '"]');
+    if (!toggleEl) return;
+    toggleEl.addEventListener("click", () => {
+      toggleSub(bodyId, chevronId);
+    });
+    toggleEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleSub(bodyId, chevronId);
+      }
+    });
+  }
+  function updateSkillsSection(r) {
+    const section = refs.shadowRoot?.getElementById("res-skills-section");
+    const list = refs.shadowRoot?.getElementById("res-skills-list");
+    const count = refs.shadowRoot?.getElementById("res-skills-count");
+    if (!section || !list) return;
+    if (!r || !r.skills || r.skills.length === 0) {
+      section.style.display = "none";
+      return;
+    }
+    section.style.display = "";
+    if (count) count.textContent = r.skills.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432";
+    list.innerHTML = r.skills.map((s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>").join("");
+  }
   var init_resume_helpers = __esm({
     "src/ui/tabs/resumes/resume-helpers.js"() {
       init_state();
-      init_state();
       init_html2();
+      init_resume_helpers_gap();
     }
   });
 
@@ -4125,8 +4239,7 @@
         const idx = parseInt(item.getAttribute("data-resume-idx"), 10);
         const resume = resumes[idx];
         if (!resume) return;
-        panelState.resume = resume;
-        panelState._resumeCleared = false;
+        setActiveResumeState(resume);
         setActiveResume(resume);
         renderResumePanel();
         renderMyResumesPanel();
@@ -4272,7 +4385,28 @@
     }
   });
 
-  // src/ui/tabs/resumes/render-resume-panel.js
+  // src/ui/tabs/resumes/resume-accordion-header.js
+  function calcExperienceYears(resume) {
+    if (!resume.experience || resume.experience.length === 0) return 0;
+    let totalMonths = 0;
+    for (const job of resume.experience) {
+      if (job.period) {
+        const yearMatch = job.period.match(/(\d+)\s*(лет|год|года|г\.)/i);
+        const monthMatch = job.period.match(/(\d+)\s*мес/i);
+        if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
+        if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
+      }
+    }
+    return Math.round(totalMonths / 12);
+  }
+  function yearWord(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 19) return "\u043B\u0435\u0442";
+    if (mod10 === 1) return "\u0433\u043E\u0434";
+    if (mod10 >= 2 && mod10 <= 4) return "\u0433\u043E\u0434\u0430";
+    return "\u043B\u0435\u0442";
+  }
   function updateAccordionHeader(resume) {
     const titleEl = refs.shadowRoot?.getElementById("res-title");
     const subtitleEl = refs.shadowRoot?.getElementById("res-subtitle");
@@ -4315,27 +4449,14 @@
       if (avatarEl) avatarEl.textContent = "?";
     }
   }
-  function calcExperienceYears(resume) {
-    if (!resume.experience || resume.experience.length === 0) return 0;
-    let totalMonths = 0;
-    for (const job of resume.experience) {
-      if (job.period) {
-        const yearMatch = job.period.match(/(\d+)\s*(лет|год|года|г\.)/i);
-        const monthMatch = job.period.match(/(\d+)\s*мес/i);
-        if (yearMatch) totalMonths += parseInt(yearMatch[1], 10) * 12;
-        if (monthMatch) totalMonths += parseInt(monthMatch[1], 10);
-      }
+  var init_resume_accordion_header = __esm({
+    "src/ui/tabs/resumes/resume-accordion-header.js"() {
+      init_state();
+      init_resume_helpers();
     }
-    return Math.round(totalMonths / 12);
-  }
-  function yearWord(n) {
-    const mod10 = n % 10;
-    const mod100 = n % 100;
-    if (mod100 >= 11 && mod100 <= 19) return "\u043B\u0435\u0442";
-    if (mod10 === 1) return "\u0433\u043E\u0434";
-    if (mod10 >= 2 && mod10 <= 4) return "\u0433\u043E\u0434\u0430";
-    return "\u043B\u0435\u0442";
-  }
+  });
+
+  // src/ui/tabs/resumes/render-resume-panel.js
   function renderResumePanel() {
     const container = refs.shadowRoot?.getElementById("res-parsed-data");
     if (!container) return;
@@ -4343,7 +4464,7 @@
     if (!r || !r.id) {
       const synced = panelState.myResumes || [];
       if (!panelState._resumeCleared && synced.length > 0 && synced[0].id) {
-        panelState.resume = synced[0];
+        setActiveResumeState(synced[0]);
         setActiveResume(synced[0]);
         renderResumePanel();
         return;
@@ -4371,8 +4492,7 @@
       if (chevron) chevron.classList.add("open");
     }
     const vis = r.visibility || (r.hidden ? "hidden" : "unknown");
-    container.innerHTML = '<div class="tl-item">' + buildPersonalSection(r) + '</div><div class="tl-item">' + buildSalarySection(r) + '</div><div class="tl-item">' + buildExperienceSection(r) + '</div><div class="tl-item">' + buildEducationSection(r) + '</div><div class="tl-item">' + buildLanguagesSection(r) + '</div><div class="tl-item">' + buildContactsSection(r) + "</div>" + // Hidden resume warning (no button, just info)
-    (vis === "hidden" ? '<div style="font-size:10px;color:#92400e;padding:6px 4px 0 28px;">\u0421\u043A\u0440\u044B\u0442\u043E\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u043D\u0435 \u0432\u0438\u0434\u043D\u043E \u0440\u0430\u0431\u043E\u0442\u043E\u0434\u0430\u0442\u0435\u043B\u044F\u043C \u2014 \u043C\u044D\u0442\u0447\u0438\u043D\u0433 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D</div>' : "");
+    container.innerHTML = '<div class="tl-item">' + buildPersonalSection(r) + '</div><div class="tl-item">' + buildSalarySection(r) + '</div><div class="tl-item">' + buildExperienceSection(r) + '</div><div class="tl-item">' + buildEducationSection(r) + '</div><div class="tl-item">' + buildLanguagesSection(r) + '</div><div class="tl-item">' + buildContactsSection(r) + "</div>" + (vis === "hidden" ? '<div style="font-size:10px;color:#92400e;padding:6px 4px 0 28px;">\u0421\u043A\u0440\u044B\u0442\u043E\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u043D\u0435 \u0432\u0438\u0434\u043D\u043E \u0440\u0430\u0431\u043E\u0442\u043E\u0434\u0430\u0442\u0435\u043B\u044F\u043C \u2014 \u043C\u044D\u0442\u0447\u0438\u043D\u0433 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D</div>' : "");
     attachSubToggle("subPersonal", "chevPersonal");
     attachSubToggle("subSalary", "chevSalary");
     attachSubToggle("subExp", "chevExp");
@@ -4392,6 +4512,7 @@
       init_render_my_resumes();
       init_section_builders();
       init_storage();
+      init_resume_accordion_header();
     }
   });
 
@@ -4410,53 +4531,6 @@
     "src/ui/tabs/resumes.js"() {
       init_resumes();
       init_resume_detail2();
-    }
-  });
-
-  // src/ui/panel/helpers.js
-  function addBlacklistItem() {
-    const input = refs.shadowRoot?.getElementById("bl-input");
-    if (!input || !input.value.trim()) return;
-    const name = input.value.trim();
-    if (!panelState.blacklist.includes(name)) {
-      panelState.blacklist.push(name);
-      input.value = "";
-      renderBlacklist();
-      addLogEntry("info", "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0430 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F \u0432 \u0427\u0421: " + name);
-    }
-  }
-  function removeBlacklistItem(name) {
-    panelState.blacklist = panelState.blacklist.filter((n) => n !== name);
-    renderBlacklist();
-  }
-  function selectConversation(convId) {
-    panelState.activeConversation = convId;
-    renderNegotiationList();
-    renderChatMessages();
-  }
-  function filterVacancies() {
-    const search = (refs.shadowRoot?.getElementById("vac-search")?.value || "").toLowerCase();
-    const status = refs.shadowRoot?.getElementById("vac-status-filter")?.value || "all";
-    const minScore = parseInt(refs.shadowRoot?.getElementById("vac-score-range")?.value || "0", 10);
-    const items = refs.shadowRoot?.querySelectorAll("#har-vlist .vacancy-item");
-    let visible = 0;
-    items.forEach((item) => {
-      const title = (item.dataset.title || "").toLowerCase();
-      const itemStatus = item.dataset.status || "new";
-      const itemScore = parseInt(item.dataset.score || "0", 10);
-      const matchTitle = !search || title.includes(search);
-      const matchStatus = status === "all" || itemStatus === status;
-      const matchScore = itemScore >= minScore;
-      item.style.display = matchTitle && matchStatus && matchScore ? "" : "none";
-      if (matchTitle && matchStatus && matchScore) visible++;
-    });
-  }
-  var init_helpers2 = __esm({
-    "src/ui/panel/helpers.js"() {
-      init_state();
-      init_settings2();
-      init_stats2();
-      init_negotiations2();
     }
   });
 
@@ -4544,91 +4618,7 @@
     }
   });
 
-  // src/lib/resume-fetch-list-vis.js
-  function extractVisibilityStatus(doc, resumes, html) {
-    if (resumes.length === 0) return;
-    if (!html) {
-      visLog.warn("extractVisibilityStatus: no raw HTML provided, skipping");
-      return;
-    }
-    const htmlLower = html.toLowerCase();
-    let alreadyDetected = 0;
-    let needDetection = 0;
-    resumes.forEach((r) => {
-      if (r.visibility === VISIBILITY_HIDDEN || r.visibility === VISIBILITY_VISIBLE) alreadyDetected++;
-      else needDetection++;
-    });
-    resumes.forEach((r) => {
-      const link = Array.from(doc.querySelectorAll("a[href]")).find((a) => {
-        const h = a.getAttribute("href") || "";
-        return h.includes(r.id);
-      });
-      if (link) {
-        const raw = link.textContent || "";
-        const norm = normalizeWs(raw);
-        const hasInd = hasHiddenIndicator(raw);
-        visLog.info("  DEBUG " + r.id.substring(0, 8) + ": rawLen=" + raw.length + " hasNbsp=" + (raw.indexOf("\xA0") !== -1) + ' normalized="' + norm.substring(0, 80) + '" hasHidden=' + hasInd + " vis=" + r.visibility);
-      }
-    });
-    visLog.info("Visibility scan: " + resumes.length + " resumes (" + alreadyDetected + " already from link text, " + needDetection + " need detection)");
-    if (needDetection === 0) {
-      visLog.info("All resumes already detected from link text \u2014 skipping other strategies");
-      logVisibilitySummary(resumes);
-      return;
-    }
-    const globalIndicators = HIDDEN_INDICATORS.map((ind) => ({ text: ind, pos: htmlLower.indexOf(ind) }));
-    const hasAnyIndicators = globalIndicators.some((i) => i.pos !== -1);
-    visLog.info("Indicators in HTML: " + (hasAnyIndicators ? globalIndicators.filter((i) => i.pos !== -1).map((i) => '"' + i.text + '"@' + i.pos).join(", ") : "NONE FOUND"));
-    let strategyUsed = false;
-    for (const sel of RESUME_CARD_SELECTORS) {
-      const cards = doc.querySelectorAll(sel);
-      if (cards.length === 0) continue;
-      visLog.info("Strategy 1: Found " + cards.length + " cards with selector: " + sel);
-      let matched = 0;
-      cards.forEach((card) => {
-        const link = card.querySelector('a[href*="/resume/"], a[href*="resume="]');
-        if (!link) return;
-        const href = link.getAttribute("href") || "";
-        let hashMatch = href.match(/\/resume\/([a-f0-9]+)/);
-        if (!hashMatch) hashMatch = href.match(/[?&]resume=([a-f0-9]+)/);
-        if (!hashMatch) return;
-        const id = hashMatch[1];
-        const resume = resumes.find((r) => r.id === id);
-        if (!resume || resume.visibility !== VISIBILITY_UNKNOWN) return;
-        const result = detectVisibilityFromCard(card);
-        resume.visibility = result.visibility;
-        resume.hidden = result.hidden;
-        matched++;
-        visLog.info("  Card: " + id.substring(0, 8) + "=" + result.visibility + " (method=" + result.method + ")");
-      });
-      if (matched > 0) {
-        visLog.info("Strategy 1: matched " + matched + "/" + needDetection + " unknown resumes via data-qa cards");
-        break;
-      }
-    }
-    const stillUnknown = resumes.filter((r) => r.visibility === VISIBILITY_UNKNOWN).length;
-    if (stillUnknown === 0) strategyUsed = true;
-    else if (!strategyUsed) visLog.info("Strategy 1: no data-qa cards matched, trying next strategy");
-    if (!strategyUsed) {
-      const scriptResult = extractVisibilityFromScripts(doc, resumes, html);
-      if (scriptResult) {
-        visLog.info("Strategy 2: found visibility in script/hydration state");
-        strategyUsed = true;
-      }
-    }
-    if (!strategyUsed) {
-      runProximitySearch(resumes, html);
-      strategyUsed = true;
-    }
-    const unknownAfterAll = resumes.filter((r) => r.visibility === VISIBILITY_UNKNOWN);
-    if (unknownAfterAll.length > 0) {
-      visLog.info("[VIS-DIAG] List: " + unknownAfterAll.length + " resumes still UNKNOWN \u2014 will be resolved by detail page detection");
-      unknownAfterAll.forEach((r) => {
-        visLog.info("[VIS-DIAG]   List: " + r.id.substring(0, 8) + ' "' + (r.title || "").substring(0, 30) + '" \u2192 ' + r.visibility);
-      });
-    }
-    logVisibilitySummary(resumes);
-  }
+  // src/lib/resume-fetch-list-vis-strategies.js
   function extractVisibilityFromScripts(doc, resumes, html) {
     let found = false;
     const scripts = doc.querySelectorAll("script");
@@ -4721,17 +4711,112 @@
     }
     return positions;
   }
-  function logVisibilitySummary(resumes) {
-    const summary = resumes.map((r) => r.id.substring(0, 8) + "=" + r.visibility).join(", ");
-    visLog.info("Visibility result: [" + summary + "]");
-  }
   var visLog, SEARCH_RADIUS;
-  var init_resume_fetch_list_vis = __esm({
-    "src/lib/resume-fetch-list-vis.js"() {
+  var init_resume_fetch_list_vis_strategies = __esm({
+    "src/lib/resume-fetch-list-vis-strategies.js"() {
       init_anti_hallucination();
       init_resume_constants();
       visLog = createLogger("ResumeFetchH");
       SEARCH_RADIUS = 5e3;
+    }
+  });
+
+  // src/lib/resume-fetch-list-vis.js
+  function extractVisibilityStatus(doc, resumes, html) {
+    if (resumes.length === 0) return;
+    if (!html) {
+      visLog2.warn("extractVisibilityStatus: no raw HTML provided, skipping");
+      return;
+    }
+    const htmlLower = html.toLowerCase();
+    let alreadyDetected = 0;
+    let needDetection = 0;
+    resumes.forEach((r) => {
+      if (r.visibility === VISIBILITY_HIDDEN || r.visibility === VISIBILITY_VISIBLE) alreadyDetected++;
+      else needDetection++;
+    });
+    resumes.forEach((r) => {
+      const link = Array.from(doc.querySelectorAll("a[href]")).find((a) => {
+        const h = a.getAttribute("href") || "";
+        return h.includes(r.id);
+      });
+      if (link) {
+        const raw = link.textContent || "";
+        const norm = normalizeWs(raw);
+        const hasInd = hasHiddenIndicator(raw);
+        visLog2.info("  DEBUG " + r.id.substring(0, 8) + ": rawLen=" + raw.length + " hasNbsp=" + (raw.indexOf("\xA0") !== -1) + ' normalized="' + norm.substring(0, 80) + '" hasHidden=' + hasInd + " vis=" + r.visibility);
+      }
+    });
+    visLog2.info("Visibility scan: " + resumes.length + " resumes (" + alreadyDetected + " already from link text, " + needDetection + " need detection)");
+    if (needDetection === 0) {
+      visLog2.info("All resumes already detected from link text \u2014 skipping other strategies");
+      logVisibilitySummary(resumes);
+      return;
+    }
+    const globalIndicators = HIDDEN_INDICATORS.map((ind) => ({ text: ind, pos: htmlLower.indexOf(ind) }));
+    const hasAnyIndicators = globalIndicators.some((i) => i.pos !== -1);
+    visLog2.info("Indicators in HTML: " + (hasAnyIndicators ? globalIndicators.filter((i) => i.pos !== -1).map((i) => '"' + i.text + '"@' + i.pos).join(", ") : "NONE FOUND"));
+    let strategyUsed = false;
+    for (const sel of RESUME_CARD_SELECTORS) {
+      const cards = doc.querySelectorAll(sel);
+      if (cards.length === 0) continue;
+      visLog2.info("Strategy 1: Found " + cards.length + " cards with selector: " + sel);
+      let matched = 0;
+      cards.forEach((card) => {
+        const link = card.querySelector('a[href*="/resume/"], a[href*="resume="]');
+        if (!link) return;
+        const href = link.getAttribute("href") || "";
+        let hashMatch = href.match(/\/resume\/([a-f0-9]+)/);
+        if (!hashMatch) hashMatch = href.match(/[?&]resume=([a-f0-9]+)/);
+        if (!hashMatch) return;
+        const id = hashMatch[1];
+        const resume = resumes.find((r) => r.id === id);
+        if (!resume || resume.visibility !== VISIBILITY_UNKNOWN) return;
+        const result = detectVisibilityFromCard(card);
+        resume.visibility = result.visibility;
+        resume.hidden = result.hidden;
+        matched++;
+        visLog2.info("  Card: " + id.substring(0, 8) + "=" + result.visibility + " (method=" + result.method + ")");
+      });
+      if (matched > 0) {
+        visLog2.info("Strategy 1: matched " + matched + "/" + needDetection + " unknown resumes via data-qa cards");
+        break;
+      }
+    }
+    const stillUnknown = resumes.filter((r) => r.visibility === VISIBILITY_UNKNOWN).length;
+    if (stillUnknown === 0) strategyUsed = true;
+    else if (!strategyUsed) visLog2.info("Strategy 1: no data-qa cards matched, trying next strategy");
+    if (!strategyUsed) {
+      const scriptResult = extractVisibilityFromScripts(doc, resumes, html);
+      if (scriptResult) {
+        visLog2.info("Strategy 2: found visibility in script/hydration state");
+        strategyUsed = true;
+      }
+    }
+    if (!strategyUsed) {
+      runProximitySearch(resumes, html);
+      strategyUsed = true;
+    }
+    const unknownAfterAll = resumes.filter((r) => r.visibility === VISIBILITY_UNKNOWN);
+    if (unknownAfterAll.length > 0) {
+      visLog2.info("[VIS-DIAG] List: " + unknownAfterAll.length + " resumes still UNKNOWN \u2014 will be resolved by detail page detection");
+      unknownAfterAll.forEach((r) => {
+        visLog2.info("[VIS-DIAG]   List: " + r.id.substring(0, 8) + ' "' + (r.title || "").substring(0, 30) + '" \u2192 ' + r.visibility);
+      });
+    }
+    logVisibilitySummary(resumes);
+  }
+  function logVisibilitySummary(resumes) {
+    const summary = resumes.map((r) => r.id.substring(0, 8) + "=" + r.visibility).join(", ");
+    visLog2.info("Visibility result: [" + summary + "]");
+  }
+  var visLog2;
+  var init_resume_fetch_list_vis = __esm({
+    "src/lib/resume-fetch-list-vis.js"() {
+      init_anti_hallucination();
+      init_resume_constants();
+      init_resume_fetch_list_vis_strategies();
+      visLog2 = createLogger("ResumeFetchH");
     }
   });
 
@@ -4825,84 +4910,6 @@
     }
     return job.company || job.position ? job : null;
   }
-  function parseEducationFromDoc(eduCard) {
-    const eduEntries = [];
-    const eduCells = eduCard.querySelectorAll('[data-qa="cell-left-side"]');
-    eduCells.forEach((cell) => {
-      const edu = parseEduCell(cell);
-      if (edu) eduEntries.push(edu);
-    });
-    if (eduEntries.length === 0) {
-      Array.from(eduCard.children).forEach((child) => {
-        const edu = parseEduChild(child);
-        if (edu) eduEntries.push(edu);
-      });
-    }
-    if (eduEntries.length === 0) {
-      const fullText = (eduCard.textContent || "").trim();
-      const lines = fullText.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 3);
-      for (const line of lines) {
-        if (/[А-Яа-яЁё]{3,}/.test(line) && line.length < 200) {
-          const yearMatch = line.match(/(\d{4})/);
-          eduEntries.push({
-            name: line.replace(/\d{4}/g, "").trim().substring(0, 100),
-            year: yearMatch ? yearMatch[1] : ""
-          });
-        }
-      }
-    }
-    return eduEntries;
-  }
-  function parseEduCell(cell) {
-    const edu = {};
-    const cellTexts = cell.querySelectorAll('[data-qa="cell-text-content"]');
-    cellTexts.forEach((ct) => {
-      const t = (ct.textContent || "").trim();
-      if (!t || t.length < 2) return;
-      if (EDU_UI_TEXTS.test(t)) return;
-      if (!edu.name) {
-        edu.name = t;
-      } else if (!edu.description) {
-        edu.description = t;
-      } else if (!edu.year && /\d{4}/.test(t)) {
-        edu.year = t.match(/\d{4}/)?.[0] || t;
-      }
-    });
-    if (edu.name && !EDU_UI_TEXTS.test(edu.name) && edu.name.length > 3) {
-      return edu;
-    }
-    return null;
-  }
-  function parseEduChild(child) {
-    const edu = {};
-    const linkEl = child.querySelector("a");
-    if (linkEl) {
-      const t = (linkEl.textContent || "").trim();
-      if (!EDU_UI_TEXTS.test(t)) edu.name = t;
-    }
-    if (!edu.name) {
-      const textEls = child.querySelectorAll("span, div, p");
-      for (const el of textEls) {
-        const t = (el.textContent || "").trim();
-        if (t.length > 3 && /[А-Яа-яЁё]/.test(t) && !/^\d/.test(t) && !/\d{4}/.test(t) && !EDU_UI_TEXTS.test(t)) {
-          edu.name = t;
-          break;
-        }
-      }
-    }
-    const spans = child.querySelectorAll("span, div");
-    for (const sp of spans) {
-      const t = (sp.textContent || "").trim();
-      if (/^\d{4}$/.test(t) || /\d{4}/.test(t) && t.length < 15) {
-        edu.year = t;
-        break;
-      }
-    }
-    if (edu.name && !EDU_UI_TEXTS.test(edu.name) && edu.name.length > 2) {
-      return edu;
-    }
-    return null;
-  }
   function parsePersonalDataFromDoc(doc, titleEl, dbg, resume) {
     const personalText = [];
     const posCard = doc.querySelector('[data-qa="resume-position-card"]');
@@ -4947,11 +4954,10 @@
       }
     }
   }
-  var EDU_UI_TEXTS, GENDER_PATTERNS, AGE_PATTERN, AGE_PATTERN2;
+  var GENDER_PATTERNS, AGE_PATTERN, AGE_PATTERN2;
   var init_resume_fetch_parse = __esm({
     "src/lib/resume-fetch-parse.js"() {
       init_resume_fetch_helpers();
-      EDU_UI_TEXTS = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
       GENDER_PATTERNS = [/\bмужчина\b/i, /\bженщина\b/i, /\bмужской\b/i, /\bженский\b/i, /\bmale\b/i, /\bfemale\b/i];
       AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
       AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
@@ -4966,12 +4972,12 @@
       const cardText = normalizeWs(visCard.textContent || "").toLowerCase();
       if (cardText.includes("\u043D\u0435 \u0432\u0438\u0434\u043D\u043E \u043D\u0438\u043A\u043E\u043C\u0443") || cardText.includes("\u043D\u0435\xA0\u0432\u0438\u0434\u043D\u043E \u043D\u0438\u043A\u043E\u043C\u0443")) {
         diag.push('S0:visibility-card="\u043D\u0435 \u0432\u0438\u0434\u043D\u043E \u043D\u0438\u043A\u043E\u043C\u0443" \u2192 HIDDEN');
-        visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+        visLog3.info("[VIS-DIAG] " + diag.join(" | "));
         return { visibility: VISIBILITY_HIDDEN, trace: diag };
       }
       if (cardText.includes("\u0432\u0438\u0434\u043D\u043E \u0432\u0441\u0435\u043C") || cardText.includes("\u0432\u0438\u0434\u043D\u043E\xA0\u0432\u0441\u0435\u043C")) {
         diag.push('S0:visibility-card="\u0432\u0438\u0434\u043D\u043E \u0432\u0441\u0435\u043C" \u2192 VISIBLE');
-        visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+        visLog3.info("[VIS-DIAG] " + diag.join(" | "));
         return { visibility: VISIBILITY_VISIBLE, trace: diag };
       }
       diag.push('S0:visibility-card-unknown="' + cardText.substring(0, 40) + '"');
@@ -4982,7 +4988,7 @@
       const found = doc.querySelector(sel);
       if (found) {
         diag.push("S1:data-qa=" + sel + " \u2192 HIDDEN");
-        visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+        visLog3.info("[VIS-DIAG] " + diag.join(" | "));
         return { visibility: VISIBILITY_HIDDEN, trace: diag };
       }
     }
@@ -4997,14 +5003,14 @@
       }
       if (text.includes("\u0441\u0434\u0435\u043B\u0430\u0442\u044C \u0432\u0438\u0434\u0438\u043C\u044B\u043C")) {
         diag.push('S2:btn="\u0441\u0434\u0435\u043B\u0430\u0442\u044C \u0432\u0438\u0434\u0438\u043C\u044B\u043C" \u2192 HIDDEN');
-        visLog2.info("[VIS-DIAG] " + diag.join(" | "));
-        visLog2.info("[VIS-DIAG] All vis-related buttons: " + JSON.stringify(btnDetails));
+        visLog3.info("[VIS-DIAG] " + diag.join(" | "));
+        visLog3.info("[VIS-DIAG] All vis-related buttons: " + JSON.stringify(btnDetails));
         return { visibility: VISIBILITY_HIDDEN, trace: diag, btnDetails };
       }
       if (text.includes("\u0441\u043A\u0440\u044B\u0442\u044C \u0440\u0435\u0437\u044E\u043C\u0435")) {
         diag.push('S2:btn="\u0441\u043A\u0440\u044B\u0442\u044C \u0440\u0435\u0437\u044E\u043C\u0435" \u2192 VISIBLE');
-        visLog2.info("[VIS-DIAG] " + diag.join(" | "));
-        visLog2.info("[VIS-DIAG] All vis-related buttons: " + JSON.stringify(btnDetails));
+        visLog3.info("[VIS-DIAG] " + diag.join(" | "));
+        visLog3.info("[VIS-DIAG] All vis-related buttons: " + JSON.stringify(btnDetails));
         return { visibility: VISIBILITY_VISIBLE, trace: diag, btnDetails };
       }
     }
@@ -5019,12 +5025,12 @@
           break;
         }
       }
-      visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+      visLog3.info("[VIS-DIAG] " + diag.join(" | "));
       return { visibility: VISIBILITY_HIDDEN, trace: diag };
     }
     if (hasVisibleIndicator(bodyText)) {
       diag.push("S3:body has visible indicator \u2192 VISIBLE");
-      visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+      visLog3.info("[VIS-DIAG] " + diag.join(" | "));
       return { visibility: VISIBILITY_VISIBLE, trace: diag };
     }
     diag.push("S3:body-no-indicators");
@@ -5039,12 +5045,12 @@
           break;
         }
       }
-      visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+      visLog3.info("[VIS-DIAG] " + diag.join(" | "));
       return { visibility: VISIBILITY_HIDDEN, trace: diag };
     }
     if (hasVisibleIndicator(htmlNorm)) {
       diag.push("S4:html has visible indicator \u2192 VISIBLE");
-      visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+      visLog3.info("[VIS-DIAG] " + diag.join(" | "));
       return { visibility: VISIBILITY_VISIBLE, trace: diag };
     }
     diag.push("S4:html-no-indicators");
@@ -5065,7 +5071,7 @@
     }
     if (scriptPatterns.length > 0) {
       diag.push("S5:script=" + scriptPatterns.join(",") + " \u2192 HIDDEN");
-      visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+      visLog3.info("[VIS-DIAG] " + diag.join(" | "));
       return { visibility: VISIBILITY_HIDDEN, trace: diag, scriptPatterns };
     }
     diag.push("S5:no-script-patterns");
@@ -5073,7 +5079,7 @@
     if (hideLink) {
       const hideQa = hideLink.getAttribute("data-qa") || "";
       diag.push("S6:hide-link qa=" + hideQa + " \u2192 VISIBLE");
-      visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+      visLog3.info("[VIS-DIAG] " + diag.join(" | "));
       return { visibility: VISIBILITY_VISIBLE, trace: diag };
     }
     diag.push("S6:no-hide-link");
@@ -5083,15 +5089,15 @@
       diag.push("EXTRA:hide-qa=" + hideQas.join(","));
     }
     diag.push("\u2192 UNKNOWN");
-    visLog2.info("[VIS-DIAG] " + diag.join(" | "));
+    visLog3.info("[VIS-DIAG] " + diag.join(" | "));
     return { visibility: VISIBILITY_UNKNOWN, trace: diag };
   }
-  var visLog2;
+  var visLog3;
   var init_resume_fetch_resume_page_vis = __esm({
     "src/lib/resume-fetch-resume-page-vis.js"() {
       init_anti_hallucination();
       init_resume_constants();
-      visLog2 = createLogger("ResumeFetch");
+      visLog3 = createLogger("ResumeFetch");
     }
   });
 
@@ -5572,7 +5578,7 @@
     const visCard = iframeDoc.querySelector('[data-qa="resume-visibility-card"]');
     if (visCard) {
       const cardText = normalizeWs(visCard.textContent || "").toLowerCase();
-      visLog3.info('[VIS-IFRAME] resume-visibility-card text="' + cardText.substring(0, 100) + '"');
+      visLog4.info('[VIS-IFRAME] resume-visibility-card text="' + cardText.substring(0, 100) + '"');
       if (cardText.includes("\u043D\u0435 \u0432\u0438\u0434\u043D\u043E \u043D\u0438\u043A\u043E\u043C\u0443") || cardText.includes("\u043D\u0435\xA0\u0432\u0438\u0434\u043D\u043E \u043D\u0438\u043A\u043E\u043C\u0443")) {
         trace.push('iframe-S0:visibility-card="\u043D\u0435 \u0432\u0438\u0434\u043D\u043E \u043D\u0438\u043A\u043E\u043C\u0443" \u2192 HIDDEN');
         return { visibility: VISIBILITY_HIDDEN, trace };
@@ -5594,7 +5600,7 @@
         diagInfo.buttons.push({ text: text.substring(0, 50), qa, href: href.substring(0, 60), tag: btn.tagName });
       }
     }
-    visLog3.info("[VIS-IFRAME] Diagnostic buttons: " + JSON.stringify(diagInfo.buttons));
+    visLog4.info("[VIS-IFRAME] Diagnostic buttons: " + JSON.stringify(diagInfo.buttons));
     for (const sel of VISIBILITY_HIDDEN_DATA_QA) {
       const found = iframeDoc.querySelector(sel);
       if (found) {
@@ -5697,18 +5703,18 @@
       }
     }
     if (diagInfo.visElements.length > 0) {
-      visLog3.info("[VIS-IFRAME] Related elements: " + JSON.stringify(diagInfo.visElements));
+      visLog4.info("[VIS-IFRAME] Related elements: " + JSON.stringify(diagInfo.visElements));
     }
     trace.push("\u2192 UNKNOWN");
-    visLog3.info("[VIS-IFRAME] All strategies exhausted. Buttons found: " + diagInfo.buttons.length + ", Related elements: " + diagInfo.visElements.length);
+    visLog4.info("[VIS-IFRAME] All strategies exhausted. Buttons found: " + diagInfo.buttons.length + ", Related elements: " + diagInfo.visElements.length);
     return { visibility: VISIBILITY_UNKNOWN, trace };
   }
-  var visLog3;
+  var visLog4;
   var init_resume_fetch_iframe_vis = __esm({
     "src/lib/resume-fetch-iframe-vis.js"() {
       init_anti_hallucination();
       init_resume_constants();
-      visLog3 = createLogger("ResumeFetch");
+      visLog4 = createLogger("ResumeFetch");
     }
   });
 
@@ -6291,6 +6297,88 @@
     }
   });
 
+  // src/lib/resume-fetch-parse-edu.js
+  function parseEducationFromDoc(eduCard) {
+    const eduEntries = [];
+    const eduCells = eduCard.querySelectorAll('[data-qa="cell-left-side"]');
+    eduCells.forEach((cell) => {
+      const edu = parseEduCell(cell);
+      if (edu) eduEntries.push(edu);
+    });
+    if (eduEntries.length === 0) {
+      Array.from(eduCard.children).forEach((child) => {
+        const edu = parseEduChild(child);
+        if (edu) eduEntries.push(edu);
+      });
+    }
+    if (eduEntries.length === 0) {
+      const fullText = (eduCard.textContent || "").trim();
+      const lines = fullText.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.length > 3);
+      for (const line of lines) {
+        if (/[А-Яа-яЁё]{3,}/.test(line) && line.length < 200) {
+          const yearMatch = line.match(/(\d{4})/);
+          eduEntries.push({
+            name: line.replace(/\d{4}/g, "").trim().substring(0, 100),
+            year: yearMatch ? yearMatch[1] : ""
+          });
+        }
+      }
+    }
+    return eduEntries;
+  }
+  function parseEduCell(cell) {
+    const edu = {};
+    const cellTexts = cell.querySelectorAll('[data-qa="cell-text-content"]');
+    cellTexts.forEach((ct) => {
+      const t = (ct.textContent || "").trim();
+      if (!t || t.length < 2) return;
+      if (EDU_UI_TEXTS.test(t)) return;
+      if (!edu.name) {
+        edu.name = t;
+      } else if (!edu.description) {
+        edu.description = t;
+      } else if (!edu.year && /\d{4}/.test(t)) {
+        edu.year = t.match(/\d{4}/)?.[0] || t;
+      }
+    });
+    if (edu.name && !EDU_UI_TEXTS.test(edu.name) && edu.name.length > 3) return edu;
+    return null;
+  }
+  function parseEduChild(child) {
+    const edu = {};
+    const linkEl = child.querySelector("a");
+    if (linkEl) {
+      const t = (linkEl.textContent || "").trim();
+      if (!EDU_UI_TEXTS.test(t)) edu.name = t;
+    }
+    if (!edu.name) {
+      const textEls = child.querySelectorAll("span, div, p");
+      for (const el of textEls) {
+        const t = (el.textContent || "").trim();
+        if (t.length > 3 && /[А-Яа-яЁё]/.test(t) && !/^\d/.test(t) && !/\d{4}/.test(t) && !EDU_UI_TEXTS.test(t)) {
+          edu.name = t;
+          break;
+        }
+      }
+    }
+    const spans = child.querySelectorAll("span, div");
+    for (const sp of spans) {
+      const t = (sp.textContent || "").trim();
+      if (/^\d{4}$/.test(t) || /\d{4}/.test(t) && t.length < 15) {
+        edu.year = t;
+        break;
+      }
+    }
+    if (edu.name && !EDU_UI_TEXTS.test(edu.name) && edu.name.length > 2) return edu;
+    return null;
+  }
+  var EDU_UI_TEXTS;
+  var init_resume_fetch_parse_edu = __esm({
+    "src/lib/resume-fetch-parse-edu.js"() {
+      EDU_UI_TEXTS = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
+    }
+  });
+
   // src/lib/resume-fetch-education-languages.js
   function parseEducationFromDocSection(doc, dbg, resume) {
     const eduCard = doc.querySelector('[data-qa="resume-list-card-education"]');
@@ -6322,115 +6410,11 @@
   }
   var init_resume_fetch_education_languages = __esm({
     "src/lib/resume-fetch-education-languages.js"() {
-      init_resume_fetch_parse();
+      init_resume_fetch_parse_edu();
     }
   });
 
-  // src/lib/resume-fetch-resume.js
-  async function fetchAndParseResume(resumeUrl, listMeta) {
-    fetchLog11.info("Fetching resume: " + resumeUrl);
-    const html = await fetchHtml(resumeUrl);
-    const doc = htmlToDoc(html);
-    fetchLog11.info("Resume HTML: " + html.length + " chars");
-    logPreParseDiagnostics(html, doc);
-    window.__hhLastFetchHtml = html;
-    window.__hhLastFetchDoc = doc;
-    let hashMatch = resumeUrl.match(/\/resume\/([a-f0-9]+)/);
-    if (!hashMatch) hashMatch = resumeUrl.match(/[?&]resume=([a-f0-9]+)/);
-    const id = hashMatch ? hashMatch[1] : "";
-    const resume = {
-      id,
-      url: resumeUrl,
-      title: "",
-      salary: "",
-      gender: "",
-      age: "",
-      address: "",
-      specializations: [],
-      skills: [],
-      skillLevels: {},
-      experience: [],
-      education: [],
-      languages: [],
-      additionalInfo: "",
-      parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      visibility: VISIBILITY_UNKNOWN,
-      hidden: false,
-      _debug: { found: [], missing: [] }
-    };
-    const pageVisResult = detectVisibilityFromResumePage(doc, html);
-    const pageVis = pageVisResult.visibility;
-    const pageTrace = pageVisResult.trace || [];
-    const visDiagEntry = {
-      id: id || "unknown",
-      title: "(will be set after parse)",
-      pageVis,
-      pageTrace,
-      listVis: listMeta ? listMeta.visibility : "no-list-meta",
-      listHidden: listMeta ? listMeta.hidden : void 0,
-      decision: null,
-      decisionReason: null,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    resolveVisibilityDecision(resume, pageVis, listMeta, visDiagEntry);
-    resume._visDiag = visDiagEntry;
-    if (listMeta && listMeta.title && listMeta.title !== "Untitled") {
-      resume._listTitle = listMeta.title;
-    }
-    const dbg = (key, val) => {
-      if (val) resume._debug.found.push(key + ": " + (typeof val === "string" ? '"' + val.substring(0, 60) + '"' : val));
-      else resume._debug.missing.push(key);
-      return val;
-    };
-    parseHeader(doc, dbg, resume);
-    if (resume.title) resume.title = resume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
-    parsePersonalDataFromDoc(doc, doc.querySelector('[data-qa="resume-block-title-position"]'), dbg, resume);
-    parseSkillsFromDoc(doc, dbg, resume);
-    await parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl);
-    parseEducationFromDocSection(doc, dbg, resume);
-    parseLanguagesAndAbout2(doc, dbg, resume);
-    if (resume._visDiag) resume._visDiag.title = resume.title || "(no title)";
-    fetchLog11.info("Parsed: " + resume.title + " | Skills: " + resume.skills.length + " | Exp: " + resume.experience.length + " | Edu: " + resume.education.length);
-    return resume;
-  }
-  function parseHeader(doc, dbg, resume) {
-    const titleEl = doc.querySelector('[data-qa="resume-block-title-position"]');
-    if (titleEl) resume.title = dbg("resumeTitle (data-qa)", safeGetText2(titleEl));
-    if (!resume.title) {
-      const h1 = doc.querySelector("h1");
-      if (h1) resume.title = dbg("resumeTitle (h1)", (h1.textContent || "").trim());
-    }
-    const salaryEl = doc.querySelector('[data-qa="resume-block-salary"]');
-    if (salaryEl) resume.salary = dbg("resumeSalary (data-qa)", safeGetText2(salaryEl));
-  }
-  function parseSkillsFromDoc(doc, dbg, resume) {
-    const skillsCard = doc.querySelector('[data-qa="skills-card"]');
-    if (!skillsCard) {
-      resume._debug.missing.push('skillsBlock (no data-qa="skills-card")');
-      return;
-    }
-    resume._debug.found.push('skillsBlock (data-qa="skills-card")');
-    const skillLevelEls = skillsCard.querySelectorAll('[data-qa^="skill-level-title-"]');
-    skillLevelEls.forEach((el) => {
-      const qa = el.getAttribute("data-qa") || "";
-      const lvlMatch = qa.match(/skill-level-title-(\d)/);
-      if (lvlMatch) {
-        const lvl = lvlMatch[1];
-        const labels = { "3": "\u041F\u0440\u043E\u0434\u0432\u0438\u043D\u0443\u0442\u044B\u0439", "2": "\u0421\u0440\u0435\u0434\u043D\u0438\u0439", "1": "\u041D\u0430\u0447\u0430\u043B\u044C\u043D\u044B\u0439" };
-        resume.skillLevels[lvl] = labels[lvl] || (el.textContent || "").trim();
-        resume._debug.found.push("skillLevel" + lvl);
-      }
-    });
-    skillsCard.querySelectorAll('[data-qa^="skill-tag-"], .bloko-tag__text').forEach((tag) => {
-      const text = (tag.textContent || "").trim();
-      if (text && text.length > 0 && text.length < 100 && !resume.skills.includes(text)) {
-        resume.skills.push(text);
-      }
-    });
-    if (resume.skills.length > 0) {
-      resume._debug.found.push("skills: " + resume.skills.length + " tags");
-    }
-  }
+  // src/lib/resume-fetch-resume-diag.js
   function logPreParseDiagnostics(html, doc) {
     const preExpCards = doc.querySelectorAll('[data-qa="profile-experience-company-card"]');
     const preStepperItems = doc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
@@ -6489,6 +6473,120 @@
     fetchLog11.info("[VIS-DIAG] Decision: " + visDiagEntry.decision + " (" + visDiagEntry.decisionReason + ")");
   }
   var fetchLog11;
+  var init_resume_fetch_resume_diag = __esm({
+    "src/lib/resume-fetch-resume-diag.js"() {
+      init_anti_hallucination();
+      init_resume_constants();
+      fetchLog11 = createLogger("ResumeFetch");
+    }
+  });
+
+  // src/lib/resume-fetch-resume.js
+  async function fetchAndParseResume(resumeUrl, listMeta) {
+    fetchLog12.info("Fetching resume: " + resumeUrl);
+    const html = await fetchHtml(resumeUrl);
+    const doc = htmlToDoc(html);
+    fetchLog12.info("Resume HTML: " + html.length + " chars");
+    logPreParseDiagnostics(html, doc);
+    window.__hhLastFetchHtml = html;
+    window.__hhLastFetchDoc = doc;
+    let hashMatch = resumeUrl.match(/\/resume\/([a-f0-9]+)/);
+    if (!hashMatch) hashMatch = resumeUrl.match(/[?&]resume=([a-f0-9]+)/);
+    const id = hashMatch ? hashMatch[1] : "";
+    const resume = {
+      id,
+      url: resumeUrl,
+      title: "",
+      salary: "",
+      gender: "",
+      age: "",
+      address: "",
+      specializations: [],
+      skills: [],
+      skillLevels: {},
+      experience: [],
+      education: [],
+      languages: [],
+      additionalInfo: "",
+      parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      visibility: VISIBILITY_UNKNOWN,
+      hidden: false,
+      _debug: { found: [], missing: [] }
+    };
+    const pageVisResult = detectVisibilityFromResumePage(doc, html);
+    const pageVis = pageVisResult.visibility;
+    const pageTrace = pageVisResult.trace || [];
+    const visDiagEntry = {
+      id: id || "unknown",
+      title: "(will be set after parse)",
+      pageVis,
+      pageTrace,
+      listVis: listMeta ? listMeta.visibility : "no-list-meta",
+      listHidden: listMeta ? listMeta.hidden : void 0,
+      decision: null,
+      decisionReason: null,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    resolveVisibilityDecision(resume, pageVis, listMeta, visDiagEntry);
+    resume._visDiag = visDiagEntry;
+    if (listMeta && listMeta.title && listMeta.title !== "Untitled") {
+      resume._listTitle = listMeta.title;
+    }
+    const dbg = (key, val) => {
+      if (val) resume._debug.found.push(key + ": " + (typeof val === "string" ? '"' + val.substring(0, 60) + '"' : val));
+      else resume._debug.missing.push(key);
+      return val;
+    };
+    parseHeader(doc, dbg, resume);
+    if (resume.title) resume.title = resume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
+    parsePersonalDataFromDoc(doc, doc.querySelector('[data-qa="resume-block-title-position"]'), dbg, resume);
+    parseSkillsFromDoc(doc, dbg, resume);
+    await parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl);
+    parseEducationFromDocSection(doc, dbg, resume);
+    parseLanguagesAndAbout2(doc, dbg, resume);
+    if (resume._visDiag) resume._visDiag.title = resume.title || "(no title)";
+    fetchLog12.info("Parsed: " + resume.title + " | Skills: " + resume.skills.length + " | Exp: " + resume.experience.length + " | Edu: " + resume.education.length);
+    return resume;
+  }
+  function parseHeader(doc, dbg, resume) {
+    const titleEl = doc.querySelector('[data-qa="resume-block-title-position"]');
+    if (titleEl) resume.title = dbg("resumeTitle (data-qa)", safeGetText2(titleEl));
+    if (!resume.title) {
+      const h1 = doc.querySelector("h1");
+      if (h1) resume.title = dbg("resumeTitle (h1)", (h1.textContent || "").trim());
+    }
+    const salaryEl = doc.querySelector('[data-qa="resume-block-salary"]');
+    if (salaryEl) resume.salary = dbg("resumeSalary (data-qa)", safeGetText2(salaryEl));
+  }
+  function parseSkillsFromDoc(doc, dbg, resume) {
+    const skillsCard = doc.querySelector('[data-qa="skills-card"]');
+    if (!skillsCard) {
+      resume._debug.missing.push('skillsBlock (no data-qa="skills-card")');
+      return;
+    }
+    resume._debug.found.push('skillsBlock (data-qa="skills-card")');
+    const skillLevelEls = skillsCard.querySelectorAll('[data-qa^="skill-level-title-"]');
+    skillLevelEls.forEach((el) => {
+      const qa = el.getAttribute("data-qa") || "";
+      const lvlMatch = qa.match(/skill-level-title-(\d)/);
+      if (lvlMatch) {
+        const lvl = lvlMatch[1];
+        const labels = { "3": "\u041F\u0440\u043E\u0434\u0432\u0438\u043D\u0443\u0442\u044B\u0439", "2": "\u0421\u0440\u0435\u0434\u043D\u0438\u0439", "1": "\u041D\u0430\u0447\u0430\u043B\u044C\u043D\u044B\u0439" };
+        resume.skillLevels[lvl] = labels[lvl] || (el.textContent || "").trim();
+        resume._debug.found.push("skillLevel" + lvl);
+      }
+    });
+    skillsCard.querySelectorAll('[data-qa^="skill-tag-"], .bloko-tag__text').forEach((tag) => {
+      const text = (tag.textContent || "").trim();
+      if (text && text.length > 0 && text.length < 100 && !resume.skills.includes(text)) {
+        resume.skills.push(text);
+      }
+    });
+    if (resume.skills.length > 0) {
+      resume._debug.found.push("skills: " + resume.skills.length + " tags");
+    }
+  }
+  var fetchLog12;
   var init_resume_fetch_resume = __esm({
     "src/lib/resume-fetch-resume.js"() {
       init_anti_hallucination();
@@ -6498,7 +6596,74 @@
       init_resume_fetch_resume_page_vis();
       init_resume_fetch_resume_exp_orch();
       init_resume_fetch_education_languages();
-      fetchLog11 = createLogger("ResumeFetch");
+      init_resume_fetch_resume_diag();
+      fetchLog12 = createLogger("ResumeFetch");
+    }
+  });
+
+  // src/lib/resume-fetch-vis-fallback.js
+  function applyVisibilityFallback(results, visDiag) {
+    const stillUnknown = results.filter((r) => r.visibility === VISIBILITY_UNKNOWN);
+    if (stillUnknown.length === 0) return;
+    const iframeRan = stillUnknown.filter((r) => r._visDiag?.iframeRan);
+    const iframeNotRan = stillUnknown.filter((r) => !r._visDiag?.iframeRan);
+    if (iframeNotRan.length > 0) {
+      fetchLog13.info("[VIS-DIAG] Final fallback: " + iframeNotRan.length + " resumes UNKNOWN (iframe not run) \u2192 defaulting to VISIBLE");
+      visDiag.summary.unknownFallbackToVisible = iframeNotRan.length;
+      iframeNotRan.forEach((r) => {
+        fetchLog13.info("[VIS-DIAG]   " + (r.id ? r.id.substring(0, 8) : "?") + ' "' + (r.title || "").substring(0, 30) + '" UNKNOWN\u2192VISIBLE (iframe not run)');
+        r.visibility = VISIBILITY_VISIBLE;
+        r.hidden = false;
+        const diagEntry = visDiag.resumes.find((d) => d.id === r.id);
+        if (diagEntry) {
+          diagEntry.finalVisibility = VISIBILITY_VISIBLE;
+          diagEntry.decisionReason += " [FALLBACK: UNKNOWN\u2192VISIBLE, iframe not run]";
+        }
+      });
+    }
+    if (iframeRan.length > 0) {
+      fetchLog13.info("[VIS-DIAG] Keeping UNKNOWN for " + iframeRan.length + " resumes (iframe ran but returned UNKNOWN)");
+      iframeRan.forEach((r) => {
+        fetchLog13.info("[VIS-DIAG]   " + (r.id ? r.id.substring(0, 8) : "?") + ' "' + (r.title || "").substring(0, 30) + '" \u2192 UNKNOWN (iframe ran, no indicators found)');
+        const diagEntry = visDiag.resumes.find((d) => d.id === r.id);
+        if (diagEntry) {
+          diagEntry.finalVisibility = VISIBILITY_UNKNOWN;
+          diagEntry.decisionReason += " [KEPT UNKNOWN: iframe ran, no indicators]";
+        }
+      });
+    }
+  }
+  function finalizeVisDiag(results, visDiag) {
+    results.forEach((r) => {
+      const diagEntry = visDiag.resumes.find((d) => d.id === r.id);
+      if (diagEntry && !diagEntry.finalVisibility) {
+        diagEntry.finalVisibility = r.visibility;
+      }
+    });
+    visDiag.summary.total = results.length;
+    visDiag.summary.visible = results.filter((r) => r.visibility === VISIBILITY_VISIBLE).length;
+    visDiag.summary.hidden = results.filter((r) => r.visibility === "hidden").length;
+    visDiag.summary.unknown = results.filter((r) => r.visibility === VISIBILITY_UNKNOWN).length;
+    visDiag.finishedAt = (/* @__PURE__ */ new Date()).toISOString();
+    fetchLog13.info("[VIS-DIAG] \u2550\u2550\u2550 FINAL VISIBILITY SUMMARY \u2550\u2550\u2550");
+    fetchLog13.info("[VIS-DIAG] Total: " + visDiag.summary.total + ", Visible: " + visDiag.summary.visible + ", Hidden: " + visDiag.summary.hidden + ", Unknown: " + visDiag.summary.unknown + ", Fallbacks: " + visDiag.summary.unknownFallbackToVisible);
+    results.forEach((r) => {
+      fetchLog13.info("[VIS-DIAG]   " + (r.id ? r.id.substring(0, 8) : "?") + ' "' + (r.title || "").substring(0, 30) + '" \u2192 ' + r.visibility);
+    });
+    window.__hhVisDiag = visDiag;
+    try {
+      window.postMessage({ type: "HH-AR-VISDIAG", payload: visDiag }, "*");
+    } catch (e) {
+      fetchLog13.warn("[VIS-DIAG] Could not send to page world: " + e.message);
+    }
+    fetchLog13.info("[VIS-DIAG] Diagnostic dump available: __hhVis() / __hhVisTable() / window.__hhVisDiag");
+  }
+  var fetchLog13;
+  var init_resume_fetch_vis_fallback = __esm({
+    "src/lib/resume-fetch-vis-fallback.js"() {
+      init_anti_hallucination();
+      init_resume_constants();
+      fetchLog13 = createLogger("ResumeFetch");
     }
   });
 
@@ -6510,7 +6675,7 @@
     syncAllResumes: () => syncAllResumes
   });
   async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
-    fetchLog12.info("syncAllResumes: starting ...");
+    fetchLog14.info("syncAllResumes: starting ...");
     const visDiag = {
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       finishedAt: null,
@@ -6524,7 +6689,7 @@
       visDiag.listSource = "fetch";
       visDiag.listRawHtmlLength = window.__hhLastFetchHtml?.length || 0;
       if (list.length === 0) {
-        fetchLog12.warn("syncAllResumes: no resumes found");
+        fetchLog14.warn("syncAllResumes: no resumes found");
         visDiag.summary.total = 0;
         visDiag.finishedAt = (/* @__PURE__ */ new Date()).toISOString();
         window.__hhVisDiag = visDiag;
@@ -6551,7 +6716,7 @@
       }).length;
       const hiddenCount = list.length - visibleCount;
       if (hiddenCount > 0) {
-        fetchLog12.info("syncAllResumes: " + visibleCount + " visible, " + hiddenCount + " hidden");
+        fetchLog14.info("syncAllResumes: " + visibleCount + " visible, " + hiddenCount + " hidden");
       }
       if (onProgress) onProgress(0, list.length, "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u043F\u0438\u0441\u043A\u0430 \u0440\u0435\u0437\u044E\u043C\u0435...");
       const results = [];
@@ -6567,7 +6732,7 @@
           }
           delete resume._listTitle;
           if (resume.id) results.push(resume);
-          else fetchLog12.warn("No id for " + item.url);
+          else fetchLog14.warn("No id for " + item.url);
           const diagEntry = visDiag.resumes.find((r) => r.id === resume.id);
           if (diagEntry) {
             if (resume.title && resume.title !== "" && resume.title !== "Untitled") {
@@ -6578,16 +6743,12 @@
               diagEntry.pageTrace = resume._visDiag.pageTrace;
               diagEntry.decision = resume._visDiag.decision;
               diagEntry.decisionReason = resume._visDiag.decisionReason;
-              if (resume._visDiag.iframeVis) {
-                diagEntry.iframeVis = resume._visDiag.iframeVis;
-              }
-              if (resume._visDiag.iframeDiag) {
-                diagEntry.iframeDiag = resume._visDiag.iframeDiag;
-              }
+              if (resume._visDiag.iframeVis) diagEntry.iframeVis = resume._visDiag.iframeVis;
+              if (resume._visDiag.iframeDiag) diagEntry.iframeDiag = resume._visDiag.iframeDiag;
             }
           }
         } catch (err) {
-          fetchLog12.error("Failed: " + item.url + ": " + err.message);
+          fetchLog14.error("Failed: " + item.url + ": " + err.message);
           if (onError) onError(item, err);
           const diagEntry = visDiag.resumes.find((r) => r.id === item.id);
           if (diagEntry) {
@@ -6599,65 +6760,14 @@
         }
         if (i < list.length - 1) await gaussianDelay(2e3, 5e3);
       }
-      const stillUnknown = results.filter((r) => r.visibility === VISIBILITY_UNKNOWN);
-      if (stillUnknown.length > 0) {
-        const iframeRan = stillUnknown.filter((r) => r._visDiag?.iframeRan);
-        const iframeNotRan = stillUnknown.filter((r) => !r._visDiag?.iframeRan);
-        if (iframeNotRan.length > 0) {
-          fetchLog12.info("[VIS-DIAG] Final fallback: " + iframeNotRan.length + " resumes UNKNOWN (iframe not run) \u2192 defaulting to VISIBLE");
-          visDiag.summary.unknownFallbackToVisible = iframeNotRan.length;
-          iframeNotRan.forEach((r) => {
-            fetchLog12.info("[VIS-DIAG]   " + (r.id ? r.id.substring(0, 8) : "?") + ' "' + (r.title || "").substring(0, 30) + '" UNKNOWN\u2192VISIBLE (iframe not run)');
-            r.visibility = VISIBILITY_VISIBLE;
-            r.hidden = false;
-            const diagEntry = visDiag.resumes.find((d) => d.id === r.id);
-            if (diagEntry) {
-              diagEntry.finalVisibility = VISIBILITY_VISIBLE;
-              diagEntry.decisionReason += " [FALLBACK: UNKNOWN\u2192VISIBLE, iframe not run]";
-            }
-          });
-        }
-        if (iframeRan.length > 0) {
-          fetchLog12.info("[VIS-DIAG] Keeping UNKNOWN for " + iframeRan.length + " resumes (iframe ran but returned UNKNOWN)");
-          iframeRan.forEach((r) => {
-            fetchLog12.info("[VIS-DIAG]   " + (r.id ? r.id.substring(0, 8) : "?") + ' "' + (r.title || "").substring(0, 30) + '" \u2192 UNKNOWN (iframe ran, no indicators found)');
-            const diagEntry = visDiag.resumes.find((d) => d.id === r.id);
-            if (diagEntry) {
-              diagEntry.finalVisibility = VISIBILITY_UNKNOWN;
-              diagEntry.decisionReason += " [KEPT UNKNOWN: iframe ran, no indicators]";
-            }
-          });
-        }
-      }
-      results.forEach((r) => {
-        const diagEntry = visDiag.resumes.find((d) => d.id === r.id);
-        if (diagEntry && !diagEntry.finalVisibility) {
-          diagEntry.finalVisibility = r.visibility;
-        }
-      });
-      visDiag.summary.total = results.length;
-      visDiag.summary.visible = results.filter((r) => r.visibility === VISIBILITY_VISIBLE).length;
-      visDiag.summary.hidden = results.filter((r) => r.visibility === VISIBILITY_HIDDEN).length;
-      visDiag.summary.unknown = results.filter((r) => r.visibility === VISIBILITY_UNKNOWN).length;
-      visDiag.finishedAt = (/* @__PURE__ */ new Date()).toISOString();
-      fetchLog12.info("[VIS-DIAG] \u2550\u2550\u2550 FINAL VISIBILITY SUMMARY \u2550\u2550\u2550");
-      fetchLog12.info("[VIS-DIAG] Total: " + visDiag.summary.total + ", Visible: " + visDiag.summary.visible + ", Hidden: " + visDiag.summary.hidden + ", Unknown: " + visDiag.summary.unknown + ", Fallbacks: " + visDiag.summary.unknownFallbackToVisible);
-      results.forEach((r) => {
-        fetchLog12.info("[VIS-DIAG]   " + (r.id ? r.id.substring(0, 8) : "?") + ' "' + (r.title || "").substring(0, 30) + '" \u2192 ' + r.visibility);
-      });
-      window.__hhVisDiag = visDiag;
-      try {
-        window.postMessage({ type: "HH-AR-VISDIAG", payload: visDiag }, "*");
-      } catch (e) {
-        fetchLog12.warn("[VIS-DIAG] Could not send to page world: " + e.message);
-      }
-      fetchLog12.info("[VIS-DIAG] Diagnostic dump available: __hhVis() / __hhVisTable() / window.__hhVisDiag");
-      fetchLog12.info("Done. " + results.length + "/" + list.length + " parsed");
+      applyVisibilityFallback(results, visDiag);
+      finalizeVisDiag(results, visDiag);
+      fetchLog14.info("Done. " + results.length + "/" + list.length + " parsed");
       if (onProgress) onProgress(list.length, list.length, "\u0413\u043E\u0442\u043E\u0432\u043E");
       if (onComplete) onComplete(results);
       return results;
     } catch (err) {
-      fetchLog12.error("Fatal: " + err.message);
+      fetchLog14.error("Fatal: " + err.message);
       visDiag.finishedAt = (/* @__PURE__ */ new Date()).toISOString();
       visDiag.error = err.message;
       window.__hhVisDiag = visDiag;
@@ -6669,7 +6779,7 @@
       throw err;
     }
   }
-  var fetchLog12;
+  var fetchLog14;
   var init_resume_fetch = __esm({
     "src/lib/resume-fetch.js"() {
       init_anti_hallucination();
@@ -6677,7 +6787,8 @@
       init_resume_fetch_list();
       init_resume_fetch_resume();
       init_resume_constants();
-      fetchLog12 = createLogger("ResumeFetch");
+      init_resume_fetch_vis_fallback();
+      fetchLog14 = createLogger("ResumeFetch");
     }
   });
 
@@ -6688,9 +6799,7 @@
   }
   function clearResumeData() {
     console.log("[HH-AR][Diag] Clearing resume data...");
-    panelState.resume = null;
-    panelState._resumeCleared = true;
-    panelState.resumeList = [];
+    clearResumeState();
     clearActiveResume().then(() => {
       console.log("[HH-AR][Diag] myResume removed from storage");
       setStatusLine("\u0420\u0435\u0437\u044E\u043C\u0435 \u043E\u0447\u0438\u0449\u0435\u043D\u043E \u0438\u0437 \u043F\u0430\u043C\u044F\u0442\u0438 \u0438 storage");
@@ -6743,8 +6852,7 @@
         console.log("[HH-AR][Diag] Debug missing:", resume._debug?.missing);
         const hasUsefulData = resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0);
         if (hasUsefulData) {
-          panelState.resume = resume;
-          panelState._resumeCleared = false;
+          setActiveResumeState(resume);
           await setActiveResume(resume);
           renderResumePanel();
           setStatusLine("\u0421\u043F\u0430\u0440\u0441\u0435\u043D\u043E: " + resume.experience?.length + " \u043C\u0435\u0441\u0442, " + resume.skills?.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432");
@@ -6766,50 +6874,57 @@
       init_state();
       init_resumes2();
       init_storage();
-      init_state();
     }
   });
 
-  // src/ui/panel/events.js
-  function switchTab(tabId) {
-    panelState.activeTab = tabId;
-    const sr = refs.shadowRoot;
-    if (!sr) return;
-    sr.querySelectorAll(".tab-btn").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.tab === tabId);
-    });
-    sr.querySelectorAll(".tab-section").forEach((sec) => {
-      sec.classList.toggle("active", sec.id === "tab-" + tabId);
-    });
-    if (tabId === "resume") renderResumePanel();
-    if (tabId === "stats") renderStats();
-    if (tabId === "negotiations") renderNegotiationList();
+  // src/ui/panel/helpers.js
+  function addBlacklistItem() {
+    const input = refs.shadowRoot?.getElementById("bl-input");
+    if (!input || !input.value.trim()) return;
+    const name = input.value.trim();
+    if (!panelState.blacklist.includes(name)) {
+      panelState.blacklist.push(name);
+      input.value = "";
+      renderBlacklist();
+      addLogEntry("info", "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0430 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F \u0432 \u0427\u0421: " + name);
+    }
   }
-  function toggleTimeline(toggleEl) {
-    const body = toggleEl.nextElementSibling;
-    const chevron = toggleEl.querySelector(".timeline-chevron");
-    if (!body) return;
-    const isOpen = body.classList.toggle("open");
-    if (chevron) chevron.classList.toggle("open", isOpen);
+  function removeBlacklistItem(name) {
+    removeFromBlacklist(name);
+    renderBlacklist();
   }
-  function toggleSub2(subId, chevId) {
-    const sr = refs.shadowRoot;
-    const sub = sr?.getElementById(subId);
-    const chev = sr?.getElementById(chevId);
-    if (sub) sub.classList.toggle("open");
-    if (chev) chev.classList.toggle("open");
+  function selectConversation(convId) {
+    setActiveConversation(convId);
+    renderNegotiationList();
+    renderChatMessages();
   }
-  function bindAllEvents(container) {
-    bindTabClicks(container);
-    bindSidebarClicks(container);
-    bindTimelineToggles(container);
-    bindInputChanges(container);
-  }
-  function bindTabClicks(container) {
-    container.querySelectorAll(".tab-btn").forEach((btn) => {
-      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  function filterVacancies() {
+    const search = (refs.shadowRoot?.getElementById("vac-search")?.value || "").toLowerCase();
+    const status = refs.shadowRoot?.getElementById("vac-status-filter")?.value || "all";
+    const minScore = parseInt(refs.shadowRoot?.getElementById("vac-score-range")?.value || "0", 10);
+    const items = refs.shadowRoot?.querySelectorAll("#har-vlist .vacancy-item");
+    let visible = 0;
+    items.forEach((item) => {
+      const title = (item.dataset.title || "").toLowerCase();
+      const itemStatus = item.dataset.status || "new";
+      const itemScore = parseInt(item.dataset.score || "0", 10);
+      const matchTitle = !search || title.includes(search);
+      const matchStatus = status === "all" || itemStatus === status;
+      const matchScore = itemScore >= minScore;
+      item.style.display = matchTitle && matchStatus && matchScore ? "" : "none";
+      if (matchTitle && matchStatus && matchScore) visible++;
     });
   }
+  var init_helpers2 = __esm({
+    "src/ui/panel/helpers.js"() {
+      init_state();
+      init_settings2();
+      init_stats2();
+      init_negotiations2();
+    }
+  });
+
+  // src/ui/panel/sidebar-events.js
   function bindSidebarClicks(container) {
     container.addEventListener("click", (e) => {
       const t = e.target;
@@ -6855,7 +6970,6 @@
         return;
       }
       if (t.closest('[data-action="load-resume"]')) {
-        console.log("[HH-AR][Events] load-resume clicked, dispatching hh-ar-load-resume");
         const btn = t.closest('[data-action="load-resume"]');
         if (btn) {
           const origHTML = btn.innerHTML;
@@ -6878,7 +6992,6 @@
         return;
       }
       if (t.closest('[data-action="sync-resumes"]')) {
-        console.log("[HH-AR][Events] sync-resumes clicked");
         const btn = t.closest('[data-action="sync-resumes"]');
         if (btn) {
           const origHTML = btn.innerHTML;
@@ -6919,7 +7032,7 @@
       }
       const tabSwitch = t.closest("[data-tab-switch]");
       if (tabSwitch) {
-        switchTab(tabSwitch.dataset.tabSwitch);
+        Promise.resolve().then(() => (init_events(), events_exports)).then((m) => m.switchTabPublic(tabSwitch.dataset.tabSwitch));
         return;
       }
       if (t.closest('[data-action="reset-daily"]')) {
@@ -6948,6 +7061,69 @@
         selectConversation(convItem.dataset.convId);
         return;
       }
+    });
+  }
+  var init_sidebar_events = __esm({
+    "src/ui/panel/sidebar-events.js"() {
+      init_state();
+      init_panel();
+      init_auth();
+      init_panel_diagnostics();
+      init_helpers2();
+      init_resume_detail2();
+      init_stats2();
+      init_negotiations2();
+      init_resumes2();
+    }
+  });
+
+  // src/ui/panel/events.js
+  var events_exports = {};
+  __export(events_exports, {
+    bindAllEvents: () => bindAllEvents,
+    bindTabClicks: () => bindTabClicks,
+    switchTabPublic: () => switchTabPublic
+  });
+  function switchTab(tabId) {
+    setActiveTab(tabId);
+    const sr = refs.shadowRoot;
+    if (!sr) return;
+    sr.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === tabId);
+    });
+    sr.querySelectorAll(".tab-section").forEach((sec) => {
+      sec.classList.toggle("active", sec.id === "tab-" + tabId);
+    });
+    if (tabId === "resume") renderResumePanel();
+    if (tabId === "stats") renderStats();
+    if (tabId === "negotiations") renderNegotiationList();
+  }
+  function switchTabPublic(tabId) {
+    switchTab(tabId);
+  }
+  function toggleTimeline(toggleEl) {
+    const body = toggleEl.nextElementSibling;
+    const chevron = toggleEl.querySelector(".timeline-chevron");
+    if (!body) return;
+    const isOpen = body.classList.toggle("open");
+    if (chevron) chevron.classList.toggle("open", isOpen);
+  }
+  function toggleSub2(subId, chevId) {
+    const sr = refs.shadowRoot;
+    const sub = sr?.getElementById(subId);
+    const chev = sr?.getElementById(chevId);
+    if (sub) sub.classList.toggle("open");
+    if (chev) chev.classList.toggle("open");
+  }
+  function bindAllEvents(container) {
+    bindTabClicks(container);
+    bindSidebarClicks(container);
+    bindTimelineToggles(container);
+    bindInputChanges(container);
+  }
+  function bindTabClicks(container) {
+    container.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
   }
   function bindTimelineToggles(container) {
@@ -6979,17 +7155,32 @@
     if (scoreRange && scoreLabel) {
       scoreRange.addEventListener("input", () => {
         scoreLabel.textContent = scoreRange.value + "%";
-        filterVacancies();
+        filterVacancies2();
       });
     }
     const searchInput = container.querySelector("#vac-search");
     if (searchInput) {
-      searchInput.addEventListener("input", () => filterVacancies());
+      searchInput.addEventListener("input", () => filterVacancies2());
     }
     const statusFilter = container.querySelector("#vac-status-filter");
     if (statusFilter) {
-      statusFilter.addEventListener("change", () => filterVacancies());
+      statusFilter.addEventListener("change", () => filterVacancies2());
     }
+  }
+  function filterVacancies2() {
+    const search = (refs.shadowRoot?.getElementById("vac-search")?.value || "").toLowerCase();
+    const status = refs.shadowRoot?.getElementById("vac-status-filter")?.value || "all";
+    const minScore = parseInt(refs.shadowRoot?.getElementById("vac-score-range")?.value || "0", 10);
+    const items = refs.shadowRoot?.querySelectorAll("#har-vlist .vacancy-item");
+    items?.forEach((item) => {
+      const title = (item.dataset.title || "").toLowerCase();
+      const itemStatus = item.dataset.status || "new";
+      const itemScore = parseInt(item.dataset.score || "0", 10);
+      const matchTitle = !search || title.includes(search);
+      const matchStatus = status === "all" || itemStatus === status;
+      const matchScore = itemScore >= minScore;
+      item.style.display = matchTitle && matchStatus && matchScore ? "" : "none";
+    });
   }
   var init_events = __esm({
     "src/ui/panel/events.js"() {
@@ -6997,11 +7188,7 @@
       init_resumes2();
       init_stats2();
       init_negotiations2();
-      init_resume_detail2();
-      init_helpers2();
-      init_panel();
-      init_auth();
-      init_panel_diagnostics();
+      init_sidebar_events();
     }
   });
 
@@ -7010,7 +7197,7 @@
     const was = panelState.isLoggedIn;
     const now = checkAuth();
     if (was !== now || forceUI) {
-      panelState.isLoggedIn = now;
+      setAuthState(now);
       panelLog.info("Auth: " + (now ? "LOGGED IN" : "NOT LOGGED IN"));
       renderSidebarContent();
       if (panelState.isLoggedIn) {
@@ -7032,7 +7219,7 @@
     const was = panelState.isLoggedIn;
     const now = await checkAuthAsync();
     if (was !== now) {
-      panelState.isLoggedIn = now;
+      setAuthState(now);
       panelLog.info("Auth (async): " + (now ? "LOGGED IN" : "NOT LOGGED IN"));
       renderSidebarContent();
       if (panelState.isLoggedIn) {
@@ -7100,7 +7287,7 @@
   function toggleSidebar() {
     if (!refs.sidebarEl) createSidebar();
     if (!refs.fabEl) createFab(toggleSidebar);
-    panelState.isOpen = !panelState.isOpen;
+    togglePanelOpen();
     refs.sidebarEl.style.transform = panelState.isOpen ? "translateX(0)" : "translateX(100%)";
     if (refs.backdropEl) {
       refs.backdropEl.style.opacity = panelState.isOpen ? "1" : "0";
@@ -7110,7 +7297,7 @@
     panelLog.info("Sidebar " + (panelState.isOpen ? "opened" : "closed"));
   }
   function updateVacancies(vacancies) {
-    panelState.vacancies = (vacancies || []).filter((v) => v && v.id && v.title);
+    setVacancies(vacancies);
     renderVacancyList();
     updateVacancyCounts();
     if (panelState.resume) updateSkillGapSection(panelState.resume);
@@ -7120,8 +7307,8 @@
     renderStatsValues();
     renderOverviewKPI();
   }
-  function setStatus(status) {
-    panelState.status = status;
+  function setStatus2(status) {
+    setStatus(status);
   }
   function createPanel() {
     createFab(toggleSidebar);
@@ -7230,9 +7417,9 @@
   }
   async function handleResumeListPage() {
     const resumeList = parseResumeList();
-    panelState.resumeList = resumeList;
+    setResumeList(resumeList);
     const list = await getMyResumes();
-    panelState.myResumes = list;
+    setMyResumes(list);
     renderMyResumesPanel();
     pageLog.info("Resume list page: " + resumeList.length + " resumes");
   }
@@ -7261,12 +7448,11 @@
     }
   }
   async function saveResumeToState(resume) {
-    panelState.resume = resume;
-    panelState._resumeCleared = false;
+    setActiveResumeState(resume);
     await setActiveResume(resume);
     saveMyResume(resume).then(() => {
       getMyResumes().then((list) => {
-        panelState.myResumes = list;
+        setMyResumes(list);
         renderMyResumesPanel();
       });
     });
@@ -7282,6 +7468,7 @@
       init_engine();
       init_panel2();
       init_resumes2();
+      init_state();
       pageLog = createLogger("Main");
       pageInitialized = false;
     }
@@ -7291,7 +7478,7 @@
   async function handleLoadResume() {
     if (!panelState.isLoggedIn) return;
     const path = window.location.pathname;
-    setStatus("\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0433\u043E \u0440\u0435\u0437\u044E\u043C\u0435...");
+    setStatus2("\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0433\u043E \u0440\u0435\u0437\u044E\u043C\u0435...");
     showResumeLoading("\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0433\u043E \u0440\u0435\u0437\u044E\u043C\u0435...");
     try {
       if (/\/resume\/[a-f0-9]+/.test(path)) {
@@ -7303,7 +7490,7 @@
       }
     } catch (err) {
       loadLog.error("Load resume error: " + err.message);
-      setStatus("\u041E\u0448\u0438\u0431\u043A\u0430: " + err.message);
+      setStatus2("\u041E\u0448\u0438\u0431\u043A\u0430: " + err.message);
     } finally {
       window.dispatchEvent(new CustomEvent("hh-ar-load-resume-done"));
     }
@@ -7313,7 +7500,7 @@
     if (/\/resume\/edit\//.test(path)) {
       const editMatch = path.match(/\/resume\/([a-f0-9]+)/);
       if (!editMatch) {
-        setStatus("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0438\u0437\u0432\u043B\u0435\u0447\u044C ID \u0440\u0435\u0437\u044E\u043C\u0435 \u0438\u0437 URL");
+        setStatus2("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0438\u0437\u0432\u043B\u0435\u0447\u044C ID \u0440\u0435\u0437\u044E\u043C\u0435 \u0438\u0437 URL");
         return;
       }
       const resumeId = editMatch[1];
@@ -7324,7 +7511,7 @@
         loadLog.info("Fetched resume from edit page: " + resume.title);
       } catch (err) {
         loadLog.error("Failed to fetch resume from edit page: " + err.message);
-        setStatus("\u041E\u0448\u0438\u0431\u043A\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438: " + err.message);
+        setStatus2("\u041E\u0448\u0438\u0431\u043A\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438: " + err.message);
         return;
       }
     } else {
@@ -7333,50 +7520,47 @@
     }
     const hasUsefulData = resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0);
     if (hasUsefulData) {
-      panelState.resume = resume;
-      panelState._resumeCleared = false;
+      setActiveResumeState(resume);
       await setActiveResume(resume);
       await saveMyResume(resume);
-      panelState.myResumes = await getMyResumes();
+      setMyResumes(await getMyResumes());
       renderResumePanel();
       renderMyResumesPanel();
-      setStatus("\u0414\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E: " + (resume.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
+      setStatus2("\u0414\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E: " + (resume.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
       loadLog.info("Resume loaded and saved: " + resume.title);
     } else {
-      setStatus("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0440\u0435\u0437\u044E\u043C\u0435 \u043D\u0430 \u044D\u0442\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 (\u043D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445)");
+      setStatus2("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0440\u0435\u0437\u044E\u043C\u0435 \u043D\u0430 \u044D\u0442\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 (\u043D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445)");
       loadLog.warn("Parse result has no useful data \u2014 not saving. Found: " + JSON.stringify(resume._debug?.found) + " Missing: " + JSON.stringify(resume._debug?.missing));
     }
   }
   async function loadFromResumeListPage() {
     const list = parseResumeList();
     if (list.length > 0) {
-      panelState.resumeList = list;
+      setResumeList(list);
       renderResumeListPanel();
       loadLog.info("Resume list loaded: " + list.length + " resumes");
     }
     const synced = panelState.myResumes || [];
     if (synced.length > 0 && synced[0].id) {
-      panelState.resume = synced[0];
-      panelState._resumeCleared = false;
+      setActiveResumeState(synced[0]);
       setActiveResume(synced[0]);
       renderResumePanel();
-      setStatus("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
+      setStatus2("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
     } else {
-      setStatus("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C\xBB \u0434\u043B\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438");
+      setStatus2("\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u0437\u044E\u043C\u0435: " + list.length + ". \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C\xBB \u0434\u043B\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438");
     }
   }
   async function loadFromSyncedData() {
     const synced = panelState.myResumes || [];
     if (synced.length > 0 && synced[0].id) {
-      panelState.resume = synced[0];
-      panelState._resumeCleared = false;
+      setActiveResumeState(synced[0]);
       setActiveResume(synced[0]);
       renderResumePanel();
       renderMyResumesPanel();
-      setStatus("\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E \u0438\u0437 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u0438: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
+      setStatus2("\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E \u0438\u0437 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u0438: " + (synced[0].title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F"));
       loadLog.info("Loaded resume from synced data: " + synced[0].title);
     } else {
-      setStatus("\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0445 \u0440\u0435\u0437\u044E\u043C\u0435. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435\xBB");
+      setStatus2("\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0445 \u0440\u0435\u0437\u044E\u043C\u0435. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435\xBB");
       loadLog.info("No synced resumes available on non-resume page");
     }
   }
@@ -7417,16 +7601,16 @@
       return;
     }
     syncInProgress = true;
-    setStatus("\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u044F \u0440\u0435\u0437\u044E\u043C\u0435...");
+    setStatus2("\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u044F \u0440\u0435\u0437\u044E\u043C\u0435...");
     syncLog.info("Sync: starting fetch-based resume sync");
     try {
       await clearMyResumes();
-      panelState.myResumes = [];
+      setMyResumes([]);
       renderMyResumesPanel();
       const results = await syncAllResumes({
         onProgress: (done, total, msg) => {
           syncLog.info("Sync: [" + done + "/" + total + "] " + msg);
-          setStatus("\u0421\u0438\u043D\u0445\u0440.: " + done + "/" + total + " \u2014 " + msg);
+          setStatus2("\u0421\u0438\u043D\u0445\u0440.: " + done + "/" + total + " \u2014 " + msg);
           renderSyncProgress(done, total, msg);
         },
         onError: (item, err) => {
@@ -7436,7 +7620,7 @@
       for (const resume of results) {
         await saveMyResume(resume);
       }
-      panelState.myResumes = await getMyResumes();
+      setMyResumes(await getMyResumes());
       renderMyResumesPanel();
       if (results.length > 0) {
         const firstVisible = results.find((r) => {
@@ -7444,16 +7628,15 @@
           return vis !== "hidden";
         });
         const active = firstVisible || results[0];
-        panelState.resume = active;
-        panelState._resumeCleared = false;
+        setActiveResumeState(active);
         await setActiveResume(active);
         renderResumePanel();
       }
-      setStatus("\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043E " + results.length + " \u0440\u0435\u0437\u044E\u043C\u0435");
+      setStatus2("\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043E " + results.length + " \u0440\u0435\u0437\u044E\u043C\u0435");
       syncLog.info("Sync: complete. " + results.length + " resumes saved");
     } catch (err) {
       syncLog.error("Sync: fatal error: " + err.message);
-      setStatus("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u0438: " + err.message);
+      setStatus2("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0430\u0446\u0438\u0438: " + err.message);
     } finally {
       syncInProgress = false;
       window.dispatchEvent(new CustomEvent("hh-ar-sync-done"));
@@ -7528,13 +7711,13 @@
           savedResume.title = savedResume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
           await setActiveResume(savedResume);
         }
-        panelState.resume = savedResume;
+        setActiveResumeState(savedResume);
         mainLog.info("Loaded saved resume: " + savedResume.title);
       }
     } catch (e) {
     }
     try {
-      panelState.myResumes = await getMyResumes();
+      setMyResumes(await getMyResumes());
       if (panelState.myResumes.length > 0) {
         mainLog.info("Loaded " + panelState.myResumes.length + " saved resumes");
         let needsSave = false;
@@ -7567,6 +7750,7 @@
       init_panel2();
       init_resumes2();
       init_resume_constants();
+      init_state();
       init_main_page_handlers();
       init_main_resume_loader();
       init_main_sync();

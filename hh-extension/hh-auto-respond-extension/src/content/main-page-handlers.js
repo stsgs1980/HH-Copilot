@@ -13,6 +13,7 @@ import { fetchAndParseResume } from '../lib/resume-fetch.js';
 import { continueApply } from '../engine/index.js';
 import { panelState, updateVacancies, updateStats } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
+import { setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.js';
 
 const pageLog = createLogger('Main');
 let pageInitialized = false;
@@ -100,9 +101,9 @@ async function handleResumeDetailPage(path) {
 
 async function handleResumeListPage() {
   const resumeList = parseResumeList();
-  panelState.resumeList = resumeList;
+  setResumeList(resumeList);
   const list = await getMyResumes();
-  panelState.myResumes = list;
+  setMyResumes(list);
   renderMyResumesPanel();
   pageLog.info('Resume list page: ' + resumeList.length + ' resumes');
 }
@@ -140,12 +141,11 @@ async function handleVacancyDetailPage(path) {
  * Save a parsed resume to panelState and storage, then re-render.
  */
 async function saveResumeToState(resume) {
-  panelState.resume = resume;
-  panelState._resumeCleared = false;
+  setActiveResumeState(resume);
   await setActiveResume(resume);
   saveMyResume(resume).then(() => {
     getMyResumes().then(list => {
-      panelState.myResumes = list;
+      setMyResumes(list);
       renderMyResumesPanel();
     });
   });

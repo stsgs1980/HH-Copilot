@@ -5,7 +5,7 @@
  * Shows list of synced resumes with visibility badges.
  */
 
-import { panelState, refs } from '../../state.js';
+import { panelState, refs, setActiveResumeState } from '../../state.js';
 import { esc } from '../../html.js';
 import { renderResumePanel } from './render-resume-panel.js';
 import { getResumePageType } from '../../../parsers/resume-detail.js';
@@ -113,8 +113,7 @@ export function renderMyResumesPanel() {
       const idx = parseInt(item.getAttribute('data-resume-idx'), 10);
       const resume = resumes[idx];
       if (!resume) return;
-      panelState.resume = resume;
-      panelState._resumeCleared = false;
+      setActiveResumeState(resume);
       setActiveResume(resume);
       renderResumePanel();
       renderMyResumesPanel();

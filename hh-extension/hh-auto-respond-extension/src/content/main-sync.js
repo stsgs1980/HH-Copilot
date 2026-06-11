@@ -10,7 +10,7 @@ import { getMyResumes, saveMyResume, clearMyResumes, setActiveResume } from '../
 import { syncAllResumes } from '../lib/resume-fetch.js';
 import { panelState, setStatus } from '../ui/panel.js';
 import { renderMyResumesPanel, renderResumePanel } from '../ui/tabs/resumes.js';
-import { refs } from '../ui/state.js';
+import { refs, setActiveResumeState, setMyResumes } from '../ui/state.js';
 
 const syncLog = createLogger('Main');
 let syncInProgress = false;
@@ -33,7 +33,7 @@ export async function handleSyncResumes() {
 
   try {
     await clearMyResumes();
-    panelState.myResumes = [];
+    setMyResumes([]);
     renderMyResumesPanel();
 
     const results = await syncAllResumes({
@@ -53,7 +53,7 @@ export async function handleSyncResumes() {
     }
 
     // Update state and UI
-    panelState.myResumes = await getMyResumes();
+    setMyResumes(await getMyResumes());
     renderMyResumesPanel();
 
     if (results.length > 0) {
@@ -63,8 +63,7 @@ export async function handleSyncResumes() {
         return vis !== 'hidden';
       });
       const active = firstVisible || results[0];
-      panelState.resume = active;
-      panelState._resumeCleared = false;
+      setActiveResumeState(active);
       await setActiveResume(active);
       renderResumePanel();
     }

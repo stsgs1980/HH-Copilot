@@ -5,10 +5,9 @@
  * Extracted from events.js to keep it focused on event binding.
  */
 
-import { panelState } from '../state.js';
+import { panelState, refs, clearResumeState, setActiveResumeState } from '../state.js';
 import { renderResumePanel } from '../tabs/resumes.js';
 import { clearActiveResume, setActiveResume } from '../../lib/storage.js';
-import { refs } from '../state.js';
 
 function setStatusLine(text) {
   const el = refs.shadowRoot?.getElementById('res-status-line');
@@ -20,9 +19,7 @@ function setStatusLine(text) {
  */
 export function clearResumeData() {
   console.log('[HH-AR][Diag] Clearing resume data...');
-  panelState.resume = null;
-  panelState._resumeCleared = true;
-  panelState.resumeList = [];
+  clearResumeState();
   clearActiveResume().then(() => {
     console.log('[HH-AR][Diag] myResume removed from storage');
     setStatusLine('Резюме очищено из памяти и storage');
@@ -88,8 +85,7 @@ export async function testParseResume() {
 
       const hasUsefulData = resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0);
       if (hasUsefulData) {
-        panelState.resume = resume;
-        panelState._resumeCleared = false;
+        setActiveResumeState(resume);
         await setActiveResume(resume);
         renderResumePanel();
         setStatusLine('Спарсено: ' + resume.experience?.length + ' мест, ' + resume.skills?.length + ' навыков');

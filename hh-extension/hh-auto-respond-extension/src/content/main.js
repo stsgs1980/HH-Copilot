@@ -20,6 +20,7 @@ import { diagnoseResumeDOM, debugVisibility } from '../parsers/resume-detail.js'
 import { panelState, updateAuthState, createPanel, updateVacancies } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { VISIBILITY_UNKNOWN, TITLE_SUFFIX_NOISE } from '../lib/resume-constants.js';
+import { setActiveResumeState, setMyResumes } from '../ui/state.js';
 
 // Split modules
 import { initPageLogic } from './main-page-handlers.js';
@@ -103,13 +104,13 @@ async function loadSavedResumes() {
         savedResume.title = savedResume.title.replace(TITLE_SUFFIX_NOISE, '').trim();
         await setActiveResume(savedResume);
       }
-      panelState.resume = savedResume;
+      setActiveResumeState(savedResume);
       mainLog.info('Loaded saved resume: ' + savedResume.title);
     }
   } catch (e) {}
 
   try {
-    panelState.myResumes = await getMyResumes();
+    setMyResumes(await getMyResumes());
     if (panelState.myResumes.length > 0) {
       mainLog.info('Loaded ' + panelState.myResumes.length + ' saved resumes');
       // Migrate old data: backfill visibility field, clean title noise

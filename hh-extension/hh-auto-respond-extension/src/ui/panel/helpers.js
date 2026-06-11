@@ -4,7 +4,7 @@
  * Blacklist management, conversation select, vacancy filtering.
  */
 
-import { refs, panelState } from '../state.js';
+import { refs, panelState, removeFromBlacklist, setActiveConversation } from '../state.js';
 import { renderBlacklist } from '../tabs/settings.js';
 import { addLogEntry } from '../tabs/stats.js';
 import { renderNegotiationList, renderChatMessages } from '../tabs/negotiations.js';
@@ -26,7 +26,7 @@ export function addBlacklistItem() {
 }
 
 export function removeBlacklistItem(name) {
-  panelState.blacklist = panelState.blacklist.filter(n => n !== name);
+  removeFromBlacklist(name);
   renderBlacklist();
 }
 
@@ -35,7 +35,7 @@ export function removeBlacklistItem(name) {
 // ═══════════════════════════════════════════════
 
 export function selectConversation(convId) {
-  panelState.activeConversation = convId;
+  setActiveConversation(convId);
   renderNegotiationList();
   renderChatMessages();
 }

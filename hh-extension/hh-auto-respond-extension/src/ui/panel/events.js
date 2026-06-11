@@ -1,28 +1,22 @@
 /**
  * UI: PANEL — EVENT BINDING
  * ===========================
- * Tab switching, timeline/accordion toggling, sidebar click delegation,
- * and input change handlers. All event-related logic extracted from
- * panel/index.js to keep the main module under 250 lines.
+ * Tab switching, timeline/accordion toggling, and input change handlers.
+ * Sidebar click delegation is in ./sidebar-events.js.
  */
 
-import { panelState, refs } from '../state.js';
+import { panelState, refs, setActiveTab } from '../state.js';
 import { renderResumePanel } from '../tabs/resumes.js';
-import { renderStats, clearLog } from '../tabs/stats.js';
+import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList } from '../tabs/negotiations.js';
-import { diagnoseResumeDOM } from '../../parsers/resume-detail.js';
-import { addBlacklistItem, removeBlacklistItem, selectConversation, filterVacancies } from './helpers.js';
-
-import { toggleSidebar, updateAuthState, updateAuthStateAsync } from './index.js';
-import { resetAuthCache } from '../auth.js';
-import { clearResumeData, dumpResumeToConsole, testParseResume } from './panel-diagnostics.js';
+import { bindSidebarClicks } from './sidebar-events.js';
 
 // ═══════════════════════════════════════════════
 // TAB SWITCHING (6 tabs, CSS class toggle)
 // ═══════════════════════════════════════════════
 
 function switchTab(tabId) {
-  panelState.activeTab = tabId;
+  setActiveTab(tabId);
   const sr = refs.shadowRoot;
   if (!sr) return;
 
@@ -38,6 +32,9 @@ function switchTab(tabId) {
   if (tabId === 'stats') renderStats();
   if (tabId === 'negotiations') renderNegotiationList();
 }
+
+/** Public wrapper for tab switching from other modules. */
+export function switchTabPublic(tabId) { switchTab(tabId); }
 
 // ═══════════════════════════════════════════════
 // TIMELINE / ACCORDION TOGGLES
@@ -73,96 +70,6 @@ export function bindAllEvents(container) {
 export function bindTabClicks(container) {
   container.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-}
-
-function bindSidebarClicks(container) {
-  container.addEventListener('click', (e) => {
-    const t = e.target;
-
-    /* Close panel */
-    if (t.closest('[data-action="close-panel"]')) { toggleSidebar(); return; }
-
-    /* Vacancy actions */
-    const applyBtn = t.closest('[data-action="apply"]');
-    if (applyBtn) { e.preventDefault(); window.dispatchEvent(new CustomEvent('hh-ar-apply', { detail: { vacancyId: applyBtn.dataset.id } })); return; }
-    if (t.closest('[data-action="apply-all"]')) { window.dispatchEvent(new CustomEvent('hh-ar-apply-all')); return; }
-    if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
-    if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
-
-    /* Auth — reset cache to force real async re-check with cookie API verification */
-    if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthStateAsync(); return; }
-    if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthStateAsync(); return; }
-    if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthStateAsync(); return; }
-
-    /* Logout — redirect to hh.ru logout */
-    if (t.closest('[data-action="logout"]')) { window.location.href = 'https://hh.ru/account/logout'; return; }
-
-    /* Resume */
-    if (t.closest('[data-action="load-resume"]')) {
-      console.log('[HH-AR][Events] load-resume clicked, dispatching hh-ar-load-resume');
-      const btn = t.closest('[data-action="load-resume"]');
-      if (btn) {
-        const origHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="btn-spinner"></span> Загрузка...';
-        // Reset button after event completes (max 30s safety)
-        setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 30000);
-        // Listen for completion to restore button
-        const onDone = () => {
-          setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 300);
-          window.removeEventListener('hh-ar-load-resume-done', onDone);
-        };
-        window.addEventListener('hh-ar-load-resume-done', onDone);
-      }
-      window.dispatchEvent(new CustomEvent('hh-ar-load-resume'));
-      return;
-    }
-    if (t.closest('[data-action="sync-resumes"]')) {
-      console.log('[HH-AR][Events] sync-resumes clicked');
-      const btn = t.closest('[data-action="sync-resumes"]');
-      if (btn) {
-        const origHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="btn-spinner"></span> Синхронизация...';
-        // Listen for completion to restore button
-        const onDone = () => {
-          setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; }, 300);
-          window.removeEventListener('hh-ar-sync-done', onDone);
-        };
-        window.addEventListener('hh-ar-sync-done', onDone);
-        // Safety timeout: 60s
-        setTimeout(() => { btn.disabled = false; btn.innerHTML = origHTML; window.removeEventListener('hh-ar-sync-done', onDone); }, 60000);
-      }
-      window.dispatchEvent(new CustomEvent('hh-ar-sync-resumes'));
-      return;
-    }
-    if (t.closest('[data-action="analyze-skills"]')) { import('../tabs/resumes/resume-helpers.js').then(m => m.updateSkillGapSection(panelState.resume)); return; }
-    if (t.closest('[data-action="clear-resume"]')) { clearResumeData(); return; }
-    if (t.closest('[data-action="dump-resume"]')) { dumpResumeToConsole(); return; }
-    if (t.closest('[data-action="test-parse"]')) { testParseResume(); return; }
-
-    /* Quick action tab switches */
-    const tabSwitch = t.closest('[data-tab-switch]');
-    if (tabSwitch) { switchTab(tabSwitch.dataset.tabSwitch); return; }
-
-    /* Daily reset */
-    if (t.closest('[data-action="reset-daily"]')) { window.dispatchEvent(new CustomEvent('hh-ar-reset-daily')); return; }
-
-    /* Diagnose DOM */
-    if (t.closest('[data-action="diagnose-dom"]')) { diagnoseResumeDOM(); return; }
-
-    /* Blacklist */
-    if (t.closest('[data-action="bl-add"]')) { addBlacklistItem(); return; }
-    const blRemove = t.closest('[data-bl-remove]');
-    if (blRemove) { removeBlacklistItem(blRemove.dataset.blRemove); return; }
-
-    /* Clear log */
-    if (t.closest('[data-action="clear-log"]')) { clearLog(); return; }
-
-    /* Conversation select */
-    const convItem = t.closest('[data-conv-id]');
-    if (convItem) { selectConversation(convItem.dataset.convId); return; }
   });
 }
 
@@ -207,3 +114,20 @@ function bindInputChanges(container) {
   }
 }
 
+/** Filter vacancies by search, status, and score. */
+function filterVacancies() {
+  const search = (refs.shadowRoot?.getElementById('vac-search')?.value || '').toLowerCase();
+  const status = refs.shadowRoot?.getElementById('vac-status-filter')?.value || 'all';
+  const minScore = parseInt(refs.shadowRoot?.getElementById('vac-score-range')?.value || '0', 10);
+
+  const items = refs.shadowRoot?.querySelectorAll('#har-vlist .vacancy-item');
+  items?.forEach(item => {
+    const title = (item.dataset.title || '').toLowerCase();
+    const itemStatus = item.dataset.status || 'new';
+    const itemScore = parseInt(item.dataset.score || '0', 10);
+    const matchTitle = !search || title.includes(search);
+    const matchStatus = status === 'all' || itemStatus === status;
+    const matchScore = itemScore >= minScore;
+    item.style.display = (matchTitle && matchStatus && matchScore) ? '' : 'none';
+  });
+}

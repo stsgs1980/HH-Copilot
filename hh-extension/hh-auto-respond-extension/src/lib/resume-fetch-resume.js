@@ -4,16 +4,19 @@
  * Thin orchestrator — delegates to focused modules:
  *   - resume-fetch-resume-page-vis.js — page-level visibility detection + decision
  *   - resume-fetch-resume-exp-orch.js  — experience strategies 1-6 + iframe vis override
- *   - resume-fetch-parse.js           — personal data parsing
- *   - resume-fetch-education-languages.js — education, languages, about me
+ *   - resume-fetch-parse.js           — personal data + company card parsing
+ *   - resume-fetch-parse-edu.js       — education parsing
+ *   - resume-fetch-education-languages.js — education section, languages, about me
+ *   - resume-fetch-resume-diag.js     — pre-parse diagnostics + visibility resolution
  */
 import { createLogger } from './anti-hallucination.js';
 import { fetchHtml, htmlToDoc, safeGetText } from './resume-fetch-helpers.js';
 import { parsePersonalDataFromDoc } from './resume-fetch-parse.js';
-import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE, VISIBILITY_HIDDEN } from './resume-constants.js';
+import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from './resume-constants.js';
 import { detectVisibilityFromResumePage } from './resume-fetch-resume-page-vis.js';
 import { parseExperienceFromDoc } from './resume-fetch-resume-exp-orch.js';
 import { parseEducationFromDocSection, parseLanguagesAndAbout } from './resume-fetch-education-languages.js';
+import { logPreParseDiagnostics, resolveVisibilityDecision } from './resume-fetch-resume-diag.js';
 
 const fetchLog = createLogger('ResumeFetch');
 
@@ -29,14 +32,11 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   const doc = htmlToDoc(html);
   fetchLog.info('Resume HTML: ' + html.length + ' chars');
 
-  // Debug: pre-parse diagnostics
   logPreParseDiagnostics(html, doc);
 
-  // Store HTML for diagnostic access
   window.__hhLastFetchHtml = html;
   window.__hhLastFetchDoc = doc;
 
-  // Extract id from URL: /resume/{hex} or ?resume={hex}
   let hashMatch = resumeUrl.match(/\/resume\/([a-f0-9]+)/);
   if (!hashMatch) hashMatch = resumeUrl.match(/[?&]resume=([a-f0-9]+)/);
   const id = hashMatch ? hashMatch[1] : '';
@@ -52,12 +52,11 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
     _debug: { found: [], missing: [] }
   };
 
-  // ═══ Detect visibility from resume detail page HTML ═══
+  // Detect visibility from resume detail page HTML
   const pageVisResult = detectVisibilityFromResumePage(doc, html);
   const pageVis = pageVisResult.visibility;
   const pageTrace = pageVisResult.trace || [];
 
-  // Build structured diagnostic entry for this resume
   const visDiagEntry = {
     id: id || 'unknown',
     title: '(will be set after parse)',
@@ -68,16 +67,14 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
     timestamp: new Date().toISOString()
   };
 
-  // Resolve visibility from multiple sources
   resolveVisibilityDecision(resume, pageVis, listMeta, visDiagEntry);
   resume._visDiag = visDiagEntry;
 
-  // Carry over list title
   if (listMeta && listMeta.title && listMeta.title !== 'Untitled') {
     resume._listTitle = listMeta.title;
   }
 
-  // ── Parse all sections ──
+  // Parse all sections
   const dbg = (key, val) => {
     if (val) resume._debug.found.push(key + ': ' + (typeof val === 'string' ? '"' + val.substring(0, 60) + '"' : val));
     else resume._debug.missing.push(key);
@@ -92,7 +89,6 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   parseEducationFromDocSection(doc, dbg, resume);
   parseLanguagesAndAbout(doc, dbg, resume);
 
-  // Update visDiag title now that we have the parsed title
   if (resume._visDiag) resume._visDiag.title = resume.title || '(no title)';
 
   fetchLog.info('Parsed: ' + resume.title + ' | Skills: ' + resume.skills.length +
@@ -140,64 +136,4 @@ function parseSkillsFromDoc(doc, dbg, resume) {
   if (resume.skills.length > 0) {
     resume._debug.found.push('skills: ' + resume.skills.length + ' tags');
   }
-}
-
-/**
- * Log pre-parse diagnostic info (experience cards, date ranges, scripts).
- */
-function logPreParseDiagnostics(html, doc) {
-  const preExpCards = doc.querySelectorAll('[data-qa="profile-experience-company-card"]');
-  const preStepperItems = doc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
-  const preShowAll = html.match(/Показать все|показать ещё|Посмотреть всё|Развернуть/gi);
-  fetchLog.info('Pre-parse: ' + preExpCards.length + ' company-cards, ' +
-    preStepperItems.length + ' stepper-items, ' +
-    (preShowAll ? preShowAll.length : 0) + ' "show all" buttons in HTML');
-
-  const expCardHtml = doc.querySelector('[data-qa="resume-list-card-experience"]');
-  if (expCardHtml) {
-    fetchLog.info('ExpCard HTML snippet (first 2000 chars): ' + expCardHtml.outerHTML.substring(0, 2000));
-  }
-
-  const MONTHS_RE = /(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}\s*[—\-–]\s*(?:(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}|настоящее\s*время|по\s+настоящее\s+время|сейчас|по\s+сейчас)/gi;
-  const allDateRanges = html.match(MONTHS_RE) || [];
-  fetchLog.info('Full HTML date ranges: ' + allDateRanges.length + ' found: ' + JSON.stringify(allDateRanges));
-
-  const numDateRanges = html.match(/\d{2}\.\d{4}\s*[—\-–]\s*(?:\d{2}\.\d{4}|настоящее\s*время|по\s+настоящее\s*время|сейчас|по\s+сейчас)/gi) || [];
-  fetchLog.info('Numeric date ranges: ' + numDateRanges.length + ' found: ' + JSON.stringify(numDateRanges));
-
-  const scripts = doc.querySelectorAll('script:not([src])');
-  let expScriptCount = 0;
-  scripts.forEach(s => {
-    const t = s.textContent || '';
-    if (/experience|работ[аеы]|компани|должност|career/i.test(t)) {
-      expScriptCount++;
-      if (expScriptCount <= 3) fetchLog.info('Script with experience keywords (first 500 chars): ' + t.substring(0, 500));
-    }
-  });
-  fetchLog.info('Scripts with experience keywords: ' + expScriptCount + ' of ' + scripts.length);
-}
-
-/** Resolve visibility decision from multiple sources. */
-function resolveVisibilityDecision(resume, pageVis, listMeta, visDiagEntry) {
-  const listVis = listMeta ? listMeta.visibility : 'no-list-meta';
-  fetchLog.info('[VIS-DIAG] === Visibility decision for ' + (resume.id ? resume.id.substring(0, 8) : 'unknown') + ' ===');
-  fetchLog.info('[VIS-DIAG] Sources: page=' + pageVis + ', list=' + listVis);
-
-  if (pageVis === VISIBILITY_HIDDEN) {
-    resume.visibility = VISIBILITY_HIDDEN; resume.hidden = true;
-    visDiagEntry.decision = VISIBILITY_HIDDEN; visDiagEntry.decisionReason = 'page-detected-hidden';
-  } else if (listMeta && listMeta.visibility === VISIBILITY_HIDDEN) {
-    resume.visibility = VISIBILITY_HIDDEN; resume.hidden = true;
-    visDiagEntry.decision = VISIBILITY_HIDDEN; visDiagEntry.decisionReason = 'list-detected-hidden (page=' + pageVis + ')';
-  } else if (pageVis === VISIBILITY_VISIBLE) {
-    resume.visibility = VISIBILITY_VISIBLE; resume.hidden = false;
-    visDiagEntry.decision = VISIBILITY_VISIBLE; visDiagEntry.decisionReason = 'page-detected-visible';
-  } else if (listMeta && listMeta.visibility === VISIBILITY_VISIBLE) {
-    resume.visibility = VISIBILITY_VISIBLE; resume.hidden = false;
-    visDiagEntry.decision = VISIBILITY_VISIBLE; visDiagEntry.decisionReason = 'list-detected-visible (page=UNKNOWN)';
-  } else {
-    resume.visibility = VISIBILITY_UNKNOWN; resume.hidden = false;
-    visDiagEntry.decision = VISIBILITY_UNKNOWN; visDiagEntry.decisionReason = 'both-sources-unknown';
-  }
-  fetchLog.info('[VIS-DIAG] Decision: ' + visDiagEntry.decision + ' (' + visDiagEntry.decisionReason + ')');
 }

@@ -11,7 +11,7 @@ import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/r
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
 import { panelState, setStatus } from '../ui/panel.js';
 import { renderMyResumesPanel, renderResumePanel, renderResumeListPanel } from '../ui/tabs/resumes.js';
-import { refs } from '../ui/state.js';
+import { refs, setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.js';
 
 const loadLog = createLogger('Main');
 
@@ -76,11 +76,10 @@ async function loadFromResumePage(path) {
   // Validate: don't save empty results over good data
   const hasUsefulData = resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0);
   if (hasUsefulData) {
-    panelState.resume = resume;
-    panelState._resumeCleared = false;
+    setActiveResumeState(resume);
     await setActiveResume(resume);
     await saveMyResume(resume);
-    panelState.myResumes = await getMyResumes();
+    setMyResumes(await getMyResumes());
     renderResumePanel();
     renderMyResumesPanel();
     setStatus('Действующее резюме загружено: ' + (resume.title || 'Без названия'));
@@ -96,7 +95,7 @@ async function loadFromResumePage(path) {
 async function loadFromResumeListPage() {
   const list = parseResumeList();
   if (list.length > 0) {
-    panelState.resumeList = list;
+    setResumeList(list);
     renderResumeListPanel();
     loadLog.info('Resume list loaded: ' + list.length + ' resumes');
   }
@@ -104,8 +103,7 @@ async function loadFromResumeListPage() {
   // Also load the first synced resume into the detail panel
   const synced = panelState.myResumes || [];
   if (synced.length > 0 && synced[0].id) {
-    panelState.resume = synced[0];
-    panelState._resumeCleared = false;
+    setActiveResumeState(synced[0]);
     setActiveResume(synced[0]);
     renderResumePanel();
     setStatus('Найдено резюме: ' + list.length + '. Показано: ' + (synced[0].title || 'Без названия'));
@@ -117,8 +115,7 @@ async function loadFromResumeListPage() {
 async function loadFromSyncedData() {
   const synced = panelState.myResumes || [];
   if (synced.length > 0 && synced[0].id) {
-    panelState.resume = synced[0];
-    panelState._resumeCleared = false;
+    setActiveResumeState(synced[0]);
     setActiveResume(synced[0]);
     renderResumePanel();
     renderMyResumesPanel();

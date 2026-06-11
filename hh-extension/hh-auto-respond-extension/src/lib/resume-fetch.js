@@ -5,11 +5,12 @@
  * All logic is split into focused modules:
  *   resume-fetch-list.js            — Resume list fetching
  *   resume-fetch-resume.js          — Single resume parsing + experience orchestrator
+ *   resume-fetch-vis-fallback.js    — Final visibility fallback + diagnostic
  *   resume-fetch-experience.js      — Experience Strategies 1-3 (DOM-based)
  *   resume-fetch-strategy4-text.js  — Strategy 4 (text pattern parsing)
- *   resume-fetch-strategy5-scripts.js   — Strategy 5 orchestrator (script JSON parsing)
+ *   resume-fetch-strategy5-scripts.js   — Strategy 5 orchestrator
  *   resume-fetch-strategy5-scanners.js  — Strategy 5 JSON scanners
- *   resume-fetch-strategy6-expand.js    — Strategy 6 orchestrator (iframe/API expansion)
+ *   resume-fetch-strategy6-expand.js    — Strategy 6 orchestrator
  *   resume-fetch-strategy6-iframe.js    — Strategy 6 iframe sub-strategy
  *   resume-fetch-strategy6-urls.js      — Strategy 6 URL discovery + fetch
  *   resume-fetch-strategy6-api.js       — Strategy 6 applicant API + result parsing
@@ -22,6 +23,7 @@ import { gaussianDelay } from './timing.js';
 import { fetchResumeList } from './resume-fetch-list.js';
 import { fetchAndParseResume } from './resume-fetch-resume.js';
 import { VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE, VISIBILITY_HIDDEN } from './resume-constants.js';
+import { applyVisibilityFallback, finalizeVisDiag } from './resume-fetch-vis-fallback.js';
 
 const fetchLog = createLogger('ResumeFetch');
 
@@ -36,7 +38,6 @@ export { fetchResumeList, fetchAndParseResume };
 export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
   fetchLog.info('syncAllResumes: starting ...');
 
-  // Initialize global visibility diagnostic dump
   const visDiag = {
     startedAt: new Date().toISOString(),
     finishedAt: null,
@@ -63,16 +64,10 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
     // Capture list-level visibility data
     list.forEach(item => {
       visDiag.resumes.push({
-        id: item.id,
-        title: item.title,
-        url: item.url,
-        listVis: item.visibility,
-        listHidden: item.hidden,
-        pageVis: null,
-        pageTrace: null,
-        decision: null,
-        decisionReason: null,
-        finalVisibility: null
+        id: item.id, title: item.title, url: item.url,
+        listVis: item.visibility, listHidden: item.hidden,
+        pageVis: null, pageTrace: null,
+        decision: null, decisionReason: null, finalVisibility: null
       });
     });
 
@@ -96,7 +91,6 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
 
       try {
         const resume = await fetchAndParseResume(item.url, item);
-        // If parseHeader didn't find a title, use the one from the list
         if ((!resume.title || resume.title === '') && resume._listTitle) {
           resume.title = resume._listTitle;
         }
@@ -107,7 +101,6 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
         // Merge page-level diagnostic into our global dump
         const diagEntry = visDiag.resumes.find(r => r.id === resume.id);
         if (diagEntry) {
-          // Update title from parsed detail page (list titles are often noisy)
           if (resume.title && resume.title !== '' && resume.title !== 'Untitled') {
             diagEntry.title = resume.title;
           }
@@ -116,20 +109,13 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
             diagEntry.pageTrace = resume._visDiag.pageTrace;
             diagEntry.decision = resume._visDiag.decision;
             diagEntry.decisionReason = resume._visDiag.decisionReason;
-            // If iframe overrode visibility, store iframe result separately
-            if (resume._visDiag.iframeVis) {
-              diagEntry.iframeVis = resume._visDiag.iframeVis;
-            }
-            // Store iframe diagnostic data (body text, data-qa list, actions)
-            if (resume._visDiag.iframeDiag) {
-              diagEntry.iframeDiag = resume._visDiag.iframeDiag;
-            }
+            if (resume._visDiag.iframeVis) diagEntry.iframeVis = resume._visDiag.iframeVis;
+            if (resume._visDiag.iframeDiag) diagEntry.iframeDiag = resume._visDiag.iframeDiag;
           }
         }
       } catch (err) {
         fetchLog.error('Failed: ' + item.url + ': ' + err.message);
         if (onError) onError(item, err);
-        // Record error in diagnostic
         const diagEntry = visDiag.resumes.find(r => r.id === item.id);
         if (diagEntry) {
           diagEntry.pageVis = 'error';
@@ -142,81 +128,11 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
       if (i < list.length - 1) await gaussianDelay(2000, 5000);
     }
 
-    // ═══ FINAL FALLBACK: UNKNOWN → VISIBLE ═══
-    // Only after BOTH list and detail page detection have been tried.
-    // If a resume is still UNKNOWN and the iframe was NOT run (or also returned UNKNOWN),
-    // it's reasonable to assume it's visible ONLY if the iframe didn't run at all.
-    // If the iframe ran and returned UNKNOWN, we keep UNKNOWN — the fully-rendered
-    // page had no indicators either way, so we genuinely don't know.
-    const stillUnknown = results.filter(r => r.visibility === VISIBILITY_UNKNOWN);
-    if (stillUnknown.length > 0) {
-      // Split into: iframe ran (keep UNKNOWN) vs iframe didn't run (default VISIBLE)
-      const iframeRan = stillUnknown.filter(r => r._visDiag?.iframeRan);
-      const iframeNotRan = stillUnknown.filter(r => !r._visDiag?.iframeRan);
+    // Final visibility fallback
+    applyVisibilityFallback(results, visDiag);
 
-      if (iframeNotRan.length > 0) {
-        fetchLog.info('[VIS-DIAG] Final fallback: ' + iframeNotRan.length + ' resumes UNKNOWN (iframe not run) → defaulting to VISIBLE');
-        visDiag.summary.unknownFallbackToVisible = iframeNotRan.length;
-        iframeNotRan.forEach(r => {
-          fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" UNKNOWN→VISIBLE (iframe not run)');
-          r.visibility = VISIBILITY_VISIBLE;
-          r.hidden = false;
-          const diagEntry = visDiag.resumes.find(d => d.id === r.id);
-          if (diagEntry) {
-            diagEntry.finalVisibility = VISIBILITY_VISIBLE;
-            diagEntry.decisionReason += ' [FALLBACK: UNKNOWN→VISIBLE, iframe not run]';
-          }
-        });
-      }
-
-      if (iframeRan.length > 0) {
-        fetchLog.info('[VIS-DIAG] Keeping UNKNOWN for ' + iframeRan.length + ' resumes (iframe ran but returned UNKNOWN)');
-        iframeRan.forEach(r => {
-          fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" → UNKNOWN (iframe ran, no indicators found)');
-          const diagEntry = visDiag.resumes.find(d => d.id === r.id);
-          if (diagEntry) {
-            diagEntry.finalVisibility = VISIBILITY_UNKNOWN;
-            diagEntry.decisionReason += ' [KEPT UNKNOWN: iframe ran, no indicators]';
-          }
-        });
-      }
-    }
-
-    // ═══ FINALIZE DIAGNOSTIC: set finalVisibility for all resumes ═══
-    results.forEach(r => {
-      const diagEntry = visDiag.resumes.find(d => d.id === r.id);
-      if (diagEntry && !diagEntry.finalVisibility) {
-        diagEntry.finalVisibility = r.visibility;
-      }
-    });
-
-    // ═══ VISIBILITY SUMMARY ═══
-    visDiag.summary.total = results.length;
-    visDiag.summary.visible = results.filter(r => r.visibility === VISIBILITY_VISIBLE).length;
-    visDiag.summary.hidden = results.filter(r => r.visibility === VISIBILITY_HIDDEN).length;
-    visDiag.summary.unknown = results.filter(r => r.visibility === VISIBILITY_UNKNOWN).length;
-    visDiag.finishedAt = new Date().toISOString();
-
-    fetchLog.info('[VIS-DIAG] ═══ FINAL VISIBILITY SUMMARY ═══');
-    fetchLog.info('[VIS-DIAG] Total: ' + visDiag.summary.total +
-      ', Visible: ' + visDiag.summary.visible +
-      ', Hidden: ' + visDiag.summary.hidden +
-      ', Unknown: ' + visDiag.summary.unknown +
-      ', Fallbacks: ' + visDiag.summary.unknownFallbackToVisible);
-    results.forEach(r => {
-      fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" → ' + r.visibility);
-    });
-
-    // ═══ EXPOSE GLOBAL DIAGNOSTIC ═══
-    // Content scripts run in isolated world — window.X here is NOT visible
-    // from the page console. Send data to page-world.js (MAIN world) via postMessage.
-    window.__hhVisDiag = visDiag;
-    try {
-      window.postMessage({ type: 'HH-AR-VISDIAG', payload: visDiag }, '*');
-    } catch (e) {
-      fetchLog.warn('[VIS-DIAG] Could not send to page world: ' + e.message);
-    }
-    fetchLog.info('[VIS-DIAG] Diagnostic dump available: __hhVis() / __hhVisTable() / window.__hhVisDiag');
+    // Finalize and expose diagnostic
+    finalizeVisDiag(results, visDiag);
 
     fetchLog.info('Done. ' + results.length + '/' + list.length + ' parsed');
     if (onProgress) onProgress(list.length, list.length, 'Готово');
