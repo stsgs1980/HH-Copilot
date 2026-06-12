@@ -21,7 +21,10 @@ function switchTab(tabId) {
   if (!sr) return;
 
   sr.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tabId);
+    const isActive = btn.dataset.tab === tabId;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive);
+    btn.setAttribute('tabindex', isActive ? '0' : '-1');
   });
   sr.querySelectorAll('.tab-section').forEach(sec => {
     sec.classList.toggle('active', sec.id === 'tab-' + tabId);
@@ -46,6 +49,8 @@ function toggleTimeline(toggleEl) {
   if (!body) return;
   const isOpen = body.classList.toggle('open');
   if (chevron) chevron.classList.toggle('open', isOpen);
+  toggleEl.setAttribute('aria-expanded', isOpen);
+  if (body.id) toggleEl.setAttribute('aria-controls', body.id);
 }
 
 function toggleSub(subId, chevId) {

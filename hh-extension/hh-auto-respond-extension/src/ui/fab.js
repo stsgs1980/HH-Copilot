@@ -29,6 +29,7 @@ export function createFab(onClick) {
   refs.fabEl.id = 'hh-ar-fab';
   refs.fabEl.setAttribute('role', 'button');
   refs.fabEl.setAttribute('aria-label', 'Открыть HH Copilot');
+  refs.fabEl.setAttribute('tabindex', '0');
   /* Use setProperty for all visual props to resist hh.ru CSS overrides */
   const s = refs.fabEl.style;
   fabStyle(s, 'position', 'fixed');
@@ -51,6 +52,7 @@ export function createFab(onClick) {
   refs.fabEl.addEventListener('mouseenter', () => { s.setProperty('transform', 'scale(1.1)', 'important'); });
   refs.fabEl.addEventListener('mouseleave', () => { s.setProperty('transform', 'scale(1)', 'important'); });
   refs.fabEl.addEventListener('click', onClick);
+  refs.fabEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } });
   document.body.appendChild(refs.fabEl);
 }
 

@@ -39,10 +39,10 @@ export function getSidebarHTML() {
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
+      <span style="font-size:12px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
       <div style="display:flex;align-items:center;gap:4px;">
-        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
-        <span style="font-size:11px;color:#71717a;">chrome.storage</span>
+        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
+        <span style="font-size:12px;color:#71717a;">chrome.storage</span>
       </div>
     </div>`;
 }
@@ -60,10 +60,10 @@ export function getLoggedInHTML(userName) {
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
+      <span style="font-size:12px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
       <div style="display:flex;align-items:center;gap:4px;">
-        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
-        <span style="font-size:11px;color:#71717a;">chrome.storage</span>
+        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
+        <span style="font-size:12px;color:#71717a;">chrome.storage</span>
       </div>
     </div>`;
 }
@@ -86,11 +86,11 @@ function getHeaderHTML(userName) {
           </div>
         </div>
       </div>
-      <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="Нажмите для проверки авторизации">
+      <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="Нажмите для проверки авторизации" role="button" tabindex="0" aria-label="Проверить авторизацию">
         <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;"></span>
         ${badgeLabel}
       </div>
-      <button class="hh-tour-help" data-action="start-tour" title="Гид по расширению">?</button>
+      <button class="hh-tour-help" data-action="start-tour" title="Гид по расширению" aria-label="Открыть гид по расширению">?</button>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">
         ${ICONS.close}
@@ -108,7 +108,7 @@ function getTabBarHTML() {
     { id: 'settings', label: 'Настройки', icon: ICONS.gear },
     { id: 'stats', label: 'Статистика', icon: ICONS.chart },
   ];
-  return `<div class="har-tabbar">${tabs.map(t =>
-    `<button class="tab-btn ${t.id === 'overview' ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span>${t.label}</span></button>`
+  return `<div class="har-tabbar" role="tablist" aria-label="Основные разделы">${tabs.map((t, i) =>
+    `<button class="tab-btn ${t.id === 'overview' ? 'active' : ''}" role="tab" aria-selected="${t.id === 'overview'}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === 'overview' ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`
   ).join('')}</div>`;
 }

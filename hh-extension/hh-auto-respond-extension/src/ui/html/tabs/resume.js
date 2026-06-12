@@ -4,7 +4,7 @@
 import { ICONS } from '../icons.js';
 
 export function getResumeSection() {
-  return `<div class="tab-section" id="tab-resume">
+  return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
       <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync">
         <span style="font-size:12px;font-weight:600;">Все резюме</span>
@@ -75,7 +75,7 @@ export function getResumeSection() {
       <div id="res-score-bars" style="display:flex;gap:8px;margin-bottom:12px;">
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="font-size:10px;color:#71717a;">ATS-совместимость</span>
+            <span style="font-size:12px;color:#52525b;">ATS-совместимость</span>
             <span id="res-ats-score" style="font-size:12px;font-weight:700;color:#059669;">0%</span>
           </div>
           <div style="height:4px;border-radius:2px;background:#e4e4e7;">
@@ -84,7 +84,7 @@ export function getResumeSection() {
         </div>
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="font-size:10px;color:#71717a;">Качество опыта</span>
+            <span style="font-size:12px;color:#52525b;">Качество опыта</span>
             <span id="res-exp-score" style="font-size:12px;font-weight:700;color:#2563EB;">0%</span>
           </div>
           <div style="height:4px;border-radius:2px;background:#e4e4e7;">

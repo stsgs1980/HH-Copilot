@@ -5,7 +5,7 @@ import { ICONS } from '../icons.js';
 import { settingRow, settingToggle } from '../helpers.js';
 
 export function getSettingsSection() {
-  return `<div class="tab-section" id="tab-settings">
+  return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings">
     ${settingsRateLimits()}
     ${settingsCaptcha()}
     ${settingsBlacklist()}
@@ -48,7 +48,7 @@ function settingsBlacklist() {
     </div>
     <div id="bl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
     <div style="display:flex;gap:8px;">
-      <input type="text" id="bl-input" placeholder="Название компании..." style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;">
+      <input type="text" id="bl-input" placeholder="Название компании..." aria-label="Название компании для чёрного списка" style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
       <button class="btn btn-outline btn-sm" data-action="bl-add">+ Добавить</button>
     </div>
   </div>`;

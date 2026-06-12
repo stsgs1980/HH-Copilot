@@ -4,7 +4,7 @@
 import { ICONS } from '../icons.js';
 
 export function getNegotiationsSection() {
-  return `<div class="tab-section" id="tab-negotiations">
+  return `<div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tabbtn-negotiations">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
@@ -22,7 +22,7 @@ export function getNegotiationsSection() {
         <div id="neg-chat-header" style="display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:10px;flex-shrink:0;"></div>
         <div id="neg-chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:10px;"></div>
         <div style="display:flex;gap:8px;flex-shrink:0;padding-top:10px;border-top:1px solid rgba(0,0,0,0.06);">
-          <input type="text" id="neg-chat-input" placeholder="Сообщение..." style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+          <input type="text" id="neg-chat-input" placeholder="Сообщение..." aria-label="Введите сообщение" style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
           <button class="btn btn-primary" style="padding:8px 12px;">${ICONS.send}</button>
         </div>
       </div>
@@ -41,7 +41,7 @@ export function getNegotiationsSection() {
       <div class="timeline-body" id="cl-body" style="margin-top:10px;">
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+            <label class="toggle" role="switch" aria-checked="true" aria-label="Эмуляция набора"><input type="checkbox" checked><span class="slider"></span></label>
             <div style="flex:1;min-width:0;">
               <div style="font-size:11px;font-weight:500;">Эмуляция набора</div>
               <div style="font-size:11px;color:#71717a;">Посимвольный ввод (антибот)</div>

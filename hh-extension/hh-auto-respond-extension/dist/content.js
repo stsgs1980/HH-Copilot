@@ -895,83 +895,297 @@
     }
   });
 
-  // src/lib/parse-experience.js
-  function parseExperienceString(raw) {
-    if (!raw) return { raw: "", min: null, max: null };
-    const text = raw.toLowerCase().trim();
-    if (/нет\s*опыт|не\s*требу|без\s*опыт/.test(text)) {
-      return { raw, min: 0, max: 0 };
+  // src/lib/skill-synonyms.js
+  function buildSynonymIndex() {
+    const index = /* @__PURE__ */ new Map();
+    for (const group of SYNONYM_GROUPS) {
+      const normalizedGroup = group.map((s) => normalize(s));
+      for (const skill of normalizedGroup) {
+        if (!index.has(skill)) {
+          index.set(skill, /* @__PURE__ */ new Set());
+        }
+        for (const other of normalizedGroup) {
+          if (other !== skill) {
+            index.get(skill).add(other);
+          }
+        }
+      }
     }
-    const moreMatch = text.match(/(?:более|от|свыше)\s+(\d+)/);
-    if (moreMatch) {
-      return { raw, min: parseInt(moreMatch[1], 10), max: null };
-    }
-    const rangeMatch = text.match(/(\d+)\s*[–—\-\s]+\s*(\d+)/);
-    if (rangeMatch) {
-      return { raw, min: parseInt(rangeMatch[1], 10), max: parseInt(rangeMatch[2], 10) };
-    }
-    const exactMatch = text.match(/(\d+)\s*(?:год|лет)/);
-    if (exactMatch) {
-      return { raw, min: parseInt(exactMatch[1], 10), max: null };
-    }
-    const monthOnlyMatch = text.match(/(\d+)\s*мес/);
-    if (monthOnlyMatch) {
-      const years = parseInt(monthOnlyMatch[1], 10) / 12;
-      return { raw, min: Math.round(years * 10) / 10, max: Math.round(years * 10) / 10 };
-    }
-    return { raw, min: null, max: null };
+    return index;
   }
-  var init_parse_experience = __esm({
-    "src/lib/parse-experience.js"() {
+  function normalize(name) {
+    return (name || "").toLowerCase().trim().replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ");
+  }
+  function findSynonymMatch(skillA, skillSet) {
+    if (!_synonymIndex) _synonymIndex = buildSynonymIndex();
+    const synonyms = _synonymIndex.get(normalize(skillA));
+    if (!synonyms) return null;
+    for (const syn of synonyms) {
+      if (skillSet.has(syn)) return syn;
+    }
+    return null;
+  }
+  function getSynonyms(skill) {
+    if (!_synonymIndex) _synonymIndex = buildSynonymIndex();
+    return _synonymIndex.get(normalize(skill)) || /* @__PURE__ */ new Set();
+  }
+  function areSynonyms(skillA, skillB) {
+    if (!_synonymIndex) _synonymIndex = buildSynonymIndex();
+    const synonyms = _synonymIndex.get(normalize(skillA));
+    return synonyms ? synonyms.has(normalize(skillB)) : false;
+  }
+  var SYNONYM_GROUPS, _synonymIndex, SYNONYM_WEIGHT;
+  var init_skill_synonyms = __esm({
+    "src/lib/skill-synonyms.js"() {
+      SYNONYM_GROUPS = [
+        // ═══════════════════════════════════════════
+        // ПРОДАЖИ / ПЕРЕГОВОРЫ
+        // ═══════════════════════════════════════════
+        [
+          "\u043F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B",
+          "\u0440\u0430\u0431\u043E\u0442\u0430 \u0441 \u0432\u043E\u0437\u0440\u0430\u0436\u0435\u043D\u0438\u044F\u043C\u0438",
+          "\u043A\u043E\u043C\u043C\u0435\u0440\u0447\u0435\u0441\u043A\u0438\u0435 \u043F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B",
+          "\u0434\u0435\u043B\u043E\u0432\u043E\u0435 \u043E\u0431\u0449\u0435\u043D\u0438\u0435",
+          "\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u043E\u0432",
+          "\u0437\u0430\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u043E\u0432"
+        ],
+        [
+          "\u043F\u0440\u044F\u043C\u044B\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u0445\u043E\u043B\u043E\u0434\u043D\u044B\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u0445\u043E\u043B\u043E\u0434\u043D\u044B\u0435 \u0437\u0432\u043E\u043D\u043A\u0438",
+          "\u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0435 \u0437\u0432\u043E\u043D\u043A\u0438"
+        ],
+        [
+          "b2b \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u043F\u0440\u043E\u0434\u0430\u0436\u0438 b2b",
+          "\u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u043F\u0440\u043E\u0434\u0430\u0436\u0438 \u044E\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u043B\u0438\u0446\u0430\u043C"
+        ],
+        [
+          "b2c \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u043F\u0440\u043E\u0434\u0430\u0436\u0438 b2c",
+          "\u0440\u043E\u0437\u043D\u0438\u0447\u043D\u044B\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0438",
+          "\u043F\u0440\u043E\u0434\u0430\u0436\u0438 \u0444\u0438\u0437\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u043B\u0438\u0446\u0430\u043C"
+        ],
+        [
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0434\u0430\u0436\u0430\u043C\u0438",
+          "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E \u043E\u0442\u0434\u0435\u043B\u043E\u043C \u043F\u0440\u043E\u0434\u0430\u0436",
+          "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E \u043E\u0442\u0434\u0435\u043B\u043E\u043C",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043E\u0442\u0434\u0435\u043B\u043E\u043C \u043F\u0440\u043E\u0434\u0430\u0436"
+        ],
+        [
+          "\u0432\u043E\u0440\u043E\u043D\u043A\u0430 \u043F\u0440\u043E\u0434\u0430\u0436",
+          "\u0432\u043E\u0440\u043E\u043D\u043A\u0430 \u043A\u043E\u043D\u0432\u0435\u0440\u0441\u0438\u0438",
+          "\u043A\u043E\u043D\u0432\u0435\u0440\u0441\u0438\u044F \u043F\u0440\u043E\u0434\u0430\u0436",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0432\u043E\u0440\u043E\u043D\u043A\u043E\u0439"
+        ],
+        [
+          "\u0440\u0430\u0431\u043E\u0442\u0430 \u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430\u043C\u0438",
+          "\u043A\u043B\u0438\u0435\u043D\u0442\u043E\u043E\u0440\u0438\u0435\u043D\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u043E\u0441\u0442\u044C",
+          "\u043E\u0431\u0441\u043B\u0443\u0436\u0438\u0432\u0430\u043D\u0438\u0435 \u043A\u043B\u0438\u0435\u043D\u0442\u043E\u0432",
+          "\u0443\u0434\u0435\u0440\u0436\u0430\u043D\u0438\u0435 \u043A\u043B\u0438\u0435\u043D\u0442\u043E\u0432",
+          "\u043A\u043B\u0438\u0435\u043D\u0442\u0441\u043A\u0438\u0439 \u0441\u0435\u0440\u0432\u0438\u0441"
+        ],
+        [
+          "\u0430\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430 \u043F\u0440\u043E\u0434\u0430\u0436",
+          "\u0430\u043D\u0430\u043B\u0438\u0437 \u043F\u0440\u043E\u0434\u0430\u0436",
+          "\u043E\u0442\u0447\u0435\u0442\u043D\u043E\u0441\u0442\u044C \u043F\u043E \u043F\u0440\u043E\u0434\u0430\u0436\u0430\u043C",
+          "\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u043E\u0442\u0447\u0435\u0442\u043D\u043E\u0441\u0442\u0438"
+        ],
+        // ═══════════════════════════════════════════
+        // УПРАВЛЕНИЕ / ЛИДЕРСТВО
+        // ═══════════════════════════════════════════
+        [
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0439",
+          "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0439",
+          "\u0440\u0430\u0437\u0432\u0438\u0442\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u044B",
+          "\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u044B",
+          "\u043B\u0438\u0434\u0435\u0440\u0441\u0442\u0432\u043E"
+        ],
+        [
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0447\u0435\u0441\u043A\u0438\u0435 \u043D\u0430\u0432\u044B\u043A\u0438",
+          "\u043C\u0435\u043D\u0435\u0434\u0436\u043C\u0435\u043D\u0442",
+          "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u043E\u043C"
+        ],
+        [
+          "\u043C\u043E\u0442\u0438\u0432\u0430\u0446\u0438\u044F \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u0441\u0442\u0438\u043C\u0443\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u0440\u0430\u0437\u0432\u0438\u0442\u0438\u0435 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u043E\u0431\u0443\u0447\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u043D\u0430\u0441\u0442\u0430\u0432\u043D\u0438\u0447\u0435\u0441\u0442\u0432\u043E"
+        ],
+        [
+          "\u043E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\u043D\u043E\u0435 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435",
+          "\u043E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\u043D\u044B\u0439 \u043C\u0435\u043D\u0435\u0434\u0436\u043C\u0435\u043D\u0442",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0431\u0438\u0437\u043D\u0435\u0441 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u0430\u043C\u0438",
+          "\u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0432",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u0430\u043C\u0438"
+        ],
+        [
+          "\u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435",
+          "\u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u043A\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0438",
+          "\u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435",
+          "\u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043C\u0435\u043D\u0435\u0434\u0436\u043C\u0435\u043D\u0442"
+        ],
+        [
+          "\u0434\u0435\u043B\u0435\u0433\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435",
+          "\u043F\u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u0437\u0430\u0434\u0430\u0447",
+          "\u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435 \u0437\u0430\u0434\u0430\u0447"
+        ],
+        // ═══════════════════════════════════════════
+        // МАРКЕТИНГ / АНАЛИТИКА
+        // ═══════════════════════════════════════════
+        [
+          "\u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433",
+          "\u043F\u0440\u043E\u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435",
+          "\u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433\u043E\u0432\u044B\u0435 \u0438\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u043D\u0438\u044F",
+          "\u0438\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u0440\u044B\u043D\u043A\u0430",
+          "\u0430\u043D\u0430\u043B\u0438\u0437 \u043A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u043E\u0432"
+        ],
+        [
+          "\u0430\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430",
+          "\u0430\u043D\u0430\u043B\u0438\u0437 \u0434\u0430\u043D\u043D\u044B\u0445",
+          "data driven",
+          "business intelligence"
+        ],
+        [
+          "\u0446\u0438\u0444\u0440\u043E\u0432\u043E\u0439 \u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433",
+          "digital \u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433",
+          "\u0438\u043D\u0442\u0435\u0440\u043D\u0435\u0442 \u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433",
+          "\u043E\u043D\u043B\u0430\u0439\u043D \u043C\u0430\u0440\u043A\u0435\u0442\u0438\u043D\u0433"
+        ],
+        // ═══════════════════════════════════════════
+        // ФИНАНСЫ
+        // ═══════════════════════════════════════════
+        [
+          "p&l",
+          "\u043F\u043B\u0430\u043D \u0444\u0430\u043A\u0442",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u0438\u0431\u044B\u043B\u044C\u044E",
+          "\u043E\u0442\u0447\u0435\u0442 \u043E \u043F\u0440\u0438\u0431\u044B\u043B\u044F\u0445 \u0438 \u0443\u0431\u044B\u0442\u043A\u0430\u0445",
+          "profit and loss"
+        ],
+        [
+          "\u0444\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437",
+          "\u0444\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u043E\u0435 \u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435",
+          "\u0431\u0438\u0437\u043D\u0435\u0441 \u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435",
+          "\u0431\u044E\u0434\u0436\u0435\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435"
+        ],
+        // ═══════════════════════════════════════════
+        // ПРОЕКТЫ / ПРОДУКТ
+        // ═══════════════════════════════════════════
+        [
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u0430\u043C\u0438",
+          "project management",
+          "\u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E \u043F\u0440\u043E\u0435\u043A\u0442\u0430\u043C\u0438"
+        ],
+        [
+          "\u043F\u0440\u043E\u0434\u0443\u043A\u0442\u043E\u0432\u044B\u0439 \u043C\u0435\u043D\u0435\u0434\u0436\u043C\u0435\u043D\u0442",
+          "\u043F\u0440\u043E\u0434\u0430\u043A\u0442 \u043C\u0435\u043D\u0435\u0434\u0436\u043C\u0435\u043D\u0442",
+          "product management",
+          "product owner"
+        ],
+        [
+          "\u0437\u0430\u043F\u0443\u0441\u043A \u043F\u0440\u043E\u0434\u0443\u043A\u0442\u0430",
+          "go to market",
+          "gtm",
+          "\u0432\u044B\u0432\u043E\u0434 \u043F\u0440\u043E\u0434\u0443\u043A\u0442\u0430 \u043D\u0430 \u0440\u044B\u043D\u043E\u043A"
+        ],
+        // ═══════════════════════════════════════════
+        // HR / КАДРЫ
+        // ═══════════════════════════════════════════
+        [
+          "\u043F\u043E\u0434\u0431\u043E\u0440 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u0440\u0435\u043A\u0440\u0443\u0442\u0438\u043D\u0433",
+          "\u043D\u0430\u0439\u043C \u0441\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u043A\u043E\u0432",
+          "\u043F\u043E\u0434\u0431\u043E\u0440 \u0441\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u043A\u043E\u0432"
+        ],
+        [
+          "\u0430\u0434\u0430\u043F\u0442\u0430\u0446\u0438\u044F \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u043E\u043D\u0431\u043E\u0440\u0434\u0438\u043D\u0433",
+          "onboarding"
+        ],
+        [
+          "\u043E\u0446\u0435\u043D\u043A\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "\u0430\u0441\u0441\u0435\u0441\u0441\u043C\u0435\u043D\u0442",
+          "performance review"
+        ],
+        // ═══════════════════════════════════════════
+        // ЛОГИСТИКА / СЕТЬ
+        // ═══════════════════════════════════════════
+        [
+          "\u0440\u0430\u0431\u043E\u0442\u0430 \u0441 \u043F\u043E\u0441\u0442\u0430\u0432\u0449\u0438\u043A\u0430\u043C\u0438",
+          "\u0437\u0430\u043A\u0443\u043F\u043A\u0438",
+          "vendor management",
+          "\u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u043E\u0441\u0442\u0430\u0432\u0449\u0438\u043A\u0430\u043C\u0438"
+        ],
+        [
+          "\u0440\u0438\u0442\u0435\u0439\u043B",
+          "\u0440\u043E\u0437\u043D\u0438\u0447\u043D\u0430\u044F \u0442\u043E\u0440\u0433\u043E\u0432\u043B\u044F",
+          "\u0442\u043E\u0440\u0433\u043E\u0432\u0430\u044F \u0441\u0435\u0442\u044C",
+          "fmcg"
+        ],
+        // ═══════════════════════════════════════════
+        // IT — related tech skills
+        // ═══════════════════════════════════════════
+        [
+          "javascript",
+          "js",
+          "ecmascript"
+        ],
+        [
+          "typescript",
+          "ts"
+        ],
+        [
+          "ci/cd",
+          "continuous integration",
+          "continuous delivery"
+        ],
+        [
+          "\u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0432",
+          "\u0440\u043E\u0431\u043E\u0442\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0432",
+          "rpa",
+          "\u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u044F"
+        ]
+      ];
+      _synonymIndex = null;
+      SYNONYM_WEIGHT = 0.5;
     }
   });
 
-  // src/lib/match-scorer.js
-  function computeMatchScore(resume, vacancy) {
-    if (!resume || !vacancy) {
-      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0 }, details: {} };
-    }
-    const skillResult = scoreSkills(resume, vacancy);
-    const titleResult = scoreTitle(resume, vacancy);
-    const salaryResult = scoreSalary(resume, vacancy);
-    const expResult = scoreExperience(resume, vacancy);
-    const breakdown = {
-      skills: skillResult.score,
-      title: titleResult.score,
-      salary: salaryResult.score,
-      experience: expResult.score
-    };
-    const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
-    const details = {
-      matchingSkills: skillResult.matching,
-      derivedMatchSkills: skillResult.derivedMatch,
-      missingSkills: skillResult.missing,
-      extraSkills: skillResult.extra,
-      titleSimilarity: titleResult.similarity,
-      salaryMatch: salaryResult.reason,
-      experienceMatch: expResult.reason
-    };
-    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience);
-    return { total, breakdown, details };
-  }
+  // src/lib/match-scorer-skills.js
   function scoreSkills(resume, vacancy) {
     const resumeSkills = normalizeSkillSet(resume.skills || []);
     const derivedSkills = normalizeSkillSet(resume.derivedSkills || []);
-    const vacancySkills = normalizeSkillSet(vacancy.keySkills || vacancy.skills || []);
+    let vacancySkillsRaw = vacancy.keySkills || vacancy.skills || [];
+    if (vacancySkillsRaw.length === 0 && vacancy.derivedSkills && vacancy.derivedSkills.length > 0) {
+      skillLog.info("No vacancy keySkills \u2014 using derivedSkills (" + vacancy.derivedSkills.length + ")");
+      vacancySkillsRaw = vacancy.derivedSkills;
+    }
+    const vacancySkills = normalizeSkillSet(vacancySkillsRaw);
     const allResumeSkills = /* @__PURE__ */ new Set([...resumeSkills, ...derivedSkills]);
     if (vacancySkills.size === 0) {
-      return { score: 20, matching: [], missing: [], extra: [], derivedMatch: [] };
+      return { score: 10, matching: [], missing: [], extra: [], derivedMatch: [], synonymMatch: [] };
     }
     const matching = [];
     const derivedMatch = [];
+    const synonymMatch = [];
     const missing = [];
+    const allResume = /* @__PURE__ */ new Set([...resumeSkills, ...derivedSkills]);
     for (const skill of vacancySkills) {
       if (resumeSkills.has(skill)) {
         matching.push(skill);
       } else if (derivedSkills.has(skill)) {
         derivedMatch.push(skill);
       } else {
-        missing.push(skill);
+        const synMatch = findSynonymMatch(skill, allResume);
+        if (synMatch) {
+          synonymMatch.push(skill + " \u2248 " + synMatch);
+        } else {
+          missing.push(skill);
+        }
       }
     }
     const extra = [];
@@ -980,12 +1194,35 @@
     }
     const explicitWeight = 1;
     const derivedWeight = 0.7;
-    const effectiveMatches = matching.length * explicitWeight + derivedMatch.length * derivedWeight;
+    const effectiveMatches = matching.length * explicitWeight + derivedMatch.length * derivedWeight + synonymMatch.length * SYNONYM_WEIGHT;
     const ratio = vacancySkills.size > 0 ? effectiveMatches / vacancySkills.size : 0;
     const score = Math.min(40, Math.round(ratio * 40));
-    scoreLog.info("Skills: explicit=" + matching.length + " derived=" + derivedMatch.length + " missing=" + missing.length + " \u2192 " + score + "/40");
-    return { score, matching, missing, extra, derivedMatch };
+    skillLog.info("explicit=" + matching.length + " derived=" + derivedMatch.length + " synonym=" + synonymMatch.length + " missing=" + missing.length + " \u2192 " + score + "/40");
+    return { score, matching, missing, extra, derivedMatch, synonymMatch };
   }
+  function normalizeSkillSet(skills) {
+    const set = /* @__PURE__ */ new Set();
+    for (const s of skills) {
+      const name = typeof s === "string" ? s : s.name || "";
+      if (name) {
+        set.add(
+          name.toLowerCase().trim().replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ")
+          // collapse multiple spaces
+        );
+      }
+    }
+    return set;
+  }
+  var skillLog;
+  var init_match_scorer_skills = __esm({
+    "src/lib/match-scorer-skills.js"() {
+      init_anti_hallucination();
+      init_skill_synonyms();
+      skillLog = createLogger("Scorer:Skills");
+    }
+  });
+
+  // src/lib/match-scorer-title.js
   function scoreTitle(resume, vacancy) {
     const resumeTitle = (resume.title || "").toLowerCase().trim();
     const vacancyTitle = (vacancy.title || "").toLowerCase().trim();
@@ -1034,73 +1271,6 @@
     }
     return Math.min(5, bonus);
   }
-  function scoreSalary(resume, vacancy) {
-    const resumeSalary = parseResumeSalary(resume.salary || "");
-    let vacSalary = vacancy.salary || {};
-    if (typeof vacSalary === "string") {
-      vacSalary = parseVacancySalaryString(vacSalary);
-    }
-    if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
-      return { score: 8, reason: "no-data" };
-    }
-    if (!resumeSalary) {
-      return { score: 8, reason: "resume-no-salary" };
-    }
-    if (!vacSalary.min && !vacSalary.max) {
-      return { score: 8, reason: "vacancy-no-salary" };
-    }
-    const vacMin = vacSalary.min || 0;
-    const vacMax = vacSalary.max || Infinity;
-    if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
-      return { score: 15, reason: "within-range" };
-    }
-    if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
-      return { score: 12, reason: "slightly-below" };
-    }
-    if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
-      return { score: 10, reason: "slightly-above" };
-    }
-    if (resumeSalary < vacMin) {
-      return { score: 5, reason: "below-range" };
-    }
-    return { score: 3, reason: "above-range" };
-  }
-  function scoreExperience(resume, vacancy) {
-    let vacExp = vacancy.experience || {};
-    if (typeof vacExp === "string") {
-      vacExp = parseExperienceString(vacExp);
-    }
-    if (vacExp.min === 0 && vacExp.max === 0) {
-      return { score: 15, reason: "no-experience-required" };
-    }
-    const resumeYears = calcResumeYears(resume.experience || []);
-    if (resumeYears === null) {
-      return { score: 8, reason: "unknown-resume-exp" };
-    }
-    if (vacExp.min === null && vacExp.max === null) {
-      return { score: 8, reason: "unknown-vacancy-exp" };
-    }
-    const vacMin = vacExp.min || 0;
-    const vacMax = vacExp.max || 99;
-    if (resumeYears >= vacMin && resumeYears <= vacMax) {
-      return { score: 15, reason: "within-range" };
-    }
-    if (resumeYears < vacMin && resumeYears >= vacMin - 1) {
-      return { score: 10, reason: "slightly-below" };
-    }
-    if (resumeYears > vacMax) {
-      return { score: 8, reason: "overqualified" };
-    }
-    return { score: 3, reason: "below-range" };
-  }
-  function normalizeSkillSet(skills) {
-    const set = /* @__PURE__ */ new Set();
-    for (const s of skills) {
-      const name = typeof s === "string" ? s : s.name || "";
-      if (name) set.add(name.toLowerCase().trim().replace(/\s+/g, " "));
-    }
-    return set;
-  }
   function tokenize(text) {
     const stopWords = /* @__PURE__ */ new Set([
       "\u0432",
@@ -1143,11 +1313,123 @@
     });
     return words;
   }
+  var init_match_scorer_title = __esm({
+    "src/lib/match-scorer-title.js"() {
+    }
+  });
+
+  // src/lib/match-scorer-salary.js
+  function scoreSalary(resume, vacancy) {
+    const resumeSalary = parseResumeSalary(resume.salary || "");
+    let vacSalary = vacancy.salary || {};
+    if (typeof vacSalary === "string") {
+      vacSalary = parseVacancySalaryString(vacSalary);
+    }
+    if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
+      return { score: 8, reason: "no-data" };
+    }
+    if (!resumeSalary) {
+      return { score: 8, reason: "resume-no-salary" };
+    }
+    if (!vacSalary.min && !vacSalary.max) {
+      return { score: 8, reason: "vacancy-no-salary" };
+    }
+    const vacMin = vacSalary.min || 0;
+    const vacMax = vacSalary.max || Infinity;
+    if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
+      return { score: 15, reason: "within-range" };
+    }
+    if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
+      return { score: 12, reason: "slightly-below" };
+    }
+    if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
+      return { score: 10, reason: "slightly-above" };
+    }
+    if (resumeSalary < vacMin) {
+      return { score: 5, reason: "below-range" };
+    }
+    return { score: 3, reason: "above-range" };
+  }
   function parseResumeSalary(salaryStr) {
     if (!salaryStr || typeof salaryStr !== "string") return null;
     const nums = salaryStr.match(/\d[\d\s]*\d/g);
     if (!nums || nums.length === 0) return null;
     return parseInt(nums[0].replace(/\s/g, ""), 10) || null;
+  }
+  function parseVacancySalaryString(salaryStr) {
+    if (!salaryStr || typeof salaryStr !== "string") return {};
+    const cleaned = salaryStr.replace(/[₽$€руб\.]/gi, "").replace(/\s+/g, " ");
+    const nums = cleaned.match(/\d[\d\s]*\d/g);
+    if (!nums || nums.length === 0) return {};
+    const parsed = nums.map((n) => parseInt(n.replace(/\s/g, ""), 10)).filter((n) => !isNaN(n));
+    if (parsed.length === 0) return {};
+    if (parsed.length === 1) return { min: parsed[0], max: parsed[0] };
+    return { min: parsed[0], max: parsed[1] };
+  }
+  var init_match_scorer_salary = __esm({
+    "src/lib/match-scorer-salary.js"() {
+    }
+  });
+
+  // src/lib/parse-experience.js
+  function parseExperienceString(raw) {
+    if (!raw) return { raw: "", min: null, max: null };
+    const text = raw.toLowerCase().trim();
+    if (/нет\s*опыт|не\s*требу|без\s*опыт/.test(text)) {
+      return { raw, min: 0, max: 0 };
+    }
+    const moreMatch = text.match(/(?:более|от|свыше)\s+(\d+)/);
+    if (moreMatch) {
+      return { raw, min: parseInt(moreMatch[1], 10), max: null };
+    }
+    const rangeMatch = text.match(/(\d+)\s*[–—\-\s]+\s*(\d+)/);
+    if (rangeMatch) {
+      return { raw, min: parseInt(rangeMatch[1], 10), max: parseInt(rangeMatch[2], 10) };
+    }
+    const exactMatch = text.match(/(\d+)\s*(?:год|лет)/);
+    if (exactMatch) {
+      return { raw, min: parseInt(exactMatch[1], 10), max: null };
+    }
+    const monthOnlyMatch = text.match(/(\d+)\s*мес/);
+    if (monthOnlyMatch) {
+      const years = parseInt(monthOnlyMatch[1], 10) / 12;
+      return { raw, min: Math.round(years * 10) / 10, max: Math.round(years * 10) / 10 };
+    }
+    return { raw, min: null, max: null };
+  }
+  var init_parse_experience = __esm({
+    "src/lib/parse-experience.js"() {
+    }
+  });
+
+  // src/lib/match-scorer-experience.js
+  function scoreExperience(resume, vacancy) {
+    let vacExp = vacancy.experience || {};
+    if (typeof vacExp === "string") {
+      vacExp = parseExperienceString(vacExp);
+    }
+    if (vacExp.min === 0 && vacExp.max === 0) {
+      return { score: 15, reason: "no-experience-required" };
+    }
+    const resumeYears = calcResumeYears(resume.experience || []);
+    if (resumeYears === null) {
+      return { score: 8, reason: "unknown-resume-exp" };
+    }
+    if (vacExp.min === null && vacExp.max === null) {
+      return { score: 8, reason: "unknown-vacancy-exp" };
+    }
+    const vacMin = vacExp.min || 0;
+    const vacMax = vacExp.max || 99;
+    if (resumeYears >= vacMin && resumeYears <= vacMax) {
+      return { score: 15, reason: "within-range" };
+    }
+    if (resumeYears < vacMin && resumeYears >= vacMin - 1) {
+      return { score: 10, reason: "slightly-below" };
+    }
+    if (resumeYears > vacMax) {
+      return { score: 8, reason: "overqualified" };
+    }
+    return { score: 3, reason: "below-range" };
   }
   function calcResumeYears(experience) {
     if (!Array.isArray(experience) || experience.length === 0) return null;
@@ -1165,21 +1447,49 @@
     if (totalMonths === 0) return null;
     return Math.round(totalMonths / 12 * 10) / 10;
   }
-  function parseVacancySalaryString(salaryStr) {
-    if (!salaryStr || typeof salaryStr !== "string") return {};
-    const cleaned = salaryStr.replace(/[₽$€руб\.]/gi, "").replace(/\s+/g, " ");
-    const nums = cleaned.match(/\d[\d\s]*\d/g);
-    if (!nums || nums.length === 0) return {};
-    const parsed = nums.map((n) => parseInt(n.replace(/\s/g, ""), 10)).filter((n) => !isNaN(n));
-    if (parsed.length === 0) return {};
-    if (parsed.length === 1) return { min: parsed[0], max: parsed[0] };
-    return { min: parsed[0], max: parsed[1] };
+  var init_match_scorer_experience = __esm({
+    "src/lib/match-scorer-experience.js"() {
+      init_parse_experience();
+    }
+  });
+
+  // src/lib/match-scorer.js
+  function computeMatchScore(resume, vacancy) {
+    if (!resume || !vacancy) {
+      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0 }, details: {} };
+    }
+    const skillResult = scoreSkills(resume, vacancy);
+    const titleResult = scoreTitle(resume, vacancy);
+    const salaryResult = scoreSalary(resume, vacancy);
+    const expResult = scoreExperience(resume, vacancy);
+    const breakdown = {
+      skills: skillResult.score,
+      title: titleResult.score,
+      salary: salaryResult.score,
+      experience: expResult.score
+    };
+    const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
+    const details = {
+      matchingSkills: skillResult.matching,
+      derivedMatchSkills: skillResult.derivedMatch,
+      synonymMatchSkills: skillResult.synonymMatch,
+      missingSkills: skillResult.missing,
+      extraSkills: skillResult.extra,
+      titleSimilarity: titleResult.similarity,
+      salaryMatch: salaryResult.reason,
+      experienceMatch: expResult.reason
+    };
+    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience);
+    return { total, breakdown, details };
   }
   var scoreLog;
   var init_match_scorer = __esm({
     "src/lib/match-scorer.js"() {
       init_anti_hallucination();
-      init_parse_experience();
+      init_match_scorer_skills();
+      init_match_scorer_title();
+      init_match_scorer_salary();
+      init_match_scorer_experience();
       scoreLog = createLogger("Scorer");
     }
   });
@@ -3230,7 +3540,8 @@
   var init_sidebar_css_core = __esm({
     "src/ui/sidebar-css-core.js"() {
       SIDEBAR_CSS_CORE = `:host { all: initial; }
-*, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; }
+*, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+html { font-size: 14px; }
 :focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -3240,7 +3551,7 @@
 .fab-panel { width: 720px; height: 100vh; position: fixed; right: 0; top: 0; z-index: 1000;
   background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-left: 1px solid rgba(0,0,0,0.08); display: flex; flex-direction: column;
-  letter-spacing: -0.01em;
+
   box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 8px 40px rgba(0,0,0,0.08), 0 2px 12px rgba(0,0,0,0.04);
   transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s ease; }
 .fab-panel.hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
@@ -3254,11 +3565,11 @@
 .tab-section.active { display: block; opacity: 1; }
 
 /* Tab buttons */
-.tab-btn { position: relative; padding: 10px 6px; font-size: 12px; font-weight: 500; color: #52525B;
+.tab-btn { position: relative; padding: 10px 6px; font-size: 12px; font-weight: 500; color: #3f3f46;
   background: none; border: none; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;
   align-items: center; gap: 4px; flex: 1; border-radius: 8px; }
 .tab-btn:hover { color: #18181b; background: rgba(0,0,0,0.04); }
-.tab-btn.active { color: #059669; font-weight: 600; background: rgba(5,150,105,0.06);
+.tab-btn.active { color: #047857; font-weight: 600; background: rgba(5,150,105,0.06);
   text-shadow: 0 0 8px rgba(5,150,105,0.12); }
 .tab-btn.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
   width:20px; height:3px; background:#059669; border-radius:99px;
@@ -3306,7 +3617,7 @@
 
 /* Toggle switch */
 .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
-.toggle input { display: none; }
+.toggle input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .toggle .slider { position: absolute; inset: 0; background: #d4d4d8; border-radius: 11px; transition: background 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s; }
 .toggle .slider::before { content:''; position:absolute; left:2px; top:2px; width:18px; height:18px;
   background:#fff; border-radius:50%; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s;
@@ -3319,7 +3630,8 @@
   50% { box-shadow: 0 4px 20px rgba(5,150,105,0.4), 0 0 0 8px rgba(5,150,105,0.12); } }
 
 /* Spinner */
-.har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; }
+.har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; role: status; }
+.har-spinner::after { content: 'Loading...'; position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 @keyframes har-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 `;
     }
@@ -3332,7 +3644,7 @@
       SIDEBAR_CSS_COMPONENTS = `
 /* Badges */
 .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+  font-size: 12px; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
 .badge-green { background: #D1FAE5; color: #065F46; border: 1px solid rgba(5,150,105,0.15); }
 .badge-amber { background: #FEF3C7; color: #92400E; border: 1px solid rgba(217,119,6,0.15); }
 .badge-red { background: #FEE2E2; color: #B91C1C; border: 1px solid rgba(220,38,38,0.15); }
@@ -3375,7 +3687,8 @@
 .log-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
 
 /* Timeline */
-.timeline-toggle { cursor: pointer; user-select: none; }
+.timeline-toggle { cursor: pointer; user-select: none; tabindex: 0; }
+.timeline-toggle:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 .timeline-toggle:hover { background: #FAFAFA; }
 .timeline-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s; opacity: 0; }
 .timeline-body.open { max-height: 2000px; opacity: 1; }
@@ -3391,7 +3704,8 @@
 .tl-item:first-child .tl-dot { box-shadow: 0 0 0 3px rgba(5,150,105,0.15), 0 0 0 1px rgba(0,0,0,0.08); }
 
 /* Sub-accordion */
-.sub-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin: 0 -8px; border-radius: 6px; transition: background 0.15s; }
+.sub-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin: 0 -8px; border-radius: 6px; transition: background 0.15s; tabindex: 0; }
+.sub-toggle:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 .sub-toggle:hover { background: rgba(0,0,0,0.03); }
 .sub-body { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s, padding 0.35s; opacity: 0; padding-top: 0; }
 .sub-body.open { max-height: 2000px; opacity: 1; padding-top: 6px; overflow-y: auto; }
@@ -3409,7 +3723,7 @@
 .ai-reply-card:hover { background: #ECFDF5; border-color: rgba(5,150,105,0.3); border-left-color: #059669;
   transform: translateY(-1px); box-shadow: 0 2px 12px rgba(5,150,105,0.1); }
 .ai-reply-card:last-child { margin-bottom: 0; }
-.ai-source { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.ai-source { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 .ai-src-resume { background: #D1FAE5; color: #065F46; }
 .ai-src-vacancy { background: #DBEAFE; color: #1E40AF; }
 .ai-src-context { background: #FEF3C7; color: #78350F; }
@@ -3421,6 +3735,7 @@
 .skill-match { background: #D1FAE5; color: #065F46; }
 .skill-miss { background: #FEE2E2; color: #B91C1C; }
 .skill-extra { background: #DBEAFE; color: #1E40AF; }
+.skill-synonym { background: #FEF3C7; color: #92400E; }
 
 /* Conversation items */
 .conv-item { transition: all 0.2s ease; border-radius: 8px; }
@@ -3429,15 +3744,17 @@
 
 /* Blacklist items */
 .bl-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #FEF2F2; border-radius: 8px; border-left: 3px solid #FECACA; }
-.bl-item .btn-bl-del { padding: 4px 10px; background: #FEE2E2; color: #DC2626; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s ease; }
+.bl-item .btn-bl-del { padding: 4px 10px; background: #FEE2E2; color: #DC2626; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.15s ease; }
 .bl-item .btn-bl-del:hover { background: #DC2626; color: #fff; }
 
 /* Inputs / selects / textareas */
 .fab-panel input, .fab-panel select, .fab-panel textarea { background: #FAFAFA;
   transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s; }
-.fab-panel input::placeholder, .fab-panel textarea::placeholder { color: #a1a1aa; }
+.fab-panel input::placeholder, .fab-panel textarea::placeholder { color: #71717a; }
 .fab-panel input:focus, .fab-panel select:focus, .fab-panel textarea:focus {
   border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.1); background: #ffffff; outline: none; }
+.fab-panel input:focus-visible, .fab-panel select:focus-visible, .fab-panel textarea:focus-visible {
+  outline: 2px solid #059669; outline-offset: 2px; }
 
 /* Range input */
 .fab-panel input[type="range"] { -webkit-appearance: none; appearance: none;
@@ -3457,7 +3774,8 @@
   background: #18181b; color: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.1);
-  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+  role: alert; aria-live: assertive; }
 @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-8px); } }
 
@@ -3473,9 +3791,9 @@
   font-size: 12px; font-weight: 700; position: relative; flex-shrink: 0;
   background: conic-gradient(#059669 0deg, #059669 calc(var(--score) * 3.6deg), #e4e4e7 calc(var(--score) * 3.6deg)); }
 .score-ring span { width: 30px; height: 30px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: #059669; }
-.score-ring.high span { color: #059669; }
-.score-ring.medium span { color: #D97706; }
+  font-size: 12px; font-weight: 700; color: #047857; }
+.score-ring.high span { color: #047857; }
+.score-ring.medium span { color: #B45309; }
 .score-ring.low span { color: #DC2626; }
 
 /* \u2550\u2550\u2550 Guided Tour \u2550\u2550\u2550 */
@@ -3489,7 +3807,7 @@
   background: #ffffff; border-radius: 12px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
   border: 1px solid rgba(0,0,0,0.06);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden; z-index: 10000001;
   /* NO animation \u2014 transform:scale() in keyframes breaks position:absolute coords */
 }
@@ -3497,7 +3815,7 @@
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 14px 0; }
 .hh-tour-counter {
-  font-size: 11px; font-weight: 600; color: #3b82f6;
+  font-size: 12px; font-weight: 600; color: #3b82f6;
   background: #eff6ff; padding: 2px 8px; border-radius: 99px; }
 .hh-tour-skip {
   background: none; border: none; font-size: 12px; color: #a1a1aa;
@@ -3523,6 +3841,12 @@
   cursor: pointer; font-size: 13px; font-weight: 700; color: #71717a;
   transition: all 0.15s; line-height: 1; }
 .hh-tour-help:hover { background: #f4f4f5; color: #059669; border-color: #059669; }
+
+/* Visually hidden \u2014 accessible to screen readers */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Overflow word-break */
+.fab-panel { overflow-wrap: break-word; word-break: break-word; }
 `;
     }
   });
@@ -3552,27 +3876,27 @@
   var init_icons = __esm({
     "src/ui/html/icons.js"() {
       ICONS = {
-        briefcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
-        file: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-        folder: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>',
-        chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-        gear: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
-        chart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
-        send: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
-        close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
-        check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-        refresh: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>',
-        rocket: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
-        search: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-        sun: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M12 2v4m0 12v4m-8-10H2m20 0h-2"/><circle cx="12" cy="12" r="4"/></svg>',
-        mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
-        envelope: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
-        ai: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0"/></svg>',
-        clock: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-        code: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
-        money: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
-        bubble: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-        chevronDown: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>'
+        briefcase: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+        file: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        folder: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>',
+        chat: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+        gear: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
+        chart: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+        send: '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+        close: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+        check: '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+        refresh: '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>',
+        rocket: '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+        search: '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+        sun: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M12 2v4m0 12v4m-8-10H2m20 0h-2"/><circle cx="12" cy="12" r="4"/></svg>',
+        mail: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+        envelope: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+        ai: '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0"/></svg>',
+        clock: '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+        code: '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+        money: '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
+        bubble: '<svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+        chevronDown: '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>'
       };
     }
   });
@@ -3590,22 +3914,22 @@
   function settingRow(label, hint, type, id, value, suffix) {
     return `<div style="display:flex;align-items:center;justify-content:space-between;">
     <div>
-      <div style="font-size:12px;font-weight:500;">${label}</div>
-      ${hint ? `<div style="font-size:11px;color:#71717a;">${hint}</div>` : ""}
+      <label for="${id}" style="font-size:12px;font-weight:500;">${label}</label>
+      ${hint ? `<div style="font-size:12px;color:#52525b;">${hint}</div>` : ""}
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
-      <input type="${type}" id="${id}" value="${value}" style="width:64px;padding:6px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;text-align:center;">
-      <span style="font-size:11px;color:#71717a;">${suffix}</span>
+      <input type="${type}" id="${id}" value="${value}" aria-label="${label}" style="width:64px;padding:6px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;text-align:center;">
+      <span style="font-size:12px;color:#52525b;">${suffix}</span>
     </div>
   </div>`;
   }
   function settingToggle(label, hint, id, checked) {
     return `<div style="display:flex;align-items:center;justify-content:space-between;">
     <div>
-      <div style="font-size:12px;font-weight:500;">${label}</div>
-      ${hint ? `<div style="font-size:11px;color:#71717a;">${hint}</div>` : ""}
+      <label for="${id}" style="font-size:12px;font-weight:500;">${label}</label>
+      ${hint ? `<div style="font-size:12px;color:#52525b;">${hint}</div>` : ""}
     </div>
-    <label class="toggle"><input type="checkbox" id="${id}" ${checked ? "checked" : ""}><span class="slider"></span></label>
+    <label class="toggle" role="switch" aria-checked="${checked ? "true" : "false"}" aria-label="${label}"><input type="checkbox" id="${id}" ${checked ? "checked" : ""}><span class="slider"></span></label>
   </div>`;
   }
   var init_helpers = __esm({
@@ -3615,7 +3939,7 @@
 
   // src/ui/html/tabs/overview.js
   function getOverviewSection() {
-    return `<div class="tab-section active" id="tab-overview">
+    return `<div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview">
     ${overviewAuthCard()}
     ${overviewKPIHero()}
     ${overviewRateLimits()}
@@ -3779,7 +4103,7 @@
 
   // src/ui/html/tabs/resume.js
   function getResumeSection() {
-    return `<div class="tab-section" id="tab-resume">
+    return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
       <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync">
         <span style="font-size:12px;font-weight:600;">\u0412\u0441\u0435 \u0440\u0435\u0437\u044E\u043C\u0435</span>
@@ -3850,7 +4174,7 @@
       <div id="res-score-bars" style="display:flex;gap:8px;margin-bottom:12px;">
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="font-size:10px;color:#71717a;">ATS-\u0441\u043E\u0432\u043C\u0435\u0441\u0442\u0438\u043C\u043E\u0441\u0442\u044C</span>
+            <span style="font-size:12px;color:#52525b;">ATS-\u0441\u043E\u0432\u043C\u0435\u0441\u0442\u0438\u043C\u043E\u0441\u0442\u044C</span>
             <span id="res-ats-score" style="font-size:12px;font-weight:700;color:#059669;">0%</span>
           </div>
           <div style="height:4px;border-radius:2px;background:#e4e4e7;">
@@ -3859,7 +4183,7 @@
         </div>
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="font-size:10px;color:#71717a;">\u041A\u0430\u0447\u0435\u0441\u0442\u0432\u043E \u043E\u043F\u044B\u0442\u0430</span>
+            <span style="font-size:12px;color:#52525b;">\u041A\u0430\u0447\u0435\u0441\u0442\u0432\u043E \u043E\u043F\u044B\u0442\u0430</span>
             <span id="res-exp-score" style="font-size:12px;font-weight:700;color:#2563EB;">0%</span>
           </div>
           <div style="height:4px;border-radius:2px;background:#e4e4e7;">
@@ -3917,7 +4241,7 @@
 
   // src/ui/html/tabs/vacancies.js
   function getVacanciesSection() {
-    return `<div class="tab-section" id="tab-vacancies">
+    return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
@@ -3941,8 +4265,8 @@
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="vac-search" placeholder="\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E..." style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
-        <select id="vac-status-filter" style="padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;background:#FAFAFA;">
+        <input type="text" id="vac-search" placeholder="\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E..." aria-label="\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438" style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+        <select id="vac-status-filter" aria-label="\u0424\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u0441\u0442\u0430\u0442\u0443\u0441\u0443" style="padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;background:#FAFAFA;">
           <option value="all">\u0412\u0441\u0435</option>
           <option value="new">\u041D\u043E\u0432\u044B\u0435</option>
           <option value="applied">\u041E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u043E</option>
@@ -3951,7 +4275,7 @@
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:11px;color:#71717a;white-space:nowrap;">\u041C\u0438\u043D. \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435:</span>
-        <input type="range" id="vac-score-range" min="0" max="100" value="0" style="flex:1;">
+        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u044B\u0439 \u043F\u0440\u043E\u0446\u0435\u043D\u0442 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u044F" style="flex:1;">
         <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#71717a;min-width:32px;text-align:right;">0%</span>
       </div>
     </div>
@@ -3985,19 +4309,19 @@
       <div style="display:flex;gap:6px;margin-bottom:10px;">
         <div style="flex:1;text-align:center;">
           <div id="vac-match-skills" style="font-size:16px;font-weight:700;color:#059669;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u041D\u0430\u0432\u044B\u043A\u0438</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">\u041D\u0430\u0432\u044B\u043A\u0438</div>
         </div>
         <div style="flex:1;text-align:center;">
           <div id="vac-match-title" style="font-size:16px;font-weight:700;color:#2563EB;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u0414\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044C</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">\u0414\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044C</div>
         </div>
         <div style="flex:1;text-align:center;">
           <div id="vac-match-salary" style="font-size:16px;font-weight:700;color:#D97706;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u0417\u0430\u0440\u043F\u043B\u0430\u0442\u0430</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">\u0417\u0430\u0440\u043F\u043B\u0430\u0442\u0430</div>
         </div>
         <div style="flex:1;text-align:center;">
           <div id="vac-match-exp" style="font-size:16px;font-weight:700;color:#7C3AED;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">\u041E\u043F\u044B\u0442</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">\u041E\u043F\u044B\u0442</div>
         </div>
       </div>
       <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:#f4f4f5;">
@@ -4059,7 +4383,16 @@
         </div>
         <div id="res-gap-match-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
       </div>
-      <!-- Row 2: Gap -->
+      <!-- Row 2: Synonym (v1.9.22.0 \u2014 related skills) -->
+      <div id="res-gap-synonym-row" style="margin-bottom:8px;display:none;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#D97706;flex-shrink:0;"></span>
+          <span style="font-size:11px;font-weight:600;color:#D97706;">\u0421\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435</span>
+          <span class="badge badge-amber" id="res-gap-synonym-count" style="font-size:11px;padding:1px 6px;">0</span>
+        </div>
+        <div id="res-gap-synonym-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
+      </div>
+      <!-- Row 3: Gap -->
       <div id="res-gap-miss-row" style="margin-bottom:8px;display:none;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
           <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>
@@ -4097,7 +4430,7 @@
 
   // src/ui/html/tabs/negotiations.js
   function getNegotiationsSection() {
-    return `<div class="tab-section" id="tab-negotiations">
+    return `<div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tabbtn-negotiations">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
@@ -4115,7 +4448,7 @@
         <div id="neg-chat-header" style="display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:10px;flex-shrink:0;"></div>
         <div id="neg-chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:10px;"></div>
         <div style="display:flex;gap:8px;flex-shrink:0;padding-top:10px;border-top:1px solid rgba(0,0,0,0.06);">
-          <input type="text" id="neg-chat-input" placeholder="\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435..." style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+          <input type="text" id="neg-chat-input" placeholder="\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435..." aria-label="\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435" style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
           <button class="btn btn-primary" style="padding:8px 12px;">${ICONS.send}</button>
         </div>
       </div>
@@ -4134,7 +4467,7 @@
       <div class="timeline-body" id="cl-body" style="margin-top:10px;">
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+            <label class="toggle" role="switch" aria-checked="true" aria-label="\u042D\u043C\u0443\u043B\u044F\u0446\u0438\u044F \u043D\u0430\u0431\u043E\u0440\u0430"><input type="checkbox" checked><span class="slider"></span></label>
             <div style="flex:1;min-width:0;">
               <div style="font-size:11px;font-weight:500;">\u042D\u043C\u0443\u043B\u044F\u0446\u0438\u044F \u043D\u0430\u0431\u043E\u0440\u0430</div>
               <div style="font-size:11px;color:#71717a;">\u041F\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u044C\u043D\u044B\u0439 \u0432\u0432\u043E\u0434 (\u0430\u043D\u0442\u0438\u0431\u043E\u0442)</div>
@@ -4164,7 +4497,7 @@
 
   // src/ui/html/tabs/settings.js
   function getSettingsSection() {
-    return `<div class="tab-section" id="tab-settings">
+    return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings">
     ${settingsRateLimits()}
     ${settingsCaptcha()}
     ${settingsBlacklist()}
@@ -4204,7 +4537,7 @@
     </div>
     <div id="bl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
     <div style="display:flex;gap:8px;">
-      <input type="text" id="bl-input" placeholder="\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438..." style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;">
+      <input type="text" id="bl-input" placeholder="\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438..." aria-label="\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438 \u0434\u043B\u044F \u0447\u0451\u0440\u043D\u043E\u0433\u043E \u0441\u043F\u0438\u0441\u043A\u0430" style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
       <button class="btn btn-outline btn-sm" data-action="bl-add">+ \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C</button>
     </div>
   </div>`;
@@ -4251,7 +4584,7 @@
 
   // src/ui/html/tabs/stats.js
   function getStatsSection() {
-    return `<div class="tab-section" id="tab-stats">
+    return `<div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tabbtn-stats">
     <div style="display:flex;gap:6px;margin-bottom:12px;">
       <button class="btn btn-sm btn-primary stats-period-btn active" data-period="today">\u0421\u0435\u0433\u043E\u0434\u043D\u044F</button>
       <button class="btn btn-sm btn-outline stats-period-btn" data-period="week">\u041D\u0435\u0434\u0435\u043B\u044F</button>
@@ -4347,10 +4680,10 @@
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.18.0"}</span>
+      <span style="font-size:12px;color:#71717a;">HH Copilot v${"1.9.23.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
-        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
-        <span style="font-size:11px;color:#71717a;">chrome.storage</span>
+        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
+        <span style="font-size:12px;color:#71717a;">chrome.storage</span>
       </div>
     </div>`;
   }
@@ -4366,10 +4699,10 @@
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:11px;color:#71717a;">HH Copilot v${"1.9.18.0"}</span>
+      <span style="font-size:12px;color:#71717a;">HH Copilot v${"1.9.23.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
-        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;"></span>
-        <span style="font-size:11px;color:#71717a;">chrome.storage</span>
+        <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
+        <span style="font-size:12px;color:#71717a;">chrome.storage</span>
       </div>
     </div>`;
   }
@@ -4390,11 +4723,11 @@
           </div>
         </div>
       </div>
-      <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0434\u043B\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438">
+      <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0434\u043B\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438" role="button" tabindex="0" aria-label="\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044E">
         <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;"></span>
         ${badgeLabel}
       </div>
-      <button class="hh-tour-help" data-action="start-tour" title="\u0413\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E">?</button>
+      <button class="hh-tour-help" data-action="start-tour" title="\u0413\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E" aria-label="\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0433\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E">?</button>
       <button class="har-close-btn" data-action="close-panel" aria-label="\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u0430\u043D\u0435\u043B\u044C"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">
         ${ICONS.close}
@@ -4410,8 +4743,8 @@
       { id: "settings", label: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438", icon: ICONS.gear },
       { id: "stats", label: "\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430", icon: ICONS.chart }
     ];
-    return `<div class="har-tabbar">${tabs.map(
-      (t) => `<button class="tab-btn ${t.id === "overview" ? "active" : ""}" data-tab="${t.id}">${t.icon}<span>${t.label}</span></button>`
+    return `<div class="har-tabbar" role="tablist" aria-label="\u041E\u0441\u043D\u043E\u0432\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B">${tabs.map(
+      (t, i) => `<button class="tab-btn ${t.id === "overview" ? "active" : ""}" role="tab" aria-selected="${t.id === "overview"}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === "overview" ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`
     ).join("")}</div>`;
   }
   var init_shell = __esm({
@@ -4692,6 +5025,7 @@
     refs.fabEl.id = "hh-ar-fab";
     refs.fabEl.setAttribute("role", "button");
     refs.fabEl.setAttribute("aria-label", "\u041E\u0442\u043A\u0440\u044B\u0442\u044C HH Copilot");
+    refs.fabEl.setAttribute("tabindex", "0");
     const s = refs.fabEl.style;
     fabStyle(s, "position", "fixed");
     fabStyle(s, "bottom", "24px");
@@ -4717,6 +5051,12 @@
       s.setProperty("transform", "scale(1)", "important");
     });
     refs.fabEl.addEventListener("click", onClick);
+    refs.fabEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onClick();
+      }
+    });
     document.body.appendChild(refs.fabEl);
   }
   function updateFabIcon() {
@@ -4773,6 +5113,48 @@
     }
   });
 
+  // src/lib/vacancy-skills-collector.js
+  function normalizeSkillName(name) {
+    return (name || "").toLowerCase().trim().replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ");
+  }
+  function collectAllVacancySkills(vacancies) {
+    const skills = /* @__PURE__ */ new Set();
+    if (Array.isArray(vacancies)) {
+      for (const v of vacancies) {
+        collectFromVacancyObject(v, skills);
+      }
+    }
+    const detail = window.__hhVacDetail;
+    if (detail) {
+      collectFromVacancyObject(detail, skills);
+    }
+    return skills;
+  }
+  function collectFromVacancyObject(v, target) {
+    if (!v) return;
+    const sources = [v.tags, v.skills, v.keySkills, v.derivedSkills];
+    for (const arr of sources) {
+      if (!Array.isArray(arr)) continue;
+      for (const item of arr) {
+        const name = typeof item === "string" ? item : item?.name || "";
+        const norm = normalizeSkillName(name);
+        if (norm && norm.length > 1) target.add(norm);
+      }
+    }
+  }
+  function collectDetailVacancySkills() {
+    const skills = /* @__PURE__ */ new Set();
+    const detail = window.__hhVacDetail;
+    if (detail) {
+      collectFromVacancyObject(detail, skills);
+    }
+    return skills;
+  }
+  var init_vacancy_skills_collector = __esm({
+    "src/lib/vacancy-skills-collector.js"() {
+    }
+  });
+
   // src/ui/tabs/resumes/resume-helpers-gap.js
   function updateSkillGapSection(r) {
     const section = refs.shadowRoot?.getElementById("res-gap-section");
@@ -4784,25 +5166,35 @@
     const resumeSkills = normalizeSkills(r.skills);
     const derivedSkills = normalizeSkills(r.derivedSkills || []);
     const allResumeSkills = /* @__PURE__ */ new Set([...resumeSkills, ...derivedSkills]);
-    const vacancySkills = collectVacancySkills();
+    const vacancySkills = collectAllVacancySkills(panelState.vacancies);
     if (vacancySkills.size === 0) {
       section.style.display = "none";
       return;
     }
     const match = [];
+    const synonym = [];
     const miss = [];
     const extra = [];
     for (const skill of allResumeSkills) {
       if (vacancySkills.has(skill)) match.push(skill);
     }
     for (const skill of vacancySkills) {
-      if (!allResumeSkills.has(skill)) miss.push(skill);
+      if (allResumeSkills.has(skill)) {
+      } else {
+        const synMatch = findSynonymMatch(skill, allResumeSkills);
+        if (synMatch) {
+          synonym.push({ vacancy: skill, resume: synMatch });
+        } else {
+          miss.push(skill);
+        }
+      }
     }
     for (const skill of allResumeSkills) {
       if (!vacancySkills.has(skill)) extra.push(skill);
     }
-    const total = allResumeSkills.size + miss.length;
-    const matchPct = total > 0 ? Math.round(match.length / total * 100) : 0;
+    const effectiveMatch = match.length + synonym.length * SYNONYM_WEIGHT;
+    const total = vacancySkills.size;
+    const matchPct = total > 0 ? Math.round(effectiveMatch / total * 100) : 0;
     section.style.display = "";
     const ring = refs.shadowRoot?.getElementById("res-gap-ring");
     if (ring) {
@@ -4826,11 +5218,12 @@
     const barMiss = refs.shadowRoot?.getElementById("res-gap-bar-miss");
     const barExtra = refs.shadowRoot?.getElementById("res-gap-bar-extra");
     if (barMatch && barMiss && barExtra) {
-      barMatch.style.width = (total > 0 ? (match.length / total * 100).toFixed(1) : 0) + "%";
+      barMatch.style.width = (total > 0 ? (effectiveMatch / total * 100).toFixed(1) : 0) + "%";
       barMiss.style.width = (total > 0 ? (miss.length / total * 100).toFixed(1) : 0) + "%";
       barExtra.style.width = (total > 0 ? (extra.length / total * 100).toFixed(1) : 0) + "%";
     }
     updateGapRow("res-gap-match-row", "res-gap-match-count", "res-gap-match-list", match, "skill-match");
+    updateSynonymGapRow("res-gap-synonym-row", "res-gap-synonym-count", "res-gap-synonym-list", synonym);
     updateGapRow("res-gap-miss-row", "res-gap-miss-count", "res-gap-miss-list", miss, "skill-miss");
     updateGapRow("res-gap-extra-row", "res-gap-extra-count", "res-gap-extra-list", extra, "skill-extra");
     updateGapRecommendation(miss, matchPct);
@@ -4856,6 +5249,29 @@
       listEl.innerHTML = html;
     }
   }
+  function updateSynonymGapRow(rowId, countId, listId, synonyms) {
+    const row = refs.shadowRoot?.getElementById(rowId);
+    const countEl = refs.shadowRoot?.getElementById(countId);
+    const listEl = refs.shadowRoot?.getElementById(listId);
+    if (!row) return;
+    if (synonyms.length === 0) {
+      row.style.display = "none";
+      return;
+    }
+    row.style.display = "";
+    if (countEl) countEl.textContent = synonyms.length;
+    if (listEl) {
+      const visible = synonyms.slice(0, 5);
+      const remainder = synonyms.length - visible.length;
+      let html = visible.map(
+        (s) => '<span class="skill-tag skill-synonym" title="\u0421\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0439 \u043D\u0430\u0432\u044B\u043A: \xAB' + esc(s.resume) + "\xBB \u2248 \xAB" + esc(s.vacancy) + '\xBB">' + esc(s.vacancy) + " \u2248 " + esc(s.resume) + "</span>"
+      ).join("");
+      if (remainder > 0) {
+        html += '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>";
+      }
+      listEl.innerHTML = html;
+    }
+  }
   function updateGapRecommendation(miss, matchPct) {
     const block = refs.shadowRoot?.getElementById("res-gap-recommendation");
     const text = refs.shadowRoot?.getElementById("res-gap-recommendation-text");
@@ -4874,33 +5290,20 @@
     const set = /* @__PURE__ */ new Set();
     for (const s of skills) {
       const name = typeof s === "string" ? s : s.name || "";
-      if (name) set.add(name.toLowerCase().trim());
+      if (name) {
+        set.add(
+          name.toLowerCase().trim().replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ")
+        );
+      }
     }
     return set;
-  }
-  function collectVacancySkills() {
-    const skills = /* @__PURE__ */ new Set();
-    const vacancies = panelState.vacancies || [];
-    for (const v of vacancies) {
-      if (v.tags && Array.isArray(v.tags)) {
-        for (const t of v.tags) {
-          const name = typeof t === "string" ? t : t.name || "";
-          if (name) skills.add(name.toLowerCase().trim());
-        }
-      }
-      if (v.skills && Array.isArray(v.skills)) {
-        for (const s of v.skills) {
-          const name = typeof s === "string" ? s : s.name || "";
-          if (name) skills.add(name.toLowerCase().trim());
-        }
-      }
-    }
-    return skills;
   }
   var init_resume_helpers_gap = __esm({
     "src/ui/tabs/resumes/resume-helpers-gap.js"() {
       init_state();
       init_html2();
+      init_vacancy_skills_collector();
+      init_skill_synonyms();
     }
   });
 
@@ -6674,7 +7077,7 @@
     }
     return strengths;
   }
-  function buildRecommendations(ats, exp, flags, r) {
+  function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     const recs = [];
     const atsFailed = ats.checks.filter((c) => !c.passed).sort((a, b) => b.weight - a.weight);
     for (const c of atsFailed.slice(0, 2)) {
@@ -6687,32 +7090,69 @@
     for (const f of flags.slice(0, 2)) {
       recs.push({ priority: "high", text: f });
     }
-    if ((r.skills || []).length > 0 && (r.experience || []).length > 0) {
-      const skillLower = (r.skills || []).map((s) => s.toLowerCase().trim());
+    if (vacancySkills && vacancySkills.size > 0) {
+      const resumeExplicit = normalizeSkillSet2(r.skills || []);
+      const resumeDerived = normalizeSkillSet2(r.derivedSkills || []);
+      const allResume = /* @__PURE__ */ new Set([...resumeExplicit, ...resumeDerived]);
       const descText = (r.experience || []).map((e) => e.description || "").join(" ").toLowerCase();
-      const uncovered = skillLower.filter((s) => s.length > 2 && !descText.includes(s));
-      if (uncovered.length > 3) {
-        const sample = uncovered.slice(0, 5).map((s) => "\xAB" + s + "\xBB").join(", ");
-        const suffix = uncovered.length > 5 ? " \u0438 \u0435\u0449\u0451 " + (uncovered.length - 5) : "";
+      const descNorm = descText.replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ");
+      const missing = [];
+      const related = [];
+      for (const vs of vacancySkills) {
+        if (resumeExplicit.has(vs)) continue;
+        if (resumeDerived.has(vs)) continue;
+        if (vs.length > 3 && descNorm.includes(vs)) continue;
+        const synMatch = findSynonymMatch(vs, allResume);
+        if (synMatch) {
+          related.push(vs + " \u2248 " + synMatch);
+        } else {
+          missing.push(vs);
+        }
+      }
+      if (missing.length > 0) {
+        const sample = missing.slice(0, 5).map((s) => "\xAB" + s + "\xBB").join(", ");
+        const suffix = missing.length > 5 ? " \u0438 \u0435\u0449\u0451 " + (missing.length - 5) : "";
+        recs.push({
+          priority: "high",
+          text: missing.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u043D\u0435\u0442 \u0432 \u0440\u0435\u0437\u044E\u043C\u0435: " + sample + suffix + " \u2014 \u0434\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0434\u043B\u044F \u043B\u0443\u0447\u0448\u0435\u0433\u043E \u043C\u044D\u0442\u0447\u0438\u043D\u0433\u0430",
+          tooltip: missing.map((s) => "\xAB" + s + "\xBB").join(", ")
+        });
+      }
+      if (related.length > 0) {
+        const sample = related.slice(0, 3).map((s) => "\xAB" + s + "\xBB").join(", ");
+        const suffix = related.length > 3 ? " \u0438 \u0435\u0449\u0451 " + (related.length - 3) : "";
         recs.push({
           priority: "medium",
-          text: uncovered.length + " \u043D\u0430\u0432\u044B\u043A\u043E\u0432 \u043D\u0435 \u0432 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u044F\u0445 \u043E\u043F\u044B\u0442\u0430: " + sample + suffix + " \u2014 \u0443\u043F\u043E\u043C\u044F\u043D\u0438\u0442\u0435, \u0447\u0442\u043E\u0431\u044B HR \u0438\u0445 \u0443\u0432\u0438\u0434\u0435\u043B",
-          tooltip: uncovered.map((s) => "\xAB" + s + "\xBB").join(", ")
+          text: "\u0421\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435 \u043D\u0430\u0432\u044B\u043A\u0438: " + sample + suffix + " \u2014 \u0443\u043F\u043E\u043C\u044F\u043D\u0438\u0442\u0435 \u044F\u0432\u043D\u043E \u0434\u043B\u044F \u0442\u043E\u0447\u043D\u043E\u0433\u043E \u043C\u044D\u0442\u0447\u0438\u043D\u0433\u0430",
+          tooltip: related.map((s) => "\xAB" + s + "\xBB").join(", ")
         });
       }
     }
     return recs;
+  }
+  function normalizeSkillSet2(skills) {
+    const set = /* @__PURE__ */ new Set();
+    for (const s of skills) {
+      const name = typeof s === "string" ? s : s.name || "";
+      if (name) {
+        set.add(
+          name.toLowerCase().trim().replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ")
+        );
+      }
+    }
+    return set;
   }
   var init_quality_flags = __esm({
     "src/lib/quality-flags.js"() {
       init_quality_patterns();
       init_quality_experience();
       init_quality_date_helpers();
+      init_skill_synonyms();
     }
   });
 
   // src/lib/resume-quality-analyzer.js
-  function analyzeResumeQuality(r) {
+  function analyzeResumeQuality(r, vacancySkills) {
     if (!r || !r.id) return {
       totalScore: 0,
       atsScore: 0,
@@ -6726,7 +7166,7 @@
     const exp = analyzeExperience(r);
     const flags = detectRedFlags(r);
     const strengths = detectStrengths(r);
-    const recommendations = buildRecommendations(ats, exp, flags, r);
+    const recommendations = buildRecommendations(ats, exp, flags, r, vacancySkills);
     const flagPenalty = Math.min(30, flags.length * 7);
     const totalScore = Math.max(0, Math.round(
       ats.score * 0.4 + exp.score * 0.4 + 100 * 0.2 - flagPenalty
@@ -6804,7 +7244,8 @@
       return;
     }
     section.style.display = "";
-    const result = analyzeResumeQuality(r);
+    const vacancySkills = collectAllVacancySkills(panelState.vacancies);
+    const result = analyzeResumeQuality(r, vacancySkills);
     const pct = result.totalScore;
     const ring = refs.shadowRoot?.getElementById("res-score-ring");
     if (ring) {
@@ -6892,6 +7333,7 @@
       init_storage();
       init_resume_accordion_header();
       init_resume_quality_analyzer();
+      init_vacancy_skills_collector();
     }
   });
 
@@ -9845,7 +10287,10 @@
     const sr = refs.shadowRoot;
     if (!sr) return;
     sr.querySelectorAll(".tab-btn").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.tab === tabId);
+      const isActive = btn.dataset.tab === tabId;
+      btn.classList.toggle("active", isActive);
+      btn.setAttribute("aria-selected", isActive);
+      btn.setAttribute("tabindex", isActive ? "0" : "-1");
     });
     sr.querySelectorAll(".tab-section").forEach((sec) => {
       sec.classList.toggle("active", sec.id === "tab-" + tabId);
@@ -9863,6 +10308,8 @@
     if (!body) return;
     const isOpen = body.classList.toggle("open");
     if (chevron) chevron.classList.toggle("open", isOpen);
+    toggleEl.setAttribute("aria-expanded", isOpen);
+    if (body.id) toggleEl.setAttribute("aria-controls", body.id);
   }
   function toggleSub2(subId, chevId) {
     const sr = refs.shadowRoot;
@@ -10412,6 +10859,98 @@
     return blocks;
   }
 
+  // src/parsers/vacancy-detail-skills.js
+  init_anti_hallucination();
+  init_skill_dictionary();
+  var skillLog2 = createLogger("VacSkills");
+  function parseKeySkills(vacancy) {
+    const domSkills = [];
+    const skillItems = document.querySelectorAll('[data-qa="skills-element"]');
+    skillItems.forEach((el) => {
+      const tagText = el.querySelector(".bloko-tag__text");
+      const t = tagText ? tagText.textContent.trim() : el.textContent.trim();
+      if (t && !domSkills.includes(t)) domSkills.push(t);
+    });
+    if (domSkills.length === 0) {
+      const broaderSkills = document.querySelectorAll('[data-qa*="skill"]');
+      broaderSkills.forEach((el) => {
+        const t = (el.textContent || "").trim();
+        if (t && t.length > 1 && t.length < 80 && !domSkills.includes(t)) {
+          const parent = el.parentElement;
+          if (parent && parent.querySelectorAll('[data-qa*="skill"]').length === 1) {
+            domSkills.push(t);
+          }
+        }
+      });
+    }
+    if (domSkills.length === 0) {
+      const skillsContainer = document.querySelector(
+        '[data-qa="vacancy-key-skills"], [data-qa="skills-block"], .vacancy-key-skills'
+      );
+      if (skillsContainer) {
+        skillsContainer.querySelectorAll(".bloko-tag__text").forEach((tag) => {
+          const t = (tag.textContent || "").trim();
+          if (t && !domSkills.includes(t)) domSkills.push(t);
+        });
+      }
+    }
+    vacancy.keySkills = domSkills;
+    const descText = _getDescriptionText(vacancy);
+    const derivedFromDesc = _deriveSkillsFromText(descText);
+    if (domSkills.length > 0 && derivedFromDesc.length > 0) {
+      const domSkillsLower = new Set(domSkills.map((s) => _normalizeSkill(s)));
+      for (const ds of derivedFromDesc) {
+        if (!domSkillsLower.has(_normalizeSkill(ds))) {
+          vacancy.derivedSkills.push(ds);
+        }
+      }
+      vacancy._skillsSource = vacancy.derivedSkills.length > 0 ? "dom+derived" : "dom";
+    } else if (domSkills.length > 0) {
+      vacancy._skillsSource = "dom";
+    } else if (derivedFromDesc.length > 0) {
+      vacancy.keySkills = derivedFromDesc;
+      vacancy.derivedSkills = [];
+      vacancy._skillsSource = "derived";
+    } else {
+      vacancy._skillsSource = "none";
+    }
+    skillLog2.info("KeySkills: " + domSkills.length + " DOM + " + (vacancy._skillsSource === "derived" ? "0" : vacancy.derivedSkills.length) + " derived | source: " + vacancy._skillsSource);
+  }
+  function _getDescriptionText(vacancy) {
+    if (vacancy.description && vacancy.description.text) {
+      let text = vacancy.description.text;
+      if (vacancy.description.headings) {
+        text += "\n" + vacancy.description.headings.join("\n");
+      }
+      return text;
+    }
+    const descEl = document.querySelector('[data-qa="vacancy-description"]');
+    if (descEl) {
+      return (descEl.textContent || "").trim();
+    }
+    return "";
+  }
+  function _deriveSkillsFromText(text) {
+    if (!text || text.length < 10) return [];
+    const found = [];
+    const foundLower = /* @__PURE__ */ new Set();
+    for (const { skill, patterns } of SKILL_PATTERNS) {
+      const skillLower = _normalizeSkill(skill);
+      if (foundLower.has(skillLower)) continue;
+      for (const pattern of patterns) {
+        if (pattern.test(text)) {
+          found.push(skill);
+          foundLower.add(skillLower);
+          break;
+        }
+      }
+    }
+    return found;
+  }
+  function _normalizeSkill(name) {
+    return name.toLowerCase().trim().replace(/[-–—]/g, " ").replace(/ё/g, "\u0435").replace(/\s+/g, " ");
+  }
+
   // src/parsers/vacancy-detail.js
   init_selectors();
   init_anti_hallucination();
@@ -10436,6 +10975,10 @@
       employment: "",
       schedule: "",
       keySkills: [],
+      derivedSkills: [],
+      // v1.9.19.0: skills extracted from description text
+      _skillsSource: "none",
+      // 'dom' | 'dom+derived' | 'derived' | 'none'
       description: { text: "", html: "", headings: [], sections: {} },
       hiringFormat: "",
       isRemote: false,
@@ -10463,13 +11006,8 @@
     const schedEl = document.querySelector('[data-qa="work-schedule-by-days-text"], [data-qa*="work-schedule"], [data-qa*="schedule"]');
     if (schedEl) vacancy.schedule = (schedEl.textContent || "").trim();
     vacancy.isRemote = !!document.querySelector('[data-qa="vacancy-label-work-schedule-remote"]');
-    const skillItems = document.querySelectorAll('[data-qa="skills-element"]');
-    skillItems.forEach((el) => {
-      const tagText = el.querySelector(".bloko-tag__text");
-      const t = tagText ? tagText.textContent.trim() : el.textContent.trim();
-      if (t) vacancy.keySkills.push(t);
-    });
     parseDescription(vacancy);
+    parseKeySkills(vacancy);
     const hireEl = document.querySelector('[data-qa="vacancy-hiring-formats"]');
     if (hireEl) vacancy.hiringFormat = (hireEl.textContent || "").trim().replace(/\s+/g, " ");
     vacancy.hasApplyButton = findElement("vacancyApplyButton") !== null;
@@ -10479,7 +11017,7 @@
     }
     const elapsed = (performance.now() - t0).toFixed(1);
     vacLog.info('Parsed vacancy "' + vacancy.title.substring(0, 40) + '" in ' + elapsed + "ms");
-    vacLog.info("Skills: " + vacancy.keySkills.length + " | Desc: " + vacancy.description.text.length + " chars");
+    vacLog.info("Skills: " + vacancy.keySkills.length + " (source: " + vacancy._skillsSource + ") | Derived: " + vacancy.derivedSkills.length + " | Desc: " + vacancy.description.text.length + " chars");
     return vacancy;
   }
   function parseSalary(vacancy) {

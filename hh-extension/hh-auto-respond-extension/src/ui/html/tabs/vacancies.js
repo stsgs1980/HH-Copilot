@@ -4,7 +4,7 @@
 import { ICONS } from '../icons.js';
 
 export function getVacanciesSection() {
-  return `<div class="tab-section" id="tab-vacancies">
+  return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
@@ -28,8 +28,8 @@ export function getVacanciesSection() {
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="vac-search" placeholder="Поиск по названию..." style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
-        <select id="vac-status-filter" style="padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;background:#FAFAFA;">
+        <input type="text" id="vac-search" placeholder="Поиск по названию..." aria-label="Поиск по названию вакансии" style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+        <select id="vac-status-filter" aria-label="Фильтр по статусу" style="padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;background:#FAFAFA;">
           <option value="all">Все</option>
           <option value="new">Новые</option>
           <option value="applied">Откликнуто</option>
@@ -38,7 +38,7 @@ export function getVacanciesSection() {
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:11px;color:#71717a;white-space:nowrap;">Мин. совпадение:</span>
-        <input type="range" id="vac-score-range" min="0" max="100" value="0" style="flex:1;">
+        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения" style="flex:1;">
         <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#71717a;min-width:32px;text-align:right;">0%</span>
       </div>
     </div>
@@ -72,19 +72,19 @@ export function getVacanciesSection() {
       <div style="display:flex;gap:6px;margin-bottom:10px;">
         <div style="flex:1;text-align:center;">
           <div id="vac-match-skills" style="font-size:16px;font-weight:700;color:#059669;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">Навыки</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">Навыки</div>
         </div>
         <div style="flex:1;text-align:center;">
           <div id="vac-match-title" style="font-size:16px;font-weight:700;color:#2563EB;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">Должность</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">Должность</div>
         </div>
         <div style="flex:1;text-align:center;">
           <div id="vac-match-salary" style="font-size:16px;font-weight:700;color:#D97706;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">Зарплата</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">Зарплата</div>
         </div>
         <div style="flex:1;text-align:center;">
           <div id="vac-match-exp" style="font-size:16px;font-weight:700;color:#7C3AED;">0</div>
-          <div style="font-size:10px;color:#71717a;margin-top:1px;">Опыт</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">Опыт</div>
         </div>
       </div>
       <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:#f4f4f5;">

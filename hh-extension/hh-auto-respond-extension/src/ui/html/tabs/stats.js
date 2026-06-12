@@ -4,7 +4,7 @@
 import { ICONS } from '../icons.js';
 
 export function getStatsSection() {
-  return `<div class="tab-section" id="tab-stats">
+  return `<div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tabbtn-stats">
     <div style="display:flex;gap:6px;margin-bottom:12px;">
       <button class="btn btn-sm btn-primary stats-period-btn active" data-period="today">Сегодня</button>
       <button class="btn btn-sm btn-outline stats-period-btn" data-period="week">Неделя</button>
