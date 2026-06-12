@@ -1,6 +1,25 @@
 # Worklog — HH Bot / HH-Copilot Research
 
 ---
+Task ID: ahg-update-v2.1
+Agent: main
+Task: Update anti-hallucination-guard submodule to v2.1.0 (commit 18cd77b)
+
+Work Log:
+- Ran `bash anti-hallucination-guard/update.sh` twice: first to v2.0 (a694a16), then to v2.1.0 (18cd77b)
+- v2.0 changes: discover/generate/verify architecture, 4 bug fixes from integration testing
+- v2.1.0 changes: verify works without config (auto-discover fallback), --init generates full config, split files for Rule 11 (<250 lines), AGENT_RULES.md version synced to v2.1.0
+- setup.sh re-ran: updated pre-commit hook, AGENT_RULES.md AHG block, scripts (ahg.sh, check-hooks-lib.sh, check-hooks-snapshot.sh, check-hooks-verify.sh, validate.sh, audit.sh, sync-task-state.sh, check-agent.sh)
+- Removed obsolete file: scripts/check-hooks-integrity.sh (replaced by check-hooks-verify.sh)
+- Created .ahg-integrity.json snapshot
+- Pre-commit hook blocked commit: worklog.md not updated for 127 min — fixed by adding this entry
+
+Stage Summary:
+- AHG submodule updated: a694a16 → 18cd77b (v2.1.0)
+- All hooks and scripts reinstalled
+- Ready to commit submodule pointer update
+
+---
 Task ID: fix-resume-sync-selector
 Agent: main
 Task: Fix resume sync selector - add /applicant/resumes/view?resume= pattern
