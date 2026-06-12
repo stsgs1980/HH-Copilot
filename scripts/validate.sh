@@ -27,7 +27,7 @@ AHG="$REPO_ROOT/anti-hallucination-guard"
 if [ -d "$AHG" ]; then
     echo "--- anti-hallucination-guard ---"
     AHG_FILES=$(cd "$AHG" && git ls-files 2>/dev/null || true)
-    AHG_ALLOWED=("setup.sh" "AGENT_RULES.md" "README.md" ".gitignore" ".git-hooks/" "scripts/" "skills/")
+    AHG_ALLOWED=("setup.sh" "update.sh" "AGENT_RULES.md" "README.md" ".gitignore" ".git-hooks/" ".github/" "scripts/" "setup/" "skills/" "tools/")
     AHG_FORBIDDEN=("*.env" "*.log" "*.tmp" "*.bak" "node_modules/" "package.json" "cascade-state.json")
     AHG_ERR=0
     for F in $AHG_FILES; do

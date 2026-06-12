@@ -1181,3 +1181,41 @@ Stage Summary:
 - Salary scoring now works for list-parsed vacancies (was always 8/15)
 - Experience scoring now correctly handles unparseable strings (was giving 15/15)
 
+---
+Task ID: ahg-update
+Agent: main
+Task: Update anti-hallucination-guard submodule via update.sh
+
+Work Log:
+- Initialized git submodules (anti-hallucination-guard was empty directory)
+- Set submodule URLs with auth token for cloning
+- cascade-guard repo not found (private/deleted), skipped
+- anti-hallucination-guard cloned successfully at 0759547
+- Ran bash anti-hallucination-guard/update.sh
+- Submodule updated: 0759547 -> 49c612b (v1.4 documentation drift prevention)
+- setup.sh re-run: AGENT_RULES.md AHG block refreshed, new scripts deployed
+- New files: scripts/check-hooks-integrity.sh, scripts/sync-task-state.sh
+- Staged submodule pointer update + AGENT_RULES.md + new scripts
+
+Stage Summary:
+- anti-hallucination-guard updated to 49c612b (v1.4)
+- 35 files changed, +2759/-924 lines in submodule
+- Commit pending: git add anti-hallucination-guard && git commit
+---
+Task ID: ahg-update-fix
+Agent: main
+Task: Fix validate.sh whitelist for AHG v1.4 + remove .env from git tracking
+
+Work Log:
+- Root cause: validate.sh AHG_ALLOWED whitelist was stale (written pre-v1.4)
+- AHG v1.4 added .github/, setup/, tools/, update.sh — all flagged as foreign
+- Fixed: updated AHG_ALLOWED to include .github/, setup/, tools/, update.sh
+- Root cause .env: added to git in initial commit (0d33962) before .gitignore existed
+- .gitignore has .env but doesn't affect already-tracked files
+- Fixed: git rm --cached .env — file still on disk, no longer tracked
+- validate.sh now passes: 0 errors
+
+Stage Summary:
+- scripts/validate.sh: AHG_ALLOWED updated for v1.4 structure
+- .env: removed from git tracking (kept on disk, .gitignore protects it)
+- All validation checks pass
