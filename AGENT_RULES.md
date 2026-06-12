@@ -11,6 +11,14 @@
 - Формат: только блоки с --- разделителем
 - Содержание: конкретные факты (файлы, команды, результаты)
 
+## Правило 1.1: Структура проекта -- ПЕРВЫМ делом в каждой сессии
+
+- Каждая новая сессия начинается с чтения структуры проекта
+- ПРОЧИТАЙ: README.md, AGENT_RULES.md, cascade-state.json, worklog.md
+- ПРОЧИТАЙ: src/ дерево файлов (LS или Glob) — чтобы понимать актуальную структуру кода
+- КРОСС-ПРОВЕРКА: сверяй документы с реальным кодом. Если README говорит "65+ файлов", а в src/ 100+ файлов — это кросс-разрыв, его нужно исправить
+- ПРИЧИНА: без понимания структуры агент рискует создать некорректный код, нарушить архитектуру или продублировать существующую логику
+
 ## Правило 2: Читай перед записью (READ BEFORE WRITE)
 
 - НИКОГДА не пиши файл, не прочитав его сначала (Read tool)
@@ -81,6 +89,14 @@ v1.0 | 2026-06-09 | anti-hallucination-guard
 - Format: only blocks with --- separator
 - Content: specific facts (files, commands, results)
 
+## Rule 1.1: Project structure -- FIRST thing in every session
+
+- Every new session MUST start with reading project structure
+- READ: README.md, AGENT_RULES.md, cascade-state.json, worklog.md
+- READ: src/ file tree (LS or Glob) -- to understand actual code structure
+- CROSS-CHECK: verify documents match actual code. If README says "65+ files" but src/ has 100+ files -- that is a cross-gap, fix it
+- REASON: without understanding structure, agent risks creating incorrect code, breaking architecture, or duplicating existing logic
+
 ## Rule 2: Read before write (READ BEFORE WRITE)
 
 - NEVER write a file without reading it first (Read tool)
@@ -144,6 +160,42 @@ Stage Summary:
 
 
 <!-- AHG:END -->
+
+## Rule 8: NEVER call docx/pdf/pptx/xlsx Skill without user approval
+
+- DO NOT invoke Skill(command="docx"), Skill(command="pdf"), Skill(command="pptx"), Skill(command="xlsx") automatically
+- ALWAYS ask the user first
+- This rule exists because auto-invoking docx skill wastes time on formatting when plain text is needed
+- VIOLATION OF THIS RULE IS NOT ACCEPTABLE
+
+## Rule 9: Document format -- MD only, no auto-generation of binary files
+
+- DO NOT create, invoke, or generate PDF, XLS, DOC/DOCX files without explicit user request or approval
+- All documents MUST be in MD format, in compliance with Unicode Policy
+- This rule EXPANDS on Rule 8: even if user mentions "document" or "report", default to MD text in chat
+- Only create binary files (docx/pdf/xlsx/pptx) when user EXPLICITLY says "make a docx" / "create a pdf" / etc.
+- VIOLATION OF THIS RULE IS NOT ACCEPTABLE
+
+## Rule 10: No unsolicited initiative
+
+- Do NOT take initiative beyond what was explicitly requested
+- Do NOT add features, refactor, or expand scope unless asked
+- Do NOT generate extra files, reports, or summaries unless asked
+- If in doubt -- ask the user, do not assume
+
+## Rule 11: Answer only what was asked
+
+- When asked a question -- provide ONLY the answer
+- Do NOT add unsolicited context, explanations, or tangential information
+- Do NOT restructure or reframe the user's question
+- If the user asked for X -- give X, not X+Y+Z
+
+## Rule 12: Execute only on direct instruction, always record results
+
+- Perform tasks ONLY after a direct instruction from the user
+- Do NOT proactively start work based on assumptions or implied intent
+- After completing any task, ALWAYS record results in ALL relevant project documents (worklog, cascade-state, etc.)
+- Unrecorded work = undone work
 
 # AGENT RULES - Cascade-guard
 

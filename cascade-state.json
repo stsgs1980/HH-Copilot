@@ -3,7 +3,7 @@
     "version": "3.0",
     "project": "HH Copilot Chrome Extension",
     "repo": "https://github.com/stsgs1980/HH-Copilot.git",
-    "lastUpdated": "2026-06-11T12:00:00Z",
+    "lastUpdated": "2026-06-12T15:00:00Z",
     "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work. Wireframe reference: docs/wireframes/hh-copilot-documentation.md + hh-copilot-fab-panel.html"
   },
   "phases": [

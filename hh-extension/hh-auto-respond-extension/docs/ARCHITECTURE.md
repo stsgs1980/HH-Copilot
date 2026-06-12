@@ -1,6 +1,6 @@
 # HH Copilot -- Архитектура расширения
 
-**Версия:** 1.5.2
+**Версия:** 1.9.23.0
 **Тип:** Chrome Extension (Manifest V3)
 **Целевая платформа:** hh.ru (Magritte дизайн-система)
 
@@ -8,61 +8,71 @@
 ## 1. Компонентная диаграмма
 
 ```
-+-------------------------------------------------------------+
-|                     BROWSER (hh.ru)                          |
-|                                                              |
-|  +-------------------------------------------------------+  |
-|  |              Content Scripts (document_idle)           |  |
-|  |                                                       |  |
-|  |  +------------+  +------------+  +------------------+  |  |
-|  |  |  PARSER    |  |   PANEL    |  |      AUTH         |  |  |
-|  |  |            |  |            |  |                   |  |  |
-|  |  | parseVac-  |  | ShadowDOM  |  |  checkAuth()     |  |  |
-|  |  | ancies()   |  |  Sidebar   |  |  13 selectors     |  |  |
-|  |  | parseRes-  |  |  FAB btn   |  |  cookie fallback |  |  |
-|  |  | ume()      |  |  2 tabs    |  |                   |  |  |
-|  |  +------+-----+  +-----+------+  +--------+---------+  |  |
-|  |         |               |                  |            |  |
-|  |  +------v---------------v------------------v--------+ |  |
-|  |  |              Shared Libraries                   | |  |
-|  |  |  SELECTORS     ANTI-HALLUCINATION   STORAGE      | |  |
-|  |  |  findElement    safeGetText          chrome.stor  | |  |
-|  |  |  findAllEl      safeClick            age.local    | |  |
-|  |  |  waitForElem    safeInput            defaults     | |  |
-|  |  |                 validate             daily reset  | |  |
-|  |  |                 waitForEl            appliedList   | |  |
-|  |  |  TIMING         RATE LIMITER        DOM observer | |  |
-|  |  |  gaussian       token bucket         SPA nav      | |  |
-|  |  |  simulateTyp    adaptive slow        panelState   | |  |
-|  |  +---------------------------------------------------+ |  |
-|  +-------------------------------+-----------------------+  |
-|                                  |                          |
-|  +-------------------------------v-----------------------+  |
-|  |        Service Worker (background/index.js)          |  |
-|  |  onInstalled: init storage, create daily alarm       |  |
-|  |  onAlarm:    reset daily counters at midnight         |  |
-|  |  onMessage:  route get-stats, get-settings,          |  |
-|  |              apply-vacancy, log, settings-updated      |  |
-|  |  updateBadge: appliedToday number on icon             |  |
-|  +-------------------------------+-----------------------+  |
-|                                  |                          |
-|  +-------------------------------v-----------------------+  |
-|  |              Popup (popup/index.html)                 |  |
-|  |  Tab 1: Statistics   -- applied/interviews/errors     |  |
-|  |  Tab 2: Settings     -- mode/limits/intervals        |  |
-|  |  Tab 3: Templates    -- cover letter with vars        |  |
-|  |  Tab 4: Logs         -- last 50 entries               |  |
-|  +-------------------------------+-----------------------+  |
-|                                  |                          |
-|  +-------------------------------v-----------------------+  |
-|  |       chrome.storage.local (Persistent)               |  |
-|  |  settings, stats, appliedVacancies, resume,           |  |
-|  |  blacklistedCompanies, logs, dailyResetDate          |  |
-|  +-------------------------------------------------------+  |
-+-------------------------------------------------------------+
++---------------------------------------------------------------------+
+|                        BROWSER (hh.ru)                               |
+|                                                                      |
+|  +----------------------------------------------------------------+  |
+|  |              Content Scripts (document_idle)                     |  |
+|  |                                                                  |  |
+|  |  +-------------+ +-------------+ +--------------+ +----------+  |  |
+|  |  |   PARSERS   | |   PANEL     | |     AUTH     | | MATCHING |  |  |
+|  |  |             | |             | |              | |          |  |  |
+|  |  | parseVac-   | | ShadowDOM   | |  checkAuth() | | score-   |  |  |
+|  |  | ancies()    | |  Sidebar    | |  13 sel.     | | Skills() |  |  |
+|  |  | parseRes-   | |  FAB btn    | |  cookie fb   | | score-   |  |  |
+|  |  | ume()       | |  6 tabs     | |  username    | | Salary() |  |  |
+|  |  | parseVac-   | |  Tour       | |              | | score-   |  |  |
+|  |  | Detail()    | |             | |              | | Exp()    |  |  |
+|  |  +------+------+ +------+------| +------+-------+ | score-   |  |  |
+|  |         |               |              |          | Title()  |  |  |
+|  |  +------v---------------v--------------v----------+----------+ |  |
+|  |  |                  Shared Libraries                     | |  |
+|  |  |  SELECTORS     ANTI-HALLUCINATION   STORAGE          | |  |
+|  |  |  findElement    safeGetText          chrome.stor     | |  |
+|  |  |  findAllEl      safeClick            age.local       | |  |
+|  |  |  waitForElem    safeInput            defaults        | |  |
+|  |  |                 validate             daily reset     | |  |
+|  |  |  TIMING         RATE LIMITER        DOM observer    | |  |
+|  |  |  gaussian       token bucket         SPA nav         | |  |
+|  |  |  simulateTyp    adaptive slow        panelState      | |  |
+|  |  |                                                    | |  |
+|  |  |  SKILLS          QUALITY            TOUR           | |  |
+|  |  |  dictionary      ATS-check          tour-engine    | |  |
+|  |  |  synonyms        red-flags          tour-steps     | |  |
+|  |  |  derive-skills   recommend.         tour-tooltip   | |  |
+|  |  |  vacancy-skills  resume-analyzer                    | |  |
+|  |  +----------------------------------------------------+ |  |
+|  +-------------------------------+------------------------+  |
+|                                  |                            |
+|  +-------------------------------v------------------------+  |
+|  |     Page-World (MAIN world, document_idle)             |  |
+|  |  pushState/replaceState patch                          |  |
+|  |  Link click interception (SPA navigation)              |  |
+|  +-------------------------------+------------------------+  |
+|                                  |                            |
+|  +-------------------------------v------------------------+  |
+|  |        Service Worker (background/index.js)            |  |
+|  |  onInstalled: init storage, create daily alarm         |  |
+|  |  onAlarm:    reset daily counters at midnight          |  |
+|  |  onMessage:  route get-stats, get-settings,            |  |
+|  |              apply-vacancy, log, settings-updated       |  |
+|  |  updateBadge: appliedToday number on icon              |  |
+|  +-------------------------------+------------------------+  |
+|                                  |                            |
+|  +-------------------------------v------------------------+  |
+|  |              Popup (popup/index.html)                  |  |
+|  |  Redirect to FAB (minimal)                             |  |
+|  +-------------------------------+------------------------+  |
+|                                  |                            |
+|  +-------------------------------v------------------------+  |
+|  |       chrome.storage.local (Persistent)                |  |
+|  |  settings, stats, appliedVacancies, resume,            |  |
+|  |  blacklistedCompanies, logs, dailyResetDate            |  |
+|  +--------------------------------------------------------+  |
++---------------------------------------------------------------------+
 ```
 
-Три контекста исполнения: Content Script (работает на страницах hh.ru), Service Worker (фоновый процесс расширения), Popup (UI при клике на иконку). Связь между ними: chrome.storage.local для данных и chrome.runtime.sendMessage для команд.
+Три контекста исполнения: Content Script (работает на страницах hh.ru), Page-World Script (работает в MAIN world для SPA-навигации), Service Worker (фоновый процесс расширения), Popup (UI при клике на иконку). Связь между ними: chrome.storage.local для данных и chrome.runtime.sendMessage для команд.
 
 
 ## 2. Потоки данных
