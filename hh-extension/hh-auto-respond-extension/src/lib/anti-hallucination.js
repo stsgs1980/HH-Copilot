@@ -43,8 +43,14 @@ export function validateVacancyData(v) {
 
 export function extractVacancyId(url) {
   if (!url || typeof url !== 'string') return '';
+  // Standard: /vacancy/123456
   const m = url.match(/\/vacancy\/(\d+)/);
-  return m ? m[1] : '';
+  if (m) return m[1];
+  // VotD tracking URL: vacancyId=123456 in query params
+  // e.g. content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=132537734&...
+  const qp = url.match(/[?&]vacancyId=(\d+)/);
+  if (qp) return qp[1];
+  return '';
 }
 
 // ═══════════════════════════════════════════════

@@ -1374,3 +1374,24 @@ Stage Summary:
 - Key test: main page card with space-separated data-qa "vacancy-serp__vacancy vacancy-serp-item_clickme" ✓
 - Key test: fallback href selector when no data-qa on title link ✓
 - Key test: VotD parsing with vacancy_of_the_day_* selectors ✓
+
+---
+Task ID: votd-fix-001
+Agent: main
+Time: 2026-06-13T00:25:00+03:00
+Task: Fix VotD vacancy parsing — extract vacancyId from tracking click-URLs
+
+Work Log:
+- Analyzed user's console output: 14 VotD title elements found, 0/14 parsed
+- Root cause: VotD links are tracking URLs (content.hh.ru/...click?vacancyId=XXX, adsrv.hh.ru/click?...) not /vacancy/XXX
+- Fixed extractVacancyId() to also match ?vacancyId=XXX in query params
+- Rewrote parseVacanciesOfTheDay() to use titleEl.closest('a') for click-URL extraction
+- VotD items now get canonical https://hh.ru/vacancy/{id} URL instead of tracking URL
+- Updated tests: 5 new extractVacancyId tests for VotD URLs, 6 VotD parsing tests with real DOM structure
+- All 66 tests pass
+- Bumped version to 1.9.27.0
+
+Stage Summary:
+- Key fix: VotD parsing now works with real hh.ru main page DOM
+- extractVacancyId() handles both /vacancy/NNN and ?vacancyId=NNN formats
+- Ready for commit + push

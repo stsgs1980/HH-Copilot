@@ -45,6 +45,28 @@ describe('extractVacancyId', () => {
   it('handles long numeric IDs', () => {
     expect(extractVacancyId('/vacancy/1234567890123')).toBe('1234567890123');
   });
+
+  // VotD tracking URLs — vacancyId in query params
+  it('extracts ID from VotD content.hh.ru click URL', () => {
+    expect(extractVacancyId('https://content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=132537734&contentId=21001')).toBe('132537734');
+  });
+
+  it('extracts ID from VotD adsrv.hh.ru click URL', () => {
+    expect(extractVacancyId('https://adsrv.hh.ru/click?b=2090206&domainAreaId=1&vacancyId=111222333&from=main')).toBe('111222333');
+  });
+
+  it('extracts ID from VotD URL with vacancyId in middle of params', () => {
+    expect(extractVacancyId('https://content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=99887766&contentPlaceId=0&domainAreaId=1')).toBe('99887766');
+  });
+
+  it('prefers /vacancy/NNN match over vacancyId param', () => {
+    // Standard /vacancy/ path should be preferred (matched first)
+    expect(extractVacancyId('https://hh.ru/vacancy/12345678?vacancyId=99999999')).toBe('12345678');
+  });
+
+  it('returns empty for URL without vacancyId param or /vacancy/ path', () => {
+    expect(extractVacancyId('https://content.hh.ru/api/v1/something?contentId=123')).toBe('');
+  });
 });
 
 // ═══════════════════════════════════════════════

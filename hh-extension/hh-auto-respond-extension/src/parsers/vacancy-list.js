@@ -114,8 +114,16 @@ export async function parseVacanciesFromPage(resume) {
 
 /**
  * Parse "Vacancy of the Day" cards from hh.ru main page.
- * These have a different DOM structure: title, compensation, company are siblings,
- * not nested inside a single card container.
+ *
+ * DOM structure (from real hh.ru main page):
+ *   <a href="content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=XXX...">
+ *     <div data-qa="vacancy_of_the_day_title">Title</div>
+ *   </a>
+ *   <div data-qa="vacancy_of_the_day_compensation">Salary</div>
+ *   <div data-qa="vacancy_of_the_day_company">Company</div>
+ *
+ * Key: vacancy ID is in the click-URL's ?vacancyId=XXX param,
+ * NOT in /vacancy/XXX path. extractVacancyId() handles both formats.
  *
  * @param {Object|null} resume — active resume for match scoring (optional)
  * @returns {Promise<Object[]>}
@@ -137,51 +145,58 @@ export async function parseVacanciesOfTheDay(resume) {
     const title = (titleEl.textContent || '').trim();
     if (!title) continue;
 
-    // Walk up to find the common parent container for this "vacancy of the day" block
-    // The title, compensation, and company are typically siblings inside a wrapper
-    const container = titleEl.closest('div[class]') || titleEl.parentElement;
-    if (!container) continue;
-
-    // Try to find compensation and company near the title
-    const compEl = container.querySelector('[data-qa="vacancy_of_the_day_compensation"]')
-      || container.parentElement?.querySelector('[data-qa="vacancy_of_the_day_compensation"]');
-    const compEl2 = compEl || titleEl.parentElement?.querySelector('[data-qa="vacancy_of_the_day_compensation"]');
-
-    const companyEl = container.querySelector('[data-qa="vacancy_of_the_day_company"]')
-      || container.parentElement?.querySelector('[data-qa="vacancy_of_the_day_company"]');
-    const companyEl2 = companyEl || titleEl.parentElement?.querySelector('[data-qa="vacancy_of_the_day_company"]');
-
-    const salary = compEl2 ? (compEl2.textContent || '').trim() : 'Не указана';
-    const company = companyEl2 ? (companyEl2.textContent || '').trim() : '';
-
-    // Try to find the apply link to extract vacancy URL/ID
-    const replyEl = container.querySelector('[data-qa="vacancy-response-link-top-again"]')
-      || container.parentElement?.querySelector('[data-qa="vacancy-response-link-top-again"]');
-    const replyLink = replyEl?.closest('a') || replyEl;
-    const url = safeGetAttr(replyLink, 'href', '') || '';
-    const id = extractVacancyId(url.startsWith('/') ? 'https://hh.ru' + url : url);
-
-    // If we can't extract ID from reply link, try to find any vacancy link nearby
-    const vacancyId = id || (() => {
-      const parentBlock = titleEl.closest('[class*="vacancy-of-the-day"]')
-        || titleEl.closest('section') || container.parentElement;
-      if (!parentBlock) return '';
-      const link = parentBlock.querySelector('a[href*="/vacancy/"]');
-      if (!link) return '';
-      const href = link.getAttribute('href') || '';
-      return extractVacancyId(href.startsWith('/') ? 'https://hh.ru' + href : href) || '';
-    })();
+    // ── Extract vacancy ID from the tracking click-URL ──
+    // The title <div> is inside an <a> with tracking href like:
+    //   content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=132537734&...
+    // Or for sponsored: adsrv.hh.ru/click?...vacancyId=... (encoded in meta param)
+    let vacancyId = '';
+    const clickLink = titleEl.closest('a');
+    if (clickLink) {
+      const clickHref = clickLink.getAttribute('href') || '';
+      vacancyId = extractVacancyId(clickHref);
+    }
+    // Fallback: walk up and find any <a> with vacancyId param
+    if (!vacancyId) {
+      const parentBlock = titleEl.closest('section') || titleEl.closest('[class*="vacancy-of-the-day"]') || titleEl.parentElement?.parentElement;
+      if (parentBlock) {
+        const links = parentBlock.querySelectorAll('a[href*="vacancyId="]');
+        for (const link of links) {
+          const id = extractVacancyId(link.getAttribute('href') || '');
+          if (id) { vacancyId = id; break; }
+        }
+      }
+    }
 
     if (!vacancyId) {
       parserLog.warn('VotD #' + i + ': could not extract vacancy ID — skipping');
       continue;
     }
 
+    // ── Find compensation and company ──
+    // They are siblings near the title, walk up to their common parent
+    const container = titleEl.closest('div[class]') || titleEl.parentElement;
+    const searchRoot = container?.parentElement || container;
+
+    const compEl = searchRoot?.querySelector('[data-qa="vacancy_of_the_day_compensation"]')
+      || container?.querySelector('[data-qa="vacancy_of_the_day_compensation"]');
+    const companyEl = searchRoot?.querySelector('[data-qa="vacancy_of_the_day_company"]')
+      || container?.querySelector('[data-qa="vacancy_of_the_day_company"]');
+
+    const salary = compEl ? (compEl.textContent || '').trim() : 'Не указана';
+    const company = companyEl ? (companyEl.textContent || '').trim() : '';
+
+    // ── Check for reply/apply button ──
+    const replyEl = searchRoot?.querySelector('[data-qa="vacancy-response-link-top-again"]')
+      || container?.querySelector('[data-qa="vacancy-response-link-top-again"]');
+
+    // ── Build vacancy object with canonical hh.ru URL ──
+    const canonicalUrl = 'https://hh.ru/vacancy/' + vacancyId;
+
     const vacancy = {
       id: vacancyId, title, company,
       salary: salary || 'Не указана', location: '',
       experience: '', skills: [],
-      url: url.startsWith('/') ? 'https://hh.ru' + url : url || 'https://hh.ru/vacancy/' + vacancyId,
+      url: canonicalUrl,
       hasReply: !!replyEl, status: 'new', source: 'votd',
       parsedAt: new Date().toISOString(), matchScore: null
     };
