@@ -107,6 +107,17 @@ v1.0 | 2026-06-09 | anti-hallucination-guard
 - npm commands: same on Win, no changes needed
 - When giving instructions: ONE copy-paste block, not step-by-step prose
 
+## Rule 9.2: Version sync — update ALL version references on EVERY version bump
+
+- When bumping version in manifest.json, ALSO update:
+  - `package.json` — "version" field
+  - `src/lib/version.js` — VERSION constant
+  - `popup/index.html` — .subtitle div (visible to user!)
+  - `README.md` — **Версия:** header + all inline version references
+- These files do NOT auto-sync from manifest.json — they must be updated manually
+- BEFORE git push: verify all 5 files have the same version string
+- Violation pattern: pushing 3 version bumps without updating popup (v1.9.23→1.9.28 gap)
+
 ## Rule 10: No unsolicited initiative
 
 - Do NOT take initiative beyond what was explicitly requested

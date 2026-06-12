@@ -1434,3 +1434,17 @@ Stage Summary:
 - 3 files updated: popup/index.html, README.md (5 edits), worklog.md
 - Gap was: 5 version increments without doc updates (1.9.24→1.9.28)
 - Need: AGENT_RULES rule that forces doc sync before push
+
+---
+Task ID: rule-9.2-001
+Agent: main
+Time: 2026-06-13T00:40:00+03:00
+Task: Add Rule 9.2 — version sync enforcement
+
+Work Log:
+- Added Rule 9.2 to AGENT_RULES.md
+- Rule requires updating all 5 version files on every bump: manifest.json, package.json, version.js, popup/index.html, README.md
+- Documents the violation pattern: 3 version bumps without popup update (v1.9.23→1.9.28)
+
+Stage Summary:
+- Rule 9.2 added — prevents future version sync gaps
