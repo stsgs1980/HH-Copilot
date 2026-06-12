@@ -27,6 +27,9 @@ export function bindSidebarClicks(container) {
     /* Close panel */
     if (t.closest('[data-action="close-panel"]')) { toggleSidebar(); return; }
 
+    /* Auth indicator keyboard activation */
+    if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthStateAsync(); return; }
+
     /* Tour */
     if (t.closest('[data-action="start-tour"]')) {
       const activeTab = refs.shadowRoot?.querySelector('.tab-btn.active');
@@ -60,7 +63,6 @@ export function bindSidebarClicks(container) {
     /* Auth — reset cache to force real async re-check */
     if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthStateAsync(); return; }
     if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthStateAsync(); return; }
-    if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthStateAsync(); return; }
 
     /* Logout */
     if (t.closest('[data-action="logout"]')) { window.location.href = 'https://hh.ru/account/logout'; return; }

@@ -4,9 +4,9 @@
 import { ICONS } from '../icons.js';
 
 export function getResumeSection() {
-  return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume">
+  return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume" tabindex="0">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync" role="button" tabindex="0" aria-expanded="true" aria-controls="res-sync-body">
         <span style="font-size:12px;font-weight:600;">Все резюме</span>
         <div style="display:flex;align-items:center;gap:4px;">
           <span class="badge badge-green" id="res-visible-count" style="font-size:10px;display:none;">0 видимых</span>
@@ -16,7 +16,7 @@ export function getResumeSection() {
         </div>
       </div>
       <div class="timeline-body open" id="res-sync-body" style="margin-top:10px;">
-        <div id="res-sync-list" style="font-size:11px;color:#71717a;">
+        <div id="res-sync-list" style="font-size:11px;color:#52525b;">
           Нажмите «Синхронизировать все» для загрузки резюме
         </div>
         <div id="res-cta-load" style="padding-top:6px;display:none;">
@@ -32,14 +32,14 @@ export function getResumeSection() {
       </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="resume-parsing">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="resume-parsing" role="button" tabindex="0" aria-expanded="false" aria-controls="res-parsing-body">
         <div style="display:flex;align-items:center;gap:10px;">
           <div id="res-avatar" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#059669,#10B981);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0;">?</div>
           <div>
             <div style="display:flex;align-items:center;gap:6px;">
               <div id="res-title" style="font-size:13px;font-weight:600;">Действующее резюме</div>
             </div>
-            <div id="res-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">Выберите резюме из списка выше</div>
+            <div id="res-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Выберите резюме из списка выше</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -49,7 +49,7 @@ export function getResumeSection() {
       </div>
       <div class="timeline-body" id="res-parsing-body" style="margin-top:12px;padding-top:4px;">
         <div id="res-parsed-data">
-          <div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">Выберите или загрузите резюме</div>
+          <div style="padding:12px;text-align:center;font-size:11px;color:#52525b;">Выберите или загрузите резюме</div>
         </div>
       </div>
     </div>
@@ -68,7 +68,7 @@ export function getResumeSection() {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;">Оценка резюме</div>
-          <div id="res-score-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">Анализ глазами HR и ATS</div>
+          <div id="res-score-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Анализ глазами HR и ATS</div>
         </div>
       </div>
       <!-- Two mini-scores: ATS + Experience -->
@@ -119,12 +119,12 @@ export function getResumeSection() {
     </div>
     <!-- Diagnostic tools (collapsed by default) -->
     <div class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="diag-tools">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="diag-tools" role="button" tabindex="0" aria-expanded="false" aria-controls="diag-tools-body">
         <span style="font-size:12px;font-weight:600;">Диагностика</span>
         ${ICONS.chevronDown}
       </div>
       <div class="timeline-body" id="diag-tools-body" style="margin-top:8px;">
-        <div id="res-status-line" style="font-size:11px;color:#71717a;margin-bottom:8px;">Готово</div>
+        <div id="res-status-line" style="font-size:11px;color:#52525b;margin-bottom:8px;">Готово</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-outline btn-sm" data-action="clear-resume">Очистить</button>
           <button class="btn btn-outline btn-sm" data-action="dump-resume">Дамп</button>

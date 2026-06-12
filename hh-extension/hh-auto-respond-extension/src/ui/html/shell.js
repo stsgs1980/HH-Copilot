@@ -20,29 +20,29 @@ export function getSidebarHTML() {
         </div>
         <div>
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
-          <div style="font-size:11px;color:#71717a;display:flex;align-items:center;gap:4px;">
-            <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50;display:inline-block;"></span>
+          <div style="font-size:12px;color:#52525b;display:flex;align-items:center;gap:4px;">
+            <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>
             Проверяем авторизацию...
           </div>
         </div>
       </div>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
-        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">
+        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
         ${ICONS.close}
       </button>
     </div>
     <div class="har-content">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
-        <div class="har-spinner"></div>
+        <div class="har-spinner" role="status"><span class="sr-only">Загрузка...</span></div>
         <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">Проверяем авторизацию...</h3>
-        <p style="font-size:13px;color:#71717a;line-height:1.5;">Определяем статус на hh.ru</p>
+        <p style="font-size:13px;color:#52525b;line-height:1.5;">Определяем статус на hh.ru</p>
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:12px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${process.env.VERSION}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
-        <span style="font-size:12px;color:#71717a;">локально</span>
+        <span style="font-size:12px;color:#52525b;">локально</span>
       </div>
     </div>`;
 }
@@ -60,10 +60,10 @@ export function getLoggedInHTML(userName) {
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:12px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${process.env.VERSION}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
-        <span style="font-size:12px;color:#71717a;">локально</span>
+        <span style="font-size:12px;color:#52525b;">локально</span>
       </div>
     </div>`;
 }
@@ -73,26 +73,26 @@ function getHeaderHTML(userName) {
   const name = userName ? esc(userName) : '';
   const badgeLabel = name ? name : 'Онлайн';
   return `
-    <div class="har-header">
+    <div class="har-header" lang="ru">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
           ${ICONS.briefcase.replace('currentColor', '#fff').replace('width="16" height="16"', 'width="16" height="16"')}
         </div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
-          <div id="header-auth-status" style="font-size:11px;color:#71717a;display:flex;align-items:center;gap:4px;">
+          <div id="header-auth-status" style="font-size:12px;color:#52525b;display:flex;align-items:center;gap:4px;">
             <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>
             ${name ? name : 'Авторизован'}
           </div>
         </div>
       </div>
       <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="Нажмите для проверки авторизации" role="button" tabindex="0" aria-label="Проверить авторизацию">
-        <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;"></span>
+        <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;" aria-hidden="true"></span>
         ${badgeLabel}
       </div>
       <button class="hh-tour-help" data-action="start-tour" title="Гид по расширению" aria-label="Открыть гид по расширению">?</button>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
-        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">
+        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
         ${ICONS.close}
       </button>
     </div>`;

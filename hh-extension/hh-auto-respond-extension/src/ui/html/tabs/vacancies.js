@@ -4,26 +4,26 @@
 import { ICONS } from '../icons.js';
 
 export function getVacanciesSection() {
-  return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies">
+  return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies" tabindex="0">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
           <div style="font-size:13px;font-weight:600;">Парсинг вакансий</div>
-          <div style="font-size:11px;color:#71717a;margin-top:2px;">Извлечение со страницы поиска hh.ru</div>
+          <div style="font-size:11px;color:#52525b;margin-top:2px;">Извлечение со страницы поиска hh.ru</div>
         </div>
         <button class="btn btn-primary btn-sm" data-action="refresh">${ICONS.check} Спарсить</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">Найдено</div>
+          <div style="font-size:11px;color:#52525b;">Найдено</div>
           <div id="vac-total" style="font-size:16px;font-weight:700;">0</div>
         </div>
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">Совпадение > 70%</div>
+          <div style="font-size:11px;color:#52525b;">Совпадение > 70%</div>
           <div id="vac-high-match" style="font-size:16px;font-weight:700;color:#059669;">0</div>
         </div>
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">Чёрный список</div>
+          <div style="font-size:11px;color:#52525b;">Чёрный список</div>
           <div id="vac-blacklisted" style="font-size:16px;font-weight:700;color:#DC2626;">0</div>
         </div>
       </div>
@@ -37,9 +37,9 @@ export function getVacanciesSection() {
         </select>
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:11px;color:#71717a;white-space:nowrap;">Мин. совпадение:</span>
-        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения" style="flex:1;">
-        <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#71717a;min-width:32px;text-align:right;">0%</span>
+        <span style="font-size:11px;color:#52525b;white-space:nowrap;">Мин. совпадение:</span>
+        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="flex:1;">
+        <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#52525b;min-width:32px;text-align:right;">0%</span>
       </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">
@@ -50,8 +50,8 @@ export function getVacanciesSection() {
       <div id="mass-progress" style="display:none;margin-bottom:10px;">
         <div class="progress-bar"><div id="mass-fill" class="fill fill-green" style="width:0%;"></div></div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;">
-          <span id="mass-count" style="font-size:11px;color:#71717a;">0 / 20</span>
-          <span id="mass-eta" style="font-size:11px;color:#71717a;">Осталось: --</span>
+          <span id="mass-count" style="font-size:11px;color:#52525b;">0 / 20</span>
+          <span id="mass-eta" style="font-size:11px;color:#52525b;">Осталось: --</span>
         </div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -62,11 +62,11 @@ export function getVacanciesSection() {
     <div id="vac-match-section" class="card fade-in" style="margin-bottom:12px;display:none;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div id="vac-match-ring" style="width:48px;height:48px;border-radius:50%;background:conic-gradient(#e4e4e7 0deg 360deg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#71717a;">0%</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#52525b;">0%</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;">Совпадение с вакансией</div>
-          <div id="vac-match-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">Оцените соответствие</div>
+          <div id="vac-match-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Оцените соответствие</div>
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -125,7 +125,7 @@ export function getVacanciesSection() {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;">Совпадение навыков</div>
-          <div id="res-gap-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">Резюме vs вакансии</div>
+          <div id="res-gap-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Резюме vs вакансии</div>
         </div>
         <button class="btn btn-outline btn-sm" data-action="analyze-skills">
           ${ICONS.ai} Анализ
@@ -181,7 +181,7 @@ export function getVacanciesSection() {
     </div>
     <div class="card fade-in">
       <div style="font-size:12px;font-weight:600;margin-bottom:10px;">Вакансии на странице</div>
-      <div id="har-vlist"><div style="padding:24px;text-align:center;color:#71717a;font-size:12px;line-height:1.6;">Загрузка...</div></div>
+      <div id="har-vlist"><div style="padding:24px;text-align:center;color:#52525b;font-size:12px;line-height:1.6;">Загрузка...</div></div>
     </div>
   </div>`;
 }

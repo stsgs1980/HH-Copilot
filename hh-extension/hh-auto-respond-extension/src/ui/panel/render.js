@@ -31,7 +31,7 @@ export function renderSidebarContent() {
     content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
       <div class="har-spinner"></div>
       <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">Проверяем авторизацию...</h3>
-      <p style="font-size:13px;color:#71717a;line-height:1.5;">Определяем статус на hh.ru</p>
+      <p style="font-size:13px;color:#52525b;line-height:1.5;">Определяем статус на hh.ru</p>
     </div>`;
     return;
   }
@@ -39,7 +39,7 @@ export function renderSidebarContent() {
     content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
       <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">Войдите в hh.ru</h3>
-      <p style="font-size:13px;color:#71717a;line-height:1.5;margin-bottom:24px;">Расширение работает с вашей учётной записью.<br>Авторизуйтесь для включения автоматизации.</p>
+      <p style="font-size:13px;color:#52525b;line-height:1.5;margin-bottom:24px;">Расширение работает с вашей учётной записью.<br>Авторизуйтесь для включения автоматизации.</p>
       <a href="https://hh.ru/account/login" target="_blank" class="btn btn-primary" style="text-decoration:none;">Войти на hh.ru</a>
       <button class="btn btn-outline" id="har-retry-auth" style="margin-top:8px;">Проверить снова</button>
     </div>`;

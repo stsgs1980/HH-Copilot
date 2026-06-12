@@ -131,7 +131,7 @@ function updateGapRow(rowId, countId, listId, skills, cssClass) {
     const remainder = skills.length - visible.length;
     let html = visible.map(s => '<span class="skill-tag ' + cssClass + '">' + esc(s) + '</span>').join('');
     if (remainder > 0) {
-      html += '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>';
+      html += '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>';
     }
     listEl.innerHTML = html;
   }
@@ -156,7 +156,7 @@ function updateSynonymGapRow(rowId, countId, listId, synonyms) {
       esc(s.vacancy) + ' ≈ ' + esc(s.resume) + '</span>'
     ).join('');
     if (remainder > 0) {
-      html += '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>';
+      html += '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>';
     }
     listEl.innerHTML = html;
   }

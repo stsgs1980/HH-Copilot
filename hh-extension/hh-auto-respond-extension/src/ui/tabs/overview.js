@@ -60,9 +60,9 @@ export function addTimelineEvent(type, text, detail) {
   entry.innerHTML = `<div class="tl-dot" style="background:${color};"></div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;">
       <span style="font-size:11px;"><b style="color:${color};">[${label}]</b> ${esc(text)}</span>
-      <span style="font-size:11px;color:#71717a;flex-shrink:0;margin-left:8px;">${time}</span>
+      <span style="font-size:11px;color:#52525b;flex-shrink:0;margin-left:8px;">${time}</span>
     </div>
-    ${detail ? `<div style="font-size:11px;color:#71717a;margin-top:1px;">${esc(detail)}</div>` : ''}`;
+    ${detail ? `<div style="font-size:11px;color:#52525b;margin-top:1px;">${esc(detail)}</div>` : ''}`;
 
   const placeholder = list.querySelector('div[style*="text-align:center"]');
   if (placeholder) list.innerHTML = '';

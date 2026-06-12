@@ -1272,3 +1272,19 @@ Work Log:
 Stage Summary:
 - Tab switching now works: data-tab attribute added to all 6 tab buttons
 - Footer label changed from technical 'chrome.storage' to user-friendly 'локально'
+
+---
+Task ID: push-001
+Agent: main
+Time: 2026-06-12T15:59:00Z
+Task: Commit and push v1.9.24.0 — 35 WCAG & typography fixes
+
+Work Log:
+- 29 modified files in working tree (446+, 270-)
+- All changes from WCAG/typography audit (Task wcag-001)
+- Version bump: 1.9.23.0 → 1.9.24.0
+- Committing with descriptive message and pushing to origin/main
+
+Stage Summary:
+- 35 WCAG/typography fixes ready for push
+- Version 1.9.24.0

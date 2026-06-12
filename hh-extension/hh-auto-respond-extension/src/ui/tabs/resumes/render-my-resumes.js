@@ -76,7 +76,7 @@ export function renderMyResumesPanel() {
     } else if (vis === 'visible') {
       visBadge = '<span class="badge badge-green" style="font-size:9px;margin-left:4px;">Видимо</span>';
     } else {
-      visBadge = '<span class="badge" style="font-size:9px;margin-left:4px;background:#e4e4e7;color:#71717a;">?</span>';
+      visBadge = '<span class="badge" style="font-size:9px;margin-left:4px;background:#e4e4e7;color:#52525b;">?</span>';
     }
     // Radio-style indicator: filled circle for active, empty for others
     const radio = isActive
@@ -98,7 +98,7 @@ export function renderMyResumesPanel() {
           '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.title || 'Без названия') + '</span>' + visBadge +
         '</div>' +
         (r.salary ? '<div style="font-size:11px;color:#059669;">' + esc(r.salary) + '</div>' : '') +
-        '<div style="font-size:10px;color:#71717a;">' +
+        '<div style="font-size:10px;color:#52525b;">' +
           skillCount + ' нав., ' + expCount + ' зап. опыта' +
         '</div>' +
       '</div>' +

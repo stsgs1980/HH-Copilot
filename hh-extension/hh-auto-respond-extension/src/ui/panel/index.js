@@ -91,7 +91,7 @@ function showAuthFeedback(isLoggedIn) {
     }
     const card = refs.shadowRoot?.querySelector('#tab-overview .card');
     if (card) {
-      const desc = card.querySelector('div[style*="color:#71717a;"]');
+      const desc = card.querySelector('div[style*="color:#52525b;"]');
       if (desc) {
         const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const orig = desc.textContent;
@@ -117,6 +117,9 @@ export function createSidebar() {
   refs.sidebarEl = document.createElement('div');
   refs.sidebarEl.id = 'hh-ar-sidebar';
   refs.sidebarEl.style.cssText = 'position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);';
+  refs.sidebarEl.setAttribute('role', 'dialog');
+  refs.sidebarEl.setAttribute('aria-label', 'HH Copilot панель');
+  refs.sidebarEl.setAttribute('aria-modal', 'true');
   refs.shadowRoot = refs.sidebarEl.attachShadow({ mode: 'closed' });
 
   const style = document.createElement('style');
@@ -126,12 +129,45 @@ export function createSidebar() {
   const container = document.createElement('div');
   container.className = 'fab-panel';
   container.innerHTML = getSidebarHTML();
+  container.setAttribute('lang', 'ru');
   refs.shadowRoot.appendChild(container);
 
   /* Initial bind: close button, retry-auth, tab clicks */
   bindTabClicks(container);
   /* Bind tour click delegation inside shadowRoot */
   bindTourEvents();
+
+  /* Escape key handler — close sidebar */
+  refs.sidebarEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panelState.isOpen) {
+      e.preventDefault();
+      toggleSidebar();
+      return;
+    }
+  });
+
+  /* Focus trap: keep Tab cycling within the sidebar while open */
+  refs.sidebarEl.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !panelState.isOpen) return;
+    const sr = refs.shadowRoot;
+    if (!sr) return;
+    const focusable = sr.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first || !sr.contains(document.activeElement)) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
   document.body.appendChild(refs.backdropEl);
   document.body.appendChild(refs.sidebarEl);
 }
@@ -147,6 +183,15 @@ export function toggleSidebar() {
   }
   updateFabIcon();
   panelLog.info('Sidebar ' + (panelState.isOpen ? 'opened' : 'closed'));
+
+  /* Focus management: move focus into sidebar when opened, return to FAB when closed */
+  if (panelState.isOpen) {
+    const firstFocusable = refs.shadowRoot?.querySelector('button:not([disabled]), [tabindex="0"]');
+    if (firstFocusable) setTimeout(() => firstFocusable.focus(), 350);
+  } else {
+    /* Return focus to FAB button when sidebar closes */
+    if (refs.fabEl) setTimeout(() => refs.fabEl.focus(), 350);
+  }
 }
 
 // ═══════════════════════════════════════════════

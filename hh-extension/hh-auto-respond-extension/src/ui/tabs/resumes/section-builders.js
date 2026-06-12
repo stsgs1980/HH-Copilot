@@ -62,8 +62,8 @@ export function buildExperienceSection(r) {
 
     return '<div style="margin-bottom:' + (isLast ? '0' : '8px') + ';padding-bottom:' + (isLast ? '0' : '8px') + ';' + (isLast ? '' : 'border-bottom:1px solid rgba(0,0,0,0.05);') + '">' +
       '<div style="font-weight:600;">' + esc(j.position || '?') + '</div>' +
-      (companyLine ? '<div style="color:#71717a;margin-top:2px;">' + companyLine + '</div>' : '') +
-      (j.description ? '<div style="color:#71717a;margin-top:3px;font-size:11px;">' + esc(j.description) + '</div>' : '') +
+      (companyLine ? '<div style="color:#52525b;margin-top:2px;">' + companyLine + '</div>' : '') +
+      (j.description ? '<div style="color:#52525b;margin-top:3px;font-size:11px;">' + esc(j.description) + '</div>' : '') +
     '</div>';
   }).join('');
   return buildSubAccordion(
@@ -71,7 +71,7 @@ export function buildExperienceSection(r) {
     expCount + ' мест', '#B45309',
     expCount > 0
       ? '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;">' + expContent + '</div>'
-      : '<div style="padding:8px;font-size:11px;color:#71717a;">Опыт не указан</div>'
+      : '<div style="padding:8px;font-size:11px;color:#52525b;">Опыт не указан</div>'
   );
 }
 
@@ -84,10 +84,10 @@ export function buildEducationSection(r) {
   const eduContent = (r.education || []).map(e => {
     return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;margin-bottom:6px;">' +
       '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' +
-        (e.name ? '<span style="color:#71717a;">ВУЗ</span><span style="font-weight:500;">' + esc(e.name) + '</span>' : '') +
-        (e.description ? '<span style="color:#71717a;">Факультет</span><span style="font-weight:500;">' + esc(e.description) + '</span>' : '') +
-        (e.year ? '<span style="color:#71717a;">Год</span><span style="font-weight:500;">' + esc(e.year) + '</span>' : '') +
-        (e.degree ? '<span style="color:#71717a;">Степень</span><span style="font-weight:500;">' + esc(e.degree) + '</span>' : '') +
+        (e.name ? '<span style="color:#52525b;">ВУЗ</span><span style="font-weight:500;">' + esc(e.name) + '</span>' : '') +
+        (e.description ? '<span style="color:#52525b;">Факультет</span><span style="font-weight:500;">' + esc(e.description) + '</span>' : '') +
+        (e.year ? '<span style="color:#52525b;">Год</span><span style="font-weight:500;">' + esc(e.year) + '</span>' : '') +
+        (e.degree ? '<span style="color:#52525b;">Степень</span><span style="font-weight:500;">' + esc(e.degree) + '</span>' : '') +
       '</div></div>';
   }).join('');
   return buildSubAccordion(
@@ -95,7 +95,7 @@ export function buildEducationSection(r) {
     eduCount + ' записей', '#7C3AED',
     eduCount > 0
       ? eduContent
-      : '<div style="padding:8px;font-size:11px;color:#71717a;">Образование не указано</div>'
+      : '<div style="padding:8px;font-size:11px;color:#52525b;">Образование не указано</div>'
   );
 }
 
@@ -113,12 +113,12 @@ export function buildLanguagesSection(r) {
           const parts = l.split(/\s*[—–-]\s*/);
           const lang = parts[0] || l;
           const level = parts[1] || '\u2014';
-          return '<span style="color:#71717a;">' + esc(lang) + '</span><span style="font-weight:500;">' + esc(level) + '</span>';
+          return '<span style="color:#52525b;">' + esc(lang) + '</span><span style="font-weight:500;">' + esc(level) + '</span>';
         }
-        return '<span style="color:#71717a;">' + esc(l.name || l) + '</span><span style="font-weight:500;">' + esc(l.level || '\u2014') + '</span>';
+        return '<span style="color:#52525b;">' + esc(l.name || l) + '</span><span style="font-weight:500;">' + esc(l.level || '\u2014') + '</span>';
       }).join('') +
       '</div></div>'
-    : '<div style="padding:8px;font-size:11px;color:#71717a;">Языки не указаны</div>';
+    : '<div style="padding:8px;font-size:11px;color:#52525b;">Языки не указаны</div>';
   return buildSubAccordion(
     'subLang', 'chevLang', 'Языки',
     langCount + ' языков', '#EC4899',

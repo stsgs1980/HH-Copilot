@@ -34,6 +34,10 @@ function switchTab(tabId) {
   if (tabId === 'resume') renderResumePanel();
   if (tabId === 'stats') renderStats();
   if (tabId === 'negotiations') renderNegotiationList();
+
+  /* Focus the activated tab panel for screen readers */
+  const activePanel = sr.querySelector('#tab-' + tabId);
+  if (activePanel) activePanel.focus();
 }
 
 /** Public wrapper for tab switching from other modules. */
@@ -73,8 +77,37 @@ export function bindAllEvents(container) {
 }
 
 export function bindTabClicks(container) {
-  container.querySelectorAll('.tab-btn').forEach(btn => {
+  const tabBtns = container.querySelectorAll('.tab-btn');
+  tabBtns.forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  /* WAI-ARIA Tabs: Arrow keys navigate between tabs, Home/End to first/last */
+  container.addEventListener('keydown', (e) => {
+    const tabBtn = e.target.closest('.tab-btn');
+    if (!tabBtn) return;
+    const tabs = Array.from(container.querySelectorAll('.tab-btn'));
+    const idx = tabs.indexOf(tabBtn);
+    let nextIdx = -1;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIdx = (idx + 1) % tabs.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIdx = (idx - 1 + tabs.length) % tabs.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIdx = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIdx = tabs.length - 1;
+    }
+
+    if (nextIdx >= 0) {
+      tabs[nextIdx].focus();
+      switchTab(tabs[nextIdx].dataset.tab);
+    }
   });
 }
 
@@ -86,11 +119,18 @@ function bindTimelineToggles(container) {
     if (sub) { toggleSub(sub.dataset.subId, sub.dataset.chevId); return; }
   });
 
-  /* Keyboard support for toggleable elements */
+  /* Keyboard support for toggleable elements + vacancy items */
   container.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       const tl = e.target.closest('[data-timeline]') || e.target.closest('[data-sub-toggle]');
-      if (tl) { e.preventDefault(); tl.click(); }
+      if (tl) { e.preventDefault(); tl.click(); return; }
+      /* Vacancy item keyboard activation — click the navigate link inside */
+      const vacItem = e.target.closest('.vacancy-item');
+      if (vacItem) {
+        e.preventDefault();
+        const navLink = vacItem.querySelector('[data-action="navigate"]');
+        if (navLink) navLink.click();
+      }
     }
   });
 }
@@ -102,6 +142,7 @@ function bindInputChanges(container) {
   if (scoreRange && scoreLabel) {
     scoreRange.addEventListener('input', () => {
       scoreLabel.textContent = scoreRange.value + '%';
+      scoreRange.setAttribute('aria-valuenow', scoreRange.value);
       filterVacancies();
     });
   }

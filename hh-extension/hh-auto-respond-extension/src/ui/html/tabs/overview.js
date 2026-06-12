@@ -4,7 +4,7 @@
 import { ICONS } from '../icons.js';
 
 export function getOverviewSection() {
-  return `<div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview">
+  return `<div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview" tabindex="0">
     ${overviewAuthCard()}
     ${overviewKPIHero()}
     ${overviewRateLimits()}
@@ -18,7 +18,7 @@ function overviewAuthCard() {
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-size:12px;font-weight:600;">Авторизация HH.ru</div>
-        <div style="font-size:11px;color:#71717a;margin-top:2px;">Проверка через <code style="font-size:11px;background:#f4f4f5;padding:1px 4px;border-radius:3px;">[data-qa="mainmenu_applicant"]</code></div>
+        <div style="font-size:12px;color:#52525b;margin-top:2px;">Проверка через <code style="font-size:11px;background:#f4f4f5;padding:1px 4px;border-radius:3px;">[data-qa="mainmenu_applicant"]</code></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="badge badge-green" id="authBadge"><span class="pulse-dot" style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:3px;"></span> Авторизован</span>
@@ -53,7 +53,7 @@ function kpiRing() {
     </svg>
     <div style="position:absolute;top:50%;left:42px;transform:translateY(-50%);text-align:center;">
       <div id="kpi-daily-count" style="font-size:26px;font-weight:800;color:#18181b;line-height:1;">0</div>
-      <div style="font-size:11px;color:#71717a;font-weight:500;">из 200</div>
+      <div style="font-size:11px;color:#52525b;font-weight:500;">из 200</div>
     </div>
     <div style="font-size:11px;font-weight:600;color:#059669;margin-top:6px;letter-spacing:0.3px;">ДНЕВНОЙ ЛИМИТ</div>
   </div>`;
@@ -65,7 +65,7 @@ function kpiHourly() {
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:4px;">
         <span id="kpi-hourly-count" style="font-size:18px;font-weight:700;color:#18181b;">0</span>
-        <span style="font-size:12px;color:#71717a;">/30 час</span>
+        <span style="font-size:12px;color:#52525b;">/30 час</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
         <div style="flex:1;height:4px;background:#f4f4f5;border-radius:2px;overflow:hidden;">
@@ -83,9 +83,9 @@ function kpiApplied() {
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:4px;">
         <span id="kpi-applied-count" style="font-size:18px;font-weight:700;color:#059669;">0</span>
-        <span style="font-size:11px;color:#71717a;">откликов</span>
+        <span style="font-size:11px;color:#52525b;">откликов</span>
       </div>
-      <div style="font-size:11px;color:#71717a;margin-top:2px;">
+      <div style="font-size:11px;color:#52525b;margin-top:2px;">
         <span id="kpi-applied-delta" style="color:#059669;font-weight:600;">+0</span> за последний час
       </div>
     </div>
@@ -98,9 +98,9 @@ function kpiInvitations() {
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:4px;">
         <span id="kpi-invitations-count" style="font-size:18px;font-weight:700;color:#2563EB;">0</span>
-        <span style="font-size:11px;color:#71717a;">приглашений</span>
+        <span style="font-size:11px;color:#52525b;">приглашений</span>
       </div>
-      <div style="font-size:11px;color:#71717a;margin-top:2px;">
+      <div style="font-size:11px;color:#52525b;margin-top:2px;">
         <span id="kpi-inv-delta" style="color:#2563EB;font-weight:600;">+0</span> новых за сегодня
       </div>
     </div>
@@ -115,19 +115,19 @@ function overviewRateLimits() {
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">Мин. интервал</div>
+        <div style="font-size:11px;color:#52525b;">Мин. интервал</div>
         <div style="font-size:14px;font-weight:600;">30 сек</div>
       </div>
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">Детекция всплесков</div>
+        <div style="font-size:11px;color:#52525b;">Детекция всплесков</div>
         <div style="font-size:14px;font-weight:600;color:#059669;">Выкл</div>
       </div>
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">429 ошибок</div>
+        <div style="font-size:11px;color:#52525b;">429 ошибок</div>
         <div id="rl-429-count" style="font-size:14px;font-weight:600;">0</div>
       </div>
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">CAPTCHA</div>
+        <div style="font-size:11px;color:#52525b;">CAPTCHA</div>
         <div id="rl-captcha-status" style="font-size:14px;font-weight:600;color:#059669;">Не обнаружена</div>
       </div>
     </div>
@@ -148,7 +148,7 @@ function overviewQuickActions() {
 
 function overviewTimeline() {
   return `<div class="card fade-in">
-    <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="activity">
+    <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="activity" role="button" tabindex="0" aria-expanded="false" aria-controls="tl-activity-body">
       <div style="display:flex;align-items:center;gap:8px;">
         <div style="font-size:12px;font-weight:600;">Последняя активность</div>
         <div style="display:flex;gap:-4px;">
@@ -158,13 +158,13 @@ function overviewTimeline() {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <span id="tl-event-count" style="font-size:11px;color:#71717a;">0 событий</span>
+        <span id="tl-event-count" style="font-size:11px;color:#52525b;">0 событий</span>
         ${ICONS.chevronDown}
       </div>
     </div>
     <div class="timeline-body" id="tl-activity-body" style="margin-top:4px;">
       <div id="tl-activity-list">
-        <div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">Нет событий</div>
+        <div style="padding:12px;text-align:center;font-size:12px;color:#52525b;">Нет событий</div>
       </div>
     </div>
   </div>`;

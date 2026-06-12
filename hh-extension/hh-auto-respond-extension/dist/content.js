@@ -3540,8 +3540,8 @@
   var init_sidebar_css_core = __esm({
     "src/ui/sidebar-css-core.js"() {
       SIDEBAR_CSS_CORE = `:host { all: initial; }
-*, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; -webkit-text-size-adjust: 100%; }
-html { font-size: 14px; }
+*, *::before, *::after { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; box-sizing: border-box; line-height: 1.5; -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+html { font-size: 14px; font-variant-numeric: tabular-nums; }
 :focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -3568,6 +3568,7 @@ html { font-size: 14px; }
 .tab-btn { position: relative; padding: 10px 6px; font-size: 12px; font-weight: 500; color: #3f3f46;
   background: none; border: none; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;
   align-items: center; gap: 4px; flex: 1; border-radius: 8px; }
+.tab-btn:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 8px; }
 .tab-btn:hover { color: #18181b; background: rgba(0,0,0,0.04); }
 .tab-btn.active { color: #047857; font-weight: 600; background: rgba(5,150,105,0.06);
   text-shadow: 0 0 8px rgba(5,150,105,0.12); }
@@ -3618,6 +3619,7 @@ html { font-size: 14px; }
 /* Toggle switch */
 .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
 .toggle input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.toggle input:focus-visible + .slider { outline: 2px solid #059669; outline-offset: 2px; }
 .toggle .slider { position: absolute; inset: 0; background: #d4d4d8; border-radius: 11px; transition: background 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s; }
 .toggle .slider::before { content:''; position:absolute; left:2px; top:2px; width:18px; height:18px;
   background:#fff; border-radius:50%; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s;
@@ -3630,8 +3632,8 @@ html { font-size: 14px; }
   50% { box-shadow: 0 4px 20px rgba(5,150,105,0.4), 0 0 0 8px rgba(5,150,105,0.12); } }
 
 /* Spinner */
-.har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; role: status; }
-.har-spinner::after { content: 'Loading...'; position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; }
+/* sr-only text for spinner is added via HTML, not CSS ::after */
 @keyframes har-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 `;
     }
@@ -3649,7 +3651,7 @@ html { font-size: 14px; }
 .badge-amber { background: #FEF3C7; color: #92400E; border: 1px solid rgba(217,119,6,0.15); }
 .badge-red { background: #FEE2E2; color: #B91C1C; border: 1px solid rgba(220,38,38,0.15); }
 .badge-blue { background: #DBEAFE; color: #1E40AF; border: 1px solid rgba(37,99,235,0.15); }
-.badge-zinc { background: #F4F4F5; color: #52525B; }
+.badge-zinc { background: #E4E4E7; color: #3f3f46; }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px;
@@ -3671,14 +3673,15 @@ html { font-size: 14px; }
 .btn-danger:active { transform: translateY(0);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.1); }
 .btn-sm { padding: 5px 12px; font-size: 12px; }
-.btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none !important; pointer-events: none; }
-.btn-primary:disabled { background: #94a3b8; box-shadow: none; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; pointer-events: none; }
+.btn-primary:disabled { background: #6b7280; box-shadow: none; }
 .btn .btn-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: har-spin 0.6s linear infinite; vertical-align: middle; }
 .btn-outline .btn-spinner { border-color: rgba(0,0,0,0.12); border-top-color: #059669; }
 
 /* Vacancy items */
 .vacancy-item { display: flex; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05);
   cursor: pointer; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); border-left: 2px solid transparent; }
+.vacancy-item:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 10px; }
 .vacancy-item:hover { background: #f9fafb; border-color: rgba(5,150,105,0.15); border-left-color: #059669;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
@@ -3687,7 +3690,7 @@ html { font-size: 14px; }
 .log-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
 
 /* Timeline */
-.timeline-toggle { cursor: pointer; user-select: none; tabindex: 0; }
+.timeline-toggle { cursor: pointer; user-select: none; }
 .timeline-toggle:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 .timeline-toggle:hover { background: #FAFAFA; }
 .timeline-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s; opacity: 0; }
@@ -3704,7 +3707,7 @@ html { font-size: 14px; }
 .tl-item:first-child .tl-dot { box-shadow: 0 0 0 3px rgba(5,150,105,0.15), 0 0 0 1px rgba(0,0,0,0.08); }
 
 /* Sub-accordion */
-.sub-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin: 0 -8px; border-radius: 6px; transition: background 0.15s; tabindex: 0; }
+.sub-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin: 0 -8px; border-radius: 6px; transition: background 0.15s; }
 .sub-toggle:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 .sub-toggle:hover { background: rgba(0,0,0,0.03); }
 .sub-body { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.25s, padding 0.35s; opacity: 0; padding-top: 0; }
@@ -3750,7 +3753,7 @@ html { font-size: 14px; }
 /* Inputs / selects / textareas */
 .fab-panel input, .fab-panel select, .fab-panel textarea { background: #FAFAFA;
   transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s; }
-.fab-panel input::placeholder, .fab-panel textarea::placeholder { color: #71717a; }
+.fab-panel input::placeholder, .fab-panel textarea::placeholder { color: #6b7280; }
 .fab-panel input:focus, .fab-panel select:focus, .fab-panel textarea:focus {
   border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.1); background: #ffffff; outline: none; }
 .fab-panel input:focus-visible, .fab-panel select:focus-visible, .fab-panel textarea:focus-visible {
@@ -3774,8 +3777,8 @@ html { font-size: 14px; }
   background: #18181b; color: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.1);
-  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-  role: alert; aria-live: assertive; }
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
+/* role=alert and aria-live=assertive must be set as HTML attributes, not CSS */
 @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-8px); } }
 
@@ -3789,7 +3792,8 @@ html { font-size: 14px; }
 /* Score ring (vacancy match) */
 .score-ring { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; position: relative; flex-shrink: 0;
-  background: conic-gradient(#059669 0deg, #059669 calc(var(--score) * 3.6deg), #e4e4e7 calc(var(--score) * 3.6deg)); }
+  background: conic-gradient(#059669 0deg, #059669 calc(var(--score) * 3.6deg), #e4e4e7 calc(var(--score) * 3.6deg));
+  font-variant-numeric: tabular-nums; }
 .score-ring span { width: 30px; height: 30px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #047857; }
 .score-ring.high span { color: #047857; }
@@ -3818,9 +3822,10 @@ html { font-size: 14px; }
   font-size: 12px; font-weight: 600; color: #3b82f6;
   background: #eff6ff; padding: 2px 8px; border-radius: 99px; }
 .hh-tour-skip {
-  background: none; border: none; font-size: 12px; color: #a1a1aa;
+  background: none; border: none; font-size: 12px; color: #71717a;
   cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; }
-.hh-tour-skip:hover { color: #71717a; }
+.hh-tour-skip:hover { color: #52525b; }
+.hh-tour-skip:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 .hh-tour-title {
   padding: 8px 14px 0; font-size: 14px; font-weight: 700; color: #18181b; }
 .hh-tour-text {
@@ -3833,14 +3838,17 @@ html { font-size: 14px; }
   font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .hh-tour-next { background: #059669; color: #fff; }
 .hh-tour-next:hover { background: #047857; }
+.hh-tour-next:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
 .hh-tour-prev { background: #f4f4f5; color: #52525b; }
 .hh-tour-prev:hover { background: #e4e4e7; }
+.hh-tour-prev:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
 .hh-tour-help {
   background: none; border: 1px solid #d4d4d8; border-radius: 50%;
   width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 13px; font-weight: 700; color: #71717a;
   transition: all 0.15s; line-height: 1; }
 .hh-tour-help:hover { background: #f4f4f5; color: #059669; border-color: #059669; }
+.hh-tour-help:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
 
 /* Visually hidden \u2014 accessible to screen readers */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -3930,7 +3938,7 @@ html { font-size: 14px; }
       <label for="${id}" style="font-size:12px;font-weight:500;">${label}</label>
       ${hint ? `<div style="font-size:12px;color:#52525b;">${hint}</div>` : ""}
     </div>
-    <label class="toggle" role="switch" aria-checked="${checked ? "true" : "false"}" aria-label="${label}"><input type="checkbox" id="${id}" ${checked ? "checked" : ""}><span class="slider"></span></label>
+    <div class="toggle" role="switch" aria-checked="${checked ? "true" : "false"}" aria-label="${label}"><input type="checkbox" id="${id}" ${checked ? "checked" : ""}><span class="slider"></span></div>
   </div>`;
   }
   var init_helpers = __esm({
@@ -3940,7 +3948,7 @@ html { font-size: 14px; }
 
   // src/ui/html/tabs/overview.js
   function getOverviewSection() {
-    return `<div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview">
+    return `<div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview" tabindex="0">
     ${overviewAuthCard()}
     ${overviewKPIHero()}
     ${overviewRateLimits()}
@@ -3953,7 +3961,7 @@ html { font-size: 14px; }
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-size:12px;font-weight:600;">\u0410\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F HH.ru</div>
-        <div style="font-size:11px;color:#71717a;margin-top:2px;">\u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0447\u0435\u0440\u0435\u0437 <code style="font-size:11px;background:#f4f4f5;padding:1px 4px;border-radius:3px;">[data-qa="mainmenu_applicant"]</code></div>
+        <div style="font-size:12px;color:#52525b;margin-top:2px;">\u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0447\u0435\u0440\u0435\u0437 <code style="font-size:11px;background:#f4f4f5;padding:1px 4px;border-radius:3px;">[data-qa="mainmenu_applicant"]</code></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="badge badge-green" id="authBadge"><span class="pulse-dot" style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:3px;"></span> \u0410\u0432\u0442\u043E\u0440\u0438\u0437\u043E\u0432\u0430\u043D</span>
@@ -3986,7 +3994,7 @@ html { font-size: 14px; }
     </svg>
     <div style="position:absolute;top:50%;left:42px;transform:translateY(-50%);text-align:center;">
       <div id="kpi-daily-count" style="font-size:26px;font-weight:800;color:#18181b;line-height:1;">0</div>
-      <div style="font-size:11px;color:#71717a;font-weight:500;">\u0438\u0437 200</div>
+      <div style="font-size:11px;color:#52525b;font-weight:500;">\u0438\u0437 200</div>
     </div>
     <div style="font-size:11px;font-weight:600;color:#059669;margin-top:6px;letter-spacing:0.3px;">\u0414\u041D\u0415\u0412\u041D\u041E\u0419 \u041B\u0418\u041C\u0418\u0422</div>
   </div>`;
@@ -3997,7 +4005,7 @@ html { font-size: 14px; }
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:4px;">
         <span id="kpi-hourly-count" style="font-size:18px;font-weight:700;color:#18181b;">0</span>
-        <span style="font-size:12px;color:#71717a;">/30 \u0447\u0430\u0441</span>
+        <span style="font-size:12px;color:#52525b;">/30 \u0447\u0430\u0441</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
         <div style="flex:1;height:4px;background:#f4f4f5;border-radius:2px;overflow:hidden;">
@@ -4014,9 +4022,9 @@ html { font-size: 14px; }
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:4px;">
         <span id="kpi-applied-count" style="font-size:18px;font-weight:700;color:#059669;">0</span>
-        <span style="font-size:11px;color:#71717a;">\u043E\u0442\u043A\u043B\u0438\u043A\u043E\u0432</span>
+        <span style="font-size:11px;color:#52525b;">\u043E\u0442\u043A\u043B\u0438\u043A\u043E\u0432</span>
       </div>
-      <div style="font-size:11px;color:#71717a;margin-top:2px;">
+      <div style="font-size:11px;color:#52525b;margin-top:2px;">
         <span id="kpi-applied-delta" style="color:#059669;font-weight:600;">+0</span> \u0437\u0430 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0447\u0430\u0441
       </div>
     </div>
@@ -4028,9 +4036,9 @@ html { font-size: 14px; }
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:baseline;gap:4px;">
         <span id="kpi-invitations-count" style="font-size:18px;font-weight:700;color:#2563EB;">0</span>
-        <span style="font-size:11px;color:#71717a;">\u043F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u0438\u0439</span>
+        <span style="font-size:11px;color:#52525b;">\u043F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u0438\u0439</span>
       </div>
-      <div style="font-size:11px;color:#71717a;margin-top:2px;">
+      <div style="font-size:11px;color:#52525b;margin-top:2px;">
         <span id="kpi-inv-delta" style="color:#2563EB;font-weight:600;">+0</span> \u043D\u043E\u0432\u044B\u0445 \u0437\u0430 \u0441\u0435\u0433\u043E\u0434\u043D\u044F
       </div>
     </div>
@@ -4044,19 +4052,19 @@ html { font-size: 14px; }
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">\u041C\u0438\u043D. \u0438\u043D\u0442\u0435\u0440\u0432\u0430\u043B</div>
+        <div style="font-size:11px;color:#52525b;">\u041C\u0438\u043D. \u0438\u043D\u0442\u0435\u0440\u0432\u0430\u043B</div>
         <div style="font-size:14px;font-weight:600;">30 \u0441\u0435\u043A</div>
       </div>
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">\u0414\u0435\u0442\u0435\u043A\u0446\u0438\u044F \u0432\u0441\u043F\u043B\u0435\u0441\u043A\u043E\u0432</div>
+        <div style="font-size:11px;color:#52525b;">\u0414\u0435\u0442\u0435\u043A\u0446\u0438\u044F \u0432\u0441\u043F\u043B\u0435\u0441\u043A\u043E\u0432</div>
         <div style="font-size:14px;font-weight:600;color:#059669;">\u0412\u044B\u043A\u043B</div>
       </div>
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">429 \u043E\u0448\u0438\u0431\u043E\u043A</div>
+        <div style="font-size:11px;color:#52525b;">429 \u043E\u0448\u0438\u0431\u043E\u043A</div>
         <div id="rl-429-count" style="font-size:14px;font-weight:600;">0</div>
       </div>
       <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-        <div style="font-size:11px;color:#71717a;">CAPTCHA</div>
+        <div style="font-size:11px;color:#52525b;">CAPTCHA</div>
         <div id="rl-captcha-status" style="font-size:14px;font-weight:600;color:#059669;">\u041D\u0435 \u043E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u0430</div>
       </div>
     </div>
@@ -4075,7 +4083,7 @@ html { font-size: 14px; }
   }
   function overviewTimeline() {
     return `<div class="card fade-in">
-    <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="activity">
+    <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="activity" role="button" tabindex="0" aria-expanded="false" aria-controls="tl-activity-body">
       <div style="display:flex;align-items:center;gap:8px;">
         <div style="font-size:12px;font-weight:600;">\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u044F\u044F \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0441\u0442\u044C</div>
         <div style="display:flex;gap:-4px;">
@@ -4085,13 +4093,13 @@ html { font-size: 14px; }
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <span id="tl-event-count" style="font-size:11px;color:#71717a;">0 \u0441\u043E\u0431\u044B\u0442\u0438\u0439</span>
+        <span id="tl-event-count" style="font-size:11px;color:#52525b;">0 \u0441\u043E\u0431\u044B\u0442\u0438\u0439</span>
         ${ICONS.chevronDown}
       </div>
     </div>
     <div class="timeline-body" id="tl-activity-body" style="margin-top:4px;">
       <div id="tl-activity-list">
-        <div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">\u041D\u0435\u0442 \u0441\u043E\u0431\u044B\u0442\u0438\u0439</div>
+        <div style="padding:12px;text-align:center;font-size:12px;color:#52525b;">\u041D\u0435\u0442 \u0441\u043E\u0431\u044B\u0442\u0438\u0439</div>
       </div>
     </div>
   </div>`;
@@ -4104,9 +4112,9 @@ html { font-size: 14px; }
 
   // src/ui/html/tabs/resume.js
   function getResumeSection() {
-    return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume">
+    return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume" tabindex="0">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync" role="button" tabindex="0" aria-expanded="true" aria-controls="res-sync-body">
         <span style="font-size:12px;font-weight:600;">\u0412\u0441\u0435 \u0440\u0435\u0437\u044E\u043C\u0435</span>
         <div style="display:flex;align-items:center;gap:4px;">
           <span class="badge badge-green" id="res-visible-count" style="font-size:10px;display:none;">0 \u0432\u0438\u0434\u0438\u043C\u044B\u0445</span>
@@ -4116,7 +4124,7 @@ html { font-size: 14px; }
         </div>
       </div>
       <div class="timeline-body open" id="res-sync-body" style="margin-top:10px;">
-        <div id="res-sync-list" style="font-size:11px;color:#71717a;">
+        <div id="res-sync-list" style="font-size:11px;color:#52525b;">
           \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0421\u0438\u043D\u0445\u0440\u043E\u043D\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435\xBB \u0434\u043B\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0440\u0435\u0437\u044E\u043C\u0435
         </div>
         <div id="res-cta-load" style="padding-top:6px;display:none;">
@@ -4132,14 +4140,14 @@ html { font-size: 14px; }
       </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="resume-parsing">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="resume-parsing" role="button" tabindex="0" aria-expanded="false" aria-controls="res-parsing-body">
         <div style="display:flex;align-items:center;gap:10px;">
           <div id="res-avatar" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#059669,#10B981);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0;">?</div>
           <div>
             <div style="display:flex;align-items:center;gap:6px;">
               <div id="res-title" style="font-size:13px;font-weight:600;">\u0414\u0435\u0439\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0435 \u0440\u0435\u0437\u044E\u043C\u0435</div>
             </div>
-            <div id="res-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430 \u0432\u044B\u0448\u0435</div>
+            <div id="res-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u0435\u0437\u044E\u043C\u0435 \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430 \u0432\u044B\u0448\u0435</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -4149,7 +4157,7 @@ html { font-size: 14px; }
       </div>
       <div class="timeline-body" id="res-parsing-body" style="margin-top:12px;padding-top:4px;">
         <div id="res-parsed-data">
-          <div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0438\u043B\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0440\u0435\u0437\u044E\u043C\u0435</div>
+          <div style="padding:12px;text-align:center;font-size:11px;color:#52525b;">\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0438\u043B\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0440\u0435\u0437\u044E\u043C\u0435</div>
         </div>
       </div>
     </div>
@@ -4168,7 +4176,7 @@ html { font-size: 14px; }
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;">\u041E\u0446\u0435\u043D\u043A\u0430 \u0440\u0435\u0437\u044E\u043C\u0435</div>
-          <div id="res-score-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">\u0410\u043D\u0430\u043B\u0438\u0437 \u0433\u043B\u0430\u0437\u0430\u043C\u0438 HR \u0438 ATS</div>
+          <div id="res-score-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">\u0410\u043D\u0430\u043B\u0438\u0437 \u0433\u043B\u0430\u0437\u0430\u043C\u0438 HR \u0438 ATS</div>
         </div>
       </div>
       <!-- Two mini-scores: ATS + Experience -->
@@ -4219,12 +4227,12 @@ html { font-size: 14px; }
     </div>
     <!-- Diagnostic tools (collapsed by default) -->
     <div class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="diag-tools">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="diag-tools" role="button" tabindex="0" aria-expanded="false" aria-controls="diag-tools-body">
         <span style="font-size:12px;font-weight:600;">\u0414\u0438\u0430\u0433\u043D\u043E\u0441\u0442\u0438\u043A\u0430</span>
         ${ICONS.chevronDown}
       </div>
       <div class="timeline-body" id="diag-tools-body" style="margin-top:8px;">
-        <div id="res-status-line" style="font-size:11px;color:#71717a;margin-bottom:8px;">\u0413\u043E\u0442\u043E\u0432\u043E</div>
+        <div id="res-status-line" style="font-size:11px;color:#52525b;margin-bottom:8px;">\u0413\u043E\u0442\u043E\u0432\u043E</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-outline btn-sm" data-action="clear-resume">\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C</button>
           <button class="btn btn-outline btn-sm" data-action="dump-resume">\u0414\u0430\u043C\u043F</button>
@@ -4242,26 +4250,26 @@ html { font-size: 14px; }
 
   // src/ui/html/tabs/vacancies.js
   function getVacanciesSection() {
-    return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies">
+    return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies" tabindex="0">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
           <div style="font-size:13px;font-weight:600;">\u041F\u0430\u0440\u0441\u0438\u043D\u0433 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0439</div>
-          <div style="font-size:11px;color:#71717a;margin-top:2px;">\u0418\u0437\u0432\u043B\u0435\u0447\u0435\u043D\u0438\u0435 \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u043F\u043E\u0438\u0441\u043A\u0430 hh.ru</div>
+          <div style="font-size:11px;color:#52525b;margin-top:2px;">\u0418\u0437\u0432\u043B\u0435\u0447\u0435\u043D\u0438\u0435 \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u043F\u043E\u0438\u0441\u043A\u0430 hh.ru</div>
         </div>
         <button class="btn btn-primary btn-sm" data-action="refresh">${ICONS.check} \u0421\u043F\u0430\u0440\u0441\u0438\u0442\u044C</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">\u041D\u0430\u0439\u0434\u0435\u043D\u043E</div>
+          <div style="font-size:11px;color:#52525b;">\u041D\u0430\u0439\u0434\u0435\u043D\u043E</div>
           <div id="vac-total" style="font-size:16px;font-weight:700;">0</div>
         </div>
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 > 70%</div>
+          <div style="font-size:11px;color:#52525b;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 > 70%</div>
           <div id="vac-high-match" style="font-size:16px;font-weight:700;color:#059669;">0</div>
         </div>
         <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A</div>
+          <div style="font-size:11px;color:#52525b;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A</div>
           <div id="vac-blacklisted" style="font-size:16px;font-weight:700;color:#DC2626;">0</div>
         </div>
       </div>
@@ -4275,9 +4283,9 @@ html { font-size: 14px; }
         </select>
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:11px;color:#71717a;white-space:nowrap;">\u041C\u0438\u043D. \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435:</span>
-        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u044B\u0439 \u043F\u0440\u043E\u0446\u0435\u043D\u0442 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u044F" style="flex:1;">
-        <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#71717a;min-width:32px;text-align:right;">0%</span>
+        <span style="font-size:11px;color:#52525b;white-space:nowrap;">\u041C\u0438\u043D. \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435:</span>
+        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u044B\u0439 \u043F\u0440\u043E\u0446\u0435\u043D\u0442 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u044F" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="flex:1;">
+        <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#52525b;min-width:32px;text-align:right;">0%</span>
       </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">
@@ -4288,8 +4296,8 @@ html { font-size: 14px; }
       <div id="mass-progress" style="display:none;margin-bottom:10px;">
         <div class="progress-bar"><div id="mass-fill" class="fill fill-green" style="width:0%;"></div></div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;">
-          <span id="mass-count" style="font-size:11px;color:#71717a;">0 / 20</span>
-          <span id="mass-eta" style="font-size:11px;color:#71717a;">\u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C: --</span>
+          <span id="mass-count" style="font-size:11px;color:#52525b;">0 / 20</span>
+          <span id="mass-eta" style="font-size:11px;color:#52525b;">\u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C: --</span>
         </div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -4300,11 +4308,11 @@ html { font-size: 14px; }
     <div id="vac-match-section" class="card fade-in" style="margin-bottom:12px;display:none;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div id="vac-match-ring" style="width:48px;height:48px;border-radius:50%;background:conic-gradient(#e4e4e7 0deg 360deg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#71717a;">0%</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#52525b;">0%</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u0441 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0435\u0439</div>
-          <div id="vac-match-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">\u041E\u0446\u0435\u043D\u0438\u0442\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435</div>
+          <div id="vac-match-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">\u041E\u0446\u0435\u043D\u0438\u0442\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435</div>
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -4363,7 +4371,7 @@ html { font-size: 14px; }
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u043D\u0430\u0432\u044B\u043A\u043E\u0432</div>
-          <div id="res-gap-subtitle" style="font-size:11px;color:#71717a;margin-top:1px;">\u0420\u0435\u0437\u044E\u043C\u0435 vs \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438</div>
+          <div id="res-gap-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">\u0420\u0435\u0437\u044E\u043C\u0435 vs \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438</div>
         </div>
         <button class="btn btn-outline btn-sm" data-action="analyze-skills">
           ${ICONS.ai} \u0410\u043D\u0430\u043B\u0438\u0437
@@ -4419,7 +4427,7 @@ html { font-size: 14px; }
     </div>
     <div class="card fade-in">
       <div style="font-size:12px;font-weight:600;margin-bottom:10px;">\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435</div>
-      <div id="har-vlist"><div style="padding:24px;text-align:center;color:#71717a;font-size:12px;line-height:1.6;">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430...</div></div>
+      <div id="har-vlist"><div style="padding:24px;text-align:center;color:#52525b;font-size:12px;line-height:1.6;">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430...</div></div>
     </div>
   </div>`;
   }
@@ -4431,17 +4439,17 @@ html { font-size: 14px; }
 
   // src/ui/html/tabs/negotiations.js
   function getNegotiationsSection() {
-    return `<div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tabbtn-negotiations">
+    return `<div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tabbtn-negotiations" tabindex="0">
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
           <div style="font-size:13px;font-weight:600;">\u041F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B</div>
-          <div style="font-size:11px;color:#71717a;margin-top:2px;">\u041E\u0442\u0441\u043B\u0435\u0436\u0438\u0432\u0430\u043D\u0438\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439 \u0441 \u0440\u0430\u0431\u043E\u0442\u043E\u0434\u0430\u0442\u0435\u043B\u044F\u043C\u0438</div>
+          <div style="font-size:11px;color:#52525b;margin-top:2px;">\u041E\u0442\u0441\u043B\u0435\u0436\u0438\u0432\u0430\u043D\u0438\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439 \u0441 \u0440\u0430\u0431\u043E\u0442\u043E\u0434\u0430\u0442\u0435\u043B\u044F\u043C\u0438</div>
         </div>
         <span id="neg-count-badge" class="badge badge-blue">0 \u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0445</span>
       </div>
       <div id="neg-list" style="display:flex;flex-direction:column;gap:2px;">
-        <div style="padding:24px;text-align:center;font-size:11px;color:#71717a;">\u041F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B \u043F\u043E\u043A\u0430 \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B</div>
+        <div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">\u041F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B \u043F\u043E\u043A\u0430 \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B</div>
       </div>
     </div>
     <div id="neg-chat-area" class="card fade-in" style="margin-bottom:12px;display:none;">
@@ -4455,12 +4463,12 @@ html { font-size: 14px; }
       </div>
     </div>
     <div class="card fade-in">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="cover-letter">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="cover-letter" role="button" tabindex="0" aria-expanded="false" aria-controls="cl-body">
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="font-size:12px;font-weight:600;">\u0428\u0430\u0431\u043B\u043E\u043D\u044B \u0438 \u0432\u0432\u043E\u0434</div>
           <div style="display:flex;gap:4px;">
-            <span style="font-size:11px;color:#71717a;background:#f4f4f5;padding:1px 6px;border-radius:4px;">\u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0435</span>
-            <span style="font-size:11px;color:#71717a;background:#f4f4f5;padding:1px 6px;border-radius:4px;">\u044D\u043C\u0443\u043B\u044F\u0446\u0438\u044F \u043D\u0430\u0431\u043E\u0440\u0430</span>
+            <span style="font-size:11px;color:#52525b;background:#f4f4f5;padding:1px 6px;border-radius:4px;">\u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0435</span>
+            <span style="font-size:11px;color:#52525b;background:#f4f4f5;padding:1px 6px;border-radius:4px;">\u044D\u043C\u0443\u043B\u044F\u0446\u0438\u044F \u043D\u0430\u0431\u043E\u0440\u0430</span>
           </div>
         </div>
         ${ICONS.chevronDown}
@@ -4471,17 +4479,17 @@ html { font-size: 14px; }
             <label class="toggle" role="switch" aria-checked="true" aria-label="\u042D\u043C\u0443\u043B\u044F\u0446\u0438\u044F \u043D\u0430\u0431\u043E\u0440\u0430"><input type="checkbox" checked><span class="slider"></span></label>
             <div style="flex:1;min-width:0;">
               <div style="font-size:11px;font-weight:500;">\u042D\u043C\u0443\u043B\u044F\u0446\u0438\u044F \u043D\u0430\u0431\u043E\u0440\u0430</div>
-              <div style="font-size:11px;color:#71717a;">\u041F\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u044C\u043D\u044B\u0439 \u0432\u0432\u043E\u0434 (\u0430\u043D\u0442\u0438\u0431\u043E\u0442)</div>
+              <div style="font-size:11px;color:#52525b;">\u041F\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u044C\u043D\u044B\u0439 \u0432\u0432\u043E\u0434 (\u0430\u043D\u0442\u0438\u0431\u043E\u0442)</div>
             </div>
             <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
               <input type="number" value="80" style="width:52px;padding:4px 6px;border:1px solid #e4e4e7;border-radius:6px;font-size:11px;text-align:center;">
-              <span style="font-size:11px;color:#71717a;">\u043C\u0441</span>
+              <span style="font-size:11px;color:#52525b;">\u043C\u0441</span>
             </div>
           </div>
           <div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
               <label style="font-size:11px;font-weight:500;">\u0428\u0430\u0431\u043B\u043E\u043D \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0433\u043E</label>
-              <span style="font-size:11px;color:#71717a;">{position} {experience} {skills}</span>
+              <span style="font-size:11px;color:#52525b;">{position} {experience} {skills}</span>
             </div>
             <textarea id="cover-letter-text" style="width:100%;height:64px;padding:8px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;resize:none;line-height:1.5;">\u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435! \u041C\u0435\u043D\u044F \u0437\u0430\u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043E\u0432\u0430\u043B\u0430 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044F {position}. \u0423 \u043C\u0435\u043D\u044F {experience} \u043E\u043F\u044B\u0442\u0430 \u0432 {skills}. \u0413\u043E\u0442\u043E\u0432 \u043E\u0431\u0441\u0443\u0434\u0438\u0442\u044C \u0434\u0435\u0442\u0430\u043B\u0438 \u043D\u0430 \u0438\u043D\u0442\u0435\u0440\u0432\u044C\u044E.</textarea>
           </div>
@@ -4498,7 +4506,7 @@ html { font-size: 14px; }
 
   // src/ui/html/tabs/settings.js
   function getSettingsSection() {
-    return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings">
+    return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings" tabindex="0">
     ${settingsRateLimits()}
     ${settingsCaptcha()}
     ${settingsBlacklist()}
@@ -4532,7 +4540,7 @@ html { font-size: 14px; }
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div>
         <div style="font-size:13px;font-weight:600;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A</div>
-        <div style="font-size:11px;color:#71717a;margin-top:2px;">\u0420\u0430\u0431\u043E\u0442\u043E\u0434\u0430\u0442\u0435\u043B\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0431\u0443\u0434\u0443\u0442 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u044B</div>
+        <div style="font-size:11px;color:#52525b;margin-top:2px;">\u0420\u0430\u0431\u043E\u0442\u043E\u0434\u0430\u0442\u0435\u043B\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0431\u0443\u0434\u0443\u0442 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u044B</div>
       </div>
       <span id="bl-count-badge" class="badge badge-zinc">0 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0439</span>
     </div>
@@ -4550,16 +4558,16 @@ html { font-size: 14px; }
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div style="font-size:12px;font-weight:500;">\u0410\u0432\u0442\u043E-\u0441\u0431\u0440\u043E\u0441 \u0441\u0447\u0451\u0442\u0447\u0438\u043A\u043E\u0432</div>
-          <div style="font-size:11px;color:#71717a;">\u0412\u0440\u0435\u043C\u044F \u0441\u0431\u0440\u043E\u0441\u0430 (chrome.alarms)</div>
+          <div style="font-size:11px;color:#52525b;">\u0412\u0440\u0435\u043C\u044F \u0441\u0431\u0440\u043E\u0441\u0430 (chrome.alarms)</div>
         </div>
         <input type="time" id="s-reset-time" value="00:00" style="padding:4px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div style="font-size:12px;font-weight:500;">\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0441\u0431\u0440\u043E\u0441</div>
-          <div style="font-size:11px;color:#71717a;">\u0427\u0435\u0440\u0435\u0437 chrome.alarms API</div>
+          <div style="font-size:11px;color:#52525b;">\u0427\u0435\u0440\u0435\u0437 chrome.alarms API</div>
         </div>
-        <span id="s-reset-countdown" style="font-size:11px;font-weight:600;color:#71717a;">--</span>
+        <span id="s-reset-countdown" style="font-size:11px;font-weight:600;color:#52525b;">--</span>
       </div>
       <button class="btn btn-outline" style="align-self:flex-start;" data-action="reset-daily">${ICONS.refresh} \u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0441\u0435\u0439\u0447\u0430\u0441</button>
     </div>
@@ -4585,8 +4593,8 @@ html { font-size: 14px; }
 
   // src/ui/html/tabs/stats.js
   function getStatsSection() {
-    return `<div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tabbtn-stats">
-    <div style="display:flex;gap:6px;margin-bottom:12px;">
+    return `<div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tabbtn-stats" tabindex="0">
+    <div style="display:flex;gap:6px;margin-bottom:12px;" role="radiogroup" aria-label="\u041F\u0435\u0440\u0438\u043E\u0434 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0438">
       <button class="btn btn-sm btn-primary stats-period-btn active" data-period="today">\u0421\u0435\u0433\u043E\u0434\u043D\u044F</button>
       <button class="btn btn-sm btn-outline stats-period-btn" data-period="week">\u041D\u0435\u0434\u0435\u043B\u044F</button>
       <button class="btn btn-sm btn-outline stats-period-btn" data-period="month">\u041C\u0435\u0441\u044F\u0446</button>
@@ -4594,15 +4602,15 @@ html { font-size: 14px; }
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
       <div class="card fade-in" style="text-align:center;padding:12px 8px;">
-        <div style="font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">\u0412\u0441\u0435\u0433\u043E \u043E\u0442\u043A\u043B\u0438\u043A\u043E\u0432</div>
+        <div style="font-size:11px;color:#52525b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">\u0412\u0441\u0435\u0433\u043E \u043E\u0442\u043A\u043B\u0438\u043A\u043E\u0432</div>
         <div id="stat-total" style="font-size:22px;font-weight:700;">0</div>
       </div>
       <div class="card fade-in" style="text-align:center;padding:12px 8px;">
-        <div style="font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">\u041F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u0438\u0439</div>
+        <div style="font-size:11px;color:#52525b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">\u041F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u0438\u0439</div>
         <div id="stat-invitations" style="font-size:22px;font-weight:700;color:#2563EB;">0</div>
       </div>
       <div class="card fade-in" style="text-align:center;padding:12px 8px;">
-        <div style="font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">\u041A\u043E\u043D\u0432\u0435\u0440\u0441\u0438\u044F</div>
+        <div style="font-size:11px;color:#52525b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">\u041A\u043E\u043D\u0432\u0435\u0440\u0441\u0438\u044F</div>
         <div id="stat-conversion" style="font-size:22px;font-weight:700;color:#059669;">0%</div>
       </div>
     </div>
@@ -4618,19 +4626,19 @@ html { font-size: 14px; }
       <div style="font-size:12px;font-weight:600;margin-bottom:10px;">\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430 \u043B\u0438\u043C\u0438\u0442\u043E\u0432</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">429 \u043E\u0448\u0438\u0431\u043E\u043A (\u0432\u0441\u0435\u0433\u043E)</div>
+          <div style="font-size:11px;color:#52525b;">429 \u043E\u0448\u0438\u0431\u043E\u043A (\u0432\u0441\u0435\u0433\u043E)</div>
           <div id="stat-429" style="font-size:16px;font-weight:700;">0</div>
         </div>
         <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">CAPTCHA (\u0432\u0441\u0435\u0433\u043E)</div>
+          <div style="font-size:11px;color:#52525b;">CAPTCHA (\u0432\u0441\u0435\u0433\u043E)</div>
           <div id="stat-captcha" style="font-size:16px;font-weight:700;">0</div>
         </div>
         <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">\u0410\u0434\u0430\u043F\u0442\u0438\u0432\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0434\u043B\u0435\u043D\u0438\u0439</div>
+          <div style="font-size:11px;color:#52525b;">\u0410\u0434\u0430\u043F\u0442\u0438\u0432\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0434\u043B\u0435\u043D\u0438\u0439</div>
           <div id="stat-slowdowns" style="font-size:16px;font-weight:700;">0</div>
         </div>
         <div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:11px;color:#71717a;">\u0421\u0440. \u0438\u043D\u0442\u0435\u0440\u0432\u0430\u043B</div>
+          <div style="font-size:11px;color:#52525b;">\u0421\u0440. \u0438\u043D\u0442\u0435\u0440\u0432\u0430\u043B</div>
           <div id="stat-avg-interval" style="font-size:16px;font-weight:700;">--</div>
         </div>
       </div>
@@ -4641,7 +4649,7 @@ html { font-size: 14px; }
         <button class="btn btn-outline btn-sm" data-action="clear-log">\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C</button>
       </div>
       <div id="activity-log">
-        <div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">\u041D\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0435\u0439</div>
+        <div style="padding:12px;text-align:center;font-size:11px;color:#52525b;">\u041D\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0435\u0439</div>
       </div>
     </div>
   </div>`;
@@ -4662,29 +4670,29 @@ html { font-size: 14px; }
         </div>
         <div>
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
-          <div style="font-size:11px;color:#71717a;display:flex;align-items:center;gap:4px;">
-            <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50;display:inline-block;"></span>
+          <div style="font-size:12px;color:#52525b;display:flex;align-items:center;gap:4px;">
+            <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>
             \u041F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u043C \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044E...
           </div>
         </div>
       </div>
       <button class="har-close-btn" data-action="close-panel" aria-label="\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u0430\u043D\u0435\u043B\u044C"
-        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">
+        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
         ${ICONS.close}
       </button>
     </div>
     <div class="har-content">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
-        <div class="har-spinner"></div>
+        <div class="har-spinner" role="status"><span class="sr-only">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430...</span></div>
         <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">\u041F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u043C \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044E...</h3>
-        <p style="font-size:13px;color:#71717a;line-height:1.5;">\u041E\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u0435\u043C \u0441\u0442\u0430\u0442\u0443\u0441 \u043D\u0430 hh.ru</p>
+        <p style="font-size:13px;color:#52525b;line-height:1.5;">\u041E\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u0435\u043C \u0441\u0442\u0430\u0442\u0443\u0441 \u043D\u0430 hh.ru</p>
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:12px;color:#71717a;">HH Copilot v${"1.9.23.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.24.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
-        <span style="font-size:12px;color:#71717a;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
+        <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
       </div>
     </div>`;
   }
@@ -4700,10 +4708,10 @@ html { font-size: 14px; }
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:12px;color:#71717a;">HH Copilot v${"1.9.23.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.24.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
-        <span style="font-size:12px;color:#71717a;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
+        <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
       </div>
     </div>`;
   }
@@ -4711,26 +4719,26 @@ html { font-size: 14px; }
     const name = userName ? esc(userName) : "";
     const badgeLabel = name ? name : "\u041E\u043D\u043B\u0430\u0439\u043D";
     return `
-    <div class="har-header">
+    <div class="har-header" lang="ru">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
           ${ICONS.briefcase.replace("currentColor", "#fff").replace('width="16" height="16"', 'width="16" height="16"')}
         </div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
-          <div id="header-auth-status" style="font-size:11px;color:#71717a;display:flex;align-items:center;gap:4px;">
+          <div id="header-auth-status" style="font-size:12px;color:#52525b;display:flex;align-items:center;gap:4px;">
             <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>
             ${name ? name : "\u0410\u0432\u0442\u043E\u0440\u0438\u0437\u043E\u0432\u0430\u043D"}
           </div>
         </div>
       </div>
       <div id="authIndicator" class="badge badge-green" style="cursor:pointer;" title="\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0434\u043B\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438" role="button" tabindex="0" aria-label="\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044E">
-        <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;"></span>
+        <span style="width:5px;height:5px;background:#059669;border-radius:50%;display:inline-block;margin-right:4px;" aria-hidden="true"></span>
         ${badgeLabel}
       </div>
       <button class="hh-tour-help" data-action="start-tour" title="\u0413\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E" aria-label="\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0433\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E">?</button>
       <button class="har-close-btn" data-action="close-panel" aria-label="\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u0430\u043D\u0435\u043B\u044C"
-        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;">
+        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
         ${ICONS.close}
       </button>
     </div>`;
@@ -5245,7 +5253,7 @@ html { font-size: 14px; }
       const remainder = skills.length - visible.length;
       let html = visible.map((s) => '<span class="skill-tag ' + cssClass + '">' + esc(s) + "</span>").join("");
       if (remainder > 0) {
-        html += '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>";
+        html += '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + "</span>";
       }
       listEl.innerHTML = html;
     }
@@ -5268,7 +5276,7 @@ html { font-size: 14px; }
         (s) => '<span class="skill-tag skill-synonym" title="\u0421\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0439 \u043D\u0430\u0432\u044B\u043A: \xAB' + esc(s.resume) + "\xBB \u2248 \xAB" + esc(s.vacancy) + '\xBB">' + esc(s.vacancy) + " \u2248 " + esc(s.resume) + "</span>"
       ).join("");
       if (remainder > 0) {
-        html += '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>";
+        html += '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + "</span>";
       }
       listEl.innerHTML = html;
     }
@@ -5333,13 +5341,13 @@ html { font-size: 14px; }
     if (chev) chev.classList.toggle("open");
   }
   function buildSubAccordion(bodyId, chevronId, title, count, dotColor, contentHtml) {
-    return '<div class="tl-dot" style="background:' + dotColor + ';"></div><div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span><span style="font-size:11px;color:#71717a;">' + esc(count) + '</span></div><svg class="sub-chevron" id="' + chevronId + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="sub-body" id="' + bodyId + '">' + contentHtml + "</div>";
+    return '<div class="tl-dot" style="background:' + dotColor + ';"></div><div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span><span style="font-size:11px;color:#52525b;">' + esc(count) + '</span></div><svg class="sub-chevron" id="' + chevronId + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="sub-body" id="' + bodyId + '">' + contentHtml + "</div>";
   }
   function buildGrid(pairs) {
     const rows = pairs.filter(([, val]) => val).map(
-      ([label, val]) => '<span style="color:#71717a;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + "</span>"
+      ([label, val]) => '<span style="color:#52525b;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + "</span>"
     ).join("");
-    if (!rows) return '<div style="padding:8px;font-size:11px;color:#71717a;">\u0414\u0430\u043D\u043D\u044B\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B</div>';
+    if (!rows) return '<div style="padding:8px;font-size:11px;color:#52525b;">\u0414\u0430\u043D\u043D\u044B\u0435 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B</div>';
     return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;"><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + rows + "</div></div>";
   }
   function attachSubToggle(bodyId, chevronId) {
@@ -5451,7 +5459,7 @@ html { font-size: 14px; }
             matchingRow.style.display = "";
             const visible = matching.slice(0, 6);
             const remainder = matching.length - visible.length;
-            matchingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+            matchingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + "</span>" : "");
           } else {
             matchingRow.style.display = "none";
           }
@@ -5463,7 +5471,7 @@ html { font-size: 14px; }
             derivedRow.style.display = "";
             const visible = derived.slice(0, 6);
             const remainder = derived.length - visible.length;
-            derivedList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+            derivedList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + "</span>" : "");
           } else {
             derivedRow.style.display = "none";
           }
@@ -5475,7 +5483,7 @@ html { font-size: 14px; }
             missingRow.style.display = "";
             const visible = missing.slice(0, 6);
             const remainder = missing.length - visible.length;
-            missingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + "</span>" : "");
+            missingList.innerHTML = visible.map((s) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">' + esc(s) + "</span>").join("") + (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + "</span>" : "");
           } else {
             missingRow.style.display = "none";
           }
@@ -5500,7 +5508,7 @@ html { font-size: 14px; }
     const list = refs.shadowRoot?.getElementById("har-vlist");
     if (!list) return;
     if (!panelState.vacancies.length) {
-      list.innerHTML = '<div style="padding:24px;text-align:center;color:#71717a;font-size:12px;line-height:1.6;">\u041D\u0435\u0442 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0439.<br>\u041F\u0435\u0440\u0435\u0439\u0434\u0438\u0442\u0435 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443 \u043F\u043E\u0438\u0441\u043A\u0430.</div>';
+      list.innerHTML = '<div style="padding:24px;text-align:center;color:#52525b;font-size:12px;line-height:1.6;">\u041D\u0435\u0442 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0439.<br>\u041F\u0435\u0440\u0435\u0439\u0434\u0438\u0442\u0435 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443 \u043F\u043E\u0438\u0441\u043A\u0430.</div>';
       return;
     }
     list.innerHTML = panelState.vacancies.slice(0, 50).map((v) => {
@@ -5510,7 +5518,7 @@ html { font-size: 14px; }
       const badge = v.status === "applied" ? '<span class="badge badge-green">\u041E\u0442\u043A\u043B\u0438\u043A\u043D\u0443\u0442\u0430</span>' : v.status === "blacklisted" ? '<span class="badge badge-red">BL</span>' : "";
       const shimmerClass = score >= 70 && v.status === "new" ? " shimmer" : "";
       const opacity = v.status === "blacklisted" ? "opacity:0.4;" : v.status === "applied" ? "opacity:0.5;" : "";
-      return `<div class="vacancy-item${shimmerClass}" data-title="${esc(v.title)}" data-status="${esc(v.status || "new")}" data-score="${score}" style="${opacity}">
+      return `<div class="vacancy-item${shimmerClass}" data-title="${esc(v.title)}" data-status="${esc(v.status || "new")}" data-score="${score}" style="${opacity}" tabindex="0" role="article" aria-label="${esc(v.title)}, ${esc(v.company)}, \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 ${score}%">
       <div style="flex-shrink:0;">${sc}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
@@ -5522,7 +5530,7 @@ html { font-size: 14px; }
           ${v.salary && v.salary !== "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430" ? `<span style="color:#18181b;font-weight:500;">${esc(v.salary)}</span>` : ""}
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:11px;color:#71717a;">${esc(v.location)}</span>
+          <span style="font-size:12px;color:#52525b;">${esc(v.location)}</span>
           ${applyBtn}
         </div>
       </div>
@@ -5611,9 +5619,9 @@ html { font-size: 14px; }
     entry.innerHTML = `<div class="tl-dot" style="background:${color};"></div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;">
       <span style="font-size:11px;"><b style="color:${color};">[${label}]</b> ${esc(text)}</span>
-      <span style="font-size:11px;color:#71717a;flex-shrink:0;margin-left:8px;">${time}</span>
+      <span style="font-size:11px;color:#52525b;flex-shrink:0;margin-left:8px;">${time}</span>
     </div>
-    ${detail ? `<div style="font-size:11px;color:#71717a;margin-top:1px;">${esc(detail)}</div>` : ""}`;
+    ${detail ? `<div style="font-size:11px;color:#52525b;margin-top:1px;">${esc(detail)}</div>` : ""}`;
     const placeholder = list.querySelector('div[style*="text-align:center"]');
     if (placeholder) list.innerHTML = "";
     list.prepend(entry);
@@ -5644,13 +5652,13 @@ html { font-size: 14px; }
     const bl = panelState.blacklist || [];
     if (badge) badge.textContent = bl.length + " " + declension2(bl.length, ["\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F", "\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0438", "\u043A\u043E\u043C\u043F\u0430\u043D\u0438\u0439"]);
     if (bl.length === 0) {
-      list.innerHTML = '<div style="padding:8px;text-align:center;font-size:11px;color:#71717a;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u043F\u0443\u0441\u0442</div>';
+      list.innerHTML = '<div style="padding:8px;text-align:center;font-size:11px;color:#52525b;">\u0427\u0451\u0440\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u043F\u0443\u0441\u0442</div>';
       return;
     }
     list.innerHTML = bl.map(
       (name) => `<div class="bl-item" data-bl-name="${esc(name)}">
       <span style="font-size:12px;">${esc(name)}</span>
-      <button class="btn-bl-del" data-bl-remove="${esc(name)}">\u0423\u0434\u0430\u043B\u0438\u0442\u044C</button>
+      <button class="btn-bl-del" data-bl-remove="${esc(name)}" aria-label="\u0423\u0434\u0430\u043B\u0438\u0442\u044C ${esc(name)} \u0438\u0437 \u0447\u0451\u0440\u043D\u043E\u0433\u043E \u0441\u043F\u0438\u0441\u043A\u0430">\u0423\u0434\u0430\u043B\u0438\u0442\u044C</button>
     </div>`
     ).join("");
   }
@@ -5725,7 +5733,7 @@ html { font-size: 14px; }
       const grad = isWeekend ? "linear-gradient(180deg,#047857,#059669)" : "linear-gradient(180deg,#059669,#10B981)";
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
       <div style="width:100%;border-radius:4px;background:${grad};height:${Math.max(pct, 4)}%;transition:height 0.5s ease;"></div>
-      <span style="font-size:11px;color:#71717a;">${DAYS[i]}</span>
+      <span style="font-size:11px;color:#52525b;">${DAYS[i]}</span>
     </div>`;
     }).join("");
   }
@@ -5743,7 +5751,7 @@ html { font-size: 14px; }
     container.innerHTML = stages.map((s) => {
       const pct = s.value / max * 100;
       return `<div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:11px;color:#71717a;width:90px;flex-shrink:0;">${s.label}</span>
+      <span style="font-size:11px;color:#52525b;width:90px;flex-shrink:0;">${s.label}</span>
       <div class="progress-bar" style="flex:1;"><div class="fill" style="width:${Math.max(pct, 2)}%;background:${s.color};"></div></div>
       <span style="font-size:11px;font-weight:600;width:40px;text-align:right;">${s.value}</span>
     </div>`;
@@ -5765,7 +5773,7 @@ html { font-size: 14px; }
     entry.innerHTML = `<div class="log-dot" style="background:${color};"></div>
     <div style="flex:1;">
       <div style="font-size:11px;"><b style="color:${color};">[${label}]</b> ${esc(text)}</div>
-      <div style="font-size:11px;color:#71717a;">${time}</div>
+      <div style="font-size:11px;color:#52525b;">${time}</div>
     </div>`;
     container.prepend(entry);
   }
@@ -5773,7 +5781,7 @@ html { font-size: 14px; }
   }
   function clearLog() {
     const container = refs.shadowRoot?.getElementById("activity-log");
-    if (container) container.innerHTML = '<div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">\u041D\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0435\u0439</div>';
+    if (container) container.innerHTML = '<div style="padding:12px;text-align:center;font-size:11px;color:#52525b;">\u041D\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0435\u0439</div>';
   }
   var DAYS;
   var init_stats2 = __esm({
@@ -5792,7 +5800,7 @@ html { font-size: 14px; }
     const convs = panelState.negotiations || [];
     if (badge) badge.textContent = convs.length + " " + (convs.length === 1 ? "\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439" : "\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0445");
     if (convs.length === 0) {
-      list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#71717a;">\u041F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B \u043F\u043E\u043A\u0430 \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B</div>';
+      list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">\u041F\u0435\u0440\u0435\u0433\u043E\u0432\u043E\u0440\u044B \u043F\u043E\u043A\u0430 \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B</div>';
       return;
     }
     list.innerHTML = convs.map((c, i) => {
@@ -5805,9 +5813,9 @@ html { font-size: 14px; }
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:12px;font-weight:600;">${esc(c.name)}</span>
-          <span style="font-size:11px;color:#71717a;">${esc(c.time || "")}</span>
+          <span style="font-size:11px;color:#52525b;">${esc(c.time || "")}</span>
         </div>
-        <div style="font-size:11px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.preview || "")}</div>
+        <div style="font-size:11px;color:#52525b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.preview || "")}</div>
       </div>
       ${c.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0;"></div>' : ""}
     </div>`;
@@ -6256,7 +6264,7 @@ html { font-size: 14px; }
       content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
       <div class="har-spinner"></div>
       <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">\u041F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u043C \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044E...</h3>
-      <p style="font-size:13px;color:#71717a;line-height:1.5;">\u041E\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u0435\u043C \u0441\u0442\u0430\u0442\u0443\u0441 \u043D\u0430 hh.ru</p>
+      <p style="font-size:13px;color:#52525b;line-height:1.5;">\u041E\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u0435\u043C \u0441\u0442\u0430\u0442\u0443\u0441 \u043D\u0430 hh.ru</p>
     </div>`;
       return;
     }
@@ -6264,7 +6272,7 @@ html { font-size: 14px; }
       content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
       <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">\u0412\u043E\u0439\u0434\u0438\u0442\u0435 \u0432 hh.ru</h3>
-      <p style="font-size:13px;color:#71717a;line-height:1.5;margin-bottom:24px;">\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0441 \u0432\u0430\u0448\u0435\u0439 \u0443\u0447\u0451\u0442\u043D\u043E\u0439 \u0437\u0430\u043F\u0438\u0441\u044C\u044E.<br>\u0410\u0432\u0442\u043E\u0440\u0438\u0437\u0443\u0439\u0442\u0435\u0441\u044C \u0434\u043B\u044F \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u0438.</p>
+      <p style="font-size:13px;color:#52525b;line-height:1.5;margin-bottom:24px;">\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0441 \u0432\u0430\u0448\u0435\u0439 \u0443\u0447\u0451\u0442\u043D\u043E\u0439 \u0437\u0430\u043F\u0438\u0441\u044C\u044E.<br>\u0410\u0432\u0442\u043E\u0440\u0438\u0437\u0443\u0439\u0442\u0435\u0441\u044C \u0434\u043B\u044F \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u0438.</p>
       <a href="https://hh.ru/account/login" target="_blank" class="btn btn-primary" style="text-decoration:none;">\u0412\u043E\u0439\u0442\u0438 \u043D\u0430 hh.ru</a>
       <button class="btn btn-outline" id="har-retry-auth" style="margin-top:8px;">\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0441\u043D\u043E\u0432\u0430</button>
     </div>`;
@@ -6373,11 +6381,11 @@ html { font-size: 14px; }
       } else if (vis === "visible") {
         visBadge = '<span class="badge badge-green" style="font-size:9px;margin-left:4px;">\u0412\u0438\u0434\u0438\u043C\u043E</span>';
       } else {
-        visBadge = '<span class="badge" style="font-size:9px;margin-left:4px;background:#e4e4e7;color:#71717a;">?</span>';
+        visBadge = '<span class="badge" style="font-size:9px;margin-left:4px;background:#e4e4e7;color:#52525b;">?</span>';
       }
       const radio = isActive ? '<span style="width:16px;height:16px;border-radius:50%;border:2px solid #059669;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:8px;height:8px;border-radius:50%;background:#059669;"></span></span>' : '<span style="width:16px;height:16px;border-radius:50%;border:2px solid #d4d4d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></span>';
       const reparseIcon = isActive ? '<button class="btn btn-outline btn-sm" data-action="reparse-resume" title="' + (vis === "hidden" ? "\u041F\u0435\u0440\u0435\u043F\u0430\u0440\u0441\u0438\u0442\u044C \u0441\u043A\u0440\u044B\u0442\u043E\u0435" : "\u041F\u0435\u0440\u0435\u043F\u0430\u0440\u0441\u0438\u0442\u044C") + '" style="padding:2px 6px;font-size:13px;line-height:1;' + (vis === "hidden" ? "color:#b45309;border-color:#fbbf24;" : "") + '">\u21BB</button>' : "";
-      return '<div class="har-my-resume-item" data-resume-idx="' + idx + '" style="padding:8px;border-bottom:1px solid #e4e4e7;cursor:pointer;display:flex;align-items:flex-start;gap:8px;' + (isActive ? "background:#f0fdf4;border-radius:6px;" : "") + (vis === "hidden" && !isActive ? "opacity:0.6;" : "") + '">' + radio + '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:12px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F") + "</span>" + visBadge + "</div>" + (r.salary ? '<div style="font-size:11px;color:#059669;">' + esc(r.salary) + "</div>" : "") + '<div style="font-size:10px;color:#71717a;">' + skillCount + " \u043D\u0430\u0432., " + expCount + " \u0437\u0430\u043F. \u043E\u043F\u044B\u0442\u0430</div></div>" + reparseIcon + "</div>";
+      return '<div class="har-my-resume-item" data-resume-idx="' + idx + '" style="padding:8px;border-bottom:1px solid #e4e4e7;cursor:pointer;display:flex;align-items:flex-start;gap:8px;' + (isActive ? "background:#f0fdf4;border-radius:6px;" : "") + (vis === "hidden" && !isActive ? "opacity:0.6;" : "") + '">' + radio + '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:12px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.title || "\u0411\u0435\u0437 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F") + "</span>" + visBadge + "</div>" + (r.salary ? '<div style="font-size:11px;color:#059669;">' + esc(r.salary) + "</div>" : "") + '<div style="font-size:10px;color:#52525b;">' + skillCount + " \u043D\u0430\u0432., " + expCount + " \u0437\u0430\u043F. \u043E\u043F\u044B\u0442\u0430</div></div>" + reparseIcon + "</div>";
     }).join("");
     listEl.querySelectorAll(".har-my-resume-item").forEach((item) => {
       item.addEventListener("click", (e) => {
@@ -6464,7 +6472,7 @@ html { font-size: 14px; }
       if (j.period) companyParts.push(esc(j.period));
       const companyLine = companyParts.join(" \u2022 ");
       const isLast = idx === expCount - 1;
-      return '<div style="margin-bottom:' + (isLast ? "0" : "8px") + ";padding-bottom:" + (isLast ? "0" : "8px") + ";" + (isLast ? "" : "border-bottom:1px solid rgba(0,0,0,0.05);") + '"><div style="font-weight:600;">' + esc(j.position || "?") + "</div>" + (companyLine ? '<div style="color:#71717a;margin-top:2px;">' + companyLine + "</div>" : "") + (j.description ? '<div style="color:#71717a;margin-top:3px;font-size:11px;">' + esc(j.description) + "</div>" : "") + "</div>";
+      return '<div style="margin-bottom:' + (isLast ? "0" : "8px") + ";padding-bottom:" + (isLast ? "0" : "8px") + ";" + (isLast ? "" : "border-bottom:1px solid rgba(0,0,0,0.05);") + '"><div style="font-weight:600;">' + esc(j.position || "?") + "</div>" + (companyLine ? '<div style="color:#52525b;margin-top:2px;">' + companyLine + "</div>" : "") + (j.description ? '<div style="color:#52525b;margin-top:3px;font-size:11px;">' + esc(j.description) + "</div>" : "") + "</div>";
     }).join("");
     return buildSubAccordion(
       "subExp",
@@ -6472,13 +6480,13 @@ html { font-size: 14px; }
       "\u041E\u043F\u044B\u0442 \u0440\u0430\u0431\u043E\u0442\u044B",
       expCount + " \u043C\u0435\u0441\u0442",
       "#B45309",
-      expCount > 0 ? '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;">' + expContent + "</div>" : '<div style="padding:8px;font-size:11px;color:#71717a;">\u041E\u043F\u044B\u0442 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D</div>'
+      expCount > 0 ? '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;">' + expContent + "</div>" : '<div style="padding:8px;font-size:11px;color:#52525b;">\u041E\u043F\u044B\u0442 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D</div>'
     );
   }
   function buildEducationSection(r) {
     const eduCount = (r.education || []).length;
     const eduContent = (r.education || []).map((e) => {
-      return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;margin-bottom:6px;"><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + (e.name ? '<span style="color:#71717a;">\u0412\u0423\u0417</span><span style="font-weight:500;">' + esc(e.name) + "</span>" : "") + (e.description ? '<span style="color:#71717a;">\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442</span><span style="font-weight:500;">' + esc(e.description) + "</span>" : "") + (e.year ? '<span style="color:#71717a;">\u0413\u043E\u0434</span><span style="font-weight:500;">' + esc(e.year) + "</span>" : "") + (e.degree ? '<span style="color:#71717a;">\u0421\u0442\u0435\u043F\u0435\u043D\u044C</span><span style="font-weight:500;">' + esc(e.degree) + "</span>" : "") + "</div></div>";
+      return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;margin-bottom:6px;"><div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + (e.name ? '<span style="color:#52525b;">\u0412\u0423\u0417</span><span style="font-weight:500;">' + esc(e.name) + "</span>" : "") + (e.description ? '<span style="color:#52525b;">\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442</span><span style="font-weight:500;">' + esc(e.description) + "</span>" : "") + (e.year ? '<span style="color:#52525b;">\u0413\u043E\u0434</span><span style="font-weight:500;">' + esc(e.year) + "</span>" : "") + (e.degree ? '<span style="color:#52525b;">\u0421\u0442\u0435\u043F\u0435\u043D\u044C</span><span style="font-weight:500;">' + esc(e.degree) + "</span>" : "") + "</div></div>";
     }).join("");
     return buildSubAccordion(
       "subEdu",
@@ -6486,7 +6494,7 @@ html { font-size: 14px; }
       "\u041E\u0431\u0440\u0430\u0437\u043E\u0432\u0430\u043D\u0438\u0435",
       eduCount + " \u0437\u0430\u043F\u0438\u0441\u0435\u0439",
       "#7C3AED",
-      eduCount > 0 ? eduContent : '<div style="padding:8px;font-size:11px;color:#71717a;">\u041E\u0431\u0440\u0430\u0437\u043E\u0432\u0430\u043D\u0438\u0435 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u043E</div>'
+      eduCount > 0 ? eduContent : '<div style="padding:8px;font-size:11px;color:#52525b;">\u041E\u0431\u0440\u0430\u0437\u043E\u0432\u0430\u043D\u0438\u0435 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u043E</div>'
     );
   }
   function buildLanguagesSection(r) {
@@ -6496,10 +6504,10 @@ html { font-size: 14px; }
         const parts = l.split(/\s*[—–-]\s*/);
         const lang = parts[0] || l;
         const level = parts[1] || "\u2014";
-        return '<span style="color:#71717a;">' + esc(lang) + '</span><span style="font-weight:500;">' + esc(level) + "</span>";
+        return '<span style="color:#52525b;">' + esc(lang) + '</span><span style="font-weight:500;">' + esc(level) + "</span>";
       }
-      return '<span style="color:#71717a;">' + esc(l.name || l) + '</span><span style="font-weight:500;">' + esc(l.level || "\u2014") + "</span>";
-    }).join("") + "</div></div>" : '<div style="padding:8px;font-size:11px;color:#71717a;">\u042F\u0437\u044B\u043A\u0438 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u044B</div>';
+      return '<span style="color:#52525b;">' + esc(l.name || l) + '</span><span style="font-weight:500;">' + esc(l.level || "\u2014") + "</span>";
+    }).join("") + "</div></div>" : '<div style="padding:8px;font-size:11px;color:#52525b;">\u042F\u0437\u044B\u043A\u0438 \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u044B</div>';
     return buildSubAccordion(
       "subLang",
       "chevLang",
@@ -10088,6 +10096,11 @@ html { font-size: 14px; }
         toggleSidebar();
         return;
       }
+      if (t.closest("#authIndicator")) {
+        resetAuthCache();
+        updateAuthStateAsync();
+        return;
+      }
       if (t.closest('[data-action="start-tour"]')) {
         const activeTab = refs.shadowRoot?.querySelector(".tab-btn.active");
         const tabId = activeTab?.dataset.tab;
@@ -10128,11 +10141,6 @@ html { font-size: 14px; }
         return;
       }
       if (t.closest("#har-retry-auth")) {
-        resetAuthCache();
-        updateAuthStateAsync();
-        return;
-      }
-      if (t.closest("#authIndicator")) {
         resetAuthCache();
         updateAuthStateAsync();
         return;
@@ -10300,6 +10308,8 @@ html { font-size: 14px; }
     if (tabId === "resume") renderResumePanel();
     if (tabId === "stats") renderStats();
     if (tabId === "negotiations") renderNegotiationList();
+    const activePanel = sr.querySelector("#tab-" + tabId);
+    if (activePanel) activePanel.focus();
   }
   function switchTabPublic(tabId) {
     switchTab(tabId);
@@ -10327,8 +10337,33 @@ html { font-size: 14px; }
     bindInputChanges(container);
   }
   function bindTabClicks(container) {
-    container.querySelectorAll(".tab-btn").forEach((btn) => {
+    const tabBtns = container.querySelectorAll(".tab-btn");
+    tabBtns.forEach((btn) => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+    container.addEventListener("keydown", (e) => {
+      const tabBtn = e.target.closest(".tab-btn");
+      if (!tabBtn) return;
+      const tabs = Array.from(container.querySelectorAll(".tab-btn"));
+      const idx = tabs.indexOf(tabBtn);
+      let nextIdx = -1;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        nextIdx = (idx + 1) % tabs.length;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        nextIdx = (idx - 1 + tabs.length) % tabs.length;
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        nextIdx = 0;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        nextIdx = tabs.length - 1;
+      }
+      if (nextIdx >= 0) {
+        tabs[nextIdx].focus();
+        switchTab(tabs[nextIdx].dataset.tab);
+      }
     });
   }
   function bindTimelineToggles(container) {
@@ -10350,6 +10385,13 @@ html { font-size: 14px; }
         if (tl) {
           e.preventDefault();
           tl.click();
+          return;
+        }
+        const vacItem = e.target.closest(".vacancy-item");
+        if (vacItem) {
+          e.preventDefault();
+          const navLink = vacItem.querySelector('[data-action="navigate"]');
+          if (navLink) navLink.click();
         }
       }
     });
@@ -10360,6 +10402,7 @@ html { font-size: 14px; }
     if (scoreRange && scoreLabel) {
       scoreRange.addEventListener("input", () => {
         scoreLabel.textContent = scoreRange.value + "%";
+        scoreRange.setAttribute("aria-valuenow", scoreRange.value);
         filterVacancies2();
       });
     }
@@ -10454,7 +10497,7 @@ html { font-size: 14px; }
       }
       const card = refs.shadowRoot?.querySelector("#tab-overview .card");
       if (card) {
-        const desc = card.querySelector('div[style*="color:#71717a;"]');
+        const desc = card.querySelector('div[style*="color:#52525b;"]');
         if (desc) {
           const time = (/* @__PURE__ */ new Date()).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
           const orig = desc.textContent;
@@ -10477,6 +10520,9 @@ html { font-size: 14px; }
     refs.sidebarEl = document.createElement("div");
     refs.sidebarEl.id = "hh-ar-sidebar";
     refs.sidebarEl.style.cssText = "position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);";
+    refs.sidebarEl.setAttribute("role", "dialog");
+    refs.sidebarEl.setAttribute("aria-label", "HH Copilot \u043F\u0430\u043D\u0435\u043B\u044C");
+    refs.sidebarEl.setAttribute("aria-modal", "true");
     refs.shadowRoot = refs.sidebarEl.attachShadow({ mode: "closed" });
     const style = document.createElement("style");
     style.textContent = getSidebarCSS();
@@ -10484,9 +10530,37 @@ html { font-size: 14px; }
     const container = document.createElement("div");
     container.className = "fab-panel";
     container.innerHTML = getSidebarHTML();
+    container.setAttribute("lang", "ru");
     refs.shadowRoot.appendChild(container);
     bindTabClicks(container);
     bindTourEvents();
+    refs.sidebarEl.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && panelState.isOpen) {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+    });
+    refs.sidebarEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab" || !panelState.isOpen) return;
+      const sr = refs.shadowRoot;
+      if (!sr) return;
+      const focusable = sr.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !sr.contains(document.activeElement)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
     document.body.appendChild(refs.backdropEl);
     document.body.appendChild(refs.sidebarEl);
   }
@@ -10501,6 +10575,12 @@ html { font-size: 14px; }
     }
     updateFabIcon();
     panelLog.info("Sidebar " + (panelState.isOpen ? "opened" : "closed"));
+    if (panelState.isOpen) {
+      const firstFocusable = refs.shadowRoot?.querySelector('button:not([disabled]), [tabindex="0"]');
+      if (firstFocusable) setTimeout(() => firstFocusable.focus(), 350);
+    } else {
+      if (refs.fabEl) setTimeout(() => refs.fabEl.focus(), 350);
+    }
   }
   function updateVacancies(vacancies) {
     setVacancies(vacancies);

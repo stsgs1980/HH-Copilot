@@ -85,7 +85,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
           const visible = matching.slice(0, 6);
           const remainder = matching.length - visible.length;
           matchingList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + '</span>').join('') +
-            (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
+            (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
         } else {
           matchingRow.style.display = 'none';
         }
@@ -100,7 +100,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
           const visible = derived.slice(0, 6);
           const remainder = derived.length - visible.length;
           derivedList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + '</span>').join('') +
-            (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
+            (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
         } else {
           derivedRow.style.display = 'none';
         }
@@ -115,7 +115,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
           const visible = missing.slice(0, 6);
           const remainder = missing.length - visible.length;
           missingList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">' + esc(s) + '</span>').join('') +
-            (remainder > 0 ? '<span style="font-size:11px;color:#71717a;padding:3px 0;">+' + remainder + '</span>' : '');
+            (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
         } else {
           missingRow.style.display = 'none';
         }
@@ -146,7 +146,7 @@ export function renderVacancyList() {
   if (!list) return;
 
   if (!panelState.vacancies.length) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;color:#71717a;font-size:12px;line-height:1.6;">Нет вакансий.<br>Перейдите на страницу поиска.</div>';
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:#52525b;font-size:12px;line-height:1.6;">Нет вакансий.<br>Перейдите на страницу поиска.</div>';
     return;
   }
 
@@ -169,7 +169,7 @@ export function renderVacancyList() {
     const shimmerClass = (score >= 70 && v.status === 'new') ? ' shimmer' : '';
     const opacity = v.status === 'blacklisted' ? 'opacity:0.4;' : v.status === 'applied' ? 'opacity:0.5;' : '';
 
-    return `<div class="vacancy-item${shimmerClass}" data-title="${esc(v.title)}" data-status="${esc(v.status || 'new')}" data-score="${score}" style="${opacity}">
+    return `<div class="vacancy-item${shimmerClass}" data-title="${esc(v.title)}" data-status="${esc(v.status || 'new')}" data-score="${score}" style="${opacity}" tabindex="0" role="article" aria-label="${esc(v.title)}, ${esc(v.company)}, совпадение ${score}%">
       <div style="flex-shrink:0;">${sc}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
@@ -181,7 +181,7 @@ export function renderVacancyList() {
           ${v.salary && v.salary !== 'Не указана' ? `<span style="color:#18181b;font-weight:500;">${esc(v.salary)}</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:11px;color:#71717a;">${esc(v.location)}</span>
+          <span style="font-size:12px;color:#52525b;">${esc(v.location)}</span>
           ${applyBtn}
         </div>
       </div>

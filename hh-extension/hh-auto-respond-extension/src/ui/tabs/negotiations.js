@@ -18,7 +18,7 @@ export function renderNegotiationList() {
   if (badge) badge.textContent = convs.length + ' ' + (convs.length === 1 ? 'активный' : 'активных');
 
   if (convs.length === 0) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#71717a;">Переговоры пока не загружены</div>';
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">Переговоры пока не загружены</div>';
     return;
   }
 
@@ -32,9 +32,9 @@ export function renderNegotiationList() {
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:12px;font-weight:600;">${esc(c.name)}</span>
-          <span style="font-size:11px;color:#71717a;">${esc(c.time || '')}</span>
+          <span style="font-size:11px;color:#52525b;">${esc(c.time || '')}</span>
         </div>
-        <div style="font-size:11px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.preview || '')}</div>
+        <div style="font-size:11px;color:#52525b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.preview || '')}</div>
       </div>
       ${c.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0;"></div>' : ''}
     </div>`;

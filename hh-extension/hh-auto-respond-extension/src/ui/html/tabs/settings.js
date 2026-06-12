@@ -5,7 +5,7 @@ import { ICONS } from '../icons.js';
 import { settingRow, settingToggle } from '../helpers.js';
 
 export function getSettingsSection() {
-  return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings">
+  return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings" tabindex="0">
     ${settingsRateLimits()}
     ${settingsCaptcha()}
     ${settingsBlacklist()}
@@ -42,7 +42,7 @@ function settingsBlacklist() {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div>
         <div style="font-size:13px;font-weight:600;">Чёрный список</div>
-        <div style="font-size:11px;color:#71717a;margin-top:2px;">Работодатели, которые будут пропущены</div>
+        <div style="font-size:11px;color:#52525b;margin-top:2px;">Работодатели, которые будут пропущены</div>
       </div>
       <span id="bl-count-badge" class="badge badge-zinc">0 компаний</span>
     </div>
@@ -61,16 +61,16 @@ function settingsDailyReset() {
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div style="font-size:12px;font-weight:500;">Авто-сброс счётчиков</div>
-          <div style="font-size:11px;color:#71717a;">Время сброса (chrome.alarms)</div>
+          <div style="font-size:11px;color:#52525b;">Время сброса (chrome.alarms)</div>
         </div>
         <input type="time" id="s-reset-time" value="00:00" style="padding:4px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div style="font-size:12px;font-weight:500;">Следующий сброс</div>
-          <div style="font-size:11px;color:#71717a;">Через chrome.alarms API</div>
+          <div style="font-size:11px;color:#52525b;">Через chrome.alarms API</div>
         </div>
-        <span id="s-reset-countdown" style="font-size:11px;font-weight:600;color:#71717a;">--</span>
+        <span id="s-reset-countdown" style="font-size:11px;font-weight:600;color:#52525b;">--</span>
       </div>
       <button class="btn btn-outline" style="align-self:flex-start;" data-action="reset-daily">${ICONS.refresh} Сбросить сейчас</button>
     </div>

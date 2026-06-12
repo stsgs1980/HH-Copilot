@@ -44,7 +44,7 @@ export function buildSubAccordion(bodyId, chevronId, title, count, dotColor, con
     '<div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '">' +
       '<div style="display:flex;align-items:center;gap:6px;">' +
         '<span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span>' +
-        '<span style="font-size:11px;color:#71717a;">' + esc(count) + '</span>' +
+        '<span style="font-size:11px;color:#52525b;">' + esc(count) + '</span>' +
       '</div>' +
       '<svg class="sub-chevron" id="' + chevronId + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>' +
     '</div>' +
@@ -59,9 +59,9 @@ export function buildGrid(pairs) {
   const rows = pairs
     .filter(([, val]) => val)
     .map(([label, val]) =>
-      '<span style="color:#71717a;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + '</span>'
+      '<span style="color:#52525b;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + '</span>'
     ).join('');
-  if (!rows) return '<div style="padding:8px;font-size:11px;color:#71717a;">Данные не найдены</div>';
+  if (!rows) return '<div style="padding:8px;font-size:11px;color:#52525b;">Данные не найдены</div>';
   return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;">' +
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + rows + '</div></div>';
 }

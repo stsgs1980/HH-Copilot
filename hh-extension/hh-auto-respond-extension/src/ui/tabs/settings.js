@@ -16,14 +16,14 @@ export function renderBlacklist() {
   if (badge) badge.textContent = bl.length + ' ' + declension(bl.length, ['компания', 'компании', 'компаний']);
 
   if (bl.length === 0) {
-    list.innerHTML = '<div style="padding:8px;text-align:center;font-size:11px;color:#71717a;">Чёрный список пуст</div>';
+    list.innerHTML = '<div style="padding:8px;text-align:center;font-size:11px;color:#52525b;">Чёрный список пуст</div>';
     return;
   }
 
   list.innerHTML = bl.map(name =>
     `<div class="bl-item" data-bl-name="${esc(name)}">
       <span style="font-size:12px;">${esc(name)}</span>
-      <button class="btn-bl-del" data-bl-remove="${esc(name)}">Удалить</button>
+      <button class="btn-bl-del" data-bl-remove="${esc(name)}" aria-label="Удалить ${esc(name)} из чёрного списка">Удалить</button>
     </div>`
   ).join('');
 }

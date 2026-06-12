@@ -44,7 +44,7 @@ function renderWeeklyChart() {
       : 'linear-gradient(180deg,#059669,#10B981)';
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
       <div style="width:100%;border-radius:4px;background:${grad};height:${Math.max(pct, 4)}%;transition:height 0.5s ease;"></div>
-      <span style="font-size:11px;color:#71717a;">${DAYS[i]}</span>
+      <span style="font-size:11px;color:#52525b;">${DAYS[i]}</span>
     </div>`;
   }).join('');
 }
@@ -65,7 +65,7 @@ function renderFunnel() {
   container.innerHTML = stages.map(s => {
     const pct = (s.value / max) * 100;
     return `<div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:11px;color:#71717a;width:90px;flex-shrink:0;">${s.label}</span>
+      <span style="font-size:11px;color:#52525b;width:90px;flex-shrink:0;">${s.label}</span>
       <div class="progress-bar" style="flex:1;"><div class="fill" style="width:${Math.max(pct, 2)}%;background:${s.color};"></div></div>
       <span style="font-size:11px;font-weight:600;width:40px;text-align:right;">${s.value}</span>
     </div>`;
@@ -91,7 +91,7 @@ export function addLogEntry(level, text) {
   entry.innerHTML = `<div class="log-dot" style="background:${color};"></div>
     <div style="flex:1;">
       <div style="font-size:11px;"><b style="color:${color};">[${label}]</b> ${esc(text)}</div>
-      <div style="font-size:11px;color:#71717a;">${time}</div>
+      <div style="font-size:11px;color:#52525b;">${time}</div>
     </div>`;
   container.prepend(entry);
 }
@@ -102,5 +102,5 @@ function renderLog() {
 
 export function clearLog() {
   const container = refs.shadowRoot?.getElementById('activity-log');
-  if (container) container.innerHTML = '<div style="padding:12px;text-align:center;font-size:11px;color:#71717a;">Нет записей</div>';
+  if (container) container.innerHTML = '<div style="padding:12px;text-align:center;font-size:11px;color:#52525b;">Нет записей</div>';
 }
