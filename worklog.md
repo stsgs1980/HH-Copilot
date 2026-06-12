@@ -1351,3 +1351,26 @@ Work Log:
 Stage Summary:
 - AGENT_RULES.md updated with Rule 9.1
 - No more "git pull" without stash — always "git stash && git pull && git stash pop"
+
+---
+Task ID: tests-001
+Agent: main
+Task: Add test suite — Vitest + jsdom, 59 tests across 5 files
+
+Work Log:
+- Installed vitest ^4.1.8 + jsdom ^29.1.1 as devDependencies
+- Created vitest.config.js with jsdom environment
+- Created tests/ directory with 5 test files:
+  - anti-hallucination.test.js (16 tests): extractVacancyId, validateVacancyData
+  - parse-experience.test.js (13 tests): all experience string patterns
+  - selectors.test.js (9 tests): ~= word-match, VotD selectors, findElement/findAllElements
+  - vacancy-list.test.js (11 tests): search page cards, main page space-separated data-qa, fallback href, VotD blocks
+  - routing.test.js (10 tests): all route paths including / → mainPage
+- Added "test" and "test:watch" scripts to package.json
+- All 59 tests pass in 1.4s
+
+Stage Summary:
+- Zero → 59 tests covering: anti-hallucination, selectors, routing, vacancy parsing, experience parsing
+- Key test: main page card with space-separated data-qa "vacancy-serp__vacancy vacancy-serp-item_clickme" ✓
+- Key test: fallback href selector when no data-qa on title link ✓
+- Key test: VotD parsing with vacancy_of_the_day_* selectors ✓

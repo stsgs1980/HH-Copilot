@@ -6,10 +6,14 @@
   "scripts": {
     "build": "node esbuild.config.mjs",
     "build:prod": "node esbuild.config.mjs --production",
-    "watch": "node esbuild.config.mjs --watch"
+    "watch": "node esbuild.config.mjs --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.8",
     "ws": "^8.18.0"
   }
 }
