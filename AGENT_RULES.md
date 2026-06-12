@@ -117,6 +117,41 @@ v1.0 | 2026-06-09 | anti-hallucination-guard
 - These files do NOT auto-sync from manifest.json — they must be updated manually
 - BEFORE git push: verify all 5 files have the same version string
 - Violation pattern: pushing 3 version bumps without updating popup (v1.9.23→1.9.28 gap)
+- AUTOMATED: `scripts/version-sync.sh` checks all 5 files and blocks commit on mismatch (pre-commit Phase 4)
+
+## Rule 9.3: Documentation consistency — no commit without complete docs
+
+Before EVERY commit, the following documentation MUST be consistent with code changes:
+
+### Pre-commit documentation checklist (enforced by `scripts/doc-consistency.sh` — pre-commit Phase 5):
+
+- [ ] **CHANGELOG.md** — has entry for current version (manifest.json "version" field)
+- [ ] **cascade-state.json** — `lastUpdated` is recent (<48h), task statuses reflect actual code state
+- [ ] **README.md** — mentions all key features that exist in src/ (test suite, HMR, parsers, etc.)
+- [ ] **Version sync** — all 5 version references identical (Rule 9.2, checked by version-sync.sh)
+- [ ] **worklog.md** — updated with specific facts about what was changed and why
+
+### What went wrong before (gap history):
+1. CHANGELOG.md lost in repo recovery — 27 versions (1.9.0→1.9.28) had no entries
+2. cascade-state.json not updated after 5 commits — 10 tasks left "pending" despite code existing
+3. popup/index.html missed 5 version bumps (v1.9.23→1.9.28) — user-visible version stale
+4. worklog.md entries existed in agent workspace but not committed to git repo
+5. README.md didn't mention 67 tests or HMR — two major features invisible in docs
+
+### Root cause of ALL gaps:
+Pre-commit hook (Phase 2) ONLY checked worklog freshness. It did NOT verify:
+- Version consistency across files
+- CHANGELOG entry existence
+- cascade-state freshness
+- README feature coverage
+
+Now ALL of these are checked automatically by pre-commit Phases 4+5.
+
+### The scripts:
+- `scripts/version-sync.sh` — compares version in manifest.json, package.json, version.js, popup/index.html, README.md
+- `scripts/doc-consistency.sh` — checks CHANGELOG entry, cascade-state freshness, README coverage
+
+If a commit is blocked by these checks, FIX the documentation — do NOT bypass with `--no-verify`.
 
 ## Rule 10: No unsolicited initiative
 

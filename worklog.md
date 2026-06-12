@@ -1605,3 +1605,56 @@ Stage Summary:
 - cascade-state.json: 14→24 completed задач (10 ранее не отмеченных)
 - CHANGELOG.md: восстановлен полностью
 - Все версии синхронизированы: manifest/package/version/popup = 1.9.28.0
+
+---
+Task ID: ahg-structural-fix-001
+Agent: main
+Time: 2026-06-13T22:00:00+03:00
+Task: Структурное исправление AHG — автоматизация проверок документации через pre-commit hook
+
+Work Log:
+- Проанализированы корневые причины 5 gap'ов в документации:
+  1. CHANGELOG.md потерян при восстановлении репозитория — 27 версий без записей
+  2. cascade-state.json не обновлялся после 5 коммитов — 10 задач оставались pending
+  3. popup/index.html отставал на 5 версий (v1.9.23→1.9.28) — ни один version bump не обновил popup
+  4. worklog.md записи были в агентном workspace, но не в git repo
+  5. README.md не описывал тесты (67) и HMR — две значимые фичи невидимы в документации
+- Диагноз: pre-commit hook проверял ТОЛЬКО worklog (существует + свежий + не пустой). НЕ проверял:
+  - Синхронность версий между manifest.json, package.json, version.js, popup/index.html, README.md
+  - Наличие записи в CHANGELOG для текущей версии
+  - Свежесть cascade-state.json
+  - Покрытие README ключевых фич
+- Создан scripts/version-sync.sh (191 строка):
+  - Сравнивает версию в manifest.json (source of truth) с package.json, version.js, popup/index.html, README.md
+  - Exit code 1 при рассинхронизации — блокирует коммит
+  - Поддержка markdown bold markers в README (**Версия:** 1.9.28.0)
+  - Поддержка поиска README на 3 уровня выше (extension dir → parent → repo root)
+  - Протестировано: PASS при 1.9.28.0 во всех файлах, FAIL при намеренном рассинхроне package.json
+- Создан scripts/doc-consistency.sh (201 строка):
+  - Check 1: CHANGELOG.md содержит запись для текущей версии
+  - Check 2: cascade-state.json lastUpdated свежий (<48h OK, <168h WARN, >168h ERROR)
+  - Check 2: cascade-state.json pending задачи vs недавние коммиты — предупреждение
+  - Check 3: README.md упоминает тесты (если tests/ существует), HMR (если hot-reload.js существует), парсеры (если src/parsers/ существует)
+  - Exit code 1 при ERROR, 0 при PASS (с WARNINGS)
+- Обновлён pre-commit hook — добавлены Phase 4 и Phase 5:
+  - Phase 4: запускает version-sync.sh — блокирует коммит при рассинхронизации версий
+  - Phase 5: запускает doc-consistency.sh — блокирует коммит при отсутствии CHANGELOG записи или других документационных ошибках
+  - Скрипты ищутся в hh-extension/hh-auto-respond-extension/scripts/ и scripts/
+- Добавлено Rule 9.3 в AGENT_RULES.md:
+  - Pre-commit documentation checklist (5 пунктов)
+  - История gap'ов с конкретными примерами (5 пунктов)
+  - Корневая причина: pre-commit hook проверял только worklog
+  - Ссылки на автоматизирующие скрипты
+- Обновлён extension CHANGELOG.md: добавлены записи для v1.9.15.5 → v1.9.28.0 (14 версий)
+  - Extension CHANGELOG отставал на 14 версий (последняя запись 1.9.14)
+  - Добавлены полные записи на русском для всех недостающих версий
+
+Stage Summary:
+- 4 новых файла: scripts/version-sync.sh, scripts/doc-consistency.sh, обновлён pre-commit hook, обновлён AGENT_RULES.md
+- 2 обновлённых файла: extension CHANGELOG.md (14 версий добавлено), AGENT_RULES.md (Rule 9.3)
+- Теперь ЛЮБОЙ из 5 типов gap'ов автоматически ловится pre-commit hook'ом:
+  - Version mismatch → version-sync.sh (Phase 4)
+  - Missing CHANGELOG entry → doc-consistency.sh (Phase 5)
+  - Stale cascade-state → doc-consistency.sh (Phase 5)
+  - Missing README features → doc-consistency.sh (Phase 5)
+  - Missing worklog → original pre-commit Phase 2
