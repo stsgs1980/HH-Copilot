@@ -51,7 +51,11 @@ HH Copilot -- это браузерное расширение для автом
 
 **Rate Limiter.** Token bucket с адаптивным замедлением: 200 откликов/день, 30/час, минимум 30 секунд между действиями, максимум 5 подряд с паузой 2 минуты. При получении 429/капчи/замедленного ответа адаптивный фактор увеличивается (x2 при 429, x1.5 при slow, x1.3 при captcha). Модуль src/lib/rate-limiter.js.
 
-**Version sync.** Версия синхронизирована между manifest.json, package.json, popup/index.html и src/ui/html/shell.js. Единый источник истины -- manifest.json (esbuild читает его и инжектит process.env.VERSION). Модуль src/lib/version.js содержит константу для справки, но не импортируется никаким модулем.
+**Version sync.** Версия синхронизирована между manifest.json, package.json, popup/index.html и src/lib/version.js. Единый источник истины -- manifest.json (esbuild читает его и инжектит process.env.VERSION). Модуль src/lib/version.js содержит константу для справки, но не импортируется никаким модулем.
+
+**Тесты.** 67 модульных тестов на базе Vitest + jsdom. Покрытие: anti-hallucination (16 тестов — extractVacancyId, validateVacancyData), parse-experience (13 — все форматы строк опыта), selectors (9 — ~= word-match, VotD селекторы), vacancy-list (14 — search page, main page, VotD, sponsored VotD, canonical URL), routing (10 — все маршруты включая main page). Запуск: `npm test`, watch-режим: `npm run test:watch`.
+
+**Hot-reload для разработки.** WebSocket сервер (ws://localhost:35729) запускается командой `npm run watch`. При пересборке расширение автоматически перезагружается через chrome.runtime.reload(). Устраняет ручной обновление в chrome://extensions.
 
 ### Что НЕ работает (заглушки, планируются в следующих фазах)
 
@@ -79,6 +83,7 @@ git submodule update --init   # инициализация подмодуля (a
 cd hh-extension/hh-auto-respond-extension
 npm install          # установка esbuild + ws (devDependencies)
 npm run build        # сборка content.js из src/content/main.js
+npm test             # запуск 67 модульных тестов (Vitest + jsdom)
 ```
 
 Для разработки с авто-пересборкой и hot-reload (расширение перезагружается автоматически):

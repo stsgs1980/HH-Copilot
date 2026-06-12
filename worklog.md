@@ -1448,3 +1448,160 @@ Work Log:
 
 Stage Summary:
 - Rule 9.2 added — prevents future version sync gaps
+
+---
+Task ID: wcag-001
+Agent: main
+Time: 2026-06-12T18:50:00+03:00
+Task: Исправить 35 WCAG/типографических проблем в UI расширения (v1.9.24.0)
+
+Work Log:
+- Проведён полный аудит UI-кода (sidebar-css-core, sidebar-css-components, shell, helpers, все 6 табов, vacancies render, resume render, events, panel/index)
+- Выявлено 35 WCAG/типографических проблем в 5 категориях
+- CSS фиксы: контраст #71717a→#52525b, убраны невалидные CSS-свойства (role:status из CSS), добавлены :focus-visible стили, font-variant-numeric: tabular-nums, -webkit-font-smoothing: antialiased
+- HTML фиксы: ARIA атрибуты на spinner, toggle, timeline, tab panels, vacancy items, sidebar, range inputs, auth indicator
+- JS фиксы: WAI-ARIA tabs (Arrow/Home/End), Escape закрывает sidebar, focus trap, focus management, Enter/Space на vacancy items
+- 29 файлов изменено, 446 добавлений, 270 удалений
+- Версия: 1.9.23.0 → 1.9.24.0
+
+Stage Summary:
+- 35 WCAG/типографических проблем исправлено
+- Ключевые: контраст, фокус-менеджмент, клавиатурная навигация, ARIA-атрибуты
+- Pushed to GitHub
+
+---
+Task ID: hmr-001
+Agent: main
+Time: 2026-06-12T16:07:00+03:00
+Task: Добавить hot-reload для разработки (v1.9.25.0)
+
+Work Log:
+- Создан WebSocket сервер на ws://localhost:35729 (зависимость ws уже в devDependencies)
+- npm run watch запускает esbuild watch + WebSocket сервер параллельно
+- Content script подключается к ws://localhost:35729 при загрузке
+- При пересборке esbuild отправляет reload сообщение через WebSocket
+- Content script получает сообщение и вызывает chrome.runtime.reload()
+- Версия: 1.9.24.0 → 1.9.25.0
+
+Stage Summary:
+- HMR работает: изменение исходника → авто-пересборка → авто-перезагрузка расширения
+- Команда: npm run watch
+- Не нужно вручную нажимать "Обновить" в chrome://extensions
+
+---
+Task ID: main-page-001
+Agent: main
+Time: 2026-06-12T16:38:00+03:00
+Task: Парсинг вакансий с главной страницы hh.ru (v1.9.26.0)
+
+Work Log:
+- Добавлен маршрут mainPage в detectPageType() для URL / на hh.ru
+- Рекомендованные вакансии: ~= word-match для space-separated data-qa атрибутов + fallback по href
+- Вакансия дня: data-qa="vacancy_of_the_day_title" + три стратегии извлечения ID
+- parseVacanciesOfTheDay() — новый парсер для VotD блоков
+- Версия: 1.9.25.0 → 1.9.26.0
+
+Stage Summary:
+- Главная страница hh.ru парсит рекомендованные + Вакансия дня
+- Добавлены селекторы для ~= word-match (space-separated data-qa)
+
+---
+Task ID: tests-001
+Agent: main
+Time: 2026-06-12T17:09:00+03:00
+Task: Добавить тестовый набор — Vitest + jsdom, 59 тестов
+
+Work Log:
+- Установлены vitest ^4.1.8 + jsdom ^29.1.1 как devDependencies
+- Создан vitest.config.js с jsdom environment
+- Создано 5 тестовых файлов: anti-hallucination (16), parse-experience (13), selectors (9), vacancy-list (11), routing (10)
+- Добавлены скрипты "test" и "test:watch" в package.json
+- Все 59 тестов проходят за 1.4s
+
+Stage Summary:
+- 0→59 тестов: anti-hallucination, selectors, routing, vacancy parsing, experience parsing
+
+---
+Task ID: votd-fix-001
+Agent: main
+Time: 2026-06-13T00:25:00+03:00
+Task: Исправить парсинг VotD — извлечение vacancyId из tracking click-URLs (v1.9.27.0)
+
+Work Log:
+- Консоль пользователя: 14 VotD title элементов найдено, 0/14 распарсено
+- Корневая причина: VotD ссылки — tracking URLs (content.hh.ru/...click?vacancyId=XXX), не /vacancy/XXX
+- extractVacancyId() теперь также ищет ?vacancyId=NNN в query params
+- parseVacanciesOfTheDay() использует titleEl.closest('a') для click-URL
+- VotD получают канонический URL https://hh.ru/vacancy/{id} вместо tracking URL
+- Добавлено 5 тестов extractVacancyId для VotD URL паттернов + 6 VotD тестов
+- 66 тестов проходят
+
+Stage Summary:
+- VotD парсинг работает с реальным DOM hh.ru (0/14 → 11/14)
+- extractVacancyId() поддерживает /vacancy/NNN и ?vacancyId=NNN
+
+---
+Task ID: votd-adsrv-001
+Agent: main
+Time: 2026-06-13T00:30:00+03:00
+Task: Исправить sponsored VotD (adsrv.hh.ru) — ID вакансии в id атрибуте родителя (v1.9.28.0)
+
+Work Log:
+- Консоль: 11/14 VotD распарсено, #2/#3/#4 пропущены
+- Диагностика: adsrv.hh.ru/click?meta=... URLs НЕ содержат vacancyId
+- Но родительский div имеет id="131408939" — это и есть vacancy ID
+- Добавлен Fallback 2: обход предков, проверка id атрибута на 6-12 значный numeric
+- 67 тестов проходят
+
+Stage Summary:
+- Все 3 стратегии: click-URL vacancyId param, vacancyId query param, ancestor id attribute
+- 14/14 VotD парсятся на реальном hh.ru
+- Версия: 1.9.28.0
+
+---
+Task ID: docs-sync-001
+Agent: main
+Time: 2026-06-13T00:35:00+03:00
+Task: Синхронизация документации — исправление version gaps + добавление описания главной страницы
+
+Work Log:
+- popup/index.html: v1.9.23.0 → v1.9.28.0 (отставал на 5 версий!)
+- README.md: версия 1.9.25.0 → 1.9.28.0
+- README.md: добавлена секция "Парсинг вакансий с главной страницы hh.ru"
+- README.md: обновлена секция data flow с маршрутизацией главной страницы
+
+Stage Summary:
+- Gap: 5 инкрементов версий без обновления документации (1.9.24→1.9.28)
+
+---
+Task ID: rule-9.2-001
+Agent: main
+Time: 2026-06-13T00:40:00+03:00
+Task: Добавить Rule 9.2 — enforcement синхронизации версий
+
+Work Log:
+- Добавлено Rule 9.2 в AGENT_RULES.md
+- Правило требует обновления всех 5 файлов версий при каждом bump: manifest.json, package.json, version.js, popup/index.html, README.md
+- Документирован паттерн нарушения: 3 version bumps без обновления popup (v1.9.23→1.9.28)
+
+Stage Summary:
+- Rule 9.2 предотвращает будущие version sync gaps
+
+---
+Task ID: doc-audit-001
+Agent: main
+Time: 2026-06-13T14:45:00+03:00
+Task: Полный аудит документации — заполнение всех gap'ов
+
+Work Log:
+- Обнаружено: cascade-state.json содержит 26 задач в статусе pending, хотя 10 из них УЖЕ РЕАЛИЗОВАНЫ
+- cascade-state.json: обновлены статусы F1.1, F1.2, F1.5, F1.6, F2.1, F2.2, F2.3, F3.1, F3.4, F5.1 на completed
+- cascade-state.json: обновлены functionInventory — F-CR-05, F-CR-06, F-VC-02, F-VC-03, F-VC-04, F-VC-05, F-VC-07, F-RS-04, F-OV-05 → Works
+- cascade-state.json: lastUpdated обновлён на 2026-06-13T14:45:00Z
+- CHANGELOG.md: создан заново (был потерян при восстановлении репозитория) — полный changelog от v1.7.3 до v1.9.28.0
+- worklog.md: добавлены недостающие записи для v1.9.24.0 (WCAG), v1.9.25.0 (HMR), v1.9.26.0 (main page), v1.9.27.0 (VotD fix), v1.9.28.0 (sponsored VotD)
+
+Stage Summary:
+- cascade-state.json: 14→24 completed задач (10 ранее не отмеченных)
+- CHANGELOG.md: восстановлен полностью
+- Все версии синхронизированы: manifest/package/version/popup = 1.9.28.0
