@@ -1395,3 +1395,23 @@ Stage Summary:
 - Key fix: VotD parsing now works with real hh.ru main page DOM
 - extractVacancyId() handles both /vacancy/NNN and ?vacancyId=NNN formats
 - Ready for commit + push
+
+---
+Task ID: votd-adsrv-001
+Agent: main
+Time: 2026-06-13T00:30:00+03:00
+Task: Fix sponsored VotD (adsrv.hh.ru) — vacancy ID in parent id attribute
+
+Work Log:
+- User console: 11/14 VotD parsed, #2/#3/#4 skipped
+- Ran diagnostic JS: adsrv.hh.ru/click?meta=... URLs have NO vacancyId param
+- But parent2 has id=131408939, id=126062066, id=131788133 — these are vacancy IDs
+- Added Fallback 2 to parseVacanciesOfTheDay(): walk up ancestors, check id attribute for 6-12 digit numeric
+- Added test: sponsored VotD with parent id attribute
+- All 67 tests pass
+- Bumped to 1.9.28.0
+
+Stage Summary:
+- All 3 extraction strategies: click-URL vacancyId param, vacancyId query param, ancestor id attribute
+- 14/14 VotD should now parse on real hh.ru
+- Version: 1.9.28.0

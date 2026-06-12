@@ -155,7 +155,7 @@ export async function parseVacanciesOfTheDay(resume) {
       const clickHref = clickLink.getAttribute('href') || '';
       vacancyId = extractVacancyId(clickHref);
     }
-    // Fallback: walk up and find any <a> with vacancyId param
+    // Fallback 1: walk up and find any <a> with vacancyId param
     if (!vacancyId) {
       const parentBlock = titleEl.closest('section') || titleEl.closest('[class*="vacancy-of-the-day"]') || titleEl.parentElement?.parentElement;
       if (parentBlock) {
@@ -164,6 +164,20 @@ export async function parseVacanciesOfTheDay(resume) {
           const id = extractVacancyId(link.getAttribute('href') || '');
           if (id) { vacancyId = id; break; }
         }
+      }
+    }
+
+    // Fallback 2: sponsored VotD (adsrv.hh.ru) — vacancy ID is in parent element's id attribute
+    // e.g. <div id="131408939">...<a href="adsrv.hh.ru/click?meta=..."><div data-qa="vacancy_of_the_day_title">...
+    if (!vacancyId) {
+      let ancestor = titleEl.parentElement;
+      while (ancestor && ancestor !== document.body) {
+        const attrId = ancestor.getAttribute('id');
+        if (attrId && /^\d{6,12}$/.test(attrId)) {
+          vacancyId = attrId;
+          break;
+        }
+        ancestor = ancestor.parentElement;
       }
     }
 

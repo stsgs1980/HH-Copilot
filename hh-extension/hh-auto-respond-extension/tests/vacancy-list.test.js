@@ -268,4 +268,28 @@ describe('parseVacanciesOfTheDay', () => {
     expect(vacancies[0].url).not.toContain('content.hh.ru');
     expect(vacancies[0].url).not.toContain('adsrv.hh.ru');
   });
+
+  it('extracts ID from parent element id attribute (sponsored/adsrv VotD)', async () => {
+    // Sponsored VotD: adsrv.hh.ru/click?meta=... — NO vacancyId in URL
+    // But parent <div id="131408939"> has the vacancy ID
+    const wrapper = document.createElement('div');
+    wrapper.id = '131408939';
+    wrapper.className = 'vacancy-of-the-day-sponsored';
+    wrapper.innerHTML = `
+      <div class="votd-inner">
+        <a href="https://adsrv.hh.ru/click?b=2091117&meta=pQNVxNN0As4hRaEh9OAXo1NOzBrasz1EJyRKTSE2OxtDc9TdIEjg">
+          <div data-qa="vacancy_of_the_day_title">Спонсируемая вакансия</div>
+        </a>
+        <div data-qa="vacancy_of_the_day_compensation">от 200 000 ₽</div>
+        <div data-qa="vacancy_of_the_day_company">Спонсор Corp</div>
+      </div>
+    `;
+    document.body.appendChild(wrapper);
+
+    const vacancies = await parseVacanciesOfTheDay(null);
+    expect(vacancies.length).toBe(1);
+    expect(vacancies[0].id).toBe('131408939');
+    expect(vacancies[0].url).toBe('https://hh.ru/vacancy/131408939');
+    expect(vacancies[0].title).toBe('Спонсируемая вакансия');
+  });
 });
