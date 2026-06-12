@@ -1415,3 +1415,22 @@ Stage Summary:
 - All 3 extraction strategies: click-URL vacancyId param, vacancyId query param, ancestor id attribute
 - 14/14 VotD should now parse on real hh.ru
 - Version: 1.9.28.0
+
+---
+Task ID: docs-sync-001
+Agent: main
+Time: 2026-06-13T00:35:00+03:00
+Task: Sync documentation — fix version gaps and add main page feature description
+
+Work Log:
+- popup/index.html: v1.9.23.0 → v1.9.28.0 (5 versions behind!)
+- README.md: version 1.9.25.0 → 1.9.28.0
+- README.md: added "Парсинг вакансий с главной страницы hh.ru" section
+- README.md: updated data flow section to include main page routing
+- README.md: updated manifest version in structure section
+- Root cause: code was pushed without updating docs — Rule 9.2 candidate
+
+Stage Summary:
+- 3 files updated: popup/index.html, README.md (5 edits), worklog.md
+- Gap was: 5 version increments without doc updates (1.9.24→1.9.28)
+- Need: AGENT_RULES rule that forces doc sync before push
