@@ -96,6 +96,17 @@ v1.0 | 2026-06-09 | anti-hallucination-guard
 - Only create binary files (docx/pdf/xlsx/pptx) when user EXPLICITLY says "make a docx" / "create a pdf" / etc.
 - VIOLATION OF THIS RULE IS NOT ACCEPTABLE
 
+## Rule 9.1: Windows user — ALWAYS give PowerShell commands
+
+- User's machine: **Windows** with **PowerShell**
+- ALL shell commands MUST be PowerShell-compatible (no bash-only syntax)
+- Git pull MUST include stash: `git stash && git pull && git stash pop`
+- After code push from server → user needs: `git stash && git pull && git stash pop && npm run build`
+- NEVER assume user can pull clean — local changes are normal, stash is mandatory
+- Path format: `C:\Users\stsgr\Desktop\HH-Copilot\hh-extension\hh-auto-respond-extension`
+- npm commands: same on Win, no changes needed
+- When giving instructions: ONE copy-paste block, not step-by-step prose
+
 ## Rule 10: No unsolicited initiative
 
 - Do NOT take initiative beyond what was explicitly requested

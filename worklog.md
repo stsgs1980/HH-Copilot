@@ -1337,3 +1337,17 @@ Stage Summary:
 - Main page (/) now parses: recommended vacancies (same as search) + "Vacancy of the Day" items
 - MutationObserver active on main page for dynamic content changes
 - Fallback title link extraction ensures parsing works even without standard data-qa attributes
+
+---
+Task ID: agent-rules-001
+Agent: main
+Task: Add Rule 9.1 (Windows/PowerShell) to AGENT_RULES.md
+
+Work Log:
+- Added Rule 9.1: Windows user — ALWAYS give PowerShell commands
+- Key points: stash before pull, one copy-paste block, no bash syntax, correct Windows path
+- Committed and pushed with v1.9.26.0 changes
+
+Stage Summary:
+- AGENT_RULES.md updated with Rule 9.1
+- No more "git pull" without stash — always "git stash && git pull && git stash pop"
