@@ -4689,7 +4689,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.24.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.25.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
         <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
@@ -4708,7 +4708,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.24.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.25.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
         <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
@@ -11761,6 +11761,22 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         }
         renderMyResumesPanel();
       }
+    } catch (e) {
+    }
+  }
+  if (!("update_url" in chrome.runtime.getManifest())) {
+    try {
+      const hmr = new WebSocket("ws://localhost:35729");
+      hmr.onmessage = (e) => {
+        if (e.data === "reload") {
+          mainLog.info("[hmr] Reload signal received \u2014 reloading extension");
+          chrome.runtime.reload();
+        }
+      };
+      hmr.onopen = () => mainLog.info("[hmr] Connected to dev server");
+      hmr.onerror = () => {
+      };
+      hmr.onclose = () => mainLog.info("[hmr] Disconnected from dev server");
     } catch (e) {
     }
   }

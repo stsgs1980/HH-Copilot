@@ -71,12 +71,86 @@ function copyStatic() {
   console.log(`[dist] v${VERSION} — static files copied to ${DIST}/`);
 }
 
+// ═══════════════════════════════════════════════════════════
+// Hot-Module Replacement (HMR) — dev-only WebSocket server
+// ═══════════════════════════════════════════════════════════
+// Flow: npm run watch → esbuild rebuilds → onEnd plugin →
+//       ws://localhost:35729 sends "reload" → Chrome extension
+//       calls chrome.runtime.reload() → zero clicks
+//
+// Requires: npm install ws   (optional — gracefully skipped if missing)
+// ═══════════════════════════════════════════════════════════
+
+const HMR_PORT = 35729;
+let hmrWss = null;
+
+async function startHMR() {
+  try {
+    const { WebSocketServer } = await import('ws');
+    hmrWss = new WebSocketServer({ port: HMR_PORT });
+    hmrWss.on('connection', (ws) => {
+      console.log(`[hmr] Client connected (${hmrWss.clients.size} total)`);
+      ws.on('close', () => {
+        console.log(`[hmr] Client disconnected (${hmrWss.clients.size} remaining)`);
+      });
+    });
+    hmrWss.on('error', (e) => {
+      if (e.code === 'EADDRINUSE') {
+        console.log(`[hmr] Port ${HMR_PORT} in use — hot-reload disabled`);
+        hmrWss = null;
+      } else {
+        console.warn(`[hmr] Error: ${e.message}`);
+      }
+    });
+    console.log(`[hmr] WebSocket server on ws://localhost:${HMR_PORT}`);
+  } catch (e) {
+    console.log('[hmr] "ws" not installed — hot-reload disabled. Run: npm install ws');
+    hmrWss = null;
+  }
+}
+
+function notifyHMR() {
+  if (!hmrWss) return;
+  let sent = 0;
+  for (const ws of hmrWss.clients) {
+    if (ws.readyState === 1) { ws.send('reload'); sent++; }
+  }
+  if (sent > 0) console.log(`[hmr] → reload sent to ${sent} client(s)`);
+}
+
+// esbuild plugin: after each successful rebuild → copy static + notify HMR
+const hmrPlugin = {
+  name: 'hmr-notify',
+  setup(build) {
+    build.onEnd((result) => {
+      if (result.errors.length === 0) {
+        copyStatic();
+        notifyHMR();
+      }
+    });
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// Build
+// ═══════════════════════════════════════════════════════════
+
 if (isWatch) {
   copyStatic();
-  const ctx1 = await esbuild.context(contentOptions);
-  const ctx2 = await esbuild.context(pageWorldOptions);
-  await Promise.all([ctx1.watch(), ctx2.watch()]);
-  console.log('[esbuild] Watching for changes...');
+  await startHMR();
+
+  const contentCtx = await esbuild.context({
+    ...contentOptions,
+    plugins: [hmrPlugin],
+  });
+
+  const pageWorldCtx = await esbuild.context({
+    ...pageWorldOptions,
+    plugins: [hmrPlugin],
+  });
+
+  await Promise.all([contentCtx.watch(), pageWorldCtx.watch()]);
+  console.log(`[esbuild] Watching for changes... (hot-reload on ws://localhost:${HMR_PORT})`);
 } else {
   rmSync(DIST, { recursive: true, force: true });
   copyStatic();

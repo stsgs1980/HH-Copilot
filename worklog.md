@@ -1288,3 +1288,27 @@ Work Log:
 Stage Summary:
 - 35 WCAG/typography fixes ready for push
 - Version 1.9.24.0
+
+---
+Task ID: hmr-001
+Agent: main
+Time: 2026-06-12T16:05:00Z
+Task: Implement Hot-Module Replacement (HMR) — auto-reload extension on file change
+
+Work Log:
+- Added WebSocket server (ws://localhost:35729) to esbuild.config.mjs — starts in watch mode
+- Server gracefully skips if `ws` package not installed (no crash, just log message)
+- Added esbuild plugin `hmr-notify` — onEnd hook sends "reload" to all connected clients
+- Added HMR client in main.js — connects to ws://localhost:35729, calls chrome.runtime.reload()
+- Client activates ONLY in dev mode (no update_url in manifest = unpacked extension)
+- Added `ws` ^8.18.0 to devDependencies in package.json
+- Version bump: 1.9.24.0 → 1.9.25.0
+- Updated README: HMR documentation in esbuild section, updated install instructions
+- Build verified: content.js 567.1kb, HMR code present in bundle
+
+Stage Summary:
+- One command dev flow: `npm run watch` → save file → extension auto-reloads
+- Zero overhead in production (HMR code skipped when update_url present)
+- Graceful degradation: without `ws` package, watch works normally without HMR
+- Files changed: esbuild.config.mjs, main.js, package.json, manifest.json, version.js, README.md
+- Version: 1.9.25.0

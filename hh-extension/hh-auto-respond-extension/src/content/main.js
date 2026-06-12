@@ -209,6 +209,35 @@ async function loadSavedResumes() {
   } catch (e) {}
 }
 
+// ═══════════════════════════════════════════════
+// Hot-Module Replacement (HMR) — dev-only
+// ═══════════════════════════════════════════════
+// In unpacked (dev) mode, connects to the WebSocket server started
+// by esbuild.config.mjs. When a file changes, esbuild rebuilds →
+// server sends "reload" → extension calls chrome.runtime.reload().
+//
+// Activates ONLY when 'update_url' is absent from manifest
+// (i.e. unpacked dev extension, not Chrome Web Store).
+// Zero overhead in production.
+// ═══════════════════════════════════════════════
+
+if (!('update_url' in chrome.runtime.getManifest())) {
+  try {
+    const hmr = new WebSocket('ws://localhost:35729');
+    hmr.onmessage = (e) => {
+      if (e.data === 'reload') {
+        mainLog.info('[hmr] Reload signal received — reloading extension');
+        chrome.runtime.reload();
+      }
+    };
+    hmr.onopen = () => mainLog.info('[hmr] Connected to dev server');
+    hmr.onerror = () => {}; // server not running — that's fine
+    hmr.onclose = () => mainLog.info('[hmr] Disconnected from dev server');
+  } catch (e) {
+    // WebSocket not available — ignore
+  }
+}
+
 // BOOT
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
