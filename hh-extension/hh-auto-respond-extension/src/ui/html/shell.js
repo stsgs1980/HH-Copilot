@@ -42,7 +42,7 @@ export function getSidebarHTML() {
       <span style="font-size:12px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
-        <span style="font-size:12px;color:#71717a;">chrome.storage</span>
+        <span style="font-size:12px;color:#71717a;">локально</span>
       </div>
     </div>`;
 }
@@ -63,7 +63,7 @@ export function getLoggedInHTML(userName) {
       <span style="font-size:12px;color:#71717a;">HH Copilot v${process.env.VERSION}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
-        <span style="font-size:12px;color:#71717a;">chrome.storage</span>
+        <span style="font-size:12px;color:#71717a;">локально</span>
       </div>
     </div>`;
 }
@@ -109,6 +109,6 @@ function getTabBarHTML() {
     { id: 'stats', label: 'Статистика', icon: ICONS.chart },
   ];
   return `<div class="har-tabbar" role="tablist" aria-label="Основные разделы">${tabs.map((t, i) =>
-    `<button class="tab-btn ${t.id === 'overview' ? 'active' : ''}" role="tab" aria-selected="${t.id === 'overview'}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === 'overview' ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`
+    `<button class="tab-btn ${t.id === 'overview' ? 'active' : ''}" data-tab="${t.id}" role="tab" aria-selected="${t.id === 'overview'}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === 'overview' ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`
   ).join('')}</div>`;
 }

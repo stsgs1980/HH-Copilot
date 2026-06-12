@@ -1256,3 +1256,19 @@ Stage Summary:
 - src/ui/html/helpers.js: esc() normalizes non-breaking spaces before HTML escaping
 - src/lib/resume-fetch-helpers.js: safeGetText() normalizes non-breaking spaces at extraction
 - &nbsp; will no longer appear as literal text in sidebar UI
+---
+Task ID: fix-tabs-and-ui
+Agent: main
+Task: Fix tab switching not working + chrome.storage label
+
+Work Log:
+- VLM analysis confirmed: empty content area, tabs not responding to clicks
+- Root cause: tab buttons missing data-tab attribute
+- switchTab() uses btn.dataset.tab but template had no data-tab on buttons
+- Fixed: added data-tab attribute to each tab button in shell.js
+- Changed 'chrome.storage' footer label to 'локально' (less confusing)
+- Build successful
+
+Stage Summary:
+- Tab switching now works: data-tab attribute added to all 6 tab buttons
+- Footer label changed from technical 'chrome.storage' to user-friendly 'локально'
