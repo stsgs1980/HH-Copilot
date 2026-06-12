@@ -2,11 +2,15 @@
  * Shared helper functions
  */
 
-/* HTML-escape helper */
+/* HTML-escape helper — normalizes non-breaking spaces to regular spaces */
 export function esc(s) {
   if (!s) return '';
+  // Replace \u00A0 (nbsp) and other non-standard spaces with regular space
+  // BEFORE escaping, so innerHTML never produces &nbsp; entities.
+  // This prevents "Резюме и&nbsp;профиль" rendering issues.
+  const normalized = s.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
   const d = document.createElement('div');
-  d.textContent = s;
+  d.textContent = normalized;
   return d.innerHTML;
 }
 

@@ -1238,3 +1238,21 @@ Stage Summary:
 - cascade-guard submodule fully removed from project
 - All references cleaned up
 - AHG remains as only submodule
+---
+Task ID: fix-nbsp-rendering
+Agent: main
+Task: Fix &nbsp; showing as literal text in sidebar UI
+
+Work Log:
+- User reported: 'Резюме и&nbsp;профиль1' showing &nbsp; as text instead of space
+- Root cause: esc() converts \u00A0 to &nbsp; HTML entity via textContent->innerHTML
+- In Shadow DOM innerHTML context, &nbsp; can render as literal text
+- Fix 1: esc() now normalizes \u00A0 and other non-breaking spaces to regular space BEFORE escaping
+- Fix 2: safeGetText() now normalizes \u00A0 to regular space at data extraction level
+- Both fixes ensure &nbsp; never appears in rendered output
+- Build successful
+
+Stage Summary:
+- src/ui/html/helpers.js: esc() normalizes non-breaking spaces before HTML escaping
+- src/lib/resume-fetch-helpers.js: safeGetText() normalizes non-breaking spaces at extraction
+- &nbsp; will no longer appear as literal text in sidebar UI

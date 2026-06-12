@@ -50,7 +50,10 @@ export function htmlToDoc(html) {
 export function safeGetText(el, fallback) {
   fallback = fallback || '';
   if (!el || !(el instanceof Element)) return fallback;
-  const text = (el.textContent || '').trim();
+  // textContent converts HTML entities (\u00A0 for &nbsp;) to chars.
+  // Also normalize any remaining non-breaking spaces to regular spaces.
+  let text = (el.textContent || '').trim();
+  text = text.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
   return text.length > 0 ? text : fallback;
 }
 

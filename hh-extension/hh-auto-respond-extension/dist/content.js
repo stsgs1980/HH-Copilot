@@ -3904,8 +3904,9 @@ html { font-size: 14px; }
   // src/ui/html/helpers.js
   function esc(s) {
     if (!s) return "";
+    const normalized = s.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ");
     const d = document.createElement("div");
-    d.textContent = s;
+    d.textContent = normalized;
     return d.innerHTML;
   }
   function scoreClass(s) {
@@ -7371,7 +7372,8 @@ html { font-size: 14px; }
   function safeGetText2(el, fallback) {
     fallback = fallback || "";
     if (!el || !(el instanceof Element)) return fallback;
-    const text = (el.textContent || "").trim();
+    let text = (el.textContent || "").trim();
+    text = text.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ");
     return text.length > 0 ? text : fallback;
   }
   function extractResumeLinks(anchorList) {
