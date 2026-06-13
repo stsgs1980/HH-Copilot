@@ -1767,3 +1767,19 @@ Work Log:
 Stage Summary:
 - AHG submodule: 626d6e0 → 0cbb844
 - No more local hacks needed — upstream includes our fixes
+
+---
+Task ID: 10
+Agent: main
+Task: Update AHG submodule to v2.3.0 per user instructions
+
+Work Log:
+- git submodule update --init --remote: 0cbb844 → 168cb85
+- bash anti-hallucination-guard/update.sh: already up to date
+- Rule 16 verified: upstream write protection present
+- AHG scripts in scripts/: present (ahg.sh, validate.sh, audit.sh, check-agent.sh)
+
+Stage Summary:
+- AHG submodule updated to 168cb85 (v2.3.0)
+- Rule 16: upstream write protection in place
+- No modifications to AHG — only using as designed
