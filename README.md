@@ -1,234 +1,234 @@
 # HH Copilot -- Chrome Extension
 
-**Версия:** 1.9.28.0
-**Тип:** Расширение для Chrome (Manifest V3)
-**Целевая платформа:** hh.ru (Magritte дизайн-система)
-**Лицензия:** Приватный проект. Все права защищены.
+**Version:** 1.9.28.0
+**Type:** Chrome Extension (Manifest V3)
+**Target Platform:** hh.ru (Magritte design system)
+**License:** Private project. All rights reserved.
 
 
-## 1. HH Copilot -- краткое описание
+## 1. HH Copilot -- Brief Description
 
-HH Copilot -- это браузерное расширение для автоматизации поиска работы на портале hh.ru. Проект решает задачу рутинного отклика на вакансии: парсит карточки вакансий со страницы поиска, извлекает данные резюме пользователя, показывает результаты во встроенной боковой панели и позволяет откликаться на подходящие позиции в один клик или в полностью автоматическом режиме.
+HH Copilot is a browser extension for automating job search on the hh.ru portal. The project solves the problem of routine responses to vacancies: it parses vacancy cards from the search page, extracts user resume data, shows results in a built-in sidebar, and allows responding to suitable positions with one click or in fully automatic mode.
 
-Расширение работает исключительно в браузере пользователя. Не требуется серверная инфраструктура, база данных, Telegram-бот или какие-либо внешние API. Все данные хранятся локально в chrome.storage.local. Пользователь использует свою текущую сессию hh.ru, поэтому не нужна дополнительная авторизация через OAuth, OTP или 2FA. Расширение читает DOM-дерево страницы и взаимодействует с элементами так же, как это делал бы живой пользователь, что делает его неотличимым от ручных действий.
+The extension runs exclusively in the user's browser. No server infrastructure, database, Telegram bot, or any external APIs are required. All data is stored locally in chrome.storage.local. The user uses their current hh.ru session, so no additional authorization via OAuth, OTP, or 2FA is needed. The extension reads the page DOM tree and interacts with elements the same way a live user would, making it indistinguishable from manual actions.
 
-Проект изначально разрабатывался как часть большой системы автоматизации (Next.js + FastAPI + Playwright + Celery + Telegram), однако закрытие Applicant API hh.ru в декабре 2025 года сделало серверный подход неработоспособным. Playwright детектировался anti-bot системой по TLS-отпечатку, navigator.webdriver и поведенческой биометрии. Расширение решает все эти проблемы: оно работает в настоящем браузере, использует настоящие cookies, настоящие клики и настоящую навигацию. Никаких скрытых маркеров, никаких headless-сессий, никаких подмен user-agent.
+The project was originally developed as part of a large automation system (Next.js + FastAPI + Playwright + Celery + Telegram), but the closure of the hh.ru Applicant API in December 2025 made the server-side approach unworkable. Playwright was detected by the anti-bot system via TLS fingerprint, navigator.webdriver, and behavioral biometrics. The extension solves all these problems: it runs in a real browser, uses real cookies, real clicks, and real navigation. No hidden markers, no headless sessions, no user-agent spoofing.
 
-Целевая аудитория -- соискатели, которые рассылают десятки откликов в день и хотят ускорить этот процесс без потери качества. Расширение не заменяет человека полностью, а автоматизирует механическую часть: поиск, фильтрацию, заполнение полей, отправку отклика. Решение о том, на какие вакансии откликаться, принимает пользователь (ручной режим) или алгоритм скоринга (полуавтоматический и автоматический режимы).
+The target audience is job seekers who send dozens of responses per day and want to speed up this process without losing quality. The extension doesn't replace the person entirely, but automates the mechanical part: searching, filtering, filling in fields, sending responses. The decision about which vacancies to respond to is made by the user (manual mode) or the scoring algorithm (semi-automatic and automatic modes).
 
-Текущая версия (1.9.28.0) -- модульная архитектура на базе esbuild. Content script собран из 134 JS-модулей в каталоге src/. Парсинг резюме (13+ полей: имя, должность, зарплата, пол, возраст, город, навыки с уровнями, опыт, образование, языки, контакты, условия занятости, доп. информация), парсинг вакансий со страницы поиска + главной страницы hh.ru (рекомендованные + «Вакансия дня») + детальный парсер вакансий, FAB-кнопка с зелёной пульсацией, Shadow DOM sidebar (720px, 6 вкладок), авторизация, SPA-навигация с pushState патчем, двухуровневое определение видимости резюме (список + детальная страница, 6 стратегий), радио-кнопки для выбора действующего резюме, консолидированный UI (↻ для перепарсинга, контекстная CTA «Взять со страницы»), многостратегийный парсинг опыта (6 стратегий), пятикомпонентный движок скоринга (навыки 40%, зарплата 15%, опыт 15%, должность 15%, локация 15%) с производными навыками из опыта работы, синонимами навыков и синонимами должностей, анализ качества резюме (ATS-совместимость, красные флаги, рекомендации по улучшению), guided tour для новых пользователей, автоматический отклик (orchestrator + queue + actions) -- всё это работает. AI-сопроводительные письма и парсер переговоров -- заглушки, планируются в следующих фазах.
-
-
-## 2. Возможности
-
-### Что умеет расширение сейчас
-
-**Модульная сборка (esbuild).** Исходный код находится в каталоге src/ и состоит из 134 ES-модулей, организованных по слоям: lib/ (библиотеки, 58 файлов), parsers/ (парсеры, 21 файл), engine/ (бизнес-логика, 4 файла), services/ (сервисы, 1 файл), ui/ (интерфейс, 44 файла), content/ (5 файлов). Сборщик esbuild объединяет модули в единый IIFE-бандл content.js (Manifest V3 не поддерживает ES modules в content_scripts). Дополнительно инжектируется page-world.js в MAIN world для SPA-навигации. Команды: `npm run build` (сборка), `npm run watch` (разработка с авто-пересборкой).
-
-**Парсинг вакансий со страницы поиска.** Расширение находит все карточки вакансий на странице hh.ru/search/vacancy и извлекает из каждой: название позиции, название компании, зарплату, локацию, требуемый опыт, теги навыков, URL и идентификатор. Данные проходят валидацию (проверка названия, компании, URL, id), фильтруются по чёрному списку компаний и списку уже откликнутых вакансий.
-
-**Парсинг вакансий с главной страницы hh.ru.** При открытии корневой страницы hh.ru (/) расширение парсит два блока вакансий: (1) рекомендованные вакансии — те же селекторы vacancy-serp__vacancy что и на странице поиска, с поддержкой ~= word-match для space-separated data-qa атрибутов и fallback по href для ссылок без data-qa; (2) «Вакансия дня» — вакансии с data-qa="vacancy_of_the_day_title", где ID вакансии извлекается тремя стратегиями: из click-URL параметра vacancyId= (content.hh.ru), из vacancyId= в query params (fallback), из id атрибута родительского элемента (спонсированные adsrv.hh.ru вакансии). Все VotD получают канонический URL https://hh.ru/vacancy/{id}. Результаты обоих блоков объединяются: рекомендованные + VotD.
-
-**Парсинг резюме (13 полей).** При открытии страницы конкретного резюме (/resume/{hash}) расширение извлекает: имя, должность, желаемую зарплату, пол, возраст, город, навыки с уровнями владения (Продвинутый/Средний/Начальный), опыт работы (компания, позиция, период, описание), образование (название, факультет, год окончания, степень), языки с уровнями, контакты, дополнительную информацию. Для каждого поля есть fallback-стратегия: сначала data-qa селекторы, затем BEM-классы Bloko, затем текстовый анализ содержимого. Встроенный диагностический инструмент diagnoseResumeDOM() выводит полный дамп DOM в консоль для подбора селекторов. Парсинг резюме декомпозирован на 14 файлов в src/parsers/resume-detail/. Общие константы (очистка заголовков, определение видимости, нормализация пробелов) вынесены в src/lib/resume-constants.js.
-
-**Список резюме и синхронизация.** На странице /applicant/resumes расширение находит все резюме пользователя и показывает их в sidebar. Кнопка «Синхронизировать все» загружает все резюме разом. Каждое резюме отображает статус видимости: «Видимо» (зелёный бейдж), «Скрыто» (жёлтый бейдж). Определение видимости использует двухуровневый подход: (1) со страницы списка резюме (менее надёжный, client-side рендеринг не содержит индикаторов), (2) со страницы детального просмотра резюме (более надёжный, SSR содержит data-qa атрибуты и кнопки). Шесть стратегий определения видимости со страницы резюме: data-qa атрибуты, текст кнопок, body text, raw HTML с &nbsp; нормализацией, script JSON, data-qa наличие. Данные со страницы резюме переопределяют данные списка. Выбор действующего резюме — радио-кнопки в списке «Все резюме» (клик по карточке). Кнопка ↻ на активной карточке для перепарсинга. Миграция старых данных в chrome.storage автоматически добавляет поле visibility при загрузке.
-
-**Встроенная панель (FAB + Sidebar).** Плавающая кнопка (FAB) в правом нижнем углу экрана имеет три состояния: серая (проверка авторизации), красная (не авторизован), зелёная с пульсацией (авторизован). Все CSS-свойства FAB устанавливаются через `style.setProperty(prop, value, 'important')` для защиты от стилей hh.ru. При клике открывается боковая панель шириной 720px с 6 вкладками: Обзор, Резюме, Вакансии, Переговоры, Настройки, Статистика. Панель изолирована через Shadow DOM (mode: closed), поэтому стили hh.ru не влияют на её отображение, а стили панели -- на hh.ru.
-
-**Проверка авторизации.** Пассивная авторизация через checkAuth() с поллингом DOM каждые 2 секунды + fallback по cookies (hhruuid, _HH-RU, hhtoken). Основной селектор -- `[data-qa="mainmenu_applicant"]`. При авторизации извлекается и отображается username пользователя. Auth gate блокирует функциональность панели для неавторизованных пользователей.
-
-**SPA-навигация.** hh.ru -- Single Page Application на React. При переходе на следующую страницу поиска URL меняется, но страница не перезагружается. MutationObserver с debounce в 1 секунду отслеживает изменения в DOM и автоматически перепарсирует вакансии.
-
-**Client-side фильтрация вакансий.** Фильтрация в реальном времени: текстовый поиск по названию/компании, фильтр по статусу (new/applied/blacklisted), фильтр по диапазону match score.
-
-**Blacklist management.** Добавление/удаление компаний в чёрный список через UI панели. Вакансии из чёрного списка скрываются. Действия логируются через toast-уведомления.
-
-**CustomEvent bridge.** Коммуникация между UI и бизнес-логикой через события: hh-ar-apply, hh-ar-apply-all, hh-ar-refresh, hh-ar-toggle-status, hh-ar-load-resume. Это позволяет связывать panel events с engine actions без прямой зависимости UI от engine.
-
-**Popup-дашборд.** Четыре вкладки: статистика (отклики сегодня, приглашения, ошибки, всего), настройки (режим работы, лимиты, интервалы, отображение), шаблоны сопроводительного письма (с переменными {name}, {position}, {company}, {skills}), логи (последние 50 записей). Popup -- минимальный redirect на FAB.
-
-**Anti-hallucination.** Трёхуровневая система верификации: DOM Verification (проверка существования и видимости элемента), Data Validation (проверка типов и форматов данных), Action Verification (проверка предусловий и результатов действий). Все функции возвращают конкретные типы (string, null, boolean, number), никогда undefined. Модуль src/lib/anti-hallucination.js.
-
-**Rate Limiter.** Token bucket с адаптивным замедлением: 200 откликов/день, 30/час, минимум 30 секунд между действиями, максимум 5 подряд с паузой 2 минуты. При получении 429/капчи/замедленного ответа адаптивный фактор увеличивается (x2 при 429, x1.5 при slow, x1.3 при captcha). Модуль src/lib/rate-limiter.js.
-
-**Version sync.** Версия синхронизирована между manifest.json, package.json, popup/index.html и src/lib/version.js. Единый источник истины -- manifest.json (esbuild читает его и инжектит process.env.VERSION). Модуль src/lib/version.js содержит константу для справки, но не импортируется никаким модулем.
-
-**Тесты.** 67 модульных тестов на базе Vitest + jsdom. Покрытие: anti-hallucination (16 тестов — extractVacancyId, validateVacancyData), parse-experience (13 — все форматы строк опыта), selectors (9 — ~= word-match, VotD селекторы), vacancy-list (14 — search page, main page, VotD, sponsored VotD, canonical URL), routing (10 — все маршруты включая main page). Запуск: `npm test`, watch-режим: `npm run test:watch`.
-
-**Hot-reload для разработки.** WebSocket сервер (ws://localhost:35729) запускается командой `npm run watch`. При пересборке расширение автоматически перезагружается через chrome.runtime.reload(). Устраняет ручной обновление в chrome://extensions.
-
-### Что НЕ работает (заглушки, планируются в следующих фазах)
-
-**AI-сопроводительные письма.** Сервисный модуль -- заглушка (src/services/index.js, 3 строки). Промпты подготовлены в docs/reference-prompts.py. Планируется в Phase 4.
-
-**Автоответы в переговорах.** Отсутствует. Планируется в Phase 4.
-
-**Тёмная тема.** Отсутствует. Планируется в Phase 6.
-
-**KPI dashboard.** Wireframe вкладок существует, но данные демо. Планируется в Phase 5.
-
-**Apply modal с 5-шаговым прогрессом.** Отсутствует. Планируется в Phase 3.
+Current version (1.9.28.0) features a modular architecture based on esbuild. The content script is built from 134 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI (↻ for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions) -- all of this is working. AI cover letters and negotiations parser are stubs, planned for subsequent phases.
 
 
-## 3. Установка и запуск
+## 2. Features
 
-### Сборка из исходников
+### What the extension can do now
 
-Расширение собирается с помощью esbuild. Исходные модули находятся в src/, сборщик генерирует единый IIFE-бандл content.js в корне расширения.
+**Modular build (esbuild).** The source code is located in the src/ directory and consists of 134 ES modules organized by layers: lib/ (libraries, 58 files), parsers/ (parsers, 21 files), engine/ (business logic, 4 files), services/ (services, 1 file), ui/ (interface, 44 files), content/ (5 files). The esbuild bundler combines modules into a single IIFE bundle content.js (Manifest V3 does not support ES modules in content_scripts). Additionally, page-world.js is injected into the MAIN world for SPA navigation. Commands: `npm run build` (build), `npm run watch` (development with auto-rebuild).
+
+**Vacancy parsing from the search page.** The extension finds all vacancy cards on the hh.ru/search/vacancy page and extracts from each: position title, company name, salary, location, required experience, skill tags, URL, and identifier. Data is validated (title, company, URL, id checks), filtered by company blacklist and list of already-applied vacancies.
+
+**Vacancy parsing from the hh.ru main page.** When the root page hh.ru (/) is opened, the extension parses two vacancy blocks: (1) recommended vacancies -- the same vacancy-serp__vacancy selectors as on the search page, with ~= word-match support for space-separated data-qa attributes and fallback by href for links without data-qa; (2) "Vacancy of the Day" -- vacancies with data-qa="vacancy_of_the_day_title", where the vacancy ID is extracted using three strategies: from click-URL parameter vacancyId= (content.hh.ru), from vacancyId= in query params (fallback), from the id attribute of the parent element (sponsored adsrv.hh.ru vacancies). All VotD vacancies receive the canonical URL https://hh.ru/vacancy/{id}. Results from both blocks are merged: recommended + VotD.
+
+**Resume parsing (13 fields).** When a specific resume page is opened (/resume/{hash}), the extension extracts: name, position, desired salary, gender, age, city, skills with proficiency levels (Advanced/Intermediate/Beginner), work experience (company, position, period, description), education (institution name, faculty, graduation year, degree), languages with levels, contacts, additional information. Each field has a fallback strategy: first data-qa selectors, then Bloko BEM classes, then textual content analysis. The built-in diagnostic tool diagnoseResumeDOM() outputs a complete DOM dump to the console for selector development. Resume parsing is decomposed into 14 files in src/parsers/resume-detail/. Common constants (title cleanup, visibility detection, whitespace normalization) are extracted to src/lib/resume-constants.js.
+
+**Resume list and synchronization.** On the /applicant/resumes page, the extension finds all user resumes and displays them in the sidebar. The "Sync all" button loads all resumes at once. Each resume displays its visibility status: "Visible" (green badge), "Hidden" (yellow badge). Visibility detection uses a two-level approach: (1) from the resume list page (less reliable, client-side rendering lacks indicators), (2) from the resume detail page (more reliable, SSR contains data-qa attributes and buttons). Six strategies for visibility detection from the resume page: data-qa attributes, button text, body text, raw HTML with &nbsp; normalization, script JSON, data-qa presence. Data from the resume page overrides list data. Active resume selection uses radio buttons in the "All resumes" list (click on card). The ↻ button on the active card triggers re-parsing. Migration of old data in chrome.storage automatically adds the visibility field on load.
+
+**Built-in panel (FAB + Sidebar).** The floating button (FAB) in the bottom-right corner of the screen has three states: gray (checking authorization), red (not authorized), green with pulsation (authorized). All FAB CSS properties are set via `style.setProperty(prop, value, 'important')` to protect against hh.ru styles. Clicking opens a sidebar panel 720px wide with 6 tabs: Overview, Resumes, Vacancies, Negotiations, Settings, Statistics. The panel is isolated via Shadow DOM (mode: closed), so hh.ru styles don't affect its rendering, and panel styles don't affect hh.ru.
+
+**Authorization check.** Passive authorization via checkAuth() with DOM polling every 2 seconds + cookie fallback (hhruuid, _HH-RU, hhtoken). Primary selector -- `[data-qa="mainmenu_applicant"]`. Upon authorization, the user's username is extracted and displayed. The auth gate blocks panel functionality for unauthorized users.
+
+**SPA navigation.** hh.ru is a Single Page Application built on React. When navigating to the next search page, the URL changes but the page doesn't reload. MutationObserver with 1-second debounce tracks DOM changes and automatically re-parses vacancies.
+
+**Client-side vacancy filtering.** Real-time filtering: text search by title/company, status filter (new/applied/blacklisted), match score range filter.
+
+**Blacklist management.** Add/remove companies to the blacklist via the panel UI. Blacklisted vacancies are hidden. Actions are logged via toast notifications.
+
+**CustomEvent bridge.** Communication between UI and business logic via events: hh-ar-apply, hh-ar-apply-all, hh-ar-refresh, hh-ar-toggle-status, hh-ar-load-resume. This allows binding panel events to engine actions without a direct dependency of UI on engine.
+
+**Popup dashboard.** Four tabs: statistics (responses today, invitations, errors, total), settings (operation mode, limits, intervals, display), cover letter templates (with variables {name}, {position}, {company}, {skills}), logs (last 50 entries). Popup is a minimal redirect to FAB.
+
+**Anti-hallucination.** Three-level verification system: DOM Verification (checking element existence and visibility), Data Validation (checking data types and formats), Action Verification (checking preconditions and action results). All functions return concrete types (string, null, boolean, number), never undefined. Module src/lib/anti-hallucination.js.
+
+**Rate Limiter.** Token bucket with adaptive slowdown: 200 responses/day, 30/hour, minimum 30 seconds between actions, maximum 5 consecutive with a 2-minute pause. When receiving 429/captcha/slow response, the adaptive factor increases (x2 on 429, x1.5 on slow, x1.3 on captcha). Module src/lib/rate-limiter.js.
+
+**Version sync.** Version is synchronized between manifest.json, package.json, popup/index.html, and src/lib/version.js. The single source of truth is manifest.json (esbuild reads it and injects process.env.VERSION). Module src/lib/version.js contains the constant for reference but is not imported by any module.
+
+**Tests.** 67 unit tests based on Vitest + jsdom. Coverage: anti-hallucination (16 tests -- extractVacancyId, validateVacancyData), parse-experience (13 -- all experience string formats), selectors (9 -- ~= word-match, VotD selectors), vacancy-list (14 -- search page, main page, VotD, sponsored VotD, canonical URL), routing (10 -- all routes including main page). Run: `npm test`, watch mode: `npm run test:watch`.
+
+**Hot-reload for development.** WebSocket server (ws://localhost:35729) is started by `npm run watch`. On rebuild, the extension automatically reloads via chrome.runtime.reload(). Eliminates manual refresh in chrome://extensions.
+
+### What does NOT work (stubs, planned for subsequent phases)
+
+**AI cover letters.** Service module is a stub (src/services/index.js, 3 lines). Prompts are prepared in docs/reference-prompts.py. Planned for Phase 4.
+
+**Auto-replies in negotiations.** Not implemented. Planned for Phase 4.
+
+**Dark theme.** Not implemented. Planned for Phase 6.
+
+**KPI dashboard.** Tab wireframes exist but data is demo. Planned for Phase 5.
+
+**Apply modal with 5-step progress.** Not implemented. Planned for Phase 3.
+
+
+## 3. Installation and Setup
+
+### Building from source
+
+The extension is built using esbuild. Source modules are located in src/, the bundler generates a single IIFE bundle content.js in the extension root.
 
 ```
 git clone https://github.com/stsgs1980/HH-Copilot.git
 cd HH-Copilot
-git submodule update --init   # инициализация подмодуля (anti-hallucination-guard)
+git submodule update --init   # initialize submodule (anti-hallucination-guard)
 cd hh-extension/hh-auto-respond-extension
-npm install          # установка esbuild + ws (devDependencies)
-npm run build        # сборка content.js из src/content/main.js
-npm test             # запуск 67 модульных тестов (Vitest + jsdom)
+npm install          # install esbuild + ws (devDependencies)
+npm run build        # build content.js from src/content/main.js
+npm test             # run 67 unit tests (Vitest + jsdom)
 ```
 
-Для разработки с авто-пересборкой и hot-reload (расширение перезагружается автоматически):
+For development with auto-rebuild and hot-reload (extension reloads automatically):
 
 ```
-npm install ws       # один раз — WebSocket сервер для hot-reload
-npm run watch        # авто-пересборка + hot-reload на ws://localhost:35729
+npm install ws       # once -- WebSocket server for hot-reload
+npm run watch        # auto-rebuild + hot-reload on ws://localhost:35729
 ```
 
-Собранные файлы расширения (в каталоге dist/): content.js (бандл), page-world.js (MAIN world скрипт), manifest.json, background/index.js (service worker), popup/index.html (popup, redirect на FAB), icons/.
+Built extension files (in the dist/ directory): content.js (bundle), page-world.js (MAIN world script), manifest.json, background/index.js (service worker), popup/index.html (popup, redirect to FAB), icons/.
 
-### Загрузка в Chrome
+### Loading in Chrome
 
-Шаг 1. Откройте Chrome и перейдите по адресу chrome://extensions.
+Step 1. Open Chrome and navigate to chrome://extensions.
 
-Шаг 2. В правом верхнем углу переключите тумблер "Режим разработчика" (Developer mode) в положение ВКЛ.
+Step 2. In the top-right corner, toggle "Developer mode" ON.
 
-Шаг 3. Нажмите кнопку "Загрузить распакованное расширение" (Load unpacked).
+Step 3. Click the "Load unpacked" button.
 
-Шаг 4. В открывшемся диалоге выберите папку hh-auto-respond-extension/dist (ту, что содержит собранный manifest.json).
+Step 4. In the dialog, select the hh-auto-respond-extension/dist folder (the one containing the built manifest.json).
 
-Шаг 5. Расширение появится в списке с названием "HH Copilot". Убедитесь, что тумблер включён.
+Step 5. The extension will appear in the list with the name "HH Copilot". Make sure the toggle is enabled.
 
-### Проверка работоспособности
+### Verifying functionality
 
-После загрузки расширения откройте https://hh.ru и авторизуйтесь (если ещё не авторизованы). На правом краю экрана появится плавающая круглая кнопка (FAB). Через 1-2 секунды она должна изменить цвет с серого на зелёный (с пульсацией), что означает успешное определение авторизации. Если кнопка стала красной -- авторизация не обнаружена, проверьте что вы вошли на сайт.
+After loading the extension, open https://hh.ru and log in (if not already logged in). A floating round button (FAB) will appear on the right edge of the screen. Within 1-2 seconds it should change color from gray to green (with pulsation), indicating successful authorization detection. If the button turns red -- authorization was not detected, check that you are logged into the site.
 
-Перейдите на страницу поиска вакансий: https://hh.ru/search/vacancy?text=Python. Нажмите FAB. Откроется боковая панель шириной 720px с 6 вкладками. На вкладке "Вакансии" отобразится список найденных вакансий. Каждая карточка содержит название позиции, компанию, зарплату, локацию и кнопки управления.
+Navigate to the vacancy search page: https://hh.ru/search/vacancy?text=Python. Click the FAB. A sidebar panel 720px wide with 6 tabs will open. The "Vacancies" tab will display the list of found vacancies. Each card contains the position title, company, salary, location, and control buttons.
 
-Для проверки парсинга резюме перейдите на страницу одного из своих резюме (https://hh.ru/resume/{hash}). Откройте DevTools (F12), перейдите на вкладку Console. В фильтре введите HH-AR. Вы увидите логи парсинга с подробной информацией о найденных и отсутствующих полях. В sidebar откройте вкладку "Резюме" -- там отображаются все распарсенные данные.
+To verify resume parsing, navigate to one of your resumes (https://hh.ru/resume/{hash}). Open DevTools (F12), go to the Console tab. Type HH-AR in the filter. You will see parsing logs with detailed information about found and missing fields. In the sidebar, open the "Resumes" tab -- all parsed data will be displayed there.
 
-### Отладка
+### Debugging
 
-Content script логирует все действия с префиксом [HH-AR]. Основные модули: Parser, Resume, Panel, Auth. Для диагностики DOM можно вызвать функцию diagnoseResumeDOM() из консоли (также доступна через window.__hhDiagnose). Эта функция выводит полный дамп всех data-qa атрибутов на странице, что полезно при обновлении вёрстки hh.ru.
+The content script logs all actions with the [HH-AR] prefix. Main modules: Parser, Resume, Panel, Auth. For DOM diagnostics, you can call the diagnoseResumeDOM() function from the console (also available via window.__hhDiagnose). This function outputs a complete dump of all data-qa attributes on the page, which is useful when hh.ru layout is updated.
 
-Service Worker можно проверить на странице chrome://extensions -- найдите расширение, нажмите "Service Worker" под его названием. Storage можно просмотреть, нажав "Storage" на карточке расширения.
+The Service Worker can be inspected on the chrome://extensions page -- find the extension, click "Service Worker" under its name. Storage can be viewed by clicking "Storage" on the extension card.
 
 
-## 4. Структура проекта
+## 4. Project Structure
 
-### Корень репозитория
+### Repository root
 
 ```
 /
-  hh-extension/hh-auto-respond-extension/   -- код расширения
-  docs/wireframes/                            -- UI-прототипы (FAB panel + landing)
-    hh-copilot-documentation.md               -- документация wireframe (399 строк)
-    hh-copilot-fab-panel.html                 -- интерактивный wireframe FAB-панели
-    hh-copilot-landing.html                   -- landing-страница прототип
-    resume-tab-reference.png                  -- референс вкладки «Резюме»
+  hh-extension/hh-auto-respond-extension/   -- extension code
+  docs/wireframes/                            -- UI prototypes (FAB panel + landing)
+    hh-copilot-documentation.md               -- wireframe documentation (399 lines)
+    hh-copilot-fab-panel.html                 -- interactive FAB panel wireframe
+    hh-copilot-landing.html                   -- landing page prototype
+    resume-tab-reference.png                  -- "Resumes" tab reference
 
   anti-hallucination-guard/                    -- git submodule (anti-hallucination guard)
-  cascade-state.json                           -- 40 задач, 8 фаз (P0-P6 + P0.5)
-  AGENT_RULES.md                               -- правила AHG + Cascade
-  cascade-cli.sh                               -- CLI навигации по задачам
-  cascade-init.sh                              -- интерактивный генератор состояния
+  cascade-state.json                           -- 40 tasks, 8 phases (P0-P6 + P0.5)
+  AGENT_RULES.md                               -- AHG + Cascade rules
+  cascade-cli.sh                               -- task navigation CLI
+  cascade-init.sh                              -- interactive state generator
   scripts/
-    validate.sh                                -- проверка чистоты репозитория
-    check-agent.sh                             -- мониторинг агента
-    audit.sh                                   -- построчная оценка
-  tools/verify-docs/                           -- инструмент верификации документации
+    validate.sh                                -- repository cleanliness check
+    check-agent.sh                             -- agent monitoring
+    audit.sh                                   -- line-by-line estimation
+  tools/verify-docs/                           -- documentation verification tool
   .git/hooks/
-    pre-commit                                 -- блокирует коммит без свежего worklog
-    pre-push                                   -- запускает validate.sh перед push
-  worklog.md                                   -- журнал работы (обязателен для коммитов)
-  README.md                                    -- этот файл
+    pre-commit                                 -- blocks commit without fresh worklog
+    pre-push                                   -- runs validate.sh before push
+  worklog.md                                   -- work log (required for commits)
+  README.md                                    -- this file
 ```
 
-### Код расширения (hh-extension/hh-auto-respond-extension/)
+### Extension code (hh-extension/hh-auto-respond-extension/)
 
 ```
-manifest.json                  -- Manifest V3 конфигурация (v1.9.28.0, источник истины для версии)
-package.json                   -- esbuild, скрипты build/watch
-esbuild.config.mjs              -- сборочная конфигурация (IIFE, bundle, output → dist/)
-dist/                          -- каталог сборки (загружать в Chrome как unpacked extension)
-  content.js                   -- собираемый бандл (генерируется npm run build из src/content/main.js)
-  page-world.js                -- скрипт MAIN world (копируется из src/page-world.js)
-  manifest.json                -- копия корневого manifest.json (esbuild)
-  background/index.js          -- service worker (копия)
-  popup/index.html              -- popup (копия, версия инжектируется esbuild)
-  icons/icon{16,48,128}.png    -- иконки расширения (копия)
-background/index.js            -- service worker (исходник)
-popup/index.html                -- popup (исходник, минимальный redirect на FAB)
-icons/icon{16,48,128}.png      -- иконки расширения (исходник)
+manifest.json                  -- Manifest V3 configuration (v1.9.28.0, source of truth for version)
+package.json                   -- esbuild, build/watch scripts
+esbuild.config.mjs              -- build configuration (IIFE, bundle, output → dist/)
+dist/                          -- build directory (load in Chrome as unpacked extension)
+  content.js                   -- built bundle (generated by npm run build from src/content/main.js)
+  page-world.js                -- MAIN world script (copied from src/page-world.js)
+  manifest.json                -- copy of root manifest.json (esbuild)
+  background/index.js          -- service worker (copy)
+  popup/index.html              -- popup (copy, version injected by esbuild)
+  icons/icon{16,48,128}.png    -- extension icons (copy)
+background/index.js            -- service worker (source)
+popup/index.html                -- popup (source, minimal redirect to FAB)
+icons/icon{16,48,128}.png      -- extension icons (source)
 
-src/                           -- исходные модули (134 JS файла)
-  content/ (5 файлов):
+src/                           -- source modules (134 JS files)
+  content/ (5 files):
     index.js                   -- barrel re-export
     main.js                    -- boot sequence: init, auth gate, detectPageType, SPA observer, migration
     main-page-handlers.js      -- initPageLogic, vacancy/resume page handlers, CustomEvent dispatch
-    main-resume-loader.js      -- загрузка резюме: parseResume, fetchAndParseResume
-    main-sync.js               -- синхронизация: storage listeners, state sync
-  lib/ (58 файлов):
-    -- базовые модули --
+    main-resume-loader.js      -- resume loading: parseResume, fetchAndParseResume
+    main-sync.js               -- synchronization: storage listeners, state sync
+  lib/ (58 files):
+    -- base modules --
     index.js, selectors.js, anti-hallucination.js, timing.js, rate-limiter.js, version.js
     storage.js, storage-queue.js, storage-settings.js, storage-vacancies.js
-    -- скоринг --
-    match-scorer.js             -- calculateMatchScore() (навыки 40%, зарплата 15%, опыт 15%, должность 15%, локация 15%)
-    match-scorer-skills.js      -- scoreSkills() (explicit + derived, синонимы)
+    -- scoring --
+    match-scorer.js             -- calculateMatchScore() (skills 40%, salary 15%, experience 15%, position 15%, location 15%)
+    match-scorer-skills.js      -- scoreSkills() (explicit + derived, synonyms)
     match-scorer-salary.js      -- scoreSalary()
     match-scorer-experience.js  -- scoreExperience()
-    match-scorer-title.js       -- scoreTitle() (синонимы должностей, группы)
-    -- навыки --
+    match-scorer-title.js       -- scoreTitle() (position synonyms, groups)
+    -- skills --
     skill-dictionary.js         -- SKILL_PATTERNS (50+ Russian skill keyword patterns)
-    skill-synonyms.js           -- SKILL_SYNONYMS (группы синонимов)
+    skill-synonyms.js           -- SKILL_SYNONYMS (synonym groups)
     derive-skills.js            -- deriveSkillsFromExperience()
     vacancy-skills-collector.js -- collectAllVacancySkills()
     parse-experience.js         -- parseExperienceString()
-    -- качество --
+    -- quality --
     quality-flags.js            -- buildRecommendations()
-    quality-ats.js              -- ATS-совместимость
-    quality-experience.js       -- анализ опыта
-    quality-patterns.js         -- красные флаги
-    quality-date-helpers.js     -- утилиты дат
+    quality-ats.js              -- ATS compatibility
+    quality-experience.js       -- experience analysis
+    quality-patterns.js         -- red flags
+    quality-date-helpers.js     -- date utilities
     resume-quality-analyzer.js  -- analyzeResumeQuality()
     -- guided tour --
     tour-engine.js, tour-steps.js, tour-tooltip.js
-    -- константы резюме --
+    -- resume constants --
     resume-constants.js, resume-constants-core.js, resume-constants-title.js, resume-constants-visibility.js
-    -- fetch резюме (25 файлов) --
+    -- resume fetch (25 files) --
     resume-fetch.js, resume-fetch-list.js, resume-fetch-resume.js,
     resume-fetch-*.js (experience, strategy4-6, json-utils, education-languages, helpers,
     parse, parse-edu, vis-fallback, iframe-vis*, list-vis*, resume-diag, resume-exp-orch, resume-page-vis)
-  parsers/ (21 файл):
+  parsers/ (21 files):
     index.js, vacancy-list.js
-    vacancy-detail.js           -- parseVacancyDetail (реализован)
-    vacancy-detail-skills.js    -- parseVacancySkills (5 fallback-стратегий)
+    vacancy-detail.js           -- parseVacancyDetail (implemented)
+    vacancy-detail-skills.js    -- parseVacancySkills (5 fallback strategies)
     vacancy-diagnostic.js       -- diagnoseVacancyDOM()
-    negotiations.js             -- заглушка (Phase 1)
-    resume-detail.js            -- barrel в resume-detail/
-    resume-detail/ (14 файлов):
+    negotiations.js             -- stub (Phase 1)
+    resume-detail.js            -- barrel to resume-detail/
+    resume-detail/ (14 files):
       index.js, parse-resume.js, parse-company-card.js, parse-resume-sections.js,
       parse-resume-education.js, parse-resume-personal.js, parse-resume-contacts.js,
       parse-resume-conditions.js, diagnose.js, diagnose-blocks.js, diagnose-elements.js,
       diagnose-structure.js, resume-detail-debug-vis.js, resume-detail-list-parser.js
-  engine/ (4 файла):
+  engine/ (4 files):
     index.js, apply-orchestrator.js, apply-actions.js, apply-queue.js
-  services/ (1 файл):
-    index.js                    -- заглушка (Phase 4 -- AI-сопроводительные)
-  ui/ (44 файла):
-    -- корневые --
+  services/ (1 file):
+    index.js                    -- stub (Phase 4 -- AI cover letters)
+  ui/ (44 files):
+    -- root --
     index.js, fab.js, styles.js, state.js, panel.js, html.js, auth.js
-    -- стили --
+    -- styles --
     sidebar-css.js, sidebar-css-core.js, sidebar-css-components.js
-    -- авторизация --
+    -- authorization --
     auth-check.js, auth-detection.js, auth-user.js
     -- panel --
     panel/index.js, panel/render.js, panel/helpers.js, panel/events.js,
@@ -240,245 +240,245 @@ src/                           -- исходные модули (134 JS файл
     -- tabs --
     tabs/index.js, tabs/overview.js, tabs/resumes.js, tabs/vacancies.js,
     tabs/negotiations.js, tabs/settings.js, tabs/stats.js
-    tabs/resumes/ (7 файлов):
+    tabs/resumes/ (7 files):
       index.js, render-my-resumes.js, render-resume-panel.js,
       resume-helpers.js, resume-helpers-gap.js, resume-accordion-header.js, section-builders.js
 
 docs/
-  ARCHITECTURE.md               -- архитектурная документация
-  PLANTUML-REFERENCE.md         -- справочник PlantUML (обязателен перед редактированием .puml)
-  UNICODE_POLICY.md             -- политика Unicode (enforcement для content.js)
-  TASK-CASCADE.md               -- каскад задач (8 фаз, 40 задач)
-  reference-prompts.py          -- промпт-шаблоны для AI (reference, не подключается)
-CHANGELOG.md                    -- история версий (в корне расширения, Keep a Changelog)
-worklog.md                      -- журнал работы расширения (в корне расширения)
+  ARCHITECTURE.md               -- architecture documentation
+  PLANTUML-REFERENCE.md         -- PlantUML reference (required before editing .puml)
+  UNICODE_POLICY.md             -- Unicode policy (enforcement for content.js)
+  TASK-CASCADE.md               -- task cascade (8 phases, 40 tasks)
+  reference-prompts.py          -- AI prompt templates (reference, not connected)
+CHANGELOG.md                    -- version history (in extension root, Keep a Changelog)
+worklog.md                      -- extension work log (in extension root)
 ```
 
-### Guard-системы
+### Guard Systems
 
-Проект использует два git-подмодуля для обеспечения качества кода:
+The project uses two git submodules to ensure code quality:
 
 
 
-**anti-hallucination-guard/** (https://github.com/stsgs1980/Anti-hallucination-guard.git, commit 0759547) -- guard-система против галлюцинаций в коде. Правила AHG 1-6 интегрированы в AGENT_RULES.md в корне репозитория.
+**anti-hallucination-guard/** (https://github.com/stsgs1980/Anti-hallucination-guard.git, commit 0759547) -- guard system against code hallucinations. AHG rules 1-6 are integrated into AGENT_RULES.md in the repository root.
 
-**Git hooks** (устанавливаются вручную через `tools/verify-docs/templates/install-hooks.ts`):
-- `.git/hooks/pre-commit` -- блокирует коммит без свежей записи в worklog.md
-- `.git/hooks/pre-push` -- запускает validate.sh перед отправкой на удалённый репозиторий
+**Git hooks** (installed manually via `tools/verify-docs/templates/install-hooks.ts`):
+- `.git/hooks/pre-commit` -- blocks commit without a fresh entry in worklog.md
+- `.git/hooks/pre-push` -- runs validate.sh before pushing to the remote repository
 
-После клонирования репозитория выполните установку хуков:
+After cloning the repository, install the hooks:
 ```
 npx ts-node tools/verify-docs/templates/install-hooks.ts
 ```
 
 
-## 5. Парсинг резюме
+## 5. Resume Parsing
 
-### Принцип работы
+### How it works
 
-hh.ru использует Magritte -- собственную CSS-in-JS дизайн-систему, которая хэширует имена классов при каждом деплое. Класс вида magritte-card_bhGKz_8-5-13 изменится на magritte-card_xYzAb_9-6-14 после следующего релиза. По этой причине CSS-селекторы по классам для Magritte-компонентов не работают -- они нестабильны и ломаются при каждом обновлении сайта.
+hh.ru uses Magritte -- its own CSS-in-JS design system that hashes class names on every deploy. A class like magritte-card_bhGKz_8-5-13 will change to magritte-card_xYzAb_9-6-14 after the next release. For this reason, CSS selectors by class names for Magritte components don't work -- they are unstable and break on every site update.
 
-Единственный стабильный API для обращения к DOM-элементов hh.ru -- это атрибуты data-qa. Они созданы разработчиками hh.ru для внутреннего тестирования и не меняются между деплоями. Стратегия парсинга резюме строится исключительно на data-qa атрибутах, а там где они отсутствуют -- на текстовом анализе содержимого и BEM-классах библиотеки Bloko (бесхэшовые).
+The only stable API for addressing DOM elements on hh.ru is data-qa attributes. They are created by hh.ru developers for internal testing and don't change between deploys. The resume parsing strategy is built exclusively on data-qa attributes, and where they are absent -- on textual content analysis and Bloko library BEM classes (hash-free).
 
-### Извлекаемые поля (13)
+### Extracted fields (13)
 
-Поле "Должность" извлекается из data-qa="resume-block-title-position". Fallback -- тег h1 на странице. Это самое надёжное поле, присутствует на всех резюме.
+The "Position" field is extracted from data-qa="resume-block-title-position". Fallback -- the h1 tag on the page. This is the most reliable field, present on all resumes.
 
-Поле "Зарплата" берётся из data-qa="resume-block-salary". Fallback -- любой элемент с data-qa, содержащим "salary". Может быть пустым, если соискатель не указал желаемый доход.
+The "Salary" field is taken from data-qa="resume-block-salary". Fallback -- any element with a data-qa containing "salary". Can be empty if the job seeker hasn't specified desired income.
 
-Поля "Пол", "Возраст", "Город" извлекаются из текстового содержимого блока data-qa="resume-position-card". Magritte не предоставляет отдельных data-qa для этих полей, поэтому используется паттерн-матчинг: пол ищется по словам "мужчина"/"женщина", возраст -- по паттерну "N лет/года", город -- по текстовым фрагментам с кириллицей, не совпадающим с зарплатой или должностью.
+The "Gender", "Age", "City" fields are extracted from the text content of the data-qa="resume-position-card" block. Magritte doesn't provide separate data-qa attributes for these fields, so pattern matching is used: gender is searched by the words "мужчина"/"женщина", age -- by the pattern "N лет/года", city -- by text fragments with Cyrillic characters that don't match salary or position.
 
-Поле "Навыки" берётся из контейнера data-qa="skills-card". Теги навыков имеют data-qa="skill-tag-*", уровни владения -- data-qa="skill-level-title-N" (где N -- 1, 2 или 3, соответствующие "Начальный", "Средний", "Продвинутый"). Fallback -- классы .bloko-tag__text внутри skills-card.
+The "Skills" field is taken from the data-qa="skills-card" container. Skill tags have data-qa="skill-tag-*", proficiency levels -- data-qa="skill-level-title-N" (where N is 1, 2, or 3, corresponding to "Beginner", "Intermediate", "Advanced"). Fallback -- .bloko-tag__text classes inside skills-card.
 
-Поле "Опыт работы" извлекается из data-qa="resume-list-card-experience". Каждая запись -- это data-qa="profile-experience-company-card". Внутри карточки структура cell-based: компания и длительность в cell-left-side (два элемента cell-text-content), позиция и период в magritte-stepper-step-content, описание -- остаточный текст после вычитания позиции и периода.
+The "Work experience" field is extracted from data-qa="resume-list-card-experience". Each entry is data-qa="profile-experience-company-card". Inside the card, the structure is cell-based: company and duration in cell-left-side (two cell-text-content elements), position and period in magritte-stepper-step-content, description -- residual text after subtracting position and period.
 
-Поле "Образование" извлекается из data-qa="resume-list-card-education". Используются три fallback-стратегии: cell-left-side (как в опыте), прямые дочерние элементы eduCard, полный текстовый скан с поиском паттернов "Название -- год". UI-текст фильтруется (слова "Образование", "Редактировать" и т.д.).
+The "Education" field is extracted from data-qa="resume-list-card-education". Three fallback strategies are used: cell-left-side (as in experience), direct child elements of eduCard, full text scan searching for "Name -- year" patterns. UI text is filtered (words like "Образование", "Редактировать", etc.).
 
-Поле "Языки" ищется в bloko-tag внутри data-qa="resume-about-card" и data-qa="resume-position-card". Отдельного data-qa для языков на текущей версии Magritte нет.
+The "Languages" field is searched in bloko-tag within data-qa="resume-about-card" and data-qa="resume-position-card". There is no separate data-qa for languages in the current Magritte version.
 
-Поле "Дополнительная информация" берётся из data-qa="resume-about-card" -- текстовый контент всего блока.
+The "Additional information" field is taken from data-qa="resume-about-card" -- the text content of the entire block.
 
-### Диагностика
+### Diagnostics
 
-Для подбора селекторов при изменении DOM hh.ru предназначена функция diagnoseResumeDOM(). Она доступна из консоли (window.__hhDiagnose) или через кнопку в sidebar. Функция собирает все data-qa атрибуты на странице, группирует их по префиксу, проверяет все resume-селекторы из HH_SELECTORS, выводит дампы секций опыта и образования, показывает заголовки h1-h3 и все секции страницы.
+For selector development when hh.ru DOM changes, the diagnoseResumeDOM() function is designed. It is available from the console (window.__hhDiagnose) or via a button in the sidebar. The function collects all data-qa attributes on the page, groups them by prefix, checks all resume selectors from HH_SELECTORS, outputs dumps of experience and education sections, shows h1-h3 headings and all page sections.
 
 
-## 6. Архитектура
+## 6. Architecture
 
-### Общая схема
+### Overall scheme
 
-Расширение построено по классической архитектуре Chrome Extension Manifest V3 и состоит из трёх исполняемых контекстов: Content Script, Service Worker и Popup. Каждый контекст выполняет свою роль и взаимодействует с другими через chrome.storage.local и chrome.runtime.sendMessage.
+The extension is built on the classic Chrome Extension Manifest V3 architecture and consists of three executable contexts: Content Script, Service Worker, and Popup. Each context performs its role and interacts with others via chrome.storage.local and chrome.runtime.sendMessage.
 
-**Content Script (content.js)** -- основной модуль расширения, загружаемый на все страницы hh.ru. Содержимое собирается esbuild из 134 исходных модулей в каталоге src/ в единый IIFE-бандл. Дополнительно инжектируется page-world.js в MAIN world для SPA-навигации. Модули организованы по слоям: content (boot sequence, page handlers), библиотечный (src/lib/ -- 58 файлов: селекторы, антигаллюцинация, хранилище, тайминг, rate limiter, match-scorer, skill-dictionary, derive-skills, quality analysis, tour, resume-fetch), парсеры (src/parsers/ -- 21 файл: вакансии, резюме, переговоры, диагностика), движок (src/engine/ -- apply-orchestrator, apply-actions, apply-queue), сервисы (src/services/, заглушка), UI (src/ui/ -- 44 файла: FAB, panel, tabs, styles, state, auth, sidebar-css).
+**Content Script (content.js)** -- the main extension module, loaded on all hh.ru pages. Content is built by esbuild from 134 source modules in the src/ directory into a single IIFE bundle. Additionally, page-world.js is injected into the MAIN world for SPA navigation. Modules are organized by layers: content (boot sequence, page handlers), library (src/lib/ -- 58 files: selectors, anti-hallucination, storage, timing, rate limiter, match-scorer, skill-dictionary, derive-skills, quality analysis, tour, resume-fetch), parsers (src/parsers/ -- 21 files: vacancies, resumes, negotiations, diagnostics), engine (src/engine/ -- apply-orchestrator, apply-actions, apply-queue), services (src/services/, stub), UI (src/ui/ -- 44 files: FAB, panel, tabs, styles, state, auth, sidebar-css).
 
-**Service Worker (background/index.js)** -- фоновый сценарий, работающий в контексте расширения (не на странице hh.ru). Отвечает за инициализацию хранилища при первой установке, создание ежедневного будильника (chrome.alarms) для сброса лимитов в полночь, маршрутизацию сообщений между popup и content scripts, обновление бейджа (цифры на иконке расширения).
+**Service Worker (background/index.js)** -- background script running in the extension context (not on the hh.ru page). Responsible for storage initialization on first install, creating a daily alarm (chrome.alarms) for resetting limits at midnight, message routing between popup and content scripts, badge updates (number on the extension icon).
 
-**Popup (popup/index.html)** -- минимальный пользовательский интерфейс при клике на иконку расширения. Выполняет redirect на FAB-кнопку, основной интерфейс доступен через боковую панель.
+**Popup (popup/index.html)** -- minimal user interface when clicking the extension icon. Redirects to the FAB button; the main interface is available through the sidebar.
 
-### Потоки данных
+### Data flows
 
-**Поток парсинга вакансий:**
+**Vacancy parsing flow:**
 
-Страница hh.ru/search/vacancy или главная страница hh.ru (/) загружается в браузере. Manifest V3 инжектит content.js в момент document_idle. Точка входа src/content/main.js определяет тип страницы (search, vacancy, resume, resume-list, main) и запускает соответствующую логику. Для страницы поиска вызывается parseVacanciesFromPage() из src/parsers/vacancy-list.js. Для главной страницы вызывается handleMainPage(), которая парсит рекомендованные вакансии (parseVacanciesFromPage) и «Вакансию дня» (parseVacanciesOfTheDay), объединяя результаты. Функция через findAllElements() находит все карточки вакансий, для каждой карточки извлекает данные через findElement() и safeGetText(). Результаты валидируются через validateVacancyData(), фильтруются по списку откликнутых и чёрного списка, затем передаются в renderSidebarContent() для отображения. MutationObserver с debounce автоматически перепарсирует при изменении DOM.
+The hh.ru/search/vacancy page or hh.ru main page (/) loads in the browser. Manifest V3 injects content.js at document_idle. Entry point src/content/main.js determines the page type (search, vacancy, resume, resume-list, main) and launches the appropriate logic. For the search page, parseVacanciesFromPage() from src/parsers/vacancy-list.js is called. For the main page, handleMainPage() is called, which parses recommended vacancies (parseVacanciesFromPage) and "Vacancy of the Day" (parseVacanciesOfTheDay), merging the results. The function finds all vacancy cards via findAllElements(), extracts data from each card via findElement() and safeGetText(). Results are validated via validateVacancyData(), filtered by applied list and blacklist, then passed to renderSidebarContent() for display. MutationObserver with debounce automatically re-parses on DOM changes.
 
-**Поток парсинга резюме:**
+**Resume parsing flow:**
 
-На странице /resume/{hash} вызывается parseResume() из src/parsers/resume-detail/. Модуль последовательно извлекает данные из DOM, используя data-qa селекторы. Для каждого поля есть основная стратегия и один или несколько fallback-вариантов (5 файлов: parse-resume.js, parse-company-card.js, parse-resume-sections.js, parse-resume-education.js). Результат сохраняется в chrome.storage.local (ключ resume) и отображается во вкладке "Резюме" sidebar. Видимость резюме определяется двухуровнево: сначала из данных страницы списка (extractVisibilityStatus), затем при загрузке детальной страницы — detectVisibilityFromResumePage() с 6 стратегиями, переопределяя список если точнее.
+On the /resume/{hash} page, parseResume() from src/parsers/resume-detail/ is called. The module sequentially extracts data from the DOM using data-qa selectors. Each field has a primary strategy and one or more fallback variants (5 files: parse-resume.js, parse-company-card.js, parse-resume-sections.js, parse-resume-education.js). The result is saved to chrome.storage.local (key: resume) and displayed in the sidebar "Resumes" tab. Resume visibility is determined at two levels: first from list page data (extractVisibilityStatus), then when the detail page loads -- detectVisibilityFromResumePage() with 6 strategies, overriding the list data when more accurate.
 
-**Поток авторизации:**
+**Authorization flow:**
 
-checkAuth() из src/ui/auth.js вызывается при загрузке страницы и каждые 2 секунды. Перебирает DOM-селекторы и проверяет cookies. Результат обновляет состояние panelState.isLoggedIn, что меняет цвет FAB и содержимое sidebar.
+checkAuth() from src/ui/auth.js is called on page load and every 2 seconds. It iterates DOM selectors and checks cookies. The result updates the panelState.isLoggedIn state, which changes the FAB color and sidebar content.
 
-**Поток сообщений:**
+**Message flow:**
 
-Popup отправляет сообщения через chrome.runtime.sendMessage (типы: get-stats, get-settings, apply-vacancy, log, settings-updated). Service Worker маршрутизирует сообщения: get-stats и get-settings читают данные из хранилища и отвечают popup, apply-vacancy пересылается в content script активной вкладки hh.ru, log записывает в хранилище.
+Popup sends messages via chrome.runtime.sendMessage (types: get-stats, get-settings, apply-vacancy, log, settings-updated). Service Worker routes messages: get-stats and get-settings read data from storage and respond to popup, apply-vacancy is forwarded to the content script of the active hh.ru tab, log writes to storage.
 
 **CustomEvent bridge:**
 
-Коммуникация между UI-модулями и бизнес-логикой осуществляется через CustomEvent bridge (src/ui/panel/events.js). События: hh-ar-apply, hh-ar-apply-all, hh-ar-refresh, hh-ar-toggle-status, hh-ar-load-resume. Это позволяет связывать panel events с engine actions без прямой зависимости UI от engine.
+Communication between UI modules and business logic is carried out via CustomEvent bridge (src/ui/panel/events.js). Events: hh-ar-apply, hh-ar-apply-all, hh-ar-refresh, hh-ar-toggle-status, hh-ar-load-resume. This allows binding panel events to engine actions without a direct dependency of UI on engine.
 
 
-## 7. Технологии
+## 7. Technologies
 
 ### Manifest V3
 
-Расширение построено на Manifest V3 -- текущей версии платформы Chrome Extensions. Manifest V3 заменил V2 в 2023-2024 годах и внёс ряд существенных ограничений: content_scripts не поддерживают ES modules (import/export недоступны), фоновые страницы заменены на Service Workers (без доступа к DOM), удалены API вроде chrome.webRequest для блокировки запросов, данные хранятся исключительно через chrome.storage.local/session. Все решения в проекте принимались с учётом этих ограничений. Отсутствие модульной системы в content_scripts привело к использованию esbuild для сборки IIFE-бандла. Service Worker не имеет доступа к DOM и работает только через chrome API.
+The extension is built on Manifest V3 -- the current version of the Chrome Extensions platform. Manifest V3 replaced V2 in 2023-2024 and introduced a number of significant restrictions: content_scripts don't support ES modules (import/export unavailable), background pages were replaced by Service Workers (no DOM access), APIs like chrome.webRequest for request blocking were removed, data is stored exclusively via chrome.storage.local/session. All decisions in the project were made with these restrictions in mind. The lack of a module system in content_scripts led to using esbuild for IIFE bundle building. The Service Worker has no DOM access and operates only through Chrome APIs.
 
 ### esbuild
 
-Сборщик esbuild выбран как самый быстрый и минимальный по конфигурации вариант. Конфигурация в esbuild.config.mjs: точка входа src/content/main.js, выходной файл dist/content.js, формат IIFE, bundle=true, minify=false (для отладки), sourcemap=false. Вторая точка входа: src/page-world.js → dist/page-world.js (bundle=false). Статические файлы (manifest.json, background/, popup/, icons/) копируются в dist/. Команды: `npm run build` (сборка в dist/), `npm run watch` (наблюдение за изменениями + hot-reload). Загрузка в Chrome — выбрать папку dist/ как unpacked extension.
+The esbuild bundler was chosen as the fastest and most minimal configuration option. Configuration in esbuild.config.mjs: entry point src/content/main.js, output file dist/content.js, IIFE format, bundle=true, minify=false (for debugging), sourcemap=false. Second entry point: src/page-world.js → dist/page-world.js (bundle=false). Static files (manifest.json, background/, popup/, icons/) are copied to dist/. Commands: `npm run build` (build to dist/), `npm run watch` (watch for changes + hot-reload). Load in Chrome by selecting the dist/ folder as an unpacked extension.
 
-**Hot-Module Replacement (HMR)** — автоматическая перезагрузка расширения при разработке. При запуске `npm run watch` esbuild запускает WebSocket-сервер на порту 35729. Когда исходный файл изменяется, esbuild пересобирает бандл и отправляет сигнал "reload" через WebSocket. Расширение получает сигнал и вызывает `chrome.runtime.reload()` — расширение перезагружается без ручных кликов.
+**Hot-Module Replacement (HMR)** -- automatic extension reload during development. When running `npm run watch`, esbuild starts a WebSocket server on port 35729. When a source file changes, esbuild rebuilds the bundle and sends a "reload" signal via WebSocket. The extension receives the signal and calls `chrome.runtime.reload()` -- the extension reloads without manual clicks.
 
-Требования: `npm install ws` (devDependency, уже добавлена в package.json). Если пакет `ws` не установлен, hot-reload молча отключается — обычный `npm run watch` работает как раньше.
+Requirement: `npm install ws` (devDependency, already added to package.json). If the `ws` package is not installed, hot-reload silently disables -- regular `npm run watch` works as before.
 
-Схема работы:
+Workflow diagram:
 ```
-Сохраняешь файл → esbuild пересобирает → WebSocket "reload" → chrome.runtime.reload() → расширение обновлено
+Save file → esbuild rebuilds → WebSocket "reload" → chrome.runtime.reload() → extension updated
 ```
 
-Активируется ТОЛЬКО в dev-режиме (отсутствует `update_url` в manifest.json — признак распакованного расширения). В продакшн-сборке HMR-код не выполняется.
+Activated ONLY in dev mode (absence of `update_url` in manifest.json -- indicator of an unpacked extension). In production builds, HMR code does not execute.
 
 ### Shadow DOM
 
-Панель расширения (sidebar) создаётся внутри Shadow DOM с параметром mode: "closed". Это означает полную изоляцию: CSS-стили hh.ru (библиотеки Bloko и Magritte) не проникают внутрь панели, а стили панели не влияют на страницу. JavaScript панели изолирован от глобального контекста страницы -- нет конфликтов переменных, нет переопределения прототипов. Shadow DOM -- это встроенный механизм браузера, не требующий полифилов или библиотек. Он работает во всех современных браузерах на базе Chromium, включая Chrome, Edge, Brave, Opera.
+The extension panel (sidebar) is created inside a Shadow DOM with mode: "closed". This means complete isolation: CSS styles from hh.ru (Bloko and Magritte libraries) don't penetrate inside the panel, and panel styles don't affect the page. Panel JavaScript is isolated from the global page context -- no variable conflicts, no prototype overrides. Shadow DOM is a built-in browser mechanism that doesn't require polyfills or libraries. It works in all modern Chromium-based browsers, including Chrome, Edge, Brave, and Opera.
 
 ### chrome.storage.local
 
-Все данные расширения хранятся в chrome.storage.local -- ключевом хранилище, доступном из всех контекстов расширения (content scripts, service worker, popup). Хранилище асинхронное, объём ограничен 10 МБ на расширение (достаточно для тысяч вакансий). Схема хранения: settings (объект с настройками пользователя), stats (статистика откликов), appliedVacancies (массив id откликнутых вакансий), skippedVacancies (пропущенные), blacklistedCompanies (чёрный список компаний), logs (массив до 500 записей), resume (объект с распарсенным резюме), resumeList (список резюме), dailyResetDate (дата последнего сброса), installedAt (дата установки). Данные не отправляются на внешние серверы.
+All extension data is stored in chrome.storage.local -- a key-value store accessible from all extension contexts (content scripts, service worker, popup). The storage is asynchronous, with a volume limit of 10 MB per extension (sufficient for thousands of vacancies). Storage schema: settings (object with user settings), stats (response statistics), appliedVacancies (array of applied vacancy IDs), skippedVacancies (skipped), blacklistedCompanies (company blacklist), logs (array up to 500 entries), resume (parsed resume object), resumeList (list of resumes), dailyResetDate (last reset date), installedAt (installation date). Data is not sent to external servers.
 
-### data-qa селекторы
+### data-qa selectors
 
-Стратегия обращения к DOM hh.ru строится исключительно на атрибутах data-qa. Каждый селектор в HH_SELECTORS -- это массив строк, перебираемых по порядку приоритета. Первый элемент -- наиболее стабильный data-qa, последующие -- fallback-варианты (BEM-классы Bloko, partial class match). Функция findElement() перебирает массив, проверяет существование, принадлежность к документу, видимость (display и visibility через getComputedStyle) и возвращает первый подходящий элемент. Magritte-хэшированные классы (вида magritte-card_bhGKz) категорически не используются -- они нестабильны.
+The strategy for addressing hh.ru DOM is built exclusively on data-qa attributes. Each selector in HH_SELECTORS is an array of strings, iterated in priority order. The first element is the most stable data-qa, subsequent elements are fallback variants (Bloko BEM classes, partial class match). The findElement() function iterates the array, checks existence, document membership, visibility (display and visibility via getComputedStyle), and returns the first matching element. Magritte hashed classes (like magritte-card_bhGKz) are categorically not used -- they are unstable.
 
 ### React-safe input
 
-hh.ru построен на React 18 с Magritte UI. React использует synthetic events, поэтому прямое присвоение element.value = text не обновляет внутреннее состояние React, и данные не отправляются при сабмите. Расширение использует native value setter (Object.getOwnPropertyDescriptor для HTMLTextAreaElement.prototype.value) с последующей диспетчеризацией synthetic событий (input и change, bubbles: true). Это гарантирует, что React "увидит" новое значение и корректно его обработает.
+hh.ru is built on React 18 with Magritte UI. React uses synthetic events, so directly assigning element.value = text doesn't update React's internal state, and data isn't sent on submit. The extension uses the native value setter (Object.getOwnPropertyDescriptor for HTMLTextAreaElement.prototype.value) followed by dispatching synthetic events (input and change, bubbles: true). This guarantees that React "sees" the new value and processes it correctly.
 
 
-## 8. Версионирование
+## 8. Versioning
 
-### Правила
+### Rules
 
-Версия расширения указывается в manifest.json в поле "version" и следует формату SemVer (MAJOR.MINOR.PATCH). Каждый коммит в основную ветку с функциональными изменениями обязан сопровождаться бампом версии. Версия синхронизируется автоматически между manifest.json, package.json, popup/index.html и src/ui/html/shell.js через модуль src/lib/version.js. Единый источник истины -- manifest.json.
+The extension version is specified in manifest.json in the "version" field and follows the SemVer format (MAJOR.MINOR.PATCH). Every commit to the main branch with functional changes must be accompanied by a version bump. The version is automatically synchronized between manifest.json, package.json, popup/index.html, and src/ui/html/shell.js via the src/lib/version.js module. The single source of truth is manifest.json.
 
-**PATCH (третий разряд).** Исправление багов, обновление селекторов без изменения логики, мелкие правки стилей popup, обновление текста документации. Пример: 1.7.2 переходит в 1.7.3.
+**PATCH (third digit).** Bug fixes, selector updates without logic changes, minor popup style tweaks, documentation text updates. Example: 1.7.2 becomes 1.7.3.
 
-**MINOR (второй разряд).** Новый функционал, не ломающий существующее поведение: добавление нового парсера, новые поля в резюме, новые настройки в popup, новые вкладки в sidebar. Пример: 1.7.3 переходит в 1.8.0.
+**MINOR (second digit).** New functionality that doesn't break existing behavior: adding a new parser, new resume fields, new popup settings, new sidebar tabs. Example: 1.7.3 becomes 1.8.0.
 
-**MAJOR (первый разряд).** Изменения, ломающие обратную совместимость: новое архитектурное решение, миграция схемы хранилища, удаление существующего API. Пример: 1.7.3 переходит в 2.0.0.
+**MAJOR (first digit).** Changes that break backward compatibility: new architectural decision, storage schema migration, removal of existing API. Example: 1.7.3 becomes 2.0.0.
 
-### Формат коммитов
+### Commit format
 
-Каждый коммит должен начинаться с типа изменения: feat:, fix:, refactor:, docs:, chore:. После типа -- краткое описание на русском или английском. Примеры: "feat: парсинг навыков с уровнями", "fix: offsetParent для fixed элементов", "docs: обновление ARCHITECTURE.md".
+Each commit must start with a change type: feat:, fix:, refactor:, docs:, chore:. After the type -- a brief description in Russian or English. Examples: "feat: skill parsing with levels", "fix: offsetParent for fixed elements", "docs: update ARCHITECTURE.md".
 
-### История изменений
+### Changelog
 
-Полная история версий ведётся в файле CHANGELOG.md в корне папки расширения. Формат -- Keep a Changelog. Каждый релиз содержит секции "Добавлено", "Изменено", "Исправлено", "Удалено". Текущая версия -- 1.8.3.
+Full version history is maintained in the CHANGELOG.md file in the extension root. Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.8.3.
 
-### Версионная хронология
+### Version timeline
 
-- **v1.0.0**: Initial popup-only extension (монолитный content.js, 1637 строк)
-- **v1.1.0**: Парсер резюме, табовая система sidebar
-- **v1.2.0**: Исправлен баг загрузки резюме, контекстно-зависимая логика
-- **v1.3.0**: Переписан парсинг резюме под Magritte (критический баг: 8/11 полей не парсились)
-- **v1.4.0**: Auto-expand скрытых секций, sidebar 720px
-- **v1.5.0**: Массовая чистка мёртвого кода (311 файлов, -41361 строк), оставлено только расширение
-- **v1.5.1-v1.5.4**: Anti-hallucination-guard submodule, документация
-- **v1.6.0**: Phase 0 -- esbuild modular refactoring (монолит 42 модуля)
-- **v1.7.0-v1.7.2**: Auth UX, FAB CSS изоляция, version sync, dist/ build, apply engine stub
+- **v1.0.0**: Initial popup-only extension (monolithic content.js, 1637 lines)
+- **v1.1.0**: Resume parser, sidebar tab system
+- **v1.2.0**: Fixed resume loading bug, context-dependent logic
+- **v1.3.0**: Rewrote resume parsing for Magritte (critical bug: 8/11 fields not parsing)
+- **v1.4.0**: Auto-expand hidden sections, sidebar 720px
+- **v1.5.0**: Mass dead code cleanup (311 files, -41361 lines), only extension kept
+- **v1.5.1-v1.5.4**: Anti-hallucination-guard submodule, documentation
+- **v1.6.0**: Phase 0 -- esbuild modular refactoring (42 modules from monolith)
+- **v1.7.0-v1.7.2**: Auth UX, FAB CSS isolation, version sync, dist/ build, apply engine stub
 - **v1.7.3**: File structure cleanup, git hooks, version sync
 - **v1.7.4**: Fix resume sync selector (/applicant/resumes/view?resume= pattern)
-- **v1.7.5-v1.7.7**: Resume visibility badges (Видимо/Скрыто/Статус неизвестен), title noise cleanup
+- **v1.7.5-v1.7.7**: Resume visibility badges (Visible/Hidden/Status unknown), title noise cleanup
 - **v1.7.8**: Migration for old stored data (visibility backfill), nbsp normalization fix
 - **v1.7.9**: Magritte-aware multi-strategy visibility detection
 - **v1.8.0**: &nbsp; (U+00A0) normalization in visibility detection
-- **v1.8.1**: Fix "Загрузить с текущей страницы" button (container ID mismatch har-resume-content→res-parsed-data)
+- **v1.8.1**: Fix "Load from current page" button (container ID mismatch har-resume-content→res-parsed-data)
 - **v1.8.2**: Repo restoration after destructive agent, wireframe files added to docs/wireframes/
-- **v1.8.3**: Resume UI wireframe compliance — anti-monolith refactor (resumes.js → 5 файлов), subtitle fix, имя field, structured education/languages
+- **v1.8.3**: Resume UI wireframe compliance -- anti-monolith refactor (resumes.js → 5 files), subtitle fix, name field, structured education/languages
 
 
-## 9. Разработка
+## 9. Development
 
-### Как добавить новый функционал
+### How to add new functionality
 
-**Добавление нового модуля.** Все модули находятся в src/ каталоге. Библиотечные модули -- в src/lib/, парсеры -- в src/parsers/, бизнес-логика -- в src/engine/, сервисы -- в src/services/, UI -- в src/ui/. Новый модуль создаётся как ES module с named exports и подключается через barrel-файл (index.js) соответствующего каталога. После сборки (`npm run build`) модуль включается в content.js.
+**Adding a new module.** All modules are located in the src/ directory. Library modules -- in src/lib/, parsers -- in src/parsers/, business logic -- in src/engine/, services -- in src/services/, UI -- in src/ui/. A new module is created as an ES module with named exports and connected via the barrel file (index.js) of the corresponding directory. After building (`npm run build`), the module is included in content.js.
 
-**Добавление нового селектора.** Откройте объект HH_SELECTORS в src/lib/selectors.js. Найдите соответствующую группу (Vacancy Search, Vacancy Page, Resume Page, Auth) или создайте новую. Добавьте селектор в массив: первым элементом -- data-qa (самый стабильный), затем fallback-варианты. Протестируйте через diagnoseResumeDOM() (window.__hhDiagnose) -- она проверит все resume-селекторы и покажет, какие найдены, а какие нет.
+**Adding a new selector.** Open the HH_SELECTORS object in src/lib/selectors.js. Find the appropriate group (Vacancy Search, Vacancy Page, Resume Page, Auth) or create a new one. Add the selector to the array: first element -- data-qa (most stable), then fallback variants. Test via diagnoseResumeDOM() (window.__hhDiagnose) -- it will check all resume selectors and show which are found and which are not.
 
-**Добавление нового ключа в хранилище.** Добавьте ключ в DEFAULT_SETTINGS или DEFAULT_STATS в src/lib/storage.js, а также в инициализацию в background/index.js (секция chrome.runtime.onInstalled.addListener). Обязательно предусмотрите значение по умолчанию.
+**Adding a new storage key.** Add the key to DEFAULT_SETTINGS or DEFAULT_STATS in src/lib/storage.js, and also to the initialization in background/index.js (chrome.runtime.onInstalled.addListener section). Be sure to provide a default value.
 
-### Правила кода
+### Code rules
 
-Правило 1. Ничего не возвращай как undefined. Все функции возвращают string, null, boolean, number или object. Пустая строка '' -- допустимое значение, undefined -- нет. Это предотвращает cascading ошибки при цепочках вызовов.
+Rule 1. Never return undefined. All functions return string, null, boolean, number, or object. Empty string '' is an acceptable value, undefined is not. This prevents cascading errors in call chains.
 
-Правило 2. Никогда не предполагай, что DOM-элемент существует. Любой вызов querySelector может вернуть null. Используй findElement() или safeQuery() вместо прямого querySelector.
+Rule 2. Never assume a DOM element exists. Any querySelector call can return null. Use findElement() or safeQuery() instead of direct querySelector.
 
-Правило 3. Никогда не обращайся к textContent/value без обёртки. safeGetText() проверяет существование, тип, видимость и пустоту. safeGetAttr() проверяет существование и возвращает fallback. safeInput() проверяет disabled/readonly и использует React-safe setter.
+Rule 3. Never access textContent/value without a wrapper. safeGetText() checks existence, type, visibility, and emptiness. safeGetAttr() checks existence and returns fallback. safeInput() checks disabled/readonly and uses React-safe setter.
 
-Правило 4. Никогда не кликай по невидимым элементам. safeClick() проверяет offsetParent, getComputedStyle, disabled. Если элемент невидим -- функция возвращает false без выполнения клика.
+Rule 4. Never click on invisible elements. safeClick() checks offsetParent, getComputedStyle, disabled. If the element is invisible -- the function returns false without performing the click.
 
-Правило 5. Всегда валидируй данные перед использованием. validateVacancyData() проверяет тип, длину, формат. ExtractVacancyId() использует regex с fallback на пустую строку.
+Rule 5. Always validate data before use. validateVacancyData() checks type, length, format. extractVacancyId() uses regex with fallback to empty string.
 
-Правило 6. Не используй Magritte-хэшированные CSS-классы. Только data-qa атрибуты и Bloko BEM-классы. Хэши меняются при каждом деплое hh.ru.
+Rule 6. Don't use Magritte hashed CSS classes. Only data-qa attributes and Bloko BEM classes. Hashes change on every hh.ru deploy.
 
-Правило 7. Все стили панели должны быть внутри Shadow DOM. Никаких инлайн-стилей на элементах вне shadowRoot. Никаких вставок в document.head.
+Rule 7. All panel styles must be inside Shadow DOM. No inline styles on elements outside shadowRoot. No insertions into document.head.
 
-Правило 8. Логируй всё, что может быть полезно для отладки. Префикс [HH-AR][ModuleName]. Уровни: debug (info), warn, error.
+Rule 8. Log everything that might be useful for debugging. Prefix [HH-AR][ModuleName]. Levels: debug (info), warn, error.
 
-Правило 9. Каждый модуль не должен превышать 250 строк. При превышении -- декомпозиция (anti-monolith rule).
+Rule 9. Each module must not exceed 250 lines. If exceeded -- decompose (anti-monolith rule).
 
-Правило 10. Каждый коммит должен сопровождаться записью в worklog.md. pre-commit hook блокирует коммиты без свежего worklog.
+Rule 10. Each commit must be accompanied by an entry in worklog.md. The pre-commit hook blocks commits without a fresh worklog.
 
 
 ## 10. Roadmap
 
-### Фаза 0 (завершена): Модульный рефакторинг
+### Phase 0 (completed): Modular refactoring
 
-Монолитный content.js (1637 строк) декомпозирован в 49 ES-модулей. Настроен esbuild (IIFE, bundle, sourcemap). Создана модульная структура: lib/, parsers/, engine/, services/, ui/ с barrel-файлами. Все файлы не превышают 250 строк. Все задачи фазы 0 завершены.
+The monolithic content.js (1637 lines) was decomposed into 49 ES modules. esbuild was configured (IIFE, bundle, sourcemap). Modular structure created: lib/, parsers/, engine/, services/, ui/ with barrel files. All files don't exceed 250 lines. All Phase 0 tasks are completed.
 
-Дополнительная работа (Phase 0.5): FAB CSS изоляция с !important, Auth UX (пассивная авторизация, username), 6-вкладочная wireframe панель, client-side фильтрация вакансий, blacklist management UI, version sync, CustomEvent bridge.
+Additional work (Phase 0.5): FAB CSS isolation with !important, Auth UX (passive authorization, username), 6-tab wireframe panel, client-side vacancy filtering, blacklist management UI, version sync, CustomEvent bridge.
 
-### Фаза 1: Расширение парсинга
+### Phase 1: Extended parsing
 
-Детальный парсер вакансии (parseVacancyDetail), парсер переговоров (parseNegotiations), salary parser, experience parser. Все задачи -- pending (cascade-state.json).
+Detailed vacancy parser (parseVacancyDetail), negotiations parser (parseNegotiations), salary parser, experience parser. All tasks -- pending (cascade-state.json).
 
-### Фаза 2: Matching Engine
+### Phase 2: Matching Engine
 
-Пятикомпонентный скоринг (Jaccard + alias matching), skill gap analysis, интеграция в парсер вакансий. Все задачи -- pending.
+Five-component scoring (Jaccard + alias matching), skill gap analysis, integration into vacancy parser. All tasks -- pending.
 
-### Фаза 3: Auto-Apply
+### Phase 3: Auto-Apply
 
-5-шаговый modal (pre-flight, навигация, поиск кнопки, обработка alert-ов, заполнение и отправка), обработка CAPTCHA/429, полуавтоматический и полностью автоматический режимы, typing simulation. Все задачи -- pending.
+5-step modal (pre-flight, navigation, button search, alert handling, fill and submit), CAPTCHA/429 handling, semi-automatic and fully automatic modes, typing simulation. All tasks -- pending.
 
-### Фаза 4: AI Integration
+### Phase 4: AI Integration
 
-Генерация сопроводительных писем через LLM API, AI-ответы в переговорах, управление API ключом. Все задачи -- pending.
+Cover letter generation via LLM API, AI replies in negotiations, API key management. All tasks -- pending.
 
-### Фаза 5: Аналитика и UX
+### Phase 5: Analytics and UX
 
-KPI dashboard, conversion funnel, расширенная статистика, адаптивное замедление с визуализацией. Все задачи -- pending.
+KPI dashboard, conversion funnel, extended statistics, adaptive slowdown with visualization. All tasks -- pending.
 
-### Фаза 6: Полировка
+### Phase 6: Polish
 
-Тёмная тема, skill gap analysis UI, Chrome Web Store публикация. Все задачи -- pending.
+Dark theme, skill gap analysis UI, Chrome Web Store publication. All tasks -- pending.

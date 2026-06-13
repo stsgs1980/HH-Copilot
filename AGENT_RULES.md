@@ -163,6 +163,16 @@ If a commit is blocked by these checks, FIX the documentation — do NOT bypass 
 - This is basic -- give the sync command after a push. No kick needed to do this. Should have been there from the start
 - VIOLATION OF THIS RULE IS NOT ACCEPTABLE
 
+## Rule 9.5: All documentation MUST be in English -- chat responses in Russian
+
+- ALL project documentation (README, ARCHITECTURE, CHANGELOG, TASK-CASCADE, guides, wireframes, PUML reference, etc.) MUST be written in English
+- The ONLY exception: chat responses to the user MUST be in Russian, because the user communicates in Russian
+- This applies to: .md files, code comments, commit messages, worklog entries
+- This does NOT apply to: UI strings visible to the end user (those stay in Russian as they are hh.ru-facing)
+- Files inside `anti-hallucination-guard/` are managed by the submodule and MUST NOT be modified
+- When updating docs, also verify the content matches current code state -- do not blindly translate stale content
+- VIOLATION OF THIS RULE IS NOT ACCEPTABLE
+
 ## Rule 10: No unsolicited initiative
 
 - Do NOT take initiative beyond what was explicitly requested

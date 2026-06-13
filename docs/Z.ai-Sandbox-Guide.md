@@ -1,390 +1,390 @@
-# Z.ai Sandbox — Полное руководство
+# Z.ai Sandbox — Complete Guide
 
-> Руководство основано на реальном опыте работы. Все ошибки и решения — настоящие.
-
----
-
-## Оглавление
-
-1. [Быстрый старт (чистая установка)](#1-быстрый старт-чистая-установка)
-2. [Всё установлено, но ничего не работает](#2-всё-установлено-но-ничего-не-работает)
-3. [Клонирование стороннего проекта в песочницу](#3-клонирование-стороннего-проекта-в-песочницу)
-4. [Dev-сервер не запускается](#4-dev-сервер-не-запускается)
-5. [Порт 3000 занят (EADDRINUSE)](#5-порт-3000-занят-eaddrinuse)
-6. [HMR упал — страница стала 500](#6-hmr-упал-страница-стала-500)
-7. [Модули не находятся (Module not found)](#7-модули-не-находятся-module-not-found)
-8. [Добавление Git Submodule](#8-добавление-git-submodule)
-9. [Обновление Submodule](#9-обновление-submodule)
-10. [Полезные команды](#10-полезные-команды)
-11. [Частые ошибки и решения](#11-частые-ошибки-и-решения)
+> This guide is based on real hands-on experience. All errors and solutions are genuine.
 
 ---
 
-## 1. Быстрый старт (чистая установка)
+## Table of Contents
 
-### Чистый старт — правильная последовательность
+1. [Quick Start (Clean Install)](#1-quick-start-clean-install)
+2. [Everything Is Installed but Nothing Works](#2-everything-is-installed-but-nothing-works)
+3. [Cloning a Third-Party Project into the Sandbox](#3-cloning-a-third-party-project-into-the-sandbox)
+4. [Dev Server Won't Start](#4-dev-server-wont-start)
+5. [Port 3000 Is in Use (EADDRINUSE)](#5-port-3000-is-in-use-eaddrinuse)
+6. [HMR Crashed — Page Returns 500](#6-hmr-crashed--page-returns-500)
+7. [Modules Not Found (Module not found)](#7-modules-not-found-module-not-found)
+8. [Adding a Git Submodule](#8-adding-a-git-submodule)
+9. [Updating a Submodule](#9-updating-a-submodule)
+10. [Useful Commands](#10-useful-commands)
+11. [Common Errors and Solutions](#11-common-errors-and-solutions)
+
+---
+
+## 1. Quick Start (Clean Install)
+
+### Clean Start — Correct Sequence
 
 ```bash
-# Шаг 1: Инициализация песочницы (ВСЕГДА первой командой)
+# Step 1: Initialize the sandbox (ALWAYS the first command)
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 ```
 
-Эта команда:
-- Создаёт структуру Next.js 16 проекта
-- Устанавливает базовые зависимости
-- Настраивает TypeScript, Tailwind CSS, shadcn/ui
-- **Автоматически запускает dev-сервер** в фоне через `.zscripts/dev.sh`
-- Логи пишет в `/home/z/my-project/.zscripts/dev.log`
+This command:
+- Creates a Next.js 16 project structure
+- Installs base dependencies
+- Configures TypeScript, Tailwind CSS, shadcn/ui
+- **Automatically starts the dev server** in the background via `.zscripts/dev.sh`
+- Writes logs to `/home/z/my-project/.zscripts/dev.log`
 
 ```bash
-# Шаг 2: Установка дополнительных зависимостей
+# Step 2: Install additional dependencies
 cd /home/z/my-project && bun add <package-name>
 
-# Пример:
+# Example:
 bun add framer-motion
 bun add three @react-three/fiber @react-three/drei
 ```
 
 ```bash
-# Шаг 3: Проверка что всё работает
+# Step 3: Verify everything is working
 cat /home/z/my-project/.zscripts/dev.log | tail -20
-# Должно быть: "GET / 200 in ..."
+# Should show: "GET / 200 in ..."
 ```
 
-### Чего НЕ нужно делать
+### What NOT to Do
 
 ```bash
-# ❌ НЕ запускай dev-сервер вручную
+# ❌ DO NOT start the dev server manually
 npm run dev
 bun run dev
 next dev
 npx next dev
 
-# ❌ НЕ создавай проекты с нуля
+# ❌ DO NOT create projects from scratch
 npx create-next-app
 
-# ❌ НЕ клонируй в подпапки (см. раздел 3)
+# ❌ DO NOT clone into subdirectories (see section 3)
 git clone ... && cd subdir && npm install
 ```
 
-> **Почему:** Песочница управляет dev-сервером сама через `.zscripts/dev.sh`. Ручной запуск ломает Preview Panel — превью не обновляется и не работает.
+> **Why:** The sandbox manages the dev server itself via `.zscripts/dev.sh`. Manual startup breaks the Preview Panel — the preview stops updating and stops working.
 
 ---
 
-## 2. Всё установлено, но ничего не работает
+## 2. Everything Is Installed but Nothing Works
 
-### Ситуация: «Я что-то делал, и песочница перестала показывать превью»
+### Situation: "I did something and the sandbox stopped showing the preview"
 
-**Что мы сделали неправильно (реальный кейс):**
+**What we did wrong (real case):**
 
-1. Клонировали репозиторий в **подпапку** `/home/z/my-project/Rust-performance-optimization/`
-2. Запускали dev-сервер **вручную** через `npx next dev`
-3. Dev-сервер периодически падал при HMR, превью не работал
+1. Cloned a repository into a **subdirectory** `/home/z/my-project/Rust-performance-optimization/`
+2. Started the dev server **manually** via `npx next dev`
+3. The dev server periodically crashed during HMR, the preview didn't work
 
-**Как исправить:**
+**How to fix it:**
 
 ```bash
-# Шаг 1: Убить ВСЕ вручную запущенные процессы
+# Step 1: Kill ALL manually started processes
 pkill -f "next dev"
 pkill -f "bun run dev"
 
-# Шаг 2: Убедиться что портов freed
-lsof -i :3000  # должно быть пусто
+# Step 2: Make sure ports are freed
+lsof -i :3000  # should be empty
 
-# Шаг 3: Копировать код из подпапки в КОРЕНЬ проекта
-# Если клонировал в подпапку — перенеси файлы:
+# Step 3: Copy code from subdirectory to the project ROOT
+# If you cloned into a subdirectory — move the files:
 rsync -av --exclude='node_modules' --exclude='.next' \
   /home/z/my-project/ subdir/ /home/z/my-project/
 
-# Шаг 4: Переустановить зависимости в корне
+# Step 4: Reinstall dependencies in the root
 cd /home/z/my-project && bun install
 
-# Шаг 5: Переинициализировать песочницу
+# Step 5: Reinitialize the sandbox
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 
-# Шаг 6: Проверить логи
+# Step 6: Check the logs
 cat /home/z/my-project/.zscripts/dev.log | tail -20
-# Ожидаем: "GET / 200 in ..."
+# Expected: "GET / 200 in ..."
 ```
 
-### Другие причины неработающего превью
+### Other Reasons for a Non-Working Preview
 
-| Симптом | Причина | Решение |
+| Symptom | Cause | Solution |
 |---|---|---|
-| Страница 500 | Ошибка компиляции в коде | `cat .zscripts/dev.log \| tail -30` — ищи ошибку |
-| Белый экран | Dev-сервер упал | Переинициализируй песочницу |
-| Превью показывает старое | HMR сломался | Переинициализируй песочницу |
-| «Connection refused» | Нет процесса на порте 3000 | Переинициализируй песочницу |
-| Module not found | Забыл `bun add` | `bun add <package>` |
+| Page 500 | Compilation error in code | `cat .zscripts/dev.log \| tail -30` — look for the error |
+| White screen | Dev server crashed | Reinitialize the sandbox |
+| Preview shows old content | HMR broke | Reinitialize the sandbox |
+| "Connection refused" | No process on port 3000 | Reinitialize the sandbox |
+| Module not found | Forgot `bun add` | `bun add <package>` |
 
 ---
 
-## 3. Клонирование стороннего проекта в песочницу
+## 3. Cloning a Third-Party Project into the Sandbox
 
-### Правильный способ (код в корень проекта)
+### Correct Way (code in the project root)
 
 ```bash
-# Шаг 1: Инициализация песочницы (создаст Next.js каркас)
+# Step 1: Initialize the sandbox (will create a Next.js scaffold)
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 
-# Шаг 2: Клонировать ВРЕМЕННО в отдельную папку
+# Step 2: Clone TEMPORARILY into a separate folder
 cd /tmp && git clone https://github.com/user/project.git
 
-# Шаг 3: Скопировать файлы проекта в КОРЕНЬ песочницы
+# Step 3: Copy project files to the sandbox ROOT
 rsync -av --exclude='node_modules' --exclude='.next' \
   /tmp/project/ /home/z/my-project/
 
-# Шаг 4: Установить зависимости В КОРНЕ песочницы
+# Step 4: Install dependencies IN the sandbox ROOT
 cd /home/z/my-project && bun install
 
-# Шаг 5: Переинициализировать (перезапустит dev-сервер)
+# Step 5: Reinitialize (will restart the dev server)
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 
-# Шаг 6: Проверить
+# Step 6: Verify
 cat /home/z/my-project/.zscripts/dev.log | tail -20
 ```
 
-### Неправильный способ (ЧТО НЕ НАДО ДЕЛАТЬ)
+### Incorrect Way (WHAT NOT TO DO)
 
 ```bash
-# ❌ НЕ клонируй напрямую в подпапку проекта
+# ❌ DO NOT clone directly into a project subdirectory
 cd /home/z/my-project
 git clone https://github.com/user/project.git my-project
-cd my-project && npm install && npm run dev  # Сломает песочницу!
+cd my-project && npm install && npm run dev  # Will break the sandbox!
 ```
 
-> **Почему не работает:** Dev-сервер песочницы запускается в `/home/z/my-project/` и ожидает код там. Если код в подпапке — превью показывает дефолтную заглушку, а не твой проект.
+> **Why it doesn't work:** The sandbox's dev server runs in `/home/z/my-project/` and expects the code there. If the code is in a subdirectory — the preview shows the default placeholder, not your project.
 
-### Если нужна база данных (Prisma)
+### If You Need a Database (Prisma)
 
 ```bash
-# После копирования файлов в корень:
+# After copying files to the root:
 cd /home/z/my-project
 
-# Применить схему
+# Apply the schema
 bunx prisma db push
 
-# Сгенерировать клиент
+# Generate the client
 bunx prisma generate
 ```
 
 ---
 
-## 4. Dev-сервер не запускается
+## 4. Dev Server Won't Start
 
-### Симптомы
+### Symptoms
 
 ```bash
 cat .zscripts/dev.log | tail -30
-# Видно: EADDRINUSE, Connection refused, или просто пусто
+# Shows: EADDRINUSE, Connection refused, or just empty
 ```
 
-### Решение: полная переинициализация
+### Solution: Full Reinitialization
 
 ```bash
-# Шаг 1: Убить всё
+# Step 1: Kill everything
 pkill -f "next"
 pkill -f "node"
 pkill -f "bun"
 
-# Шаг 2: Удалить кэш
+# Step 2: Delete the cache
 rm -rf /home/z/my-project/.next
 
-# Шаг 3: Переинициализировать
+# Step 3: Reinitialize
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 
-# Шаг 4: Подождать 10-15 секунд
+# Step 4: Wait 10-15 seconds
 sleep 15
 
-# Шаг 5: Проверить
+# Step 5: Verify
 cat /home/z/my-project/.zscripts/dev.log | tail -20
 ```
 
-### Если переинициализация не помогает
+### If Reinitialization Doesn't Help
 
 ```bash
-# Проверить что лог-файл вообще пишется
+# Check if the log file is being written at all
 ls -la /home/z/my-project/.zscripts/dev.log
 ls -la /home/z/my-project/.zscripts/dev.pid
 
-# Если dev.pid есть но сервер мёртв:
+# If dev.pid exists but the server is dead:
 kill $(cat /home/z/my-project/.zscripts/dev.pid)
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 ```
 
 ---
 
-## 5. Порт 3000 занят (EADDRINUSE)
+## 5. Port 3000 Is in Use (EADDRINUSE)
 
-### Реальный кейс
+### Real Case
 
 ```
 Error: listen EADDRINUSE: address already in use :::3000
 ```
 
-Это значит: dev-сервер уже запущен (возможно, вручную в предыдущей сессии).
+This means: the dev server is already running (possibly started manually in a previous session).
 
-### Решение
+### Solution
 
 ```bash
-# Шаг 1: НЕ запускай вручную! Песочница сама запустит сервер.
+# Step 1: DO NOT start manually! The sandbox will start the server itself.
 
-# Шаг 2: Если нужен перезапуск:
+# Step 2: If you need a restart:
 pkill -f "next dev"
 pkill -f "bun run dev"
 
-# Шаг 3: Переинициализировать
+# Step 3: Reinitialize
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 ```
 
-> **Важно:** В песочнице НИКОГДА не запускай `npm run dev`, `bun run dev`, `next dev`. Сервер запускается автоматически через `.zscripts/dev.sh`.
+> **Important:** In the sandbox, NEVER run `npm run dev`, `bun run dev`, or `next dev`. The server starts automatically via `.zscripts/dev.sh`.
 
 ---
 
-## 6. HMR упал — страница стала 500
+## 6. HMR Crashed — Page Returns 500
 
-### Симптомы
+### Symptoms
 
 ```
 GET / 500 in 942ms (compile: 852ms, render: 90ms)
 ```
 
-### Причина
+### Cause
 
-Изменил/удалил файлы, которые Turbopack (HMR) пытался перезагрузить. Например:
-- Удалил компонент, который импортируется в `page.tsx`
-- Переименовал папку
-- Добавил submodule (удаление + пересоздание папки)
+You changed/deleted files that Turbopack (HMR) was trying to reload. For example:
+- Deleted a component that is imported in `page.tsx`
+- Renamed a folder
+- Added a submodule (deletion + recreation of folder)
 
-### Решение
+### Solution
 
 ```bash
-# HMR после удаления файлов не восстанавливается сам.
-# Нужен полный перезапуск:
+# HMR does not recover on its own after file deletion.
+# A full restart is needed:
 
 pkill -f "next dev"
 rm -rf /home/z/my-project/.next
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 sleep 15
 cat /home/z/my-project/.zscripts/dev.log | tail -10
-# Ожидаем: GET / 200
+# Expected: GET / 200
 ```
 
 ---
 
-## 7. Модули не находятся (Module not found)
+## 7. Modules Not Found (Module not found)
 
-### Симптомы
+### Symptoms
 
 ```
 Module not found: Can't resolve '@/lib/guided-tour/src'
 ```
 
-### Причины и решения
+### Causes and Solutions
 
-| Причина | Решение |
+| Cause | Solution |
 |---|---|
-| Пакет не установлен | `cd /home/z/my-project && bun add <package>` |
-| Неправильный путь импорта | Проверь путь: файл должен существовать по указанному пути |
-| Путь заканчивается на файл, а не на папку | `@/lib/guided-tour` вместо `@/lib/guided-tour/index` |
-| Удалил файл, но импорт остался | Обнови импорт в `page.tsx` |
-| Submodule не скачан | `git submodule update --init --recursive` |
+| Package not installed | `cd /home/z/my-project && bun add <package>` |
+| Incorrect import path | Check the path: the file must exist at the specified path |
+| Path ends with a file instead of a folder | `@/lib/guided-tour` instead of `@/lib/guided-tour/index` |
+| Deleted file but import remains | Update the import in `page.tsx` |
+| Submodule not downloaded | `git submodule update --init --recursive` |
 
-### Как проверить
+### How to Verify
 
 ```bash
-# Проверить что файл существует
+# Check that the file exists
 ls /home/z/my-project/src/lib/guided-tour/index.ts
 
-# Проверить путь алиаса (должен быть @/ -> src/)
+# Check the alias path (should be @/ -> src/)
 cat /home/z/my-project/tsconfig.json | grep -A3 "paths"
 
-# Проверить линтер
+# Run the linter
 cd /home/z/my-project && bun run lint
 ```
 
 ---
 
-## 8. Добавление Git Submodule
+## 8. Adding a Git Submodule
 
-### Пример: добавляем GuidedTour как submodule
+### Example: adding GuidedTour as a submodule
 
 ```bash
-# Шаг 1: Подготовить папку для submodule
+# Step 1: Prepare a folder for the submodule
 mkdir -p /home/z/my-project/src/lib/guided-tour
 
-# Шаг 2: Добавить submodule
+# Step 2: Add the submodule
 cd /home/z/my-project
 git submodule add https://github.com/user/GuidedTour.git src/lib/guided-tour
 
-# Шаг 3: Проверить
+# Step 3: Verify
 cat .gitmodules
-# Должно быть:
+# Should show:
 # [submodule "src/lib/guided-tour"]
 #     path = src/lib/guided-tour
 #     url = https://github.com/user/GuidedTour.git
 
 ls src/lib/guided-tour/
-# Должны быть файлы компонента
+# Should contain the component files
 
-# Шаг 4: Обновить импорты в коде
-# Было: import { X } from "@/components/ui/guided-tour"
-# Стало: import { X } from "@/lib/guided-tour"
+# Step 4: Update imports in the code
+# Before: import { X } from "@/components/ui/guided-tour"
+# After:  import { X } from "@/lib/guided-tour"
 
-# Шаг 5: Переинициализировать песочницу (HMR может упасть)
+# Step 5: Reinitialize the sandbox (HMR may crash)
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 ```
 
-### Если submodule не пушится (protected branch)
+### If the Submodule Won't Push (protected branch)
 
 ```bash
-# Пуш в отдельную ветку, потом PR через GitHub UI:
+# Push to a separate branch, then create a PR via GitHub UI:
 git checkout -b feature/my-changes
 git push origin feature/my-changes
 
-# Создай PR: https://github.com/user/repo/pull/new/feature/my-changes
+# Create a PR: https://github.com/user/repo/pull/new/feature/my-changes
 ```
 
 ---
 
-## 9. Обновление Submodule
+## 9. Updating a Submodule
 
-### Быстрое обновление
+### Quick Update
 
 ```bash
 git submodule update --remote src/lib/guided-tour
 ```
 
-### Полный цикл (обновить + закоммитить)
+### Full Cycle (update + commit)
 
 ```bash
-# 1. Подтянуть изменения из upstream
+# 1. Pull changes from upstream
 git submodule update --remote src/lib/guided-tour
 
-# 2. Посмотреть что изменилось
+# 2. See what changed
 git diff src/lib/guided-tour
 
-# 3. Закоммитить новую версию
+# 3. Commit the new version
 git add src/lib/guided-tour
 git commit -m "chore: update GuidedTour submodule"
 
-# 4. Переинициализировать песочницу (если нужны зависимости)
+# 4. Reinitialize the sandbox (if dependencies are needed)
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 ```
 
-### Проверить текущую версию submodule
+### Check Current Submodule Version
 
 ```bash
 git submodule status src/lib/guided-tour
 ```
 
-### Что нового с прошлого обновления
+### What's New Since the Last Update
 
 ```bash
 cd src/lib/guided-tour && git log --oneline HEAD..origin/main && cd -
 ```
 
-### Откатить если сломалось
+### Roll Back if Broken
 
 ```bash
 cd src/lib/guided-tour
@@ -396,53 +396,53 @@ git commit -m "chore: pin GuidedTour to <commit-hash>"
 
 ---
 
-## 10. Полезные команды
+## 10. Useful Commands
 
-### Проверка состояния песочницы
+### Checking Sandbox Status
 
 ```bash
-# Логи dev-сервера
+# Dev server logs
 cat /home/z/my-project/.zscripts/dev.log | tail -30
 
-# PID dev-сервера
+# Dev server PID
 cat /home/z/my-project/.zscripts/dev.pid
 
-# PID процесса
+# Process info by PID
 cat /home/z/my-project/.zscripts/dev.pid | xargs ps -p
 ```
 
-### Проверка кода
+### Code Checking
 
 ```bash
-# Линтер
+# Linter
 cd /home/z/my-project && bun run lint
 
-# TypeScript ошибки
+# TypeScript errors
 bunx tsc --noEmit
 ```
 
-### База данных (Prisma)
+### Database (Prisma)
 
 ```bash
 cd /home/z/my-project
 
-# Применить схему
+# Apply the schema
 bunx prisma db push
 
-# Сгенерировать клиент
+# Generate the client
 bunx prisma generate
 
-# Сбросить базу
+# Reset the database
 bunx prisma migrate reset
 ```
 
-### Перезапуск песочницы
+### Restarting the Sandbox
 
 ```bash
-# Стандартная переинициализация
+# Standard reinitialization
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 
-# Жёсткий перезапуск (если стандартная не помогает)
+# Hard restart (if standard doesn't help)
 pkill -f "next dev"
 rm -rf /home/z/my-project/.next
 curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
@@ -451,9 +451,9 @@ curl https://z-cdn.chatglm.cn/fullstack/init-fullstack_1775040338514.sh | bash
 ### Preview URL
 
 ```bash
-# Узнать container ID
+# Get the container ID
 echo $FC_CONTAINER_ID
-# или
+# or
 hostname
 
 # Preview URL:
@@ -462,37 +462,37 @@ hostname
 
 ---
 
-## 11. Частые ошибки и решения
+## 11. Common Errors and Solutions
 
-| # | Ошибка | Причина | Решение |
+| # | Error | Cause | Solution |
 |---|---|---|---|
-| 1 | `Module not found` | Пакет не установлен | `bun add <package>` |
-| 2 | `EADDRINUSE` | Сервер уже запущен | `pkill -f next` + переинициализация |
-| 3 | `GET / 500` | Ошибка в коде | Проверить `.zscripts/dev.log` |
-| 4 | `GET / 200` но белый экран | HMR сломался | Переинициализация песочницы |
-| 5 | `Connection refused` | Сервер не запущен | Переинициализация песочницы |
-| 6 | Превью не обновляется | Dev-сервер упал | `cat .zscripts/dev.log` + переинициализация |
-| 7 | Submodule folder empty | Забыл `--recurse-submodules` | `git submodule update --init --recursive` |
-| 8 | TypeScript ошибки | Неверные типы | `bunx tsc --noEmit` |
-| 9 | Импорты не работают | Неправильный путь | Используй `@/` алиас |
-| 10 | Turbopack panic | Удаление файлов при работающем сервере | Переинициализация песочницы |
+| 1 | `Module not found` | Package not installed | `bun add <package>` |
+| 2 | `EADDRINUSE` | Server already running | `pkill -f next` + reinitialization |
+| 3 | `GET / 500` | Error in code | Check `.zscripts/dev.log` |
+| 4 | `GET / 200` but white screen | HMR broken | Reinitialize the sandbox |
+| 5 | `Connection refused` | Server not running | Reinitialize the sandbox |
+| 6 | Preview not updating | Dev server crashed | `cat .zscripts/dev.log` + reinitialization |
+| 7 | Submodule folder empty | Forgot `--recurse-submodules` | `git submodule update --init --recursive` |
+| 8 | TypeScript errors | Incorrect types | `bunx tsc --noEmit` |
+| 9 | Imports not working | Incorrect path | Use the `@/` alias |
+| 10 | Turbopack panic | File deletion while server is running | Reinitialize the sandbox |
 
 ---
 
-## Структура проекта
+## Project Structure
 
 ```
 /home/z/my-project/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx          # ГЛАВНЫЙ ФАЙЛ — весь UI здесь
+│   │   ├── page.tsx          # MAIN FILE — all UI goes here
 │   │   ├── layout.tsx
 │   │   └── globals.css
 │   ├── components/
-│   │   ├── ui/               # shadcn/ui компоненты
-│   │   ├── sections/         # Секции страницы
-│   │   ├── features/         # Компоненты с состоянием
-│   │   └── perf/             # Специфичные компоненты
+│   │   ├── ui/               # shadcn/ui components
+│   │   ├── sections/         # Page sections
+│   │   ├── features/         # Stateful components
+│   │   └── perf/             # Specialized components
 │   └── lib/
 │       ├── guided-tour/      # Git submodule (GuidedTour)
 │       ├── perf-data.ts
@@ -502,10 +502,10 @@ hostname
 │   └── schema.prisma
 ├── public/
 ├── .zscripts/
-│   ├── dev.sh               # Скрипт запуска dev-сервера (НЕ РЕДАКТИРОВАТЬ)
-│   ├── dev.pid              # PID процесса
-│   └── dev.log              # ЛОГИ (читать отсюда при ошибках)
-├── .gitmodules              # Submodule конфигурация
+│   ├── dev.sh               # Dev server startup script (DO NOT EDIT)
+│   ├── dev.pid              # Process PID
+│   └── dev.log              # LOGS (read from here when errors occur)
+├── .gitmodules              # Submodule configuration
 ├── package.json
 ├── tsconfig.json
 └── next.config.ts
@@ -513,12 +513,12 @@ hostname
 
 ---
 
-## Золотые правила песочницы
+## Golden Rules of the Sandbox
 
-1. **ВСЕГДА** начинай с `curl ... init-fullstack ... | bash`
-2. **НИКОГДА** не запускай dev-сервер вручную (`npm run dev`, `bun run dev`, `next dev`)
-3. **ВЕСЬ КОД** пишется в `/home/z/my-project/` (корень проекта, не подпапки)
-4. **ЛОГИ** всегда тут: `cat /home/z/my-project/.zscripts/dev.log | tail -30`
-5. **ЗАВИСИМОСТИ** ставятся через: `cd /home/z/my-project && bun add <package>`
-6. **ПЕРЕЗАПУСК** = переинициализация: `curl ... init-fullstack ... | bash`
-7. **СЛОМАЛОСЬ** — не чини вручную, переинициализируй
+1. **ALWAYS** start with `curl ... init-fullstack ... | bash`
+2. **NEVER** start the dev server manually (`npm run dev`, `bun run dev`, `next dev`)
+3. **ALL CODE** goes in `/home/z/my-project/` (project root, not subdirectories)
+4. **LOGS** are always here: `cat /home/z/my-project/.zscripts/dev.log | tail -30`
+5. **DEPENDENCIES** are installed via: `cd /home/z/my-project && bun add <package>`
+6. **RESTART** = reinitialization: `curl ... init-fullstack ... | bash`
+7. **BROKEN** — don't fix manually, reinitialize

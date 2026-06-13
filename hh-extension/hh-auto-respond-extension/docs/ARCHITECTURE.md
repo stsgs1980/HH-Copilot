@@ -1,11 +1,11 @@
-# HH Copilot -- Архитектура расширения
+# HH Copilot -- Extension Architecture
 
-**Версия:** 1.9.23.0
-**Тип:** Chrome Extension (Manifest V3)
-**Целевая платформа:** hh.ru (Magritte дизайн-система)
+**Version:** 1.9.28.0
+**Type:** Chrome Extension (Manifest V3)
+**Target Platform:** hh.ru (Magritte design system)
 
 
-## 1. Компонентная диаграмма
+## 1. Component Diagram
 
 ```
 +---------------------------------------------------------------------+
@@ -72,34 +72,34 @@
 +---------------------------------------------------------------------+
 ```
 
-Три контекста исполнения: Content Script (работает на страницах hh.ru), Page-World Script (работает в MAIN world для SPA-навигации), Service Worker (фоновый процесс расширения), Popup (UI при клике на иконку). Связь между ними: chrome.storage.local для данных и chrome.runtime.sendMessage для команд.
+Three execution contexts: Content Script (runs on hh.ru pages), Page-World Script (runs in MAIN world for SPA navigation), Service Worker (extension background process), Popup (UI on icon click). Communication between them: chrome.storage.local for data and chrome.runtime.sendMessage for commands.
 
 
-## 2. Потоки данных
+## 2. Data Flows
 
-### 2.1 Поток парсинга вакансий
+### 2.1 Vacancy Parsing Flow
 
 ```
-[Страница hh.ru загружена]
+[hh.ru page loaded]
         |
         v
 manifest.json: content_scripts inject content.js (document_idle)
         |
         v
-initPageLogic() -- определение типа страницы по URL
+initPageLogic() -- determine page type by URL
         |
         +-- /search/vacancy*  --> parseVacanciesFromPage()
-        +-- /vacancy/{id}     --> initVacancyPage() (заглушка)
+        +-- /vacancy/{id}     --> initVacancyPage() (stub)
         +-- /resume/{hash}    --> parseResume()
         +-- /applicant/resumes --> parseResumeList()
         +-- *                 --> checkAuth() + createFab()
         |
-        v  (для /search/vacancy)
+        v  (for /search/vacancy)
 parseVacanciesFromPage()
         |
-        +-- findAllElements('vacancyCard') --> NodeList карточек
+        +-- findAllElements('vacancyCard') --> NodeList of cards
         |
-        +-- Для каждой карточки:
+        +-- For each card:
         |       |
         |       +-- findElement('vacancyTitleLink', card) --> titleEl
         |       |       +-- safeGetText(titleEl) --> title
@@ -114,20 +114,20 @@ parseVacanciesFromPage()
         |       +-- findElement('replyButton', card) --> hasReply
         |       |
         |       +-- validateVacancyData(vacancy) --> {valid, errors}
-        |       +-- Проверка: уже откликнуты? Чёрный список?
-        |       +-- Добавление в vacancies[]
+        |       +-- Check: already applied? Blacklisted?
+        |       +-- Add to vacancies[]
         |
         v
 panelState.vacancies = vacancies
         |
         v
-renderSidebarContent() --> отрисовка карточек в Shadow DOM sidebar
+renderSidebarContent() --> render cards in Shadow DOM sidebar
 ```
 
-### 2.2 Поток парсинга резюме
+### 2.2 Resume Parsing Flow
 
 ```
-[Пользователь открывает /resume/{hash}]
+[User opens /resume/{hash}]
         |
         v
 initPageLogic() --> detectPageType() = 'resume'
@@ -143,9 +143,9 @@ parseResume()
         +-- data-qa="resume-block-salary" --> salary
         |
         +-- data-qa="resume-position-card" text scan:
-        |       +-- regex: пол (мужчина/женщина)
-        |       +-- regex: возраст (N лет/года)
-        |       +-- regex: город (кириллический текст)
+        |       +-- regex: gender (male/female)
+        |       +-- regex: age (N years)
+        |       +-- regex: city (Cyrillic text)
         |
         +-- data-qa="skills-card":
         |       +-- [data-qa^="skill-level-title-N"] --> skillLevels
@@ -159,11 +159,11 @@ parseResume()
         |               +-- residual text --> description
         |
         +-- data-qa="resume-list-card-education":
-        |       +-- способ 1: cell-left-side + cell-text-content
-        |       +-- способ 2: прямые дочерние элементы
-        |       +-- способ 3: полный текстовый скан
+        |       +-- method 1: cell-left-side + cell-text-content
+        |       +-- method 2: direct child elements
+        |       +-- method 3: full text scan
         |
-        +-- bloko-tag в resume-about-card --> languages
+        +-- bloko-tag in resume-about-card --> languages
         +-- data-qa="resume-about-card" text --> additionalInfo
         |
         v
@@ -172,140 +172,139 @@ resume._debug = { found: [], missing: [] }
         v
 chrome.storage.local.set({ resume })
 panelState.resume = resume
-renderResumePanel() --> вкладка "Моё резюме" в sidebar
+renderResumePanel() --> "My Resume" tab in sidebar
 ```
 
-### 2.3 Поток авторизации
+### 2.3 Authorization Flow
 
 ```
-[content.js загружен на hh.ru]
+[content.js loaded on hh.ru]
         |
         v
-createFab() --> серый FAB (проверка)
+createFab() --> gray FAB (checking)
 checkAuth():
         |
-        +-- Перебор 13 селекторов:
+        +-- Iterate 13 selectors:
         |       [data-qa="mainmenu_applicant"]
         |       [data-qa="mainmenu_user_name"]
         |       a[data-qa="mainmenu_myResumes"]
         |       [data-qa="mainmenu"] sup
         |       .supernova-nav__item--applicant
         |       a[href*="/applicant/"]
-        |       ... и ещё 7
+        |       ... and 7 more
         |       |
-        |       +-- Для каждого: querySelector + getComputedStyle
-        |       +-- Если найден видимый элемент --> return true
+        |       +-- For each: querySelector + getComputedStyle
+        |       +-- If visible element found --> return true
         |
         +-- Cookie fallback:
-        |       document.cookie содержит hhruuid / _HH-RU / hhtoken
+        |       document.cookie contains hhruuid / _HH-RU / hhtoken
         |       --> return true
         |
-        +-- Ничего не найдено --> return false
+        +-- Nothing found --> return false
         |
         v
 panelState.isLoggedIn = true/false
-updateFabIcon() --> синий (true) / красный (false)
+updateFabIcon() --> blue (true) / red (false)
 renderSidebarContent()
 
-[Поллинг каждые 2 секунды]
+[Polling every 2 seconds]
         |
         v
 updateAuthState() --> checkAuth() --> updateFabIcon()
 ```
 
 
-## 3. Стратегия селекторов
+## 3. Selector Strategy
 
-### 3.1 Почему data-qa
+### 3.1 Why data-qa
 
-hh.ru использует Magritte -- CSS-in-JS дизайн-систему, которая генерирует хэшированные имена классов при каждой сборке. Пример:
+hh.ru uses Magritte -- a CSS-in-JS design system that generates hashed class names on every build. Example:
 
 ```
-magritte-card___bhGKz_8-5-13   (деплой 1)
-magritte-card___xYzAb_9-6-14   (деплой 2)
+magritte-card___bhGKz_8-5-13   (deploy 1)
+magritte-card___xYzAb_9-6-14   (deploy 2)
 ```
 
-Селектор по такому классу перестанет работать после любого обновления сайта. Атрибуты data-qa, напротив, созданы для тестирования и остаются стабильными между деплоями. Они являются единственным надёжным API для обращения к DOM hh.ru.
+A selector based on such a class will stop working after any site update. data-qa attributes, on the other hand, are created for testing and remain stable across deploys. They are the only reliable API for accessing hh.ru's DOM.
 
-### 3.2 Fallback-цепочки
+### 3.2 Fallback Chains
 
-Каждый селектор в объекте HH_SELECTORS -- это массив строк. Функция findElement() перебирает массив и возвращает первый видимый элемент:
+Each selector in the HH_SELECTORS object is an array of strings. The findElement() function iterates through the array and returns the first visible element:
 
 ```javascript
 vacancyCard: [
-    '[data-qa="vacancy-serp__vacancy"]',     // приоритет 1: data-qa
-    '[class*="vacancy-serp-item"]'            // приоритет 2: partial class
+    '[data-qa="vacancy-serp__vacancy"]',     // priority 1: data-qa
+    '[class*="vacancy-serp-item"]'            // priority 2: partial class
 ]
 ```
 
-findElement() для каждого селектора:
-1. Пытается выполнить querySelector -- при ошибке (невалидный селектор) переходит к следующему
-2. Проверяет что элемент существует (не null)
-3. Проверяет что элемент принадлежит документу (document.body.contains)
-4. Проверяет что элемент видим через getComputedStyle (display !== 'none', visibility !== 'hidden')
-5. Возвращает элемент или null (никогда не undefined)
+findElement() for each selector:
+1. Attempts querySelector -- on error (invalid selector) moves to the next one
+2. Checks that the element exists (not null)
+3. Checks that the element belongs to the document (document.body.contains)
+4. Checks that the element is visible via getComputedStyle (display !== 'none', visibility !== 'hidden')
+5. Returns the element or null (never undefined)
 
-### 3.3 Категории селекторов
+### 3.3 Selector Categories
 
-**Vacancy Search (страница поиска):** vacancyCard, vacancyTitleLink, vacancyTitleText, vacancyCompany, vacancySalary, vacancyLocation, vacancyExperience, vacancyTags, replyButton, nextPage.
+**Vacancy Search (search page):** vacancyCard, vacancyTitleLink, vacancyTitleText, vacancyCompany, vacancySalary, vacancyLocation, vacancyExperience, vacancyTags, replyButton, nextPage.
 
-**Vacancy Page (страница вакансии):** vacancyTitleOnPage, vacancyCompanyOnPage, vacancyDescription, vacancySkills, responsePopup, addCoverLetter, coverLetterInput, submitButton, alertMagritte, relocationConfirm, testTaskWarning, alreadyApplied, indirectEmployerAlert.
+**Vacancy Page (vacancy detail page):** vacancyTitleOnPage, vacancyCompanyOnPage, vacancyDescription, vacancySkills, responsePopup, addCoverLetter, coverLetterInput, submitButton, alertMagritte, relocationConfirm, testTaskWarning, alreadyApplied, indirectEmployerAlert.
 
-**Resume Page (страница резюме):** resumeTitle, resumeSalary, resumeSkillsTable, resumeSkillTag, resumeSkillLevel3, resumeSkillLevel2, resumeSkillLevel1, resumePersonalName, resumeListItem, resumeListTitle, resumeListLink.
+**Resume Page (resume detail page):** resumeTitle, resumeSalary, resumeSkillsTable, resumeSkillTag, resumeSkillLevel3, resumeSkillLevel2, resumeSkillLevel1, resumePersonalName, resumeListItem, resumeListTitle, resumeListLink.
 
-**Auth (авторизация):** loginEmailInput, loginPasswordInput, loginCaptchaImage, logged_in_indicator.
+**Auth (authorization):** loginEmailInput, loginPasswordInput, loginCaptchaImage, logged_in_indicator.
 
-### 3.4 Запрещённые селекторы
+### 3.4 Forbidden Selectors
 
-Категорически запрещено использовать CSS-классы Magritte с хэшами (содержащие ___, например magritte-card___bhGKz). Также запрещено полагаться на h2/h3 заголовки для секций резюме -- Magritte не использует семантические заголовки для разделов.
+It is strictly forbidden to use Magritte CSS classes with hashes (containing ___, e.g. magritte-card___bhGKz). It is also forbidden to rely on h2/h3 headings for resume sections -- Magritte does not use semantic headings for sections.
 
 
-## 4. Shadow DOM изоляция
+## 4. Shadow DOM Isolation
 
-### 4.1 Зачем
+### 4.1 Why
 
-hh.ru подключает множество CSS-библиотек (Bloko, Magritte). Если вставить HTML панели напрямую в document.body, стили hh.ru могут сломать вёрстку панели, а стили панели -- сломать страницу. Например, класс .bloko-button будет переопределён, и кнопки на странице перестанут работать корректно.
+hh.ru includes many CSS libraries (Bloko, Magritte). If the panel HTML is inserted directly into document.body, hh.ru styles can break the panel layout, and panel styles can break the page. For example, the .bloko-button class would be overridden, and buttons on the page would stop working correctly.
 
-### 4.2 Как работает
+### 4.2 How It Works
 
 ```javascript
 panelEl = document.createElement('div');
 const shadowRoot = panelEl.attachShadow({ mode: 'closed' });
-// Все стили и DOM панели существуют внутри shadowRoot
-// Внешний document.body видит только panelEl (пустой div)
+// All panel styles and DOM exist inside shadowRoot
+// External document.body only sees panelEl (empty div)
 ```
 
-mode: 'closed' означает, что внешний JavaScript не может получить доступ к shadowRoot через panelEl.shadowRoot -- доступ только изнутри. Это защищает от случайного вмешательства.
+mode: 'closed' means that external JavaScript cannot access shadowRoot via panelEl.shadowRoot -- access is only from inside. This protects against accidental interference.
 
-### 4.3 Что изолировано
+### 4.3 What Is Isolated
 
-CSS hh.ru не проникает в панель. CSS панели не влияет на hh.ru. Глобальный JavaScript hh.ru не имеет доступа к переменным и функциям внутри Shadow DOM. События, генерируемые внутри Shadow DOM, по умолчанию не всплывают наружу (composed: false для внутренних событий).
+hh.ru CSS does not penetrate into the panel. Panel CSS does not affect hh.ru. hh.ru's global JavaScript has no access to variables and functions inside the Shadow DOM. Events generated inside the Shadow DOM do not bubble out by default (composed: false for internal events).
 
-### 4.4 Исключения
+### 4.4 Exceptions
 
-Content script расширения создаёт Shadow DOM, но сам работает в контексте страницы. Переменные content.js (findElement, safeGetText и т.д.) являются глобальными для страницы, но это допустимо, так как имена функций имеют префикс и не конфликтуют с hh.ru. Функция diagnoseResumeDOM() экспортируется в window.__hhDiagnose для удобства отладки из консоли.
+The extension's content script creates the Shadow DOM, but itself runs in the page context. content.js variables (findElement, safeGetText, etc.) are global to the page, but this is acceptable since function names have prefixes and do not conflict with hh.ru. The diagnoseResumeDOM() function is exported to window.__hhDiagnose for debugging convenience from the console.
 
 
-## 5. Схема chrome.storage.local
+## 5. chrome.storage.local Schema
 
-### 5.1 Структура
+### 5.1 Structure
 
-Все данные расширения хранятся в chrome.storage.local. Хранилище асинхронное, объём ограничен 10 МБ. Данные не удаляются при закрытии браузера.
+All extension data is stored in chrome.storage.local. The storage is asynchronous, with a capacity limit of 10 MB. Data is not deleted when the browser is closed.
 
 ```
-Ключ                 Тип          Значение по умолчанию      Назначение
+Key                  Type         Default Value              Purpose
 --------------------------------------------------------------------------
-settings             object       (см. DEFAULT_SETTINGS)     Настройки пользо-
-                                                       вателя
-stats                object       (см. DEFAULT_STATS)       Статистика откликов
-appliedVacancies     array []     []                        ID откликнутых
-skippedVacancies     array []     []                        ID пропущенных
-blacklistedCompanies array []     []                        Чёрный список
-logs                 array []     []                        Лог (до 500 записей)
-resume               object       null                       Распарсенное резюме
-resumeList           array []     []                        Список резюме
-dailyResetDate       string       null                       Дата сброса (YYYY-MM-DD)
-installedAt          string       null                       Дата установки (ISO)
+settings             object       (see DEFAULT_SETTINGS)     User settings
+stats                object       (see DEFAULT_STATS)       Response statistics
+appliedVacancies     array []     []                        IDs of applied
+skippedVacancies     array []     []                        IDs of skipped
+blacklistedCompanies array []     []                        Blacklist
+logs                 array []     []                        Log (up to 500 entries)
+resume               object       null                       Parsed resume
+resumeList           array []     []                        Resume list
+dailyResetDate       string       null                       Reset date (YYYY-MM-DD)
+installedAt          string       null                       Install date (ISO)
 ```
 
 ### 5.2 DEFAULT_SETTINGS
@@ -313,14 +312,14 @@ installedAt          string       null                       Дата устан
 ```javascript
 {
     mode: 'manual',           // manual / semi-auto / auto
-    dailyLimit: 200,          // макс. откликов в день
-    minMatchScore: 60,        // мин. score для авто-отклика
+    dailyLimit: 200,          // max applications per day
+    minMatchScore: 60,        // min score for auto-apply
     letterTone: 'formal',     // formal / confident / friendly
-    searchInterval: 300,      // интервал поиска (сек)
-    autoScroll: true,         // авто-скролл страницы
-    showMatchScore: true,     // показывать match score
-    confirmBeforeApply: true, // подтверждение перед откликом
-    coverLetterTemplate: ''   // шаблон сопроводительного
+    searchInterval: 300,      // search interval (sec)
+    autoScroll: true,         // auto-scroll the page
+    showMatchScore: true,     // show match score
+    confirmBeforeApply: true, // confirm before applying
+    coverLetterTemplate: ''   // cover letter template
 }
 ```
 
@@ -338,157 +337,157 @@ installedAt          string       null                       Дата устан
 }
 ```
 
-### 5.4 Операции
+### 5.4 Operations
 
-getAllSettings() -- читает settings из хранилища, мержит с DEFAULT_SETTINGS, возвращает объект. При ошибке чтения возвращает копию DEFAULT_SETTINGS.
+getAllSettings() -- reads settings from storage, merges with DEFAULT_SETTINGS, returns the object. On read error, returns a copy of DEFAULT_SETTINGS.
 
-getStats() -- проверяет ежедневный сброс (checkDailyReset), читает stats, мержит с DEFAULT_STATS. Счётчики appliedToday, skipsToday, errorsToday сбрасываются при смене даты.
+getStats() -- checks daily reset (checkDailyReset), reads stats, merges with DEFAULT_STATS. Counters appliedToday, skipsToday, errorsToday are reset when the date changes.
 
-incrementApplied() -- увеличивает appliedToday и totalApplied, проверяет дневной лимит. Возвращает {allowed: true/false, remaining: N}.
+incrementApplied() -- increments appliedToday and totalApplied, checks the daily limit. Returns {allowed: true/false, remaining: N}.
 
-isAlreadyApplied(id) / markAsApplied(id) -- проверка и запись в массив appliedVacancies.
+isAlreadyApplied(id) / markAsApplied(id) -- checks and records in the appliedVacancies array.
 
-checkDailyReset() -- сравнивает dailyResetDate с текущей датой. При несовпадении сбрасывает дневные счётчики и обновляет дату.
+checkDailyReset() -- compares dailyResetDate with the current date. If they don't match, resets daily counters and updates the date.
 
-### 5.5 Инициализация
+### 5.5 Initialization
 
-При установке расширения (reason === 'install') Service Worker записывает все ключи с дефолтными значениями в chrome.storage.local. При обновлении (reason === 'update') существующие данные сохраняются -- Service Worker только создаёт/пересоздаёт будильник dailyReset.
+When the extension is installed (reason === 'install'), the Service Worker writes all keys with default values to chrome.storage.local. On update (reason === 'update'), existing data is preserved -- the Service Worker only creates/recreates the dailyReset alarm.
 
 
-## 6. Передача сообщений
+## 6. Message Passing
 
-### 6.1 Направления
+### 6.1 Directions
 
 ```
 Popup  --sendMessage-->  Service Worker  --sendMessage-->  Content Script
-Content Script  --sendMessage-->  Service Worker  (для логов)
+Content Script  --sendMessage-->  Service Worker  (for logs)
 ```
 
-Content Script не может отправить сообщение напрямую в Popup (Popup может быть закрыт). Popup отправляет сообщение в Service Worker, а Service Worker пересылает его в Content Script активной вкладки hh.ru через chrome.tabs.sendMessage.
+Content Script cannot send a message directly to Popup (Popup may be closed). Popup sends a message to the Service Worker, and the Service Worker forwards it to the Content Script of the active hh.ru tab via chrome.tabs.sendMessage.
 
-### 6.2 Типы сообщений
+### 6.2 Message Types
 
-**get-stats.** Popup запрашивает статистику. Service Worker читает chrome.storage.local.get('stats') и отправляет данные обратно через sendResponse.
+**get-stats.** Popup requests statistics. Service Worker reads chrome.storage.local.get('stats') and sends the data back via sendResponse.
 
-**get-settings.** Popup запрашивает настройки. Service Worker читает chrome.storage.local.get('settings') и отправляет обратно.
+**get-settings.** Popup requests settings. Service Worker reads chrome.storage.local.get('settings') and sends them back.
 
-**apply-vacancy.** Popup запрашивает отклик на вакансию. Service Worker пересылает сообщение в Content Script активной вкладки hh.ru (chrome.tabs.query с фильтром url: 'https://hh.ru/*'). Content Script выполняет логику отклика.
+**apply-vacancy.** Popup requests applying to a vacancy. Service Worker forwards the message to the Content Script of the active hh.ru tab (chrome.tabs.query with url filter: 'https://hh.ru/*'). Content Script executes the application logic.
 
-**log.** Content Script или Popup отправляют запись лога. Service Worker добавляет её в массив logs в chrome.storage.local (максимум 500 записей, старые удаляются).
+**log.** Content Script or Popup sends a log entry. Service Worker adds it to the logs array in chrome.storage.local (maximum 500 entries, oldest are removed).
 
-**settings-updated.** Popup отправляет обновлённые настройки. Service Worker пересылает в Content Script. Content Script обновляет локальное состояние и перезапускает рендер панели.
+**settings-updated.** Popup sends updated settings. Service Worker forwards to Content Script. Content Script updates local state and re-renders the panel.
 
-### 6.3 Асинхронные ответы
+### 6.3 Asynchronous Responses
 
-Для get-stats и get-settings Service Worker возвращает true из обработчика onMessage (что означает асинхронный ответ). Затем вызов sendResponse(data) отправляет данные обратно в Popup. Это необходимо, потому что chrome.storage.local.get -- асинхронная операция.
+For get-stats and get-settings, the Service Worker returns true from the onMessage handler (meaning an asynchronous response). Then calling sendResponse(data) sends the data back to Popup. This is necessary because chrome.storage.local.get is an asynchronous operation.
 
-### 6.4 Badge updates
+### 6.4 Badge Updates
 
-Service Worker экспортирует функцию updateBadge(), которая читает appliedToday из хранилища и устанавливает текст бейджа (число на иконке расширения) через chrome.action.setBadgeText. Функция вызывается при инициализации и может вызываться после каждого отклика (хотя сейчас Content Script обновляет бейдж напрямую через chrome.runtime.sendMessage).
+The Service Worker exports the updateBadge() function, which reads appliedToday from storage and sets the badge text (number on the extension icon) via chrome.action.setBadgeText. The function is called on initialization and can be called after each application (although currently Content Script updates the badge directly via chrome.runtime.sendMessage).
 
 
-## 7. Антигаллюцинационная верификация
+## 7. Anti-Hallucination Verification
 
-### 7.1 Определение
+### 7.1 Definition
 
-"Галлюцинация" в контексте расширения -- это ситуация, когда код делает неверные предположения о DOM-структуре и действует на основе данных, которых нет или которые искажены. Примеры: обращение к textContent несуществующего элемента (TypeError, краш расширения), парсинг salary = "Не указана" как числа (NaN propagation), клик по скрытому элементу (действие не регистрируется).
+A "hallucination" in the context of the extension is a situation where the code makes incorrect assumptions about the DOM structure and acts based on data that doesn't exist or is distorted. Examples: accessing textContent of a non-existent element (TypeError, extension crash), parsing salary = "Not specified" as a number (NaN propagation), clicking a hidden element (action is not registered).
 
-### 7.2 Уровень 1: DOM Verification
+### 7.2 Level 1: DOM Verification
 
-Принцип: никогда не обращаться к DOM без проверки существования и видимости.
+Principle: never access the DOM without checking existence and visibility.
 
-safeGetText(el, fallback) выполняет 5 проверок:
+safeGetText(el, fallback) performs 5 checks:
 1. el !== null
 2. el instanceof Element
-3. el.offsetParent !== null ИЛИ el не находится в body (для fixed/transform)
-4. el не скрыт через display:none или visibility:hidden (getComputedStyle)
-5. textContent не пустой и не whitespace-only
+3. el.offsetParent !== null OR el is not in body (for fixed/transform)
+4. el is not hidden via display:none or visibility:hidden (getComputedStyle)
+5. textContent is not empty and not whitespace-only
 
-safeGetAttr(el, attr, fallback) проверяет:
+safeGetAttr(el, attr, fallback) checks:
 1. el !== null
 2. el instanceof Element
-3. getAttribute возвращает не null (возвращает fallback если null)
+3. getAttribute returns not null (returns fallback if null)
 
-safeClick(el, label) проверяет:
+safeClick(el, label) checks:
 1. el !== null
 2. el instanceof Element
 3. el.disabled === false
 4. document.body.contains(el) === true
 5. getComputedStyle: display !== 'none', visibility !== 'hidden'
 
-### 7.3 Уровень 2: Data Validation
+### 7.3 Level 2: Data Validation
 
-Принцип: никогда не использовать данные без валидации типа, формата и содержания.
+Principle: never use data without validating type, format, and content.
 
-validateVacancyData(v) проверяет:
-- title: существует, тип string, длина >= 3
-- company: существует, тип string
-- url: существует, начинается с "https://hh.ru/"
-- id: существует, тип string, не пустой
+validateVacancyData(v) checks:
+- title: exists, type string, length >= 3
+- company: exists, type string
+- url: exists, starts with "https://hh.ru/"
+- id: exists, type string, not empty
 
-extractVacancyId(url) проверяет:
-- url существует, тип string
-- regex /\/vacancy\/(\d+)/ совпал
-- при несовпадении возвращает '' (пустую строку, не null/undefined)
+extractVacancyId(url) checks:
+- url exists, type string
+- regex /\/vacancy\/(\d+)/ matched
+- on mismatch returns '' (empty string, not null/undefined)
 
-waitForElement(selectors, timeout) проверяет:
-- Мгновенная проверка (0ms) перед запуском observer
-- MutationObserver с timeout (default 10s)
-- При timeout возвращает null (не hang)
-- Visibility check для каждого найденного элемента
+waitForElement(selectors, timeout) checks:
+- Instant check (0ms) before starting observer
+- MutationObserver with timeout (default 10s)
+- On timeout returns null (does not hang)
+- Visibility check for each found element
 
-### 7.4 Уровень 3: Action Verification
+### 7.4 Level 3: Action Verification
 
-Принцип: никогда не выполнять действие без проверки предусловий И результата.
+Principle: never perform an action without checking preconditions AND result.
 
-safeInput(el, text, label) проверяет:
+safeInput(el, text, label) checks:
 1. el !== null
 2. el instanceof HTMLElement
 3. el.disabled === false, el.readOnly === false
-4. text существует, тип string, длина > 0
+4. text exists, type string, length > 0
 5. React native value setter + dispatchEvent(input, change)
 
-simulateTyping(el, text) проверяет:
-1. el и text существуют
-2. Посимвольная вставка с событием input после каждого символа
-3. Случайная задержка 30-120ms между символами (имитация живого набора)
+simulateTyping(el, text) checks:
+1. el and text exist
+2. Character-by-character insertion with input event after each character
+3. Random delay 30-120ms between characters (simulates live typing)
 
-### 7.5 Правила для разработчиков
+### 7.5 Developer Rules
 
-Правило 1. Ничего не возвращай как undefined. Конкретные типы: string, null, boolean, number, object. Пустая строка '' -- ок, undefined -- нет.
+Rule 1. Never return undefined. Use specific types: string, null, boolean, number, object. Empty string '' is ok, undefined is not.
 
-Правило 2. Не предполагай что DOM-элемент существует. Используй findElement() или проверяй вручную.
+Rule 2. Do not assume a DOM element exists. Use findElement() or check manually.
 
-Правило 3. Не цепляй .textContent/.value напрямую. safeGetText() и safeGetAttr() обязательны.
+Rule 3. Do not chain .textContent/.value directly. safeGetText() and safeGetAttr() are mandatory.
 
-Правило 4. Не кликай по невидимым элементам. safeClick() проверяет всё.
+Rule 4. Do not click invisible elements. safeClick() checks everything.
 
-Правило 5. Не вводи текст в disabled/readonly поля. safeInput() проверяет.
+Rule 5. Do not enter text into disabled/readonly fields. safeInput() checks.
 
-Правило 6. Валидируй данные перед использованием. validateVacancyData() перед добавлением в результат.
+Rule 6. Validate data before use. validateVacancyData() before adding to results.
 
-Правило 7. Проверяй URL перед навигацией. extractVacancyId() вернёт '' при некорректном URL.
+Rule 7. Check URLs before navigation. extractVacancyId() returns '' for invalid URLs.
 
-Правило 8. Логируй все ошибки, не игнорируй. Logger -- единственный источник правды для отладки.
+Rule 8. Log all errors, do not ignore them. Logger is the single source of truth for debugging.
 
-Правило 9. Не доверяй данным из chrome.storage слепо. Проверяй тип и структуру при чтении.
+Rule 9. Do not trust data from chrome.storage blindly. Check type and structure on read.
 
-Правило 10. Предусматривай fallback. Fallback-цепочки селекторов, fallback-значения, fallback-действия.
+Rule 10. Provide fallbacks. Selector fallback chains, fallback values, fallback actions.
 
 
-## 8. SPA навигация
+## 8. SPA Navigation
 
-### 8.1 Проблема
+### 8.1 The Problem
 
-hh.ru -- Single Page Application на React. При переходе на следующую страницу поиска (клик по "Следующая") URL меняется с /search/vacancy?page=1 на /search/vacancy?page=2, но страница не перезагружается. Content script загружается один раз при document_idle и не перезагружается при SPA-навигации.
+hh.ru is a Single Page Application built with React. When navigating to the next search page (clicking "Next"), the URL changes from /search/vacancy?page=1 to /search/vacancy?page=2, but the page does not reload. The content script loads once at document_idle and is not reloaded on SPA navigation.
 
-### 8.2 Решение
+### 8.2 Solution
 
-MutationObserver отслеживает изменения в DOM дерева:
+MutationObserver monitors changes in the DOM tree:
 
 ```javascript
 const observer = new MutationObserver((mutations) => {
-    // Фильтруем: интересуют только изменения в карточках вакансий
+    // Filter: only interested in changes within vacancy cards
     let relevantChange = false;
     for (const m of mutations) {
         if (m.target.closest('[data-qa="vacancy-serp__vacancy"]')) {
@@ -498,7 +497,7 @@ const observer = new MutationObserver((mutations) => {
     }
     if (!relevantChange) return;
 
-    // Debounce 1 секунда (ждём пока DOM полностью обновится)
+    // 1 second debounce (wait for DOM to fully update)
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         const vacancies = parseVacanciesFromPage();
@@ -510,8 +509,8 @@ observer.observe(document.body, { childList: true, subtree: true });
 
 ### 8.3 Debounce
 
-Без debounce каждое изменение DOM (включая промежуточные состояния рендера React) вызывало бы перепарсинг. Задержка в 1 секунду гарантирует, что парсинг начинается только после завершения рендера новой страницы.
+Without debounce, every DOM change (including React's intermediate render states) would trigger re-parsing. The 1-second delay ensures that parsing only starts after the new page has finished rendering.
 
-### 8.4 Cross-page navigation
+### 8.4 Cross-page Navigation
 
-При нажатии "Откликнуться" в панели на странице поиска нужно перейти на /vacancy/{id}. Это вызывает полную перезагрузку страницы и повторную загрузку content.js. Для сохранения состояния между страницами используется chrome.storage.local: pendingApply сохраняется с timestamp, при загрузке страницы вакансии проверяется pendingApply и продолжается процесс отклика. Если pendingApply старше 2 минут -- игнорируется (защита от stale state).
+When clicking "Apply" in the panel on the search page, you need to navigate to /vacancy/{id}. This causes a full page reload and re-loading of content.js. To preserve state between pages, chrome.storage.local is used: pendingApply is saved with a timestamp; when the vacancy page loads, pendingApply is checked and the application process continues. If pendingApply is older than 2 minutes, it is ignored (protection against stale state).

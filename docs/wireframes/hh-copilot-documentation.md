@@ -1,399 +1,399 @@
-# HH Copilot — Документация UI-прототипов
+# HH Copilot — UI Prototype Documentation
 
-## Обзор проекта
+## Project Overview
 
-**HH Copilot** — Chrome-расширение для автоматизации поиска работы на hh.ru. Продукт состоит из двух основных интерфейсов: рекламной landing-страницы и рабочей FAB-панели расширения, которая оверлеится поверх сайта hh.ru. Документация описывает содержимое и заложенный функционал двух HTML-прототипов.
-
----
-
-## 1. Файл: `hh-copilot-fab-panel-wireframe.html`
-
-**Назначение:** Интерактивный wireframe (макет) выезжающей боковой панели Chrome-расширения HH Copilot. Имитирует работу расширения поверх страницы hh.ru.
-
-**Технический стек:**
-- Tailwind CSS (CDN) + кастомный CSS
-- Шрифт: Inter (Google Fonts)
-- Тёмная/светлая тема через класс `.dark` на `<html>`
-- Glass-morphism (backdrop-filter) для фона панели
-- Vanilla JavaScript для интерактивности
-
-**Контекст:** На фоне отображается симуляция страницы поиска вакансий hh.ru с тремя демо-карточками вакансий (Яндекс 87%, Сбер 62%, Лебедев 18%). Каждая карточка содержит название, компанию, город, зарплатную вилку и теги навыков с цветовой индикацией match-score.
-
-### 1.1. FAB-кнопка (Floating Action Button)
-
-| Элемент | Описание |
-|---------|----------|
-| Позиция | Fixed, bottom-right (28px от краёв) |
-| Размер | 56×56px, скругление 18px |
-| Стиль | Градиент #059669 → #10B981, тень зелёная |
-| Бейдж | Красный круг с числом (23) — счётчик уведомлений |
-| Анимация открытия | `translateX(100%)` → `translateX(0)`, cubic-bezier 0.35s |
-| Tooltip | При наведении: «HH Copilot» |
-
-### 1.2. Структура панели (420px, right-aligned)
-
-Панель имеет три зоны:
-1. **Header (shrink-0)** — авторизация, название, навигация по вкладкам
-2. **Content (flex-1, scrollable)** — содержимое активной вкладки
-3. **Footer (shrink-0)** — версия и статус
+**HH Copilot** is a Chrome extension for automating job search on hh.ru. The product consists of two main interfaces: a promotional landing page and the extension's working FAB panel, which overlays on top of the hh.ru website. This documentation describes the content and intended functionality of the two HTML prototypes.
 
 ---
 
-### Вкладка 1: Обзор (Overview)
+## 1. File: `hh-copilot-fab-panel-wireframe.html`
 
-**Заложенный функционал:**
+**Purpose:** Interactive wireframe (mockup) of the slide-out side panel of the HH Copilot Chrome extension. Simulates the extension's operation on top of the hh.ru page.
 
-| Блок | Функция | Детали |
-|------|---------|--------|
-| Статус авторизации | Проверка сессии на hh.ru | Два состояния: «Авторизован» (зелёный) и «Войдите на hh.ru» (красный, замок). Кнопка «Проверить» |
-| KPI-карточки (2×2 grid) | Метрики за сегодня | Откликов сегодня (23), Приглашения (5), Ошибки (1, с типом 429 Rate limit), Всего откликов (147, +12% за неделю) |
-| Дневной лимит | Прогресс-бар расхода лимитов | Дневной: 23/200, Часовой: 23/30, обратный отсчёт до следующего отклика (12 сек) |
-| Adaptive slowdown | Защита от детекции | Burst detection (0/5 подряд), Adaptive factor (1.0x) — динамически увеличивает интервалы при серии быстрых запросов |
-| Авто-отклик | Массовая отправка откликов | Статус («Остановлен»), кнопка «Откликнуться на все», кнопка паузы, фильтр: new + score ≥ 70%, очередь с превью (8 вакансий по убыванию score) |
-| Последняя активность | Лог действий | Список из 5 последних событий с цветовой кодировкой: отклики (зелёный), паузы (жёлтый), ошибки (красный), приглашения (синий) и относительным временем |
+**Tech Stack:**
+- Tailwind CSS (CDN) + custom CSS
+- Font: Inter (Google Fonts)
+- Dark/light theme via `.dark` class on `<html>`
+- Glass-morphism (backdrop-filter) for panel background
+- Vanilla JavaScript for interactivity
 
----
+**Context:** The background displays a simulation of the hh.ru vacancy search page with three demo vacancy cards (Yandex 87%, Sber 62%, Lebedev 18%). Each card contains the job title, company, city, salary range, and skill tags with color-coded match-score indicators.
 
-### Вкладка 2: Резюме (Resume)
+### 1.1. FAB Button (Floating Action Button)
 
-**Заложенный функционал:**
+| Element | Description |
+|---------|-------------|
+| Position | Fixed, bottom-right (28px from edges) |
+| Size | 56×56px, border-radius 18px |
+| Style | Gradient #059669 → #10B981, green shadow |
+| Badge | Red circle with number (23) — notification counter |
+| Open animation | `translateX(100%)` → `translateX(0)`, cubic-bezier 0.35s |
+| Tooltip | On hover: "HH Copilot" |
 
-| Блок | Функция | Детали |
-|------|---------|--------|
-| Данные резюме | Парсинг профиля | Автоматический сбор: должность, город, зарплатная вилка, опыт. Источник: `/applicant/resumes` |
-| Навыки | Извлечение skills | Теги навыков из резюме: React, TypeScript, Next.js, JavaScript, Redux, Webpack, CI/CD, Module Federation, GraphQL, Testing |
-| Опыт работы | Timeline | Хронология позиций с компанией, периодом и кратким описанием (timeline с линией и точками) |
-| Skill Gap Analysis | Анализ разрыва навыков | Топ-5 недостающих навыков по сравнению с рынка: React Testing Library (78%), Node.js (65%), Docker (52%), Tailwind CSS (41%), AWS/Cloud (38%). Цветовая индикация: красный (>60%), жёлтый (40-60%) |
-| Кнопка «Обновить» | Репарсинг | Повторный запрос данных резюме с hh.ru |
+### 1.2. Panel Structure (420px, right-aligned)
 
----
-
-### Вкладка 3: Вакансии (Vacancies)
-
-**Заложенный функционал:**
-
-| Блок | Функция | Детали |
-|------|---------|--------|
-| Поиск | Текстовый фильтр | Полнотекстовый поиск по названию вакансий |
-| Фильтр статуса | Dropdown | Фильтрация: Все / New / Откликнуто / Blacklist |
-| Фильтр по score | Range slider | Минимальный порог match-score (0-100%) |
-| Карточка вакансии | Отображение с мэтчингом | Название, компания, город, зарплата, опыт, теги навыков, badge с % |
-| Matching breakdown | Детализация скоринга | 5 метрик: Навыки (90%), ЗП (85%), Опыт (75%), Позиция (70%), Локация (100%) |
-| Кнопка «Откликнуться» | Ручной отклик | Триггерит пошаговый процесс (модальное окно) |
-| Кнопка бана | Чёрный список | Добавление компании в BL с иконкой запрета |
-| Shimmer-эффект | Выделение рекомендованных | Анимация мерцания для вакансий с высоким score, на которые ещё не откликнулись |
-| Состояния вакансий | Визуальные статусы | Уже откликнута (зелёный бейдж), Низкий match (серая отключённая кнопка), В чёрном списке (зачёркнутая, полупрозрачная, бейдж «BL») |
+The panel has three zones:
+1. **Header (shrink-0)** — authentication, title, tab navigation
+2. **Content (flex-1, scrollable)** — content of the active tab
+3. **Footer (shrink-0)** — version and status
 
 ---
 
-### Вкладка 4: Переговоры (Negotiations)
+### Tab 1: Overview
 
-**Заложенный функционал:**
+**Intended functionality:**
 
-| Блок | Функция | Детали |
-|------|---------|--------|
-| Список диалогов | Чат с работодателями | Аватар (инициалы), название компании и контактного лица, превью последнего сообщения, относительное время |
-| Бейдж новых | Индикатор непрочитанных | Счётчик «2 новых сообщения» |
-| Статус переговоров | Категоризация | Приглашение, Интервью, Диалог, Ожидание, Отказ — цветные теги |
-| Клик по диалогу | Открытие чата | `cursor: pointer` + hover-эффект |
-| Кнопка «Обновить» | Синхронизация | Повторный запрос списка переговоров |
-
----
-
-### Вкладка 5: Настройки (Settings)
-
-**Заложенный функционал:**
-
-| Блок | Функция | Детали |
-|------|---------|--------|
-| Режим работы | Выбор режима | Три режима: Ручной (ручной отклик), Semi-auto (подтверждение каждого), Авто (полностью автоматически). Визуальный selector с иконками |
-| Лимиты и пороги | Настройка rate limiting | 4 ползунка: дневной лимит (10-500, по умолчанию 200), часовой лимит (5-60, default 30), мин. интервал в секундах (10-120, default 30), мин. match score (0-100%, default 70%) |
-| Сопроводительное письмо | Шаблон с переменными | Текстовое поле с шаблоном, dropdown выбора тона (Формальный / Уверенный / Дружелюбный). Переменные: `{name}`, `{position}`, `{company}`, `{skills}`, `{experience}` |
-| Typing simulation | Имитация набора | Посимвольный ввод для обхода детекции ботов (описано в подсказке) |
-| Тогглы | Вкл/Выкл функций | 5 переключателей: Показывать match score, Авто-скролл пагинации, Подтверждение отклика, Скрывать чёрный список, Тёмная тема панели |
-| Чёрный список | Управление BL | Список заблокированных компаний с возможностью удаления. Счётчик количества |
+| Block | Function | Details |
+|-------|----------|---------|
+| Authentication status | Session check on hh.ru | Two states: "Authenticated" (green) and "Sign in to hh.ru" (red, lock icon). "Check" button |
+| KPI cards (2×2 grid) | Today's metrics | Applications today (23), Invitations (5), Errors (1, with type 429 Rate limit), Total applications (147, +12% for the week) |
+| Daily limit | Limit usage progress bar | Daily: 23/200, Hourly: 23/30, countdown to next application (12 sec) |
+| Adaptive slowdown | Detection protection | Burst detection (0/5 in a row), Adaptive factor (1.0x) — dynamically increases intervals during a series of rapid requests |
+| Auto-apply | Mass submission of applications | Status ("Stopped"), "Apply to all" button, pause button, filter: new + score ≥ 70%, queue with preview (8 vacancies sorted by score descending) |
+| Recent activity | Action log | List of 5 most recent events with color coding: applications (green), pauses (yellow), errors (red), invitations (blue) and relative timestamps |
 
 ---
 
-### Вкладка 6: Логи (Logs)
+### Tab 2: Resume
 
-**Заложенный функционал:**
+**Intended functionality:**
 
-| Блок | Функция | Детали |
-|------|---------|--------|
-| Статистика (2×2) | Сводка за сегодня | Откликов, Приглашений, Ошибок, Всего откликов |
-| Прогресс лимита | Визуализация расхода | Прогресс-бар 23/200 (11.5%), сброс в 00:00 MSK, текущий adaptive factor |
-| Воронка | Конверсионная воронка | 5 этапов: Просмотры (1240) → Отклики (147) → Приглашения (23) → Интервью (8) → Офферы (2). Горизонтальные progress-бары с числами |
-| Логи | Журнал событий | Фильтрация по уровням: Все / Info / Warn / Error. Цветовая индикация: SUCCESS (зелёный), INFO (синий), WARN (жёлтый), ERROR (красный). Каждый лог с timestamp |
-| Кнопка «Очистить» | Сброс логов | Очистка журнала событий |
-
----
-
-### Модальное окно: Процесс отклика
-
-**Заложенный функционал:**
-
-| Элемент | Описание |
-|---------|----------|
-| Заголовок | «Отклик на вакансию» с кнопкой закрытия |
-| Инфо-блок | Название вакансии, score, ссылка на `/vacancy/{id}` |
-| Пошаговый процесс | 5 шагов: (1) Переход на страницу вакансии, (2) Клик «Откликнуться», (3) Заполнение сопроводительного письма, (4) Обработка алертов (relocation), (5) Сабмит и верификация |
-| Прогресс-бар | Визуализация текущего шага |
-| Кнопки | «Симулировать отклик» (зелёная) и «Отмена» |
+| Block | Function | Details |
+|-------|----------|---------|
+| Resume data | Profile parsing | Automatic collection: job title, city, salary range, experience. Source: `/applicant/resumes` |
+| Skills | Skills extraction | Skill tags from resume: React, TypeScript, Next.js, JavaScript, Redux, Webpack, CI/CD, Module Federation, GraphQL, Testing |
+| Work experience | Timeline | Chronology of positions with company, period, and brief description (timeline with line and dots) |
+| Skill Gap Analysis | Skill gap analysis | Top 5 missing skills compared to the market: React Testing Library (78%), Node.js (65%), Docker (52%), Tailwind CSS (41%), AWS/Cloud (38%). Color indicators: red (>60%), yellow (40-60%) |
+| "Refresh" button | Re-parsing | Re-request resume data from hh.ru |
 
 ---
 
-### JavaScript-функционал (wireframe)
+### Tab 3: Vacancies
 
-| Функция | Описание |
-|---------|----------|
-| `togglePanel()` | Открыть/закрыть панель, переключить overlay |
-| `switchTab(tabId)` | Переключение вкладок, обновление active-состояния кнопок |
-| `toggleAuth()` | Переключение между состояниями авторизации |
-| `toggleAutoApply()` / `pauseAutoApply()` | Запуск/пауза авто-отклика, показ/скрытие очереди |
-| `manualApply(el, name)` | Открытие модального окна отклика |
-| `simulateApply()` | Симуляция пошагового процесса отклика с анимацией шагов |
-| `closeApplyModal()` | Закрытие модального окна |
-| `addToBlacklist(company)` / `removeFromBlacklist(company)` | Управление чёрным списком |
-| `setMode(mode)` | Переключение режима работы (manual/semi/auto) |
-| `filterLogs(level)` | Фильтрация логов по уровню |
+**Intended functionality:**
 
----
-
-## 2. Файл: `hh-copilot-landing.html`
-
-**Назначение:** Рекламная landing-страница продукта HH Copilot. Тёмная тема, SaaS-стилистика.
-
-**Технический стек:**
-- Чистый CSS (без фреймворков), CSS-переменные для дизайн-токенов
-- Шрифт: Manrope (Google Fonts), веса 200-900
-- SVG-иконки inline (без иконковых библиотек)
-- Vanilla JavaScript для анимаций и интерактивности
-- `prefers-reduced-motion` — отключение анимаций при настройке системы
-
-**Дизайн-система:**
-- Фон: `#0a0a0c` (почти чёрный)
-- Акцент: `#059669` / `#10B981` (изумрудный зелёный)
-- Glass-morphism: полупрозрачные карточки с `backdrop-filter: blur`
-- Noise-overlay: текстурный шум поверх всей страницы (opacity 3.5%)
-- Cursor-glow: зелёное свечение радиусом 600px, следующее за курсором
-- Scroll reveal: анимация появления при скролле через IntersectionObserver
+| Block | Function | Details |
+|-------|----------|---------|
+| Search | Text filter | Full-text search by vacancy title |
+| Status filter | Dropdown | Filtering: All / New / Applied / Blacklist |
+| Score filter | Range slider | Minimum match-score threshold (0-100%) |
+| Vacancy card | Display with matching | Title, company, city, salary, experience, skill tags, badge with % |
+| Matching breakdown | Scoring details | 5 metrics: Skills (90%), Salary (85%), Experience (75%), Position (70%), Location (100%) |
+| "Apply" button | Manual application | Triggers step-by-step process (modal window) |
+| Ban button | Blacklist | Add company to BL with ban icon |
+| Shimmer effect | Highlight recommended | Shimmer animation for high-score vacancies that haven't been applied to yet |
+| Vacancy states | Visual statuses | Already applied (green badge), Low match (grey disabled button), In blacklist (strikethrough, semi-transparent, "BL" badge) |
 
 ---
 
-### Секция: Navbar (фиксированная)
+### Tab 4: Negotiations
 
-| Элемент | Описание |
-|---------|----------|
-| Логотип | Иконка «HC» (38×38px, зелёный градиент) + текст «HH Copilot» |
-| Навигация | 4 ссылки: Возможности, Тарифы, FAQ, Как это работает |
-| CTA-кнопка | «Попробовать бесплатно» (зелёный градиент) |
-| Адаптивность | На ≤768px: гамбургер-меню → полноэкранное мобильное меню с blur-фоном |
-| Стиль | `backdrop-filter: blur(24px)`, полупрозрачный фон, border-bottom |
+**Intended functionality:**
 
----
-
-### Секция: Hero
-
-| Элемент | Описание |
-|---------|----------|
-| Бейдж | «AI-помощник для поиска работы на HH.ru» с пульсирующей зелёной точкой |
-| Заголовок | «Найди работу **в 10 раз быстрее**» (gradient text) |
-| Подзаголовок | Описание продукта: автоотклики, AI-переписка, мэтчинг, аналитика |
-| Кнопки | «Попробовать бесплатно» (primary) + «Как это работает» (outline, ссылка на #how) |
-| Макет панели | Glass-card с мокапом интерфейса: логотип, статус «Онлайн», табы (Обзор, Вакансии, Переговоры, Статистика), KPI-карточки (127 откликов, 23 приглашений, 89% мэтчинг), чат с AI (предложение отклика, подтверждение пользователя) |
-| Фоновые эффекты | 3 radial-gradient пятна (mesh-1, mesh-2, mesh-3) с blur 80-100px |
-| Scroll-индикатор | «листай вниз» с анимированной линией |
-| Адаптивность | ≤1024px: одноколоночная раскладка, ≤480px: кнопки в столбик, h1 = 2rem |
+| Block | Function | Details |
+|-------|----------|---------|
+| Dialog list | Chat with employers | Avatar (initials), company name and contact person, last message preview, relative time |
+| New badge | Unread indicator | Counter "2 new messages" |
+| Negotiation status | Categorization | Invitation, Interview, Dialogue, Waiting, Rejection — color-coded tags |
+| Click on dialog | Open chat | `cursor: pointer` + hover effect |
+| "Refresh" button | Synchronization | Re-request negotiation list |
 
 ---
 
-### Секция: Stats (м metrics)
+### Tab 5: Settings
 
-| Метрика | Значение | Описание |
-|---------|----------|----------|
-| Пользователи | 12 847 | Число пользователей продукта |
-| Откликов отправлено | 340 тыс. | Общий количество отправленных откликов |
-| Получают оффер | 89% | Конверсия в оффер |
-| Рейтинг | 4.9 | Рейтинг в Chrome Web Store |
+**Intended functionality:**
 
-- Анимация счётчика при попадании в viewport (easeOutCubic)
-- Адаптивность: 4 колонки → 2 → 1
+| Block | Function | Details |
+|-------|----------|---------|
+| Operation mode | Mode selection | Three modes: Manual (manual application), Semi-auto (confirmation for each), Auto (fully automatic). Visual selector with icons |
+| Limits and thresholds | Rate limiting configuration | 4 sliders: daily limit (10-500, default 200), hourly limit (5-60, default 30), minimum interval in seconds (10-120, default 30), minimum match score (0-100%, default 70%) |
+| Cover letter | Template with variables | Text field with template, tone selection dropdown (Formal / Confident / Friendly). Variables: `{name}`, `{position}`, `{company}`, `{skills}`, `{experience}` |
+| Typing simulation | Input simulation | Character-by-character input to bypass bot detection (described in tooltip) |
+| Toggles | Feature on/off | 5 switches: Show match score, Auto-scroll pagination, Application confirmation, Hide blacklist, Panel dark theme |
+| Blacklist | BL management | List of blocked companies with removal option. Count indicator |
 
 ---
 
-### Секция: Marquee (бегущая строка)
+### Tab 6: Logs
 
-Бесконечная горизонтальная прокрутка с ключевыми технологиями продукта:
+**Intended functionality:**
+
+| Block | Function | Details |
+|-------|----------|---------|
+| Statistics (2×2) | Today's summary | Applications, Invitations, Errors, Total applications |
+| Limit progress | Usage visualization | Progress bar 23/200 (11.5%), resets at 00:00 MSK, current adaptive factor |
+| Funnel | Conversion funnel | 5 stages: Views (1240) → Applications (147) → Invitations (23) → Interviews (8) → Offers (2). Horizontal progress bars with numbers |
+| Logs | Event journal | Filtering by levels: All / Info / Warn / Error. Color indicators: SUCCESS (green), INFO (blue), WARN (yellow), ERROR (red). Each log with timestamp |
+| "Clear" button | Log reset | Clear event journal |
+
+---
+
+### Modal Window: Application Process
+
+**Intended functionality:**
+
+| Element | Description |
+|---------|-------------|
+| Title | "Apply to vacancy" with close button |
+| Info block | Vacancy title, score, link to `/vacancy/{id}` |
+| Step-by-step process | 5 steps: (1) Navigate to vacancy page, (2) Click "Apply", (3) Fill in cover letter, (4) Handle alerts (relocation), (5) Submit and verify |
+| Progress bar | Current step visualization |
+| Buttons | "Simulate application" (green) and "Cancel" |
+
+---
+
+### JavaScript Functionality (wireframe)
+
+| Function | Description |
+|----------|-------------|
+| `togglePanel()` | Open/close panel, toggle overlay |
+| `switchTab(tabId)` | Switch tabs, update button active states |
+| `toggleAuth()` | Toggle between authentication states |
+| `toggleAutoApply()` / `pauseAutoApply()` | Start/pause auto-apply, show/hide queue |
+| `manualApply(el, name)` | Open application modal window |
+| `simulateApply()` | Simulate step-by-step application process with step animations |
+| `closeApplyModal()` | Close modal window |
+| `addToBlacklist(company)` / `removeFromBlacklist(company)` | Blacklist management |
+| `setMode(mode)` | Switch operation mode (manual/semi/auto) |
+| `filterLogs(level)` | Filter logs by level |
+
+---
+
+## 2. File: `hh-copilot-landing.html`
+
+**Purpose:** Promotional landing page for the HH Copilot product. Dark theme, SaaS styling.
+
+**Tech Stack:**
+- Pure CSS (no frameworks), CSS variables for design tokens
+- Font: Manrope (Google Fonts), weights 200-900
+- SVG icons inline (no icon libraries)
+- Vanilla JavaScript for animations and interactivity
+- `prefers-reduced-motion` — disables animations when system setting is active
+
+**Design System:**
+- Background: `#0a0a0c` (near-black)
+- Accent: `#059669` / `#10B981` (emerald green)
+- Glass-morphism: semi-transparent cards with `backdrop-filter: blur`
+- Noise-overlay: textured noise over the entire page (opacity 3.5%)
+- Cursor-glow: green glow with 600px radius, following the cursor
+- Scroll reveal: appearance animation on scroll via IntersectionObserver
+
+---
+
+### Section: Navbar (fixed)
+
+| Element | Description |
+|---------|-------------|
+| Logo | "HC" icon (38×38px, green gradient) + "HH Copilot" text |
+| Navigation | 4 links: Features, Pricing, FAQ, How It Works |
+| CTA button | "Try for free" (green gradient) |
+| Responsiveness | At ≤768px: hamburger menu → fullscreen mobile menu with blur background |
+| Style | `backdrop-filter: blur(24px)`, semi-transparent background, border-bottom |
+
+---
+
+### Section: Hero
+
+| Element | Description |
+|---------|-------------|
+| Badge | "AI assistant for job search on HH.ru" with pulsing green dot |
+| Heading | "Find a job **10x faster**" (gradient text) |
+| Subheading | Product description: auto-apply, AI correspondence, matching, analytics |
+| Buttons | "Try for free" (primary) + "How it works" (outline, link to #how) |
+| Panel layout | Glass-card with interface mockup: logo, "Online" status, tabs (Overview, Vacancies, Negotiations, Statistics), KPI cards (127 applications, 23 invitations, 89% matching), AI chat (application suggestion, user confirmation) |
+| Background effects | 3 radial-gradient spots (mesh-1, mesh-2, mesh-3) with blur 80-100px |
+| Scroll indicator | "scroll down" with animated line |
+| Responsiveness | ≤1024px: single-column layout, ≤480px: buttons stacked vertically, h1 = 2rem |
+
+---
+
+### Section: Stats (metrics)
+
+| Metric | Value | Description |
+|--------|-------|-------------|
+| Users | 12,847 | Number of product users |
+| Applications sent | 340K | Total number of submitted applications |
+| Receive offer | 89% | Offer conversion rate |
+| Rating | 4.9 | Chrome Web Store rating |
+
+- Counter animation when entering viewport (easeOutCubic)
+- Responsiveness: 4 columns → 2 → 1
+
+---
+
+### Section: Marquee (scrolling ticker)
+
+Infinite horizontal scroll with key product technologies:
 `Auto Apply`, `Chatik API`, `AI Interview`, `Smart Replies`, `Analytics`, `Typing Simulation`, `Rate Limiting`, `Skill Matching`, `HH.ru Integration`, `CAPTCHA Detection`.
 
-Дублирование контента для бесшовного цикла. Скорость: 30s на полный цикл.
+Content duplication for seamless loop. Speed: 30s per full cycle.
 
 ---
 
-### Секция: Features (Возможности)
+### Section: Features
 
-6 карточек в сетке 3×2 с hover-эффектами (поднятие, поворот, свечение за курсором):
+6 cards in a 3×2 grid with hover effects (elevation, rotation, cursor-following glow):
 
-| # | Возможность | Описание |
-|---|-------------|----------|
-| 1 | Авто-отклики | AI анализирует вакансии и отправляет отклики с персонализированными сопроводительными письмами на основе резюме |
-| 2 | AI-переписка | Чтение сообщений в Chatik, генерация вариантов ответов, адаптация под тон собеседника |
-| 3 | Умный мэтчинг | Взвешенное сравнение навыков, скоринг 0-100%, порог 87%+ для автоотклика |
-| 4 | Аналитика и статистика | Конверсия откликов, воронка ответов, дневные лимиты, графики и метрики |
-| 5 | Защита от банов | Rate limiting (200/день, 30/час, от 30с), typing simulation, burst detection, CAPTCHA detection |
-| 6 | Приватность | Локальная обработка данных, 152-ФЗ |
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | Auto-apply | AI analyzes vacancies and submits applications with personalized cover letters based on your resume |
+| 2 | AI correspondence | Reading messages in Chatik, generating response options, adapting to the interlocutor's tone |
+| 3 | Smart matching | Weighted skill comparison, scoring 0-100%, threshold 87%+ for auto-apply |
+| 4 | Analytics and statistics | Application conversion, response funnel, daily limits, charts and metrics |
+| 5 | Ban protection | Rate limiting (200/day, 30/hour, from 30s), typing simulation, burst detection, CAPTCHA detection |
+| 6 | Privacy | Local data processing, 152-FZ compliance |
 
-- Каждая карточка содержит иконку, заголовок, описание, ссылку «Подробнее»
-- Эффект `radial-gradient` за курсором (CSS-переменные `--mx`, `--my`)
-- Адаптивность: 3 → 2 → 1 колонка
-
----
-
-### Секция: How It Works (Как это работает)
-
-4 шага в сетке с соединяющими линиями:
-
-| Шаг | Название | Описание |
-|-----|----------|----------|
-| 1 | Установите расширение | Добавление в Chrome за 1 клик, установка < 1 минуты |
-| 2 | Подключите HH.ru | OAuth-авторизация, автоматическая синхронизация профиля |
-| 3 | Настройте фильтры | Зарплата, локация, навыки, чёрный список |
-| 4 | Запустите автопоиск | AI отправляет отклики 24/7, пользователь принимает приглашения |
-
-**Timeline-карточка** (горизонтальная цепочка):
-Подключение (1 клик) → Парсинг (30 сек) → Мэтчинг (AI-скоринг) → Отклик (авто) → Собеседование (подсказки)
-
-- Адаптивность: ≤1024px: 2 колонки (без линий), ≤768px: 1 колонка, timeline вертикальная
+- Each card contains an icon, title, description, and "Learn more" link
+- `radial-gradient` effect behind cursor (CSS variables `--mx`, `--my`)
+- Responsiveness: 3 → 2 → 1 column
 
 ---
 
-### Секция: Product Preview (Панель управления)
+### Section: How It Works
 
-Макет панели внутри декоративной рамки браузера:
+4 steps in a grid with connecting lines:
 
-| Элемент | Описание |
-|---------|----------|
-| Browser frame | Имитация окна Chrome (точки красный/жёлтый/зелёный, URL-бар «hh.ru — HH Copilot Panel») |
-| Panel header | Логотип «HC», название, статус «Онлайн» |
-| Tabs | Обзор, Резюме, Вакансии, Переговоры, Настройки, Статистика |
-| KPI-ring | SVG кольцо прогресса (127/200), зелёный градиент |
-| KPI-карточки (2×2) | Отправлено сегодня (127), Приглашений (23), Ответов (45), Ожидает ответа (59) |
-| Подпись | «750px панель с 6 вкладками и 16 функциями» |
+| Step | Title | Description |
+|------|-------|-------------|
+| 1 | Install the extension | Add to Chrome in 1 click, setup < 1 minute |
+| 2 | Connect HH.ru | OAuth authorization, automatic profile synchronization |
+| 3 | Set up filters | Salary, location, skills, blacklist |
+| 4 | Start auto-search | AI submits applications 24/7, user accepts invitations |
 
----
+**Timeline card** (horizontal chain):
+Connection (1 click) → Parsing (30 sec) → Matching (AI scoring) → Application (auto) → Interview (tips)
 
-### Секция: Pricing (Тарифы)
-
-3 тарифных плана в сетке:
-
-| Параметр | Бесплатный | Про | Бизнес |
-|----------|-----------|-----|--------|
-| Цена | 0 ₽/мес | 990 ₽/мес | 2 990 ₽/мес |
-| Период | Навсегда бесплатно | Отменить в любой момент | Индивидуальные условия |
-| Отклики | 20/день | Безлимит | Безлимит |
-| AI-автоотклики | Нет | Да | Да |
-| AI-переписка | Нет | Да | Да |
-| Аналитика | Базовая | Расширенная | Расширенная |
-| Typing simulation | Нет | Да | Да |
-| Поддержка | Базовая | Приоритетная | Персональный менеджер |
-| API доступ | Нет | Нет | Да |
-| SSO | Нет | Нет | Да |
-| White-label | Нет | Нет | Да |
-| Командный дашборд | Нет | Нет | Да |
-
-**Переключатель периодов:** Месяц / Год (скидка -30%). Toggle-switch с ARIA-атрибутами и поддержкой клавиатуры (Enter/Space). Средний тариф отмечен бейджем «Популярный».
+- Responsiveness: ≤1024px: 2 columns (no lines), ≤768px: 1 column, timeline vertical
 
 ---
 
-### Секция: Testimonials (Отзывы)
+### Section: Product Preview (Control Panel)
 
-3 карточки с отзывами пользователей (5 звёзд каждый):
+Panel mockup inside a decorative browser frame:
 
-| Автор | Роль | Текст отзыва |
-|-------|------|-------------|
-| Алексей К. | Frontend Developer | Оффер от Яндекса за 5 дней, AI выделил среди 200 кандидатов |
-| Мария С. | Product Manager | 340 откликов за неделю, 12 приглашений, AI-переписка в Chatik |
-| Дмитрий В. | Backend Developer | AI-подсказки на собеседовании в реальном времени, оффер на следующий день |
-
----
-
-### Секция: FAQ (Частые вопросы)
-
-6 аккордеон-вопросов с aria-expanded:
-
-| # | Вопрос | Краткий ответ |
-|---|--------|---------------|
-| 1 | Безопасно ли использовать расширение? | Все данные локально, 152-ФЗ |
-| 2 | Не забанит ли HH.ru за автоотклики? | Rate limiting, typing simulation, burst detection |
-| 3 | Как работает AI-переписка? | Chatik API, 3 источника контекста, подстройка под тон |
-| 4 | Сколько откликов можно отправлять? | 20/день (бесплатно), 200/день (про) |
-| 5 | Поддерживается ли мобильная версия? | Только Chrome desktop, PWA в планах |
-| 6 | Можно ли вернуть деньги? | Гарантия 14 дней, 100% возврат |
+| Element | Description |
+|---------|-------------|
+| Browser frame | Chrome window simulation (red/yellow/green dots, URL bar "hh.ru — HH Copilot Panel") |
+| Panel header | "HC" logo, name, "Online" status |
+| Tabs | Overview, Resume, Vacancies, Negotiations, Settings, Statistics |
+| KPI ring | SVG progress ring (127/200), green gradient |
+| KPI cards (2×2) | Sent today (127), Invitations (23), Replies (45), Awaiting reply (59) |
+| Caption | "750px panel with 6 tabs and 16 features" |
 
 ---
 
-### Секция: Final CTA
+### Section: Pricing
 
-| Элемент | Описание |
-|---------|----------|
-| Заголовок | «Готовы найти идеальную работу?» |
-| Подзаголовок | 12 000+ пользователей нашли работу мечты |
-| Кнопка | «Начать бесплатно» |
-| Подпись | Без кредитной карты, настройка за 2 минуты, отмена в любой момент |
-| Фон | Radial-gradient свечение (glow-эффект) |
+3 pricing plans in a grid:
+
+| Parameter | Free | Pro | Business |
+|-----------|------|-----|----------|
+| Price | 0 ₽/mo | 990 ₽/mo | 2,990 ₽/mo |
+| Period | Free forever | Cancel anytime | Custom terms |
+| Applications | 20/day | Unlimited | Unlimited |
+| AI auto-apply | No | Yes | Yes |
+| AI correspondence | No | Yes | Yes |
+| Analytics | Basic | Advanced | Advanced |
+| Typing simulation | No | Yes | Yes |
+| Support | Basic | Priority | Personal manager |
+| API access | No | No | Yes |
+| SSO | No | No | Yes |
+| White-label | No | No | Yes |
+| Team dashboard | No | No | Yes |
+
+**Period switch:** Month / Year (30% discount). Toggle switch with ARIA attributes and keyboard support (Enter/Space). Middle plan marked with "Popular" badge.
+
+---
+
+### Section: Testimonials
+
+3 user review cards (5 stars each):
+
+| Author | Role | Review text |
+|--------|------|-------------|
+| Alexey K. | Frontend Developer | Offer from Yandex in 5 days, AI stood out among 200 candidates |
+| Maria S. | Product Manager | 340 applications in a week, 12 invitations, AI correspondence in Chatik |
+| Dmitry V. | Backend Developer | AI tips during interview in real time, offer the next day |
+
+---
+
+### Section: FAQ (Frequently Asked Questions)
+
+6 accordion questions with aria-expanded:
+
+| # | Question | Brief answer |
+|---|----------|--------------|
+| 1 | Is it safe to use the extension? | All data is local, 152-FZ compliant |
+| 2 | Will HH.ru ban me for auto-apply? | Rate limiting, typing simulation, burst detection |
+| 3 | How does AI correspondence work? | Chatik API, 3 context sources, tone adaptation |
+| 4 | How many applications can I submit? | 20/day (free), 200/day (pro) |
+| 5 | Is the mobile version supported? | Chrome desktop only, PWA planned |
+| 6 | Can I get a refund? | 14-day guarantee, 100% refund |
+
+---
+
+### Section: Final CTA
+
+| Element | Description |
+|---------|-------------|
+| Heading | "Ready to find the perfect job?" |
+| Subheading | 12,000+ users found their dream job |
+| Button | "Start for free" |
+| Caption | No credit card, setup in 2 minutes, cancel anytime |
+| Background | Radial-gradient glow effect |
 
 ---
 
 ### Footer
 
-| Колонка | Ссылки |
-|---------|--------|
-| Бренд | Логотип «HC» + описание продукта |
-| Продукт | Возможности, Тарифы, Chrome Web Store, Обновления |
-| Компания | О нас, Блог, Карьера, Контакты |
-| Поддержка | Документация, FAQ, Telegram, Email |
+| Column | Links |
+|--------|-------|
+| Brand | "HC" logo + product description |
+| Product | Features, Pricing, Chrome Web Store, Updates |
+| Company | About us, Blog, Careers, Contacts |
+| Support | Documentation, FAQ, Telegram, Email |
 
 ---
 
-### JavaScript-функционал (landing)
+### JavaScript Functionality (landing)
 
-| Функция | Описание |
-|---------|----------|
-| Cursor glow | Отслеживание `mousemove`, отображение/скрытие свечения за курсором |
-| Feature card glow | Обновление CSS-переменных `--mx`/`--my` при наведении на карточки |
-| Scroll reveal | IntersectionObserver для анимации появления элементов |
-| Stats counter | Анимация чисел от 0 до `data-target` с easeOutCubic |
-| Hamburger menu | Открытие/закрытие мобильного меню, закрытие при клике на ссылку |
-| FAQ accordion | Раскрытие/скрытие ответов, aria-expanded, одновременное закрытие других |
-| Pricing toggle | Переключение месяц/год, пересчёт цен (990 → 693), клавиатурная доступность |
-| Smooth scroll | Плавная прокрутка к якорям |
-| Nav CTA hide | Скрытие CTA-кнопки в navbar при скролле вниз |
+| Function | Description |
+|----------|-------------|
+| Cursor glow | `mousemove` tracking, show/hide cursor glow |
+| Feature card glow | Update CSS variables `--mx`/`--my` on card hover |
+| Scroll reveal | IntersectionObserver for element appearance animation |
+| Stats counter | Animate numbers from 0 to `data-target` with easeOutCubic |
+| Hamburger menu | Open/close mobile menu, close on link click |
+| FAQ accordion | Expand/collapse answers, aria-expanded, close others simultaneously |
+| Pricing toggle | Switch month/year, recalculate prices (990 → 693), keyboard accessible |
+| Smooth scroll | Smooth scrolling to anchors |
+| Nav CTA hide | Hide CTA button in navbar on scroll down |
 
 ---
 
-## Сводная таблица функционала
+## Functionality Summary Table
 
-| Функциональная область | Wireframe (FAB Panel) | Landing |
-|------------------------|----------------------|---------|
-| Авторизация на hh.ru | Да (2 состояния) | Описана в «Как это работает» |
-| Парсинг резюме | Да (вкладка «Резюме») | Упомянута |
-| Skill Gap Analysis | Да (топ-5 недостающих навыков) | Нет |
-| Парсинг вакансий | Да (вкладка «Вакансии») | Описана |
-| Match scoring | Да (5 метрик breakdown) | Да (описание 87%+) |
-| Ручной отклик | Да (кнопка + модальное окно с 5 шагами) | Нет |
-| Авто-отклик | Да (очередь, фильтры, пауза) | Да (описание) |
-| Чёрный список | Да (добавление/удаление, фильтрация) | Упомянут в «Как это работает» |
-| Переговоры | Да (список диалогов, статусы) | Да (AI-переписка) |
-| AI-переписка | Нет (только список диалогов) | Да (описание + мокап в Hero) |
-| Rate limiting | Да (дневной/часовой, adaptive factor, burst detection) | Да (описание в «Защита от банов») |
-| Typing simulation | Да (описано в настройках) | Да (упомянута в marquee и features) |
-| CAPTCHA detection | Нет | Упомянута в marquee |
-| Воронка конверсии | Да (5 этапов с числами) | Нет (только в описании) |
-| Логи и отладка | Да (4 уровня, фильтрация) | Нет |
-| Шаблон сопроводительного | Да (textarea + переменные + тона) | Упомянут в фичах |
-| Режимы работы | Да (manual/semi/auto) | Нет |
-| Тарифные планы | Нет | Да (3 плана с деталями) |
-| Отзывы | Нет | Да (3 отзыва) |
-| FAQ | Нет | Да (6 вопросов) |
-| Тёмная/светлая тема | Да (переключатель) | Нет (только тёмная) |
+| Functional area | Wireframe (FAB Panel) | Landing |
+|-----------------|----------------------|---------|
+| hh.ru authentication | Yes (2 states) | Described in "How It Works" |
+| Resume parsing | Yes ("Resume" tab) | Mentioned |
+| Skill Gap Analysis | Yes (top 5 missing skills) | No |
+| Vacancy parsing | Yes ("Vacancies" tab) | Described |
+| Match scoring | Yes (5 metrics breakdown) | Yes (87%+ description) |
+| Manual application | Yes (button + modal with 5 steps) | No |
+| Auto-apply | Yes (queue, filters, pause) | Yes (description) |
+| Blacklist | Yes (add/remove, filtering) | Mentioned in "How It Works" |
+| Negotiations | Yes (dialog list, statuses) | Yes (AI correspondence) |
+| AI correspondence | No (dialog list only) | Yes (description + mockup in Hero) |
+| Rate limiting | Yes (daily/hourly, adaptive factor, burst detection) | Yes (description in "Ban Protection") |
+| Typing simulation | Yes (described in settings) | Yes (mentioned in marquee and features) |
+| CAPTCHA detection | No | Mentioned in marquee |
+| Conversion funnel | Yes (5 stages with numbers) | No (description only) |
+| Logs and debugging | Yes (4 levels, filtering) | No |
+| Cover letter template | Yes (textarea + variables + tones) | Mentioned in features |
+| Operation modes | Yes (manual/semi/auto) | No |
+| Pricing plans | No | Yes (3 plans with details) |
+| Testimonials | No | Yes (3 reviews) |
+| FAQ | No | Yes (6 questions) |
+| Dark/light theme | Yes (toggle) | No (dark only) |

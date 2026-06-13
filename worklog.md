@@ -1862,3 +1862,24 @@ Work Log:
 Stage Summary:
 - Both accordions now collapsed by default
 - User must click to expand each section
+
+---
+Task ID: docs-english-translation
+Agent: main
+Task: Translate all Russian documentation to English + add Rule 9.5
+
+Work Log:
+- Added Rule 9.5 to AGENT_RULES.md: all docs in English, chat in Russian
+- Translated README.md: Russian -> English, version 1.9.28.0, file counts verified (134 JS files)
+- Translated ARCHITECTURE.md: Russian -> English, version updated to 1.9.28.0
+- Translated TASK-CASCADE.md: Russian -> English
+- Translated hh-copilot-documentation.md (wireframes): Russian -> English
+- Translated Z.ai-Sandbox-Guide.md: Russian -> English
+- Translated hh-extension/CHANGELOG.md: Russian -> English
+- Files NOT modified (already in English): root CHANGELOG.md, UNICODE_POLICY.md, UNICODE_POLICY-v2.1.md, PLANTUML-REFERENCE.md
+- Files NOT modified (AHG submodule): anti-hallucination-guard/AGENT_RULES.md, anti-hallucination-guard/README.md, anti-hallucination-guard/CHANGELOG.md
+
+Stage Summary:
+- All project documentation now in English
+- Rule 9.5 ensures future docs stay in English
+- Chat responses remain in Russian per Rule 9.5 exception

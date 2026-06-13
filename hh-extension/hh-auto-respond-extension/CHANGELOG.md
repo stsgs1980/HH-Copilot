@@ -1,263 +1,263 @@
 # HH Copilot — Changelog
 
-Все значимые изменения в расширении фиксируются в этом файле.
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
+All notable changes to the extension are documented in this file.
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
 ## [1.9.28.0] — 2026-06-12
 
-### Исправлено
-- **Sponsored VotD (adsrv.hh.ru)** — 3 из 14 «Вакансий дня» пропускались из-за tracking URL (`adsrv.hh.ru/click?meta=ENCRYPTED`) без `vacancyId`. ID вакансии теперь извлекается из числового `id` атрибута родительского элемента (например, `id="131408939"`). Трёхуровневая стратегия извлечения: (1) параметр `vacancyId` в click-URL, (2) ближайшая ссылка с `vacancyId=`, (3) `id` атрибут ancestor-элемента `/^\d{6,12}$/`.
-- Все VotD элементы теперь получают канонический URL `https://hh.ru/vacancy/{id}` вместо tracking URL.
-- Добавлены тесты: извлечение ID из parent `id`, канонический URL для VotD, парсинг adsrv.hh.ru URL.
+### Fixed
+- **Sponsored VotD (adsrv.hh.ru)** — 3 of 14 "Vacancies of the Day" were skipped due to tracking URLs (`adsrv.hh.ru/click?meta=ENCRYPTED`) without `vacancyId`. The vacancy ID is now extracted from the numeric `id` attribute of the parent element (e.g., `id="131408939"`). Three-level extraction strategy: (1) `vacancyId` parameter in click-URL, (2) nearest link with `vacancyId=`, (3) `id` attribute of ancestor element matching `/^\d{6,12}$/`.
+- All VotD elements now receive the canonical URL `https://hh.ru/vacancy/{id}` instead of the tracking URL.
+- Added tests: ID extraction from parent `id`, canonical URL for VotD, adsrv.hh.ru URL parsing.
 
 ---
 
 ## [1.9.27.0] — 2026-06-12
 
-### Исправлено
-- **VotD парсинг (0/14)** — «Вакансия дня» на главной hh.ru возвращала 0 элементов. Причина: ссылки VotD — tracking URL (`content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=XXX`), а не стандартные `/vacancy/XXX`. `extractVacancyId()` теперь распознаёт `?vacancyId=NNN` в query-параметрах. `parseVacanciesOfTheDay()` использует `titleEl.closest('a')` для поиска click-URL.
-- Добавлены 5 тестов `extractVacancyId` для VotD URL-паттернов.
-- Добавлены 6 тестов парсинга VotD с реалистичной DOM-структурой.
-- Тестовый набор: 67 тестов проходят.
+### Fixed
+- **VotD parsing (0/14)** — "Vacancy of the Day" on the hh.ru homepage returned 0 elements. Cause: VotD links are tracking URLs (`content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=XXX`), not standard `/vacancy/XXX`. `extractVacancyId()` now recognizes `?vacancyId=NNN` in query parameters. `parseVacanciesOfTheDay()` uses `titleEl.closest('a')` to find the click-URL.
+- Added 5 `extractVacancyId` tests for VotD URL patterns.
+- Added 6 VotD parsing tests with realistic DOM structure.
+- Test suite: 67 tests passing.
 
 ---
 
 ## [1.9.26.0] — 2026-06-12
 
-### Добавлено
-- **Парсинг вакансий на главной странице** — при открытии `hh.ru/` расширение парсит два блока: (1) рекомендованные вакансии с `~=` word-match для `data-qa` атрибутов и `href` fallback; (2) блок «Вакансия дня» через `data-qa="vacancy_of_the_day_title"` с тремя стратегиями извлечения ID вакансии.
-- Добавлен маршрут `mainPage` в `detectPageType()` для URL-паттерна `/` на `hh.ru`.
-- `parseVacanciesOfTheDay()` — новая функция-парсер для блоков VotD.
+### Added
+- **Vacancy parsing on the homepage** — when opening `hh.ru/`, the extension parses two blocks: (1) recommended vacancies with `~=` word-match for `data-qa` attributes and `href` fallback; (2) "Vacancy of the Day" block via `data-qa="vacancy_of_the_day_title"` with three vacancy ID extraction strategies.
+- Added `mainPage` route to `detectPageType()` for the `/` URL pattern on `hh.ru`.
+- `parseVacanciesOfTheDay()` — new parser function for VotD blocks.
 
 ---
 
 ## [1.9.25.0] — 2026-06-12
 
-### Добавлено
-- **Hot Module Replacement (HMR)** — расширение автоматически перезагружается при изменении файлов в процессе разработки. WebSocket-сервер (`ws://localhost:35729`) запускается через `npm run watch`. Content script слушает reload-сообщения и вызывает `chrome.runtime.reload()`. Устраняет ручную перезагрузку расширения при разработке.
+### Added
+- **Hot Module Replacement (HMR)** — the extension automatically reloads when files change during development. WebSocket server (`ws://localhost:35729`) starts via `npm run watch`. Content script listens for reload messages and calls `chrome.runtime.reload()`. Eliminates manual extension reloading during development.
 
 ---
 
 ## [1.9.24.0] — 2026-06-12
 
-### Исправлено
-- **35 проблем WCAG/типографики** во всём sidebar UI:
-  - **Контраст**: вторичный текст `#71717a` → `#52525b`, placeholder `#6b7280`, disabled button `#6b7280`, tour skip `#71717a` → `#52525b`.
-  - **Невалидные CSS-свойства**: удалены `role:status`, `role:alert`, `aria-live:assertive`, `tabindex:0` из CSS-деклараций.
-  - **Focus indicators**: `:focus-visible` стили для tab buttons, toggles, vacancy items, tour buttons.
-  - **Типографика**: `font-variant-numeric: tabular-nums` на score rings, `-webkit-font-smoothing: antialiased`.
-  - **ARIA атрибуты**: `role="status"` + `<span class="sr-only">` на spinner, `role="switch"` на toggle, `aria-expanded`/`aria-controls` на timeline toggles, `role="radiogroup"` на stats period, `role="article"` + `aria-label` на vacancy items, `aria-label` на blacklist delete, `aria-valuenow` на range inputs, `lang="ru"` + `role="dialog"` на sidebar, `aria-hidden` на decorative dots.
-  - **Клавиатурная навигация**: WAI-ARIA tabs с Arrow/Home/End клавишами, Escape закрывает sidebar, focus trap (Tab циклит внутри sidebar), управление фокусом при открытии/закрытии, Enter/Space активирует ссылки вакансий.
-- Исправлен баг переключения вкладок — отсутствующий `data-tab` атрибут на кнопках вкладок.
-- Исправлен рендеринг `&nbsp;` как буквального текста в UI sidebar.
+### Fixed
+- **35 WCAG/typography issues** across the entire sidebar UI:
+  - **Contrast**: secondary text `#71717a` → `#52525b`, placeholder `#6b7280`, disabled button `#6b7280`, tour skip `#71717a` → `#52525b`.
+  - **Invalid CSS properties**: removed `role:status`, `role:alert`, `aria-live:assertive`, `tabindex:0` from CSS declarations.
+  - **Focus indicators**: `:focus-visible` styles for tab buttons, toggles, vacancy items, tour buttons.
+  - **Typography**: `font-variant-numeric: tabular-nums` on score rings, `-webkit-font-smoothing: antialiased`.
+  - **ARIA attributes**: `role="status"` + `<span class="sr-only">` on spinner, `role="switch"` on toggle, `aria-expanded`/`aria-controls` on timeline toggles, `role="radiogroup"` on stats period, `role="article"` + `aria-label` on vacancy items, `aria-label` on blacklist delete, `aria-valuenow` on range inputs, `lang="ru"` + `role="dialog"` on sidebar, `aria-hidden` on decorative dots.
+  - **Keyboard navigation**: WAI-ARIA tabs with Arrow/Home/End keys, Escape closes sidebar, focus trap (Tab cycles within sidebar), focus management on open/close, Enter/Space activates vacancy links.
+- Fixed tab switching bug — missing `data-tab` attribute on tab buttons.
+- Fixed `&nbsp;` rendering as literal text in sidebar UI.
 
 ---
 
 ## [1.9.23.0] — 2026-06-11
 
-### Изменено
-- **Anti-monolith рефакторинг**: split `match-scorer.js` на 4 сфокусированных модуля — `match-scorer-skills.js` (skill overlap 0-40), `match-scorer-title.js` (title similarity 0-30), `match-scorer-salary.js` (salary fit 0-15), `match-scorer-experience.js` (experience match 0-15). Главный `match-scorer.js` теперь тонкий оркестратор.
-- Удалён `cascade-guard` submodule (репозиторий удалён на GitHub).
+### Changed
+- **Anti-monolith refactoring**: split `match-scorer.js` into 4 focused modules — `match-scorer-skills.js` (skill overlap 0-40), `match-scorer-title.js` (title similarity 0-30), `match-scorer-salary.js` (salary fit 0-15), `match-scorer-experience.js` (experience match 0-15). The main `match-scorer.js` is now a thin orchestrator.
+- Removed `cascade-guard` submodule (repository deleted on GitHub).
 
 ---
 
 ## [1.9.22.0] — 2026-06-11
 
-### Добавлено
-- **Синонимное сопоставление навыков** — связанные навыки частично учитываются в скоринге. Если вакансия требует «P&L», а в резюме «управление продажами», группа синонимов даёт partial match bonus. Группы синонимов: продажи, IT, маркетинг, HR, лидерство.
+### Added
+- **Synonym skill matching** — related skills are partially accounted for in scoring. If a vacancy requires "P&L" and the resume has "sales management", the synonym group provides a partial match bonus. Synonym groups: sales, IT, marketing, HR, leadership.
 
 ---
 
 ## [1.9.21.0] — 2026-06-11
 
-### Исправлено
-- **Рекомендации «Что улучшить»** — заменён шумный «10 навыков не в описаниях опыта» на действенный «навыков вакансии нет в резюме», показывающий только реальные пробелы. Создан общий utility `vacancy-skills-collector.js`.
+### Fixed
+- **"What to improve" recommendations** — replaced the noisy "10 skills not in experience descriptions" with actionable "vacancy skills missing from resume", showing only real gaps. Created a shared utility `vacancy-skills-collector.js`.
 
 ---
 
 ## [1.9.20.0] — 2026-06-11
 
-### Исправлено
-- Пропуск навыков, уже входящих в `derivedSkills`, при формировании рекомендаций — нет дублирующих предупреждений для навыков, которые у пользователя уже есть.
+### Fixed
+- Skip skills already included in `derivedSkills` when generating recommendations — no duplicate warnings for skills the user already has.
 
 ---
 
 ## [1.9.19.0] — 2026-06-11
 
-### Добавлено
-- **Вывод навыков вакансии из должности** — карточки вакансий на странице поиска редко содержат `keySkills`, поэтому `deriveVacancySkills()` извлекает навыки из названия вакансии через `SKILL_PATTERNS` и эвристики.
-- Добавлены кросс-ссылки sales/commercial: «коммерческ» ↔ «продаж» ↔ «менеджер по развитию».
-- Добавлены недостающие навыки в skill-dictionary: стратегия продаж, LTV, ROI, построение воронки продаж, unit-экономика.
-- **Исправление скоринга опыта** — штраф за «overqualified» удалён. Превышение максимального опыта НЕ является штрафом на российском рынке труда. 10+ лет при требовании «3-6 лет» теперь даёт 12/15 (было 8/15).
+### Added
+- **Vacancy skill derivation from job title** — vacancy cards on the search page rarely contain `keySkills`, so `deriveVacancySkills()` extracts skills from the vacancy title via `SKILL_PATTERNS` and heuristics.
+- Added sales/commercial cross-references: "коммерческ" ↔ "продаж" ↔ "менеджер по развитию".
+- Added missing skills to skill-dictionary: sales strategy, LTV, ROI, sales funnel building, unit economics.
+- **Experience scoring fix** — "overqualified" penalty removed. Exceeding the maximum experience is NOT a penalty on the Russian labor market. 10+ years with a "3-6 years" requirement now gives 12/15 (was 8/15).
 
 ---
 
 ## [1.9.18.0] — 2026-06-11
 
-### Исправлено
-- **10 багов из code review**: парсинг типа занятости, парсинг формата работы, обработка multi-value форматов, логика карьерного роста, ложнопозитивные размытые фразы, границы кириллических regex, конкретные непокрытые навыки в рекомендациях, tooltip для непокрытых навыков, улучшения тура.
+### Fixed
+- **10 bugs from code review**: employment type parsing, work format parsing, multi-value format handling, career growth logic, false positive vague phrases, Cyrillic regex boundaries, specific uncovered skills in recommendations, tooltip for uncovered skills, tour improvements.
 
 ---
 
 ## [1.9.17.0] — 2026-06-11
 
-### Исправлено
-- **Парсер навыков** — 5 fallback-стратегий при отсутствии `skills-card` data-qa в DOM hh.ru (Magritte redesign): skills-table, heading detection, `data-qa*="skill"` scan, Magritte tag scan.
-- **Скоринг опыта** — парсинг строки опыта вакансии («3-6 лет») в структурированный формат `{min:3, max:6}`.
-- **Навигация по вакансиям** — удалена сломанная SPA-интерцепция кликов, блокировавшая навигацию.
+### Fixed
+- **Skill parser** — 5 fallback strategies when `skills-card` data-qa is absent in hh.ru DOM (Magritte redesign): skills-table, heading detection, `data-qa*="skill"` scan, Magritte tag scan.
+- **Experience scoring** — parse vacancy experience string ("3-6 лет") into structured format `{min:3, max:6}`.
+- **Vacancy navigation** — removed broken SPA click interception that was blocking navigation.
 
 ---
 
 ## [1.9.16.0] — 2026-06-11
 
-### Добавлено
-- **SPA-навигация** — `pushState`/`replaceState` патч в `page-world.js` (MAIN world). Интерцепция кликов по ссылкам вакансий/резюме через `pushState` вместо полной перезагрузки страницы. `MutationObserver` с 1-секундным debounce автоматически перепарсивает вакансии.
+### Added
+- **SPA navigation** — `pushState`/`replaceState` patch in `page-world.js` (MAIN world). Interception of vacancy/resume link clicks via `pushState` instead of full page reload. `MutationObserver` with 1-second debounce automatically re-parses vacancies.
 
 ---
 
 ## [1.9.15.9] — 2026-06-11
 
-### Добавлено
-- **Производные навыки из опыта** — `skill-dictionary.js` (50+ паттернов русских ключевых слов навыков) + `derive-skills.js` автоматически извлекает навыки из описаний опыта работы. Интегрировано в оба пути парсинга резюме (DOM и fetch). `scoreSkills()` теперь использует `derivedSkills` с весом 70%.
+### Added
+- **Derived skills from experience** — `skill-dictionary.js` (50+ Russian skill keyword patterns) + `derive-skills.js` automatically extracts skills from work experience descriptions. Integrated into both resume parsing paths (DOM and fetch). `scoreSkills()` now uses `derivedSkills` with 70% weight.
 
 ---
 
 ## [1.9.15.6] — 2026-06-11
 
-### Исправлено
-- **initPageLogic() не вызывалась** — заменён сломанный `dynamic import()` на паттерн `CustomEvent 'hh-ar-init-page-logic'`. Добавлена страховка: auto-call через 3с на страницах вакансий. `initPageLogic()` сделана идемпотентной для предотвращения дублирования.
+### Fixed
+- **initPageLogic() was not being called** — replaced broken `dynamic import()` with `CustomEvent 'hh-ar-init-page-logic'` pattern. Added safety net: auto-call after 3s on vacancy pages. `initPageLogic()` made idempotent to prevent duplication.
 
 ---
 
 ## [1.9.15.5] — 2026-06-11
 
-### Добавлено
-- **Парсер детальной вакансии** — `parseVacancyDetail()` извлекает все поля со страниц `/vacancy/{id}`: title, company, salary, experience, description, key skills, employment type, work format.
-- **Скоринг совпадений** — `calculateMatchScore(vacancy, resume)` возвращает `{total: 0-100, breakdown: {skills, salary, experience, position, location}}`.
-- **Хранилище вакансий** — `storage-vacancies.js` сохраняет данные вакансий между сессиями.
+### Added
+- **Detailed vacancy parser** — `parseVacancyDetail()` extracts all fields from `/vacancy/{id}` pages: title, company, salary, experience, description, key skills, employment type, work format.
+- **Match scoring** — `calculateMatchScore(vacancy, resume)` returns `{total: 0-100, breakdown: {skills, salary, experience, position, location}}`.
+- **Vacancy storage** — `storage-vacancies.js` persists vacancy data between sessions.
 
 ---
 
 ## [1.9.14] — 2026-06-11
 
-### Добавлено
-- **Блок «Оценка резюме»** во вкладке Резюме — объективная оценка полноты заполнения:
-  - Кольцевая диаграмма с % (цвет: зелёный ≥70%, амбарный ≥40%, красный <40%)
-  - Чеклист из 11 критериев с весами: позиция, имя, зарплата, город, контакты, навыки (3+), опыт (1+), образование, языки, о себе, занятость/формат
-  - Подсказка в зависимости от процента
+### Added
+- **"Resume Assessment" block** in the Resume tab — objective assessment of completion quality:
+  - Ring chart with % (color: green ≥70%, amber ≥40%, red <40%)
+  - Checklist of 11 criteria with weights: position, name, salary, city, contacts, skills (3+), experience (1+), education, languages, about me, employment/format
+  - Hint depending on percentage
 
-### Изменено
-- **Блок «Совпадение навыков» перенесён из вкладки Резюме во вкладку Вакансии** — анализ навыков vs вакансий логичнее привязать к вакансиям, а не к резюме
-- Переименован: «Анализ навыков» → «Совпадение навыков» (более точное название)
+### Changed
+- **"Skill Match" block moved from Resume tab to Vacancies tab** — skills vs. vacancies analysis makes more sense tied to vacancies rather than resume
+- Renamed: "Skill Analysis" → "Skill Match" (more accurate name)
 
 ---
 
 ## [1.9.13] — 2026-06-11
 
-### Исправлено
-- **Контакты: слитный текст «Электронная почтаfoo@bar.com»** — `textContent` элемента `[data-qa="resume-contact-email"]` содержит лейбл + email. Теперь email извлекается через regex из текста или через `mailto:` href (чистый email без лейбла)
-- **Контакты: телефон не парсился** — `[data-qa="resume-contact-phone"]` не совпадал с реальной структурой hh.ru. Добавлены: приоритет `tel:` href, расширенные data-qa селекторы (`[data-qa*="contact-phone"]`), поиск `a[href^="tel:"]` в блоке контактов, regex по тексту блока
-- **Контакты: ложный телеграм @hh_ru_official** — regex `@(\w{4,})` захватывал ссылку hh.ru из футера. Исправлено: telegram ищется только в блоке контактов, исключены системные аккаунты hh.ru (hh_ru_official, hhru, hh_ru и др.)
-- Оба парсера синхронизированы: `parseContacts()` (живая страница) и `parseContactsFromDoc()` (fetch) используют идентичную логику
+### Fixed
+- **Contacts: concatenated text "Электронная почтаfoo@bar.com"** — `textContent` of `[data-qa="resume-contact-email"]` element contains label + email. Email is now extracted via regex from text or via `mailto:` href (clean email without label)
+- **Contacts: phone was not parsed** — `[data-qa="resume-contact-phone"]` did not match actual hh.ru structure. Added: priority `tel:` href, extended data-qa selectors (`[data-qa*="contact-phone"]`), search for `a[href^="tel:"]` in contacts block, regex on block text
+- **Contacts: false telegram @hh_ru_official** — regex `@(\w{4,})` captured the hh.ru link from the footer. Fixed: telegram is now searched only in the contacts block, system hh.ru accounts excluded (hh_ru_official, hhru, hh_ru, etc.)
+- Both parsers synchronized: `parseContacts()` (live page) and `parseContactsFromDoc()` (fetch) use identical logic
 
-### Изменено
-- **Блок «Анализ навыков» скрыт, пока нет вакансий** — раньше показывал бесполезный «0%» с текстом «откройте вакансии для сравнения». Теперь блок полностью скрыт, пока не загружены вакансии для сравнения
+### Changed
+- **"Skill Analysis" block hidden until vacancies are available** — previously showed useless "0%" with text "open vacancies for comparison". Now the block is completely hidden until vacancies are loaded for comparison
 
 ---
 
 ## [1.9.12] — 2026-06-11
 
-### Исправлено
-- **Контакты «Данные не найдены»** — телефон, email и telegram не парсились при загрузке через fetch (синхронизация всех резюме). `parseContactsFromDoc()` не вызывался в `fetchAndParseResume()`, хотя вызывался в `parseResume()` для живой страницы
-- Добавлен `parseContactsFromDoc()` в `resume-fetch-parse.js` — парсинг контактов из fetched HTML с fallback-стратегиями:
-  - `data-qa` селекторы (primary)
-  - `mailto:` ссылки
-  - Regex-паттерны для телефона и email
-  - Поиск `t.me/` ссылок по всему документу
-- Добавлены поля `phone`, `email`, `telegram` в модель резюме в `fetchAndParseResume()`
+### Fixed
+- **Contacts "Data not found"** — phone, email and telegram were not parsed when loading via fetch (sync all resumes). `parseContactsFromDoc()` was not called in `fetchAndParseResume()`, although it was called in `parseResume()` for the live page
+- Added `parseContactsFromDoc()` to `resume-fetch-parse.js` — parsing contacts from fetched HTML with fallback strategies:
+  - `data-qa` selectors (primary)
+  - `mailto:` links
+  - Regex patterns for phone and email
+  - Search for `t.me/` links throughout the document
+- Added `phone`, `email`, `telegram` fields to resume model in `fetchAndParseResume()`
 
 ---
 
 ## [1.9.11] — 2026-06-11
 
-### Добавлено
-- **Блок «Все резюме» — сворачиваемый аккордеон** — блок теперь можно свернуть/развернуть кликом по заголовку (data-timeline toggle + шеврон)
-- Счётчики видимых/скрытых резюме (badge) в заголовке аккордеона
+### Added
+- **"All Resumes" block — collapsible accordion** — the block can now be collapsed/expanded by clicking the header (data-timeline toggle + chevron)
+- Visible/hidden resume counters (badge) in accordion header
 
-### Изменено
-- Порядок блоков: «Все резюме» теперь сверху, «Действующее резюме» — ниже
-- Anti-monolith рефакторинг: split iframe-vis strategies, centralize panelState mutations
-- Версия: 1.9.10 → 1.9.11
+### Changed
+- Block order: "All Resumes" is now on top, "Active Resume" — below
+- Anti-monolith refactoring: split iframe-vis strategies, centralize panelState mutations
+- Version: 1.9.10 → 1.9.11
 
 ---
 
 ## [1.9.10] — 2026-06-11
 
-### Изменено
-- Anti-monolith рефакторинг: все файлы ≤200 строк, panelState centralised
-- Split 6 monolith файлов, centralize chrome.storage
+### Changed
+- Anti-monolith refactoring: all files ≤200 lines, panelState centralised
+- Split 6 monolith files, centralize chrome.storage
 - Split main.js (454→139), events.js (301→209), centralize storage
-- Обновлены submodules: anti-hallucination-guard (cascade-guard удалён)
+- Updated submodules: anti-hallucination-guard (cascade-guard removed)
 
 ---
 
 ## [1.9.9] — 2026-06-11
 
-### Исправлено
-- **Скрытые резюме отмечались видимыми** — три бага в цепочке определения видимости:
-  1. **Преждевременный fallback UNKNOWN→VISIBLE** в `extractVisibilityStatus()` и `parseResumeList()` — список резюме сразу помечал UNKNOWN как VISIBLE, не дожидаясь проверки детальной страницы. Убран: UNKNOWN остаётся UNKNOWN до проверки страницы резюме
-  2. **Strategy 2 в `detectVisibilityFromResumePage()`** — `text.includes('скрыть')` совпадало с любым элементом («скрыть контакты», «скрыть раздел» и т.д.), возвращая VISIBLE. Исправлено: только точное совпадение «скрыть резюме»
-  3. **Страница резюме перекрывала список** — если страница возвращала VISIBLE (ложноположительно), это перезаписывало правильный HIDDEN из списка. Новая приоритетная логика: HIDDEN побеждает VISIBLE (и из списка, и со страницы); VISIBLE побеждает UNKNOWN; финальный fallback UNKNOWN→VISIBLE только в `syncAllResumes()` после всех проверок
-- Финальный fallback UNKNOWN→VISIBLE перенесён из `extractVisibilityStatus()` / `parseResumeList()` в `syncAllResumes()` — срабатывает только после того, как и список, и детальная страница проверены
+### Fixed
+- **Hidden resumes marked as visible** — three bugs in the visibility detection chain:
+  1. **Premature UNKNOWN→VISIBLE fallback** in `extractVisibilityStatus()` and `parseResumeList()` — the resume list immediately marked UNKNOWN as VISIBLE without waiting for the detail page check. Removed: UNKNOWN stays UNKNOWN until the resume page is checked
+  2. **Strategy 2 in `detectVisibilityFromResumePage()`** — `text.includes('скрыть')` matched any element ("скрыть контакты", "скрыть раздел", etc.), returning VISIBLE. Fixed: only exact match "скрыть резюме"
+  3. **Resume page overrode list** — if the page returned VISIBLE (false positive), it overwrote the correct HIDDEN from the list. New priority logic: HIDDEN beats VISIBLE (both from list and page); VISIBLE beats UNKNOWN; final UNKNOWN→VISIBLE fallback only in `syncAllResumes()` after all checks
+- Final UNKNOWN→VISIBLE fallback moved from `extractVisibilityStatus()` / `parseResumeList()` to `syncAllResumes()` — triggers only after both list and detail page have been checked
 
 ---
 
 ## [1.9.8] — 2026-06-11
 
-### Добавлено
-- **Определение видимости с страницы резюме** — `detectVisibilityFromResumePage()` в `resume-fetch-resume.js`:
-  6 стратегий определения скрытого/видимого статуса из HTML детальной страницы резюме:
-  1. `data-qa` атрибуты (`resume-make-visible`, `resume-action-hide`)
-  2. Текст кнопок («Сделать видимым» = скрыто, «Скрыть резюме» = видно)
-  3. Текст body с индикаторами скрытости
-  4. Поиск по raw HTML с нормализацией `&nbsp;`
+### Added
+- **Visibility detection from resume page** — `detectVisibilityFromResumePage()` in `resume-fetch-resume.js`:
+  6 strategies for determining hidden/visible status from the resume detail page HTML:
+  1. `data-qa` attributes (`resume-make-visible`, `resume-action-hide`)
+  2. Button text ("Сделать видимым" = hidden, "Скрыть резюме" = visible)
+  3. Body text with hidden indicators
+  4. Raw HTML search with `&nbsp;` normalization
   5. Script/hydration JSON (`"hidden": true`)
-  6. Наличие `data-qa="resume-action-hide"` = видимое
-- Данные со страницы резюме **переопределяют** данные со списка (более надёжные)
-- **Радио-кнопки в списке «Все резюме»** — выбор действующего резюме кликом по карточке (◉ активное, ○ неактивное)
-- **Кнопка ↻ (перепарсить)** на карточке активного резюме — контекстная: амбарная для скрытого, стандартная для видимого
-- **«Взять со страницы» CTA** в блоке «Все резюме» — показывается только на странице резюме, когда нет активного
+  6. Presence of `data-qa="resume-action-hide"` = visible
+- Data from the resume page **overrides** data from the list (more reliable)
+- **Radio buttons in "All Resumes" list** — select active resume by clicking the card (◉ active, ○ inactive)
+- **↻ (re-parse) button** on active resume card — contextual: amber for hidden, standard for visible
+- **"Get from page" CTA** in "All Resumes" block — shown only on the resume page when there is no active one
 
-### Изменено
-- **Консолидация кнопок** — с 7 видимых кнопок до 2 основных:
-  - Убрана «Перепарсить действующее/скрытое» — заменена на ↻ на карточке
-  - «Взять со страницы» перенесён из пустого состояния в «Все резюме»
-  - «Синхронизировать все» стала outline (вторичная)
-  - Диагностика свёрнута за шеврон (3 кнопки скрыты)
-- **Раскрывающийся селектор удалён** — заменён на радио-кнопки (устранены случайные клики)
-- **Переименование кнопки** — «Сделать текущее действующим» → «Взять со страницы» (устранена путаница «текущее» vs «действующее»)
-- **Переименование блока** — «Парсинг резюме» → «Действующее резюме»
-- Предупреждение о скрытом резюме — теперь текст вместо кнопки
+### Changed
+- **Button consolidation** — from 7 visible buttons to 2 main ones:
+  - Removed "Re-parse active/hidden" — replaced by ↻ on the card
+  - "Get from page" moved from empty state to "All Resumes"
+  - "Synchronize all" became outline (secondary)
+  - Diagnostics collapsed behind chevron (3 buttons hidden)
+- **Dropdown selector removed** — replaced by radio buttons (eliminates accidental clicks)
+- **Button rename** — "Make current active" → "Get from page" (eliminates "current" vs "active" confusion)
+- **Block rename** — "Resume Parsing" → "Active Resume"
+- Hidden resume warning — now text instead of button
 
-### Исправлено
-- **`getResumePageType()` возвращала `'resume'` вместо `'resume-detail'`** — из-за этого подсказка «Нажмите „Взять со страницы" ниже» и CTA-кнопка НИКОГДА не показывались на странице резюме. Оба потребителя (`render-resume-panel.js`, `render-my-resumes.js`) сравнивали с `'resume-detail'`
-- **detectVisibilityFromLinkText()** — больше не возвращает VISIBLE преждевременно; возвращает UNKNOWN, позволяя другим стратегиям (card, proximity, script) отработать
-- **Финальный fallback UNKNOWN→VISIBLE** — добавлен после ВСЕХ стратегий в `resume-fetch-helpers.js` и `resume-detail/index.js`
-- **Скрытые резюме не пере-скрывались** после повторного скрытия на hh.ru — исправлено определением со страницы резюме
+### Fixed
+- **`getResumePageType()` returned `'resume'` instead of `'resume-detail'`** — because of this, the hint "Click 'Get from page' below" and the CTA button were NEVER shown on the resume page. Both consumers (`render-resume-panel.js`, `render-my-resumes.js`) compared against `'resume-detail'`
+- **detectVisibilityFromLinkText()** — no longer returns VISIBLE prematurely; returns UNKNOWN, allowing other strategies (card, proximity, script) to work
+- **Final UNKNOWN→VISIBLE fallback** — added after ALL strategies in `resume-fetch-helpers.js` and `resume-detail/index.js`
+- **Hidden resumes were not re-hidden** after re-hiding on hh.ru — fixed by detection from the resume page
 
 ---
 
 ## [1.9.7] — 2026-06-11
 
-### Добавлено
-- **Спиннеры загрузки для кнопок** — все 3 кнопки (load-resume, sync-resumes, analyze-skills) показывают loading-состояние с `btn-spinner` и восстановлением после завершения
-- **Событие `hh-ar-load-resume-done`** — рассылается после завершения загрузки резюме для восстановления кнопки
-- **Событие `hh-ar-sync-done`** — рассылается после завершения синхронизации для восстановления кнопки
+### Added
+- **Loading spinners for buttons** — all 3 buttons (load-resume, sync-resumes, analyze-skills) show loading state with `btn-spinner` and restore after completion
+- **`hh-ar-load-resume-done` event** — dispatched after resume loading completes for button restoration
+- **`hh-ar-sync-done` event** — dispatched after synchronization completes for button restoration
 
-### Изменено
-- Версия: 1.9.6 → 1.9.7
+### Changed
+- Version: 1.9.6 → 1.9.7
 - Popup version sync: v1.7.3 → v1.9.7
 - README version sync: v1.8.3 → v1.9.7
 
@@ -265,439 +265,439 @@
 
 ## [1.9.6] — 2026-06-11
 
-### Добавлено
-- **Strategy 5/6 sub-modules** — декомпозиция strategy5-scanners.js и strategy6 подмодулей из монолитных файлов
-- `resume-fetch-strategy5-scanners.js` — сканеры для strategy 5 (DOM scanners для поиска JSON в script-тегах)
-- `resume-fetch-strategy6-urls.js` — API/URL fallback-подходы для strategy 6
-- `resume-fetch-strategy6-iframe.js` — скрытый iframe (PRIMARY метод strategy 6)
-- `resume-fetch-strategy6-expand.js` — оркестратор expand для strategy 6
-- `resume-fetch-strategy6-api.js` — API-based fallback для strategy 6
+### Added
+- **Strategy 5/6 sub-modules** — decomposition of strategy5-scanners.js and strategy6 sub-modules from monolithic files
+- `resume-fetch-strategy5-scanners.js` — scanners for strategy 5 (DOM scanners for searching JSON in script tags)
+- `resume-fetch-strategy6-urls.js` — API/URL fallback approaches for strategy 6
+- `resume-fetch-strategy6-iframe.js` — hidden iframe (PRIMARY method of strategy 6)
+- `resume-fetch-strategy6-expand.js` — expand orchestrator for strategy 6
+- `resume-fetch-strategy6-api.js` — API-based fallback for strategy 6
 
-### Исправлено
-- **Experience scroll & text truncation** — исправлено обрезание текста и прокрутка в секции опыта
-- Версия: 1.9.5 → 1.9.6
+### Fixed
+- **Experience scroll & text truncation** — fixed text truncation and scrolling in the experience section
+- Version: 1.9.5 → 1.9.6
 
 ---
 
-### Исправлено
-- **Strategy 6: скрытый iframe вместо AJAX** — диагностика показала, что кнопка «Развернуть»
-  НЕ использует AJAX. React/Magritte загружает все данные опыта при client-side hydration,
-  а кнопка просто переключает видимость компонентов. Поскольку полные данные отсутствуют
-  в SSR HTML и `<script>` тегах, единственный надёжный способ получить все записи — загрузить
-  страницу в скрытый iframe, дождаться React hydration, нажать «Развернуть» и распарсить DOM.
-  - Новый метод `fetchExpandedExperienceViaIframe()` — PRIMARY подход в Strategy 6
-  - Новый метод `parseExperienceFromIframeDoc()` — парсинг DOM из iframe
-  - Существующие подходы (API endpoints, query params) оставлены как fallback
+### Fixed
+- **Strategy 6: hidden iframe instead of AJAX** — diagnostics showed that the "Expand" button
+  does NOT use AJAX. React/Magritte loads all experience data during client-side hydration,
+  and the button simply toggles component visibility. Since full data is absent
+  from SSR HTML and `<script>` tags, the only reliable way to get all records is to load
+  the page in a hidden iframe, wait for React hydration, click "Expand" and parse the DOM.
+  - New method `fetchExpandedExperienceViaIframe()` — PRIMARY approach in Strategy 6
+  - New method `parseExperienceFromIframeDoc()` — DOM parsing from iframe
+  - Existing approaches (API endpoints, query params) kept as fallback
 
-### Изменено
-- **Anti-monolith рефакторинг resume-fetch.js** — файл 1481 строк разбит на 8 модулей:
-  - `resume-fetch.js` (~45 строк) — тонкий оркестратор (импорты + реэкспорты + syncAllResumes)
-  - `resume-fetch-list.js` (~65 строк) — fetchResumeList()
-  - `resume-fetch-resume.js` (~150 строк) — fetchAndParseResume() + парсеры хедера/скиллов + опыт-оркестратор
-  - `resume-fetch-experience.js` (~95 строк) — стратегии 1-3 (DOM-based опыт)
-  - `resume-fetch-strategy4-text.js` (~145 строк) — стратегия 4 (текстовый поиск) + stripHtmlTags
-  - `resume-fetch-strategy5-scripts.js` (~190 строк) — стратегия 5 (script JSON)
-  - `resume-fetch-strategy6-expand.js` (~370 строк) — стратегия 6 (iframe, API, URL)
-  - `resume-fetch-json-utils.js` (~130 строк) — JSON-утилиты (extractJsonArray, buildEntryFromApiItem, findExperienceInObject)
-  - `resume-fetch-education-languages.js` (~50 строк) — образование + языки + о себе
-- Публичный API не изменён: `fetchResumeList`, `fetchAndParseResume`, `syncAllResumes` реэкспортятся из resume-fetch.js
-- Версия: 1.9.4 → 1.9.5
+### Changed
+- **Anti-monolith refactoring of resume-fetch.js** — 1481-line file split into 8 modules:
+  - `resume-fetch.js` (~45 lines) — thin orchestrator (imports + re-exports + syncAllResumes)
+  - `resume-fetch-list.js` (~65 lines) — fetchResumeList()
+  - `resume-fetch-resume.js` (~150 lines) — fetchAndParseResume() + header/skills parsers + experience orchestrator
+  - `resume-fetch-experience.js` (~95 lines) — strategies 1-3 (DOM-based experience)
+  - `resume-fetch-strategy4-text.js` (~145 lines) — strategy 4 (text search) + stripHtmlTags
+  - `resume-fetch-strategy5-scripts.js` (~190 lines) — strategy 5 (script JSON)
+  - `resume-fetch-strategy6-expand.js` (~370 lines) — strategy 6 (iframe, API, URL)
+  - `resume-fetch-json-utils.js` (~130 lines) — JSON utilities (extractJsonArray, buildEntryFromApiItem, findExperienceInObject)
+  - `resume-fetch-education-languages.js` (~50 lines) — education + languages + about me
+- Public API unchanged: `fetchResumeList`, `fetchAndParseResume`, `syncAllResumes` are re-exported from resume-fetch.js
+- Version: 1.9.4 → 1.9.5
 
 ---
 
 ## [1.9.4] — 2026-06-11
 
-### Добавлено
-- **Спиннер загрузки в панели** — при нажатии «Загрузить с текущей страницы» в `#res-parsed-data`
-  показывается `.har-spinner` + текст «Загрузка резюме...» вместо пустого состояния
-- **Strategy 6: расширенный парсинг опыта через AJAX/API** — новая стратегия для получения
-  скрытых записей опыта (3→6), которые hh.ru подгружает лениво через «Показать все»:
-  - (a) Поиск URL кнопок «Показать все» (href, data-url, data-action-url)
-  - (b) Поиск Magritte expansion URLs в `<script>` тегах
-  - (c) Пробуем известные API-эндпоинты (`/applicant/api/v1/resumes/{id}`, `api.hh.ru/resumes/{id}`)
-  - (d) Пробуем параметры расширения (`?expand=all`, `?expand=experience`, `?showAll=true`)
-  - (e) Парсинг JSON API ответов (hh.ru API формат: position, company, start/end dates)
-  - (f) Парсинг expanded HTML документов (company-cards + stepper + text patterns)
-- **JSON API парсер** — `parseExperienceFromJson()` с рекурсивным поиском массива опыта
-  в произвольной структуре JSON + `buildEntryFromApiItem()` для конвертации hh.ru API полей
+### Added
+- **Loading spinner in panel** — when clicking "Load from current page" in `#res-parsed-data`
+  a `.har-spinner` + text "Loading resume..." is shown instead of empty state
+- **Strategy 6: extended experience parsing via AJAX/API** — new strategy for retrieving
+  hidden experience records (3→6) that hh.ru loads lazily via "Show all":
+  - (a) Search for "Show all" button URLs (href, data-url, data-action-url)
+  - (b) Search for Magritte expansion URLs in `<script>` tags
+  - (c) Try known API endpoints (`/applicant/api/v1/resumes/{id}`, `api.hh.ru/resumes/{id}`)
+  - (d) Try expansion parameters (`?expand=all`, `?expand=experience`, `?showAll=true`)
+  - (e) Parse JSON API responses (hh.ru API format: position, company, start/end dates)
+  - (f) Parse expanded HTML documents (company-cards + stepper + text patterns)
+- **JSON API parser** — `parseExperienceFromJson()` with recursive search for experience array
+  in arbitrary JSON structure + `buildEntryFromApiItem()` for converting hh.ru API fields
 
-### Исправлено
-- **Логгер невидимый в Chrome DevTools** — `console.debug` скрыт по умолчанию, заменён на
-  `console.log` — теперь все `[HH-AR][ResumeFetch]` сообщения видны без включения Verbose
+### Fixed
+- **Logger invisible in Chrome DevTools** — `console.debug` is hidden by default, replaced with
+  `console.log` — now all `[HH-AR][ResumeFetch]` messages are visible without enabling Verbose
 
-### Изменено
-- `parseExperienceFromDoc()` стала `async` для поддержки Strategy 6 (fetch-запросы)
-- `fetchAndParseResume()` теперь `await parseExperienceFromDoc()`
-- Версия: 1.9.2 → 1.9.4
+### Changed
+- `parseExperienceFromDoc()` became `async` to support Strategy 6 (fetch requests)
+- `fetchAndParseResume()` now `await parseExperienceFromDoc()`
+- Version: 1.9.2 → 1.9.4
 
 ---
 
 ## [1.9.0] — 2026-06-11
 
-### Добавлено
-- **Strategy 4: текстовый парсинг опыта из HTML** — если data-qa парсинг нашёл мало записей,
-  ищем ВСЕ диапазоны дат (типа «январь 2020 — настоящее время») в секции опыта и
-  извлекаем окружающий текст (должность, компания, описание)
-- **Strategy 5: парсинг опыта из Magritte JSON** — поиск данных опыта в `<script>` тегах
+### Added
+- **Strategy 4: text-based experience parsing from HTML** — if data-qa parsing found few records,
+  search for ALL date ranges (like "январь 2020 — настоящее время") in the experience section and
+  extract surrounding text (position, company, description)
+- **Strategy 5: experience parsing from Magritte JSON** — search for experience data in `<script>` tags
   (hydration state, `window.__INITIAL_STATE__`, `resumeStore`)
-- **Диагностический дамп HTML** — первые 2000 символов секции опыта выводятся в консоль
-  для анализа структуры при отладке
+- **Diagnostic HTML dump** — first 2000 characters of experience section output to console
+  for structure analysis during debugging
 
-### Исправлено
-- Опыт работы: 5 стратегий парсинга вместо 3 (company-cards → stepper supplement →
+### Fixed
+- Work experience: 5 parsing strategies instead of 3 (company-cards → stepper supplement →
   stepper fallback → text patterns → script JSON)
 
-### Изменено
-- Версия: 1.8.9 → 1.9.0
+### Changed
+- Version: 1.8.9 → 1.9.0
 
 ---
 
 ## [1.8.9] — 2026-06-11
 
-### Исправлено
-- **Опыт работы: 3 → 6 записей** — два корневых бага:
-  - Race condition в `initPageLogic()`: `expandHiddenSections()` вызывалась без `await`, поэтому `parseResume()` запускался до раскрытия скрытых секций (3 видимых карточки вместо 6)
-  - Stepper fallback в `parseExperienceFromDoc()` срабатывал только при `uniqueCards.length === 0` — если 3 company-card уже найдены, оставшиеся stepper-items игнорировались
-- **Stepper supplement в live DOM парсере** — `parseExperience()` теперь тоже дополняет записи из stepper-items, не покрытых company-card обёртками
-- **Шумные логи `checkAuth`** — убраны 3 `console.log()` из `checkAuth()`, спамившие каждые 5 секунд
+### Fixed
+- **Work experience: 3 → 6 records** — two root bugs:
+  - Race condition in `initPageLogic()`: `expandHiddenSections()` was called without `await`, so `parseResume()` ran before hidden sections were expanded (3 visible cards instead of 6)
+  - Stepper fallback in `parseExperienceFromDoc()` only triggered when `uniqueCards.length === 0` — if 3 company-cards were already found, remaining stepper-items were ignored
+- **Stepper supplement in live DOM parser** — `parseExperience()` now also supplements records from stepper-items not covered by company-card wrappers
+- **Noisy `checkAuth` logs** — removed 3 `console.log()` from `checkAuth()` that were spamming every 5 seconds
 
-### Изменено
-- `parseExperienceFromDoc()` — 3 стратегии: company-cards → stepper supplement → full stepper fallback
-- `parseExperience()` (live DOM) — аналогичные 3 стратегии + поиск company info из родительских элементов
-- Версия: 1.8.8 → 1.8.9
+### Changed
+- `parseExperienceFromDoc()` — 3 strategies: company-cards → stepper supplement → full stepper fallback
+- `parseExperience()` (live DOM) — similar 3 strategies + company info search from parent elements
+- Version: 1.8.8 → 1.8.9
 
 ---
 
 ## [1.8.8] — 2026-06-11
 
-### Исправлено
-- **«Загрузить с текущей страницы» на не-резюме страницах** — на главной (`/`) и `/applicant/resumes` кнопка теперь загружает первое резюме из `myResumes[]` или предлагает синхронизацию
-- **Stepper fallback** — добавлен в `parseExperienceFromDoc()` при нулевом количестве company-card
-- **Debug логирование** — предварительный подсчёт company-cards, stepper-items и «Показать все» кнопок в fetched HTML
+### Fixed
+- **"Load from current page" on non-resume pages** — on the homepage (`/`) and `/applicant/resumes` the button now loads the first resume from `myResumes[]` or offers synchronization
+- **Stepper fallback** — added to `parseExperienceFromDoc()` when zero company-cards are found
+- **Debug logging** — preliminary count of company-cards, stepper-items and "Show all" buttons in fetched HTML
 
 ---
 
 ## [1.8.7] — 2026-06-11
 
-### Исправлено
-- **Парсинг на странице редактирования** — `/resume/edit/{id}/about` не содержит `data-qa` атрибутов, теперь используется `fetchAndParseResume()` для загрузки view-страницы
-- **Кнопка «Очистить резюме»** — добавлен флаг `_resumeCleared` для предотвращения авто-восстановления из `myResumes[0]`
-- **Валидация парсинга** — пустой результат (нет title, skills, experience) не перезаписывает хорошие данные
-- **`initPageLogic()` стала async** — для поддержки `await fetchAndParseResume()`
+### Fixed
+- **Parsing on edit page** — `/resume/edit/{id}/about` does not contain `data-qa` attributes, now uses `fetchAndParseResume()` to load the view page
+- **"Clear resume" button** — added `_resumeCleared` flag to prevent auto-restoration from `myResumes[0]`
+- **Parse validation** — empty result (no title, skills, experience) does not overwrite good data
+- **`initPageLogic()` made async** — to support `await fetchAndParseResume()`
 
 ---
 
 ## [1.8.5] — 2026-06-10
 
-### Исправлено
-- **`parseSalaryConditions` ReferenceError** — функция не была импортирована в `parse-resume.js`, вызов падал с ReferenceError
-- Добавлен импорт `parseSalaryConditions` из `parse-resume-sections.js`
+### Fixed
+- **`parseSalaryConditions` ReferenceError** — function was not imported in `parse-resume.js`, call failed with ReferenceError
+- Added import of `parseSalaryConditions` from `parse-resume-sections.js`
 
 ---
 
 ## [1.8.4] — 2026-06-10
 
-### Исправлено
-- **Skill Gap UI wireframe compliance** — приведение в соответствие с дизайн-макетом
+### Fixed
+- **Skill Gap UI wireframe compliance** — brought into compliance with the design mockup
 
 ---
 
 ## [1.7.3] — 2026-06-10
 
-### Исправлено
-- **Pre-push hook**: исправлен баг разрешения пути (`.git/hooks/..` вместо `.git/hooks/../..` — guard был молча отключён)
-- **validate.sh whitelist**: добавлены `check-agent.sh` и `audit.sh` в разрешённый список
-- **cascade-guard/setup.sh**: добавлены права на исполнение (`chmod +x`)
-- **Git tracking**: удалены 1052 файла skills/ (системные, не часть проекта) из git индекса
-- **Git tracking**: удалены content.js.bak и content.js.map (build-артефакты) из git индекса
-- **.gitignore**: добавлены глобальные правила `*.bak`, `*.map`, `upload/`
+### Fixed
+- **Pre-push hook**: fixed path resolution bug (`.git/hooks/..` instead of `.git/hooks/../..` — guard was silently disabled)
+- **validate.sh whitelist**: added `check-agent.sh` and `audit.sh` to the allowed list
+- **cascade-guard/setup.sh**: added execute permissions (`chmod +x`)
+- **Git tracking**: removed 1052 skills/ files (system files, not part of project) from git index
+- **Git tracking**: removed content.js.bak and content.js.map (build artifacts) from git index
+- **.gitignore**: added global rules `*.bak`, `*.map`, `upload/`
 
-### Добавлено
+### Added
 - **cascade-guard submodule** — git submodule (https://github.com/stsgs1980/Cascade-guard.git)
-  - cascade-cli.sh — CLI навигации по задачам (next-task, start-task, complete-task, status, validate)
-  - cascade-init.sh — интерактивный генератор cascade-state.json
-  - cascade-state.json — 35 задач, 7 фаз (P0-P6), единый источник истины статусов
-  - AGENT_RULES.md — правила C-1..C-9 (зависимости, приоритеты, верификация)
-- **Git hooks**: pre-commit (блокирует без свежего worklog) + pre-push (запускает validate.sh)
-- **worklog.md**: полный журнал работы с Task ID 1-22
+  - cascade-cli.sh — task navigation CLI (next-task, start-task, complete-task, status, validate)
+  - cascade-init.sh — interactive cascade-state.json generator
+  - cascade-state.json — 35 tasks, 7 phases (P0-P6), single source of truth for statuses
+  - AGENT_RULES.md — rules C-1..C-9 (dependencies, priorities, verification)
+- **Git hooks**: pre-commit (blocks without fresh worklog) + pre-push (runs validate.sh)
+- **worklog.md**: complete work log with Task IDs 1-22
 
-### Изменено
-- **.gitmodules**: добавлен cascade-guard submodule
-- **AGENT_RULES.md**: объединены AHG правила (1-6) + Cascade правила (C-1..C-9)
-- Репозиторий синхронизирован с origin/main (GitHub)
+### Changed
+- **.gitmodules**: added cascade-guard submodule
+- **AGENT_RULES.md**: merged AHG rules (1-6) + Cascade rules (C-1..C-9)
+- Repository synced with origin/main (GitHub)
 
 ---
 
 ## [1.7.2] — 2026-06-10
 
-### Добавлено
-- **6-tab UI wireframe** — полная переработка панели под wireframe
-  - Обзор, Резюме, Вакансии, Переговоры, Настройки, Статистика
+### Added
+- **6-tab UI wireframe** — complete panel redesign per wireframe
+  - Overview, Resume, Vacancies, Negotiations, Settings, Statistics
   - Green accent theme (#059669/#10B981), glass-morphism, CSS animations
   - KPI ring, score ring, toggle switch, progress bar
 
-### Исправлено
-- **FAB CSS isolation** — все стили через `style.setProperty(prop, value, 'important')`
-  - hh.ru CSS больше не переопределяет цвет FAB
+### Fixed
+- **FAB CSS isolation** — all styles via `style.setProperty(prop, value, 'important')`
+  - hh.ru CSS no longer overrides FAB color
 
 ---
 
 ## [1.7.1] — 2026-06-10
 
-### Добавлено
-- **Username display** — в header и auth badge при авторизации
-- **FAB tooltip** — для каждого состояния авторизации
+### Added
+- **Username display** — in header and auth badge when authorized
+- **FAB tooltip** — for each authorization state
 
-### Исправлено
-- **authIndicator badge** — click handler был мёртв, теперь работает
-- **renderSidebarContent null state** — исправлен regex для spinner HTML
+### Fixed
+- **authIndicator badge** — click handler was dead, now works
+- **renderSidebarContent null state** — fixed regex for spinner HTML
 
 ---
 
 ## [1.7.0] — 2026-06-10
 
-### Добавлено
-- **Anti-monolith split** — все JS файлы разбиты до <250 строк
-  - parse.js (408) → 4 файла
+### Added
+- **Anti-monolith split** — all JS files split to <250 lines
+  - parse.js (408) → 4 files
   - panel/index.js (277) → panel/ + events.js
-  - Итого 42 JS файла, все <250 строк
-- **TASK-CASCADE.md v4.0.0** — Phase 0 отмечена completed, добавлена Phase 0.5
-- **Popup redirect** — minimal HTML redirect на FAB при клике на иконку
+  - Total 42 JS files, all <250 lines
+- **TASK-CASCADE.md v4.0.0** — Phase 0 marked completed, Phase 0.5 added
+- **Popup redirect** — minimal HTML redirect to FAB on icon click
 
-### Изменено
-- Проект переименован: HH-Auto-Respond → HH-Copilot
+### Changed
+- Project renamed: HH-Auto-Respond → HH-Copilot
 
 ---
 
 ## [1.6.0] — 2026-06-10  (Phase 0 complete)
 
-### Переписано
-- **Phase 0: esbuild modular refactoring (F0.1-F0.9)** -- монолитный content.js (1637 строк)
-  декомпозирован в 16 ES модулей с единым сборочным шагом
-  - `src/lib/selectors.js` -- HH_SELECTORS (47+ групп), findElement, findAllElements
+### Rewritten
+- **Phase 0: esbuild modular refactoring (F0.1-F0.9)** -- monolithic content.js (1637 lines)
+  decomposed into 16 ES modules with a single build step
+  - `src/lib/selectors.js` -- HH_SELECTORS (47+ groups), findElement, findAllElements
   - `src/lib/anti-hallucination.js` -- safeGetText, safeGetAttr, safeClick, safeInput,
     waitForElement, validateVacancyData, extractVacancyId, createLogger
   - `src/lib/storage.js` -- DEFAULT_SETTINGS, DEFAULT_STATS, chrome.storage.local CRUD
   - `src/lib/timing.js` -- gaussianRandom, randomDelay, simulateReading, simulateTyping
   - `src/lib/rate-limiter.js` -- rateLimiter (check, recordAction, adaptiveSlowdown, resetBurst)
   - `src/parsers/vacancy-list.js` -- parseVacanciesFromPage
-  - `src/parsers/resume-detail.js` -- parseResume (12 полей), diagnoseResumeDOM
-  - `src/parsers/vacancy-detail.js` -- заглушка parseVacancyDetail (Phase 1)
-  - `src/parsers/negotiations.js` -- заглушка parseNegotiations (Phase 1)
+  - `src/parsers/resume-detail.js` -- parseResume (12 fields), diagnoseResumeDOM
+  - `src/parsers/vacancy-detail.js` -- stub parseVacancyDetail (Phase 1)
+  - `src/parsers/negotiations.js` -- stub parseNegotiations (Phase 1)
   - `src/ui/fab.js`, `src/ui/panel.js` -- FAB + Shadow DOM sidebar
-  - `src/ui/tabs/vacancies.js`, `src/ui/tabs/resumes.js` -- рабочие вкладки
-  - `src/ui/styles.js`, `src/ui/html.js`, `src/ui/state.js`, `src/ui/auth.js` -- UI инфраструктура
+  - `src/ui/tabs/vacancies.js`, `src/ui/tabs/resumes.js` -- working tabs
+  - `src/ui/styles.js`, `src/ui/html.js`, `src/ui/state.js`, `src/ui/auth.js` -- UI infrastructure
   - `src/content/main.js` -- boot sequence (auth gate, detectPageType, SPA observer)
-  - `src/engine/auto-respond.js` -- заглушки applyToVacancy/continueApply/applyToAll
-  - `src/services/index.js` -- сервисный барьерный файл
+  - `src/engine/auto-respond.js` -- stubs applyToVacancy/continueApply/applyToAll
+  - `src/services/index.js` -- service barrier file
 
-### Добавлено
-- **esbuild** как сборочный инструмент (IIFE bundle, sourcemaps)
-  - `esbuild.config.mjs` -- конфигурация сборки
-  - `package.json` -- скрипты build/watch
-- **content.js.bak** -- резервная копия оригинального монолита
+### Added
+- **esbuild** as build tool (IIFE bundle, sourcemaps)
+  - `esbuild.config.mjs` -- build configuration
+  - `package.json` -- build/watch scripts
+- **content.js.bak** -- backup of the original monolith
 
-### Изменено
-- content.js теперь собирается из src/ модулей через `npm run build`
-- manifest.json: `type: "module"` для service worker
+### Changed
+- content.js now built from src/ modules via `npm run build`
+- manifest.json: `type: "module"` for service worker
 
 ---
 
 ## [1.5.4] -- 2026-06-10
 
-### Добавлено
+### Added
 - Anti-hallucination-guard submodule + pre-commit/pre-push hooks
-- consumer-project detection в pre-push (skip module validation)
+- consumer-project detection in pre-push (skip module validation)
 
 ---
 
 ## [1.5.3] -- 2026-06-10
 
-### Переписано
-- Полная переработка документации с кросс-проверкой кода:
+### Rewritten
+- Complete documentation overhaul with code cross-checking:
   ARCHITECTURE.md, README.md, UNICODE_POLICY.md, TASK-CASCADE.md v3.0
 
-### Исправлено
-- Sidebar ширина 750px -> 720px
+### Fixed
+- Sidebar width 750px -> 720px
 - Storage key resume -> myResume
-- Clone URL исправлен
+- Clone URL fixed
 
 ---
 
 ## [1.5.0] -- 2026-06-10
 
-### Удалено
-- Массовая чистка мёртвого кода: 311 файлов, -41361 строк
+### Removed
+- Mass cleanup of dead code: 311 files, -41361 lines
   - hh-bot/, Next.js app/, mini-services/, skills/, download/, upload/
-  - Оставлено только расширение в hh-extension/hh-auto-respond-extension/
+  - Only the extension left in hh-extension/hh-auto-respond-extension/
 
 ---
 
 ## [1.4.0] -- 2026-06-10
 
-### Добавлено
-- Auto-expand скрытых секций резюме перед парсингом
-- Sidebar ширина 360px -> 720px
+### Added
+- Auto-expand hidden resume sections before parsing
+- Sidebar width 360px -> 720px
 
-### Исправлено
-- Дублирование duration в периоде опыта
-- Удалена текстовая trunkation
-- Мёртвый код (content/, lib/ -- never imported)
+### Fixed
+- Duplicate duration in experience period
+- Removed text truncation
+- Dead code (content/, lib/ -- never imported)
 
 ---
 
 ## [1.3.0] -- 2026-06-09
 
-### Исправлено
-- **Критический баг: 8 из 11 полей резюме не парсились** на Magritte-страницах
-  - Причина: селекторы использовали CSS-классы, хэшируемые Magritte при каждом деплое
-  - Результат: gender, age, address, specialization, skills, experience, education, languages — все ✗
-  - Только title, salary и skill-level-3 находились
+### Fixed
+- **Critical bug: 8 of 11 resume fields were not parsed** on Magritte pages
+  - Cause: selectors used CSS classes that Magritte hashes on each deploy
+  - Result: gender, age, address, specialization, skills, experience, education, languages — all ✗
+  - Only title, salary and skill-level-3 were found
 
-### Переписано
-- **`parseResume()` — полностью новая стратегия парсинга (Magritte-safe)**:
-  - **Автообнаружение секций** по тексту h2/h3 заголовков ("Опыт работы", "Образование" и т.д.)
-  - Не зависит от конкретных `data-qa` или CSS-классов — работает при любой версии Magritte
-  - Gender/age/address — парсинг из текстового содержимого рядом с h1
-  - Experience — поиск по ссылкам `/employer/`, тегам b/strong, паттернам дат
-  - Education — поиск по ссылкам и тегам b/strong внутри секции
-  - Skills — комбинированный поиск: `data-qa="skills-table"` + заголовок "Навыки"
-  - Languages — bloko-tag внутри секции с заголовком "Языки"
-- **`HH_SELECTORS`** — полная чистка от Magritte-хэшированных CSS-классов:
-  - Убраны: `.resume-block__title-text`, `.resume-block__salary`, `h1.bloko-header-section-1`,
+### Rewritten
+- **`parseResume()` — completely new parsing strategy (Magritte-safe)**:
+  - **Auto-detection of sections** by h2/h3 heading text ("Опыт работы", "Образование", etc.)
+  - Does not depend on specific `data-qa` or CSS classes — works with any Magritte version
+  - Gender/age/address — parsing from text content near h1
+  - Experience — search by `/employer/` links, b/strong tags, date patterns
+  - Education — search by links and b/strong tags within the section
+  - Skills — combined search: `data-qa="skills-table"` + heading "Навыки"
+  - Languages — bloko-tag within section with heading "Языки"
+- **`HH_SELECTORS`** — complete cleanup of Magritte-hashed CSS classes:
+  - Removed: `.resume-block__title-text`, `.resume-block__salary`, `h1.bloko-header-section-1`,
     `h2.bloko-header-1`, `.applicant-resumes__resume`, `.resume-block-item`,
     `.vacancy-serp-item__compensation`, `.vacancy-description`, `.vacancy-response-popup`,
     `textarea.bloko-textarea`, `button.bloko-button_primary`, `.bloko-tag__section`
-  - Убраны из `parseResume()`: `.bloko-text_strong`, `.bloko-text`, `[class*="strong"]`,
-    `[class*="description"]`, `[class*="experience"]` — все Magritte-хэшированные
-  - Заменены на: `b, strong, p` + `data-qa` атрибуты (стабильные)
-  - Внутренние селекторы опыта/образования: `b/strong` вместо `.bloko-text_strong`
+  - Removed from `parseResume()`: `.bloko-text_strong`, `.bloko-text`, `[class*="strong"]`,
+    `[class*="description"]`, `[class*="experience"]` — all Magritte-hashed
+  - Replaced with: `b, strong, p` + `data-qa` attributes (stable)
+  - Internal experience/education selectors: `b/strong` instead of `.bloko-text_strong`
 
 ---
 
 ## [1.2.0] — 2026-06-09
 
-### Исправлено
-- **Критический баг**: кнопка "Загрузить с текущей страницы" вызывала `parseResume()`
-  на странице `/applicant/resumes` (список резюме), что всегда давало ошибку
-  "Could not parse resume from current page", т.к. `parseResume()` ожидает URL `/resume/{hash}`
-- **Причина**: обработчик `hh-ar-load-resume` не проверял тип текущей страницы
+### Fixed
+- **Critical bug**: "Load from current page" button called `parseResume()`
+  on the `/applicant/resumes` page (resume list), which always gave the error
+  "Could not parse resume from current page", since `parseResume()` expects URL `/resume/{hash}`
+- **Cause**: `hh-ar-load-resume` handler did not check the current page type
 
-### Добавлено
-- **Контекстно-зависимая логика кнопки "Загрузить"**:
-  - На `/resume/{hash}` — парсит конкретное резюме (как раньше)
-  - На `/applicant/resumes` — парсит и показывает список резюме
-  - На других страницах — предупреждает что нужно перейти на правильную страницу
-- **`getResumePageType()`** — определяет тип страницы по URL
-- **`renderResumeListPanel()`** — рендерит список резюме в sidebar
-  - Кликабельные ссылки на каждое резюме (открывает в новой вкладке)
-  - Бейдж "loaded" для уже загруженного резюме
-  - Подсказка для пользователя
-- **Авто-сохранение списка резюме** в `panelState.resumeList` при заходе на `/applicant/resumes`
-- **CSS для списка резюме**: `.har-resume-list-*` стили
-- **Кнопка "Open on hh.ru"** в карточке загруженного резюме
+### Added
+- **Context-dependent "Load" button logic**:
+  - On `/resume/{hash}` — parses the specific resume (as before)
+  - On `/applicant/resumes` — parses and displays the resume list
+  - On other pages — warns that you need to navigate to the correct page
+- **`getResumePageType()`** — determines page type by URL
+- **`renderResumeListPanel()`** — renders resume list in sidebar
+  - Clickable links to each resume (opens in new tab)
+  - "loaded" badge for already loaded resumes
+  - Hint for the user
+- **Auto-save resume list** in `panelState.resumeList` when visiting `/applicant/resumes`
+- **CSS for resume list**: `.har-resume-list-*` styles
+- **"Open on hh.ru" button** in loaded resume card
 
-### Изменено
-- `panelState` расширен: добавлены `resume`, `resumeList`, `activeTab`
-- `renderResumePanel()` теперь проверяет наличие списка и тип страницы
-  перед показом заглушки
+### Changed
+- `panelState` extended: added `resume`, `resumeList`, `activeTab`
+- `renderResumePanel()` now checks for list presence and page type
+  before showing placeholder
 
 ---
 
 ## [1.1.0] — 2026-06-09
 
-### Добавлено
-- **Парсер резюме** — полная поддержка Magritte/Bloko DOM структуры
-  - 30+ CSS селекторов на основе `data-qa` (стабильные, не зависят от деплоя)
-  - Парсинг: позиция, зарплата, город, пол, возраст, специализации
-  - Навыки с определением уровней (Продвинутый / Средний / Начальный)
-  - Опыт работы: компания, должность, период, описание
-  - Образование: название, год окончания
-  - Языки: название и уровень владения
-  - Дополнительная информация (гражданство, готовность к переезду и т.д.)
-- **Вкладка "Моё резюме"** в sidebar
-  - Отображение всех распарсенных данных
-  - Теги навыков с цветовым оформлением
-  - Список опыта работы с должностями и периодами
-  - Кнопка "Загрузить с текущей страницы"
-  - Кнопка "Перейти к списку резюме" (открывает /applicant/resumes)
-- **Авто-парсинг** при открытии страницы резюме (`/resume/{hash}`)
-- **Сохранение резюме** в `chrome.storage.local` между сессиями
-- **Debug-панель** — раскрывающийся блок с результатами по каждому селектору
-  - ✓ найденные поля (зелёные)
-  - ✗ отсутствующие поля (красные)
-- **Табовая система** в sidebar (Вакансии / Моё резюме)
+### Added
+- **Resume parser** — full Magritte/Bloko DOM structure support
+  - 30+ CSS selectors based on `data-qa` (stable, independent of deploy)
+  - Parsing: position, salary, city, gender, age, specializations
+  - Skills with level detection (Advanced / Intermediate / Beginner)
+  - Work experience: company, position, period, description
+  - Education: name, graduation year
+  - Languages: name and proficiency level
+  - Additional info (citizenship, relocation readiness, etc.)
+- **"My Resume" tab** in sidebar
+  - Display of all parsed data
+  - Skill tags with color styling
+  - Work experience list with positions and periods
+  - "Load from current page" button
+  - "Go to resume list" button (opens /applicant/resumes)
+- **Auto-parsing** when opening a resume page (`/resume/{hash}`)
+- **Resume saving** in `chrome.storage.local` between sessions
+- **Debug panel** — collapsible block with results for each selector
+  - ✓ found fields (green)
+  - ✗ missing fields (red)
+- **Tab system** in sidebar (Vacancies / My Resume)
 
-### Изменено
-- `initPageLogic()` расширен: обработка `/resume/{hash}` и `/applicant/resumes`
+### Changed
+- `initPageLogic()` extended: handling of `/resume/{hash}` and `/applicant/resumes`
 
-### Технические детали
-- Магриттовские CSS-классы с хешами (напр. `magritte-card___bhGKz_8-5-13`) НЕ используются
-  из-за нестабильности. Только `data-qa` атрибуты и Bloko BEM классы.
-- Навыки извлекаются только из блока `[data-qa="skills-table"]`,
-  чтобы не захватить языки и теги из других секций.
+### Technical Details
+- Magritte CSS classes with hashes (e.g., `magritte-card___bhGKz_8-5-13`) are NOT used
+  due to instability. Only `data-qa` attributes and Bloko BEM classes.
+- Skills are extracted only from the `[data-qa="skills-table"]` block
+  to avoid capturing languages and tags from other sections.
 
 ---
 
 ## [1.0.0] — 2026-06-09
 
-### Добавлено
-- **Chrome Extension (Manifest V3)** — базовая архитектура
-  - `manifest.json` — MV3 конфигурация
-  - `content.js` — единый бандл (MV3 не поддерживает ES modules в content scripts)
+### Added
+- **Chrome Extension (Manifest V3)** — basic architecture
+  - `manifest.json` — MV3 configuration
+  - `content.js` — single bundle (MV3 does not support ES modules in content scripts)
   - `background/index.js` — Service Worker
-  - `popup/` — 4-табовый popup (Stats, Settings, Templates, Logs)
-  - `icons/` — PNG иконки 16/48/128px
+  - `popup/` — 4-tab popup (Stats, Settings, Templates, Logs)
+  - `icons/` — PNG icons 16/48/128px
 - **FAB (Floating Action Button)** — 56px, bottom-right
-  - 3 состояния: серый (проверка) → красный (не авторизован) → синий (авторизован)
-  - Анимация при наведении (scale 1.08)
-- **Sidebar** — 360px, right-side, Shadow DOM изоляция
-  - Шапка с названием и версией
-  - Блок авторизации с кнопкой входа
-  - Статистика: отклики / осталось / ошибки
-  - Прогресс-бар дневного лимита
-  - Кнопки: "Откликнуться на все", "Пауза", "Обновить"
-  - Список вакансий с кнопками отклика
-- **Определение авторизации** — `checkAuth()`
-  - 13 CSS селекторов (data-qa + class-based)
-  - Fallback по cookies (hhruuid, _HH-RU, hhtoken)
-  - Поллинг каждые 2 секунды
-- **Парсер вакансий** — `parseVacanciesFromPage()`
-  - Селекторы для карточек: title, company, salary, location, experience, tags
-  - Фильтрация: уже откликнутые, чёрный список компаний
-  - Валидация данных (title, company, url, id)
-- **Anti-Hallucination** — безопасные DOM операции
-  - `safeGetText()` — проверка видимости перед извлечением текста
-  - `safeClick()` — проверка disabled, visibility
-  - `safeInput()` — корректная установка значения через property setter
-  - `validateVacancyData()` — 4-уровневая проверка
-  - `waitForElement()` — MutationObserver с таймаутом
+  - 3 states: gray (checking) → red (unauthorized) → blue (authorized)
+  - Hover animation (scale 1.08)
+- **Sidebar** — 360px, right-side, Shadow DOM isolation
+  - Header with name and version
+  - Authorization block with login button
+  - Statistics: responses / remaining / errors
+  - Daily limit progress bar
+  - Buttons: "Apply to all", "Pause", "Refresh"
+  - Vacancy list with response buttons
+- **Authorization detection** — `checkAuth()`
+  - 13 CSS selectors (data-qa + class-based)
+  - Cookie fallback (hhruuid, _HH-RU, hhtoken)
+  - Polling every 2 seconds
+- **Vacancy parser** — `parseVacanciesFromPage()`
+  - Card selectors: title, company, salary, location, experience, tags
+  - Filtering: already applied, company blacklist
+  - Data validation (title, company, url, id)
+- **Anti-Hallucination** — safe DOM operations
+  - `safeGetText()` — visibility check before text extraction
+  - `safeClick()` — disabled, visibility check
+  - `safeInput()` — correct value setting via property setter
+  - `validateVacancyData()` — 4-level validation
+  - `waitForElement()` — MutationObserver with timeout
 - **Rate Limiter** — token bucket + adaptive slowdown
-  - 200/день, 30/час, 30с интервал, burst max 5
-  - Адаптивный фактор при 429/slow/captcha
+  - 200/day, 30/hour, 30s interval, burst max 5
+  - Adaptive factor on 429/slow/captcha
 - **Storage** — `chrome.storage.local` wrapper
-  - Настройки по умолчанию
-  - Статистика с ежедневным сбросом
-  - Список откликнутых вакансий
-  - Чёрный список компаний
-- **SPA Observer** — MutationObserver для страницы поиска
-  - Авто-обновление списка вакансий при навигации без перезагрузки
+  - Default settings
+  - Statistics with daily reset
+  - List of applied vacancies
+  - Company blacklist
+- **SPA Observer** — MutationObserver for search page
+  - Auto-update of vacancy list on navigation without reload
 
-### Известные проблемы
-- `offsetParent !== null` проверка в v1.0.0 ломала авторизацию
-  (исправлено в hotfix, включённом в 1.1.0)
+### Known Issues
+- `offsetParent !== null` check in v1.0.0 broke authorization
+  (fixed in hotfix included in 1.1.0)
 
 ---
 
-## [1.0.0-hotfix] — 2026-06-09 (не релизная)
+## [1.0.0-hotfix] — 2026-06-09 (not released)
 
-### Исправлено
-- **Критический баг**: `offsetParent === null` для `position:fixed` элементов
-  - hh.ru header — фиксированный, поэтому `offsetParent` всегда `null`
-  - Результат: авторизация НИКОГДА не определялась (FAB всегда красная)
-  - Решение: заменено на `getComputedStyle().display/visibility` проверку
-  - Затронуты: `checkAuth()`, `findElement()`, `waitForElement()`, `safeClick()`
-- **Расширен набор селекторов авторизации**: 3 → 13 + cookie fallback
+### Fixed
+- **Critical bug**: `offsetParent === null` for `position:fixed` elements
+  - hh.ru header is fixed, so `offsetParent` is always `null`
+  - Result: authorization was NEVER detected (FAB always red)
+  - Solution: replaced with `getComputedStyle().display/visibility` check
+  - Affected: `checkAuth()`, `findElement()`, `waitForElement()`, `safeClick()`
+- **Expanded authorization selector set**: 3 → 13 + cookie fallback
 
 ---
 
