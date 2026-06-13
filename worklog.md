@@ -1848,3 +1848,17 @@ Work Log:
 Stage Summary:
 - AGENT_RULES.md is now entirely in English (local rules + AHG block)
 - No mixed-language content remaining
+
+---
+Task ID: accordion-default-collapsed
+Agent: main
+Task: Set both Resume tab accordions to collapsed by default
+
+Work Log:
+- Changed "Все резюме" accordion: aria-expanded true->false, removed "open" class from body and chevron
+- "Действующее резюме" was already collapsed by default
+- Removed auto-expand code in render-resume-panel.js that forced "Действующее резюме" open when resume loads
+
+Stage Summary:
+- Both accordions now collapsed by default
+- User must click to expand each section

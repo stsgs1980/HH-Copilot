@@ -68,14 +68,6 @@ export function renderResumePanel() {
 
   updateAccordionHeader(r);
 
-  // Auto-expand the main accordion
-  const body = refs.shadowRoot?.getElementById('res-parsing-body');
-  if (body && !body.classList.contains('open')) {
-    body.classList.add('open');
-    const chevron = body.previousElementSibling?.querySelector('.timeline-chevron');
-    if (chevron) chevron.classList.add('open');
-  }
-
   // Build 6 accordion sections matching wireframe
   const vis = r.visibility || (r.hidden ? 'hidden' : 'unknown');
   container.innerHTML =

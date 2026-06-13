@@ -6,16 +6,16 @@ import { ICONS } from '../icons.js';
 export function getResumeSection() {
   return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume" tabindex="0">
     <div id="res-sync-section" class="card fade-in" style="margin-bottom:12px;">
-      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync" role="button" tabindex="0" aria-expanded="true" aria-controls="res-sync-body">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;" data-timeline="res-sync" role="button" tabindex="0" aria-expanded="false" aria-controls="res-sync-body">
         <span style="font-size:12px;font-weight:600;">Все резюме</span>
         <div style="display:flex;align-items:center;gap:4px;">
           <span class="badge badge-green" id="res-visible-count" style="font-size:10px;display:none;">0 видимых</span>
           <span class="badge badge-amber" id="res-hidden-count" style="font-size:10px;display:none;">0 скрытых</span>
           <span class="badge badge-zinc" id="res-sync-count">0</span>
-          <span class="timeline-chevron open"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+          ${ICONS.chevronDown}
         </div>
       </div>
-      <div class="timeline-body open" id="res-sync-body" style="margin-top:10px;">
+      <div class="timeline-body" id="res-sync-body" style="margin-top:10px;">
         <div id="res-sync-list" style="font-size:11px;color:#52525b;">
           Нажмите «Синхронизировать все» для загрузки резюме
         </div>
