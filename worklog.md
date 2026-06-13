@@ -1976,3 +1976,21 @@ Work Log:
 
 Stage Summary:
 - CHANGELOG no longer silently omits 33 versions — explicitly documented as recovery period
+
+---
+Task ID: ahg-update-fa51233
+Agent: main
+Task: Update anti-hallucination-guard to fa51233 via update.sh
+
+Work Log:
+- Ran bash anti-hallucination-guard/update.sh
+- Updated: d27c3f4 → fa51233 (2 new commits: audit improvements, leftover commits fix)
+- setup.sh re-ran: hooks updated, new files deployed
+- New: .ahgrc config, .ahg-integrity.json snapshot, post-checkout hook, cascade-state.json, verify-docs.json
+- line-count-check.sh updated with new features
+- Submodule pointer needs committing
+
+Stage Summary:
+- AHG submodule at fa51233
+- New config files: .ahgrc, .ahg-integrity.json, cascade-state.json, verify-docs.json
+- Hooks and scripts reinstalled
