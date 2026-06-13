@@ -5,7 +5,11 @@
     {
       "name": "Extension source files",
       "source": "glob:hh-extension/hh-auto-respond-extension/src/**/*.js",
-      "exclude": ["test", "spec", "__mocks__"],
+      "exclude": [
+        "test",
+        "spec",
+        "__mocks__"
+      ],
       "readmePattern": "(\\d+) source files"
     },
     {
@@ -15,6 +19,16 @@
       "tolerance": 5
     }
   ],
+  "versionSync": {
+    "source": "file:hh-extension/hh-auto-respond-extension/package.json",
+    "extractPattern": "\"version\":\\s*\"([\\d.]+)\"",
+    "targets": [
+      {
+        "file": "README.md",
+        "pattern": "Версия:\\*\\s*[\\d.]+"
+      }
+    ]
+  },
   "exclude": [
     "skills/",
     "docs/diagrams/",
