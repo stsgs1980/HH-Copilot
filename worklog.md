@@ -1832,3 +1832,19 @@ Work Log:
 Stage Summary:
 - Rule 9.4 added and pushed
 - Commits: 0b40f4e (Rule 9.4), updating with lesson line
+
+---
+Task ID: rules-en-translation
+Agent: main
+Task: Translate all local rules in AGENT_RULES.md from Russian to English
+
+Work Log:
+- Translated header, Rule 1, Rule 1.1, Rule 2, Rule 3, Rule 4, Rule 5, Rule 6, worklog format section
+- Translated Rule 9.4 (After push -- mandatory sync command)
+- Fixed README.md version reference from Russian to English
+- Rules 7-12, 9.1-9.3 were already in English -- no changes needed
+- AHG block (RULE-001 to RULE-016) is managed by submodule -- untouched
+
+Stage Summary:
+- AGENT_RULES.md is now entirely in English (local rules + AHG block)
+- No mixed-language content remaining

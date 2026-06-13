@@ -1,76 +1,76 @@
-# ПРАВИЛА АГЕНТА -- НАРУШЕНИЕ НЕДОПУСТИМО
+# AGENT RULES -- VIOLATION IS NOT ACCEPTABLE
 
-> Копируется в корень проекта setup.sh. Агент читает перед началом работы.
+> Copied to project root by setup.sh. Agent reads before starting work.
 
 ---
 
-## Правило 1: worklog -- ДО и ПОСЛЕ каждого действия
+## Rule 1: worklog -- BEFORE and AFTER every action
 
-- Перед ЛЮБЫМ действием: прочитай /worklog.md
-- После ЛЮБОГО действия: обнови /worklog.md
-- Формат: только блоки с --- разделителем
-- Содержание: конкретные факты (файлы, команды, результаты)
+- Before ANY action: read /worklog.md
+- After ANY action: update /worklog.md
+- Format: only blocks with --- separator
+- Content: specific facts (files, commands, results)
 
-## Правило 1.1: Структура проекта -- ПЕРВЫМ делом в каждой сессии
+## Rule 1.1: Project structure -- FIRST thing in every session
 
-- Каждая новая сессия начинается с чтения структуры проекта
-- ПРОЧИТАЙ: README.md, AGENT_RULES.md, cascade-state.json, worklog.md
-- ПРОЧИТАЙ: src/ дерево файлов (LS или Glob) — чтобы понимать актуальную структуру кода
-- КРОСС-ПРОВЕРКА: сверяй документы с реальным кодом. Если README говорит "65+ файлов", а в src/ 100+ файлов — это кросс-разрыв, его нужно исправить
-- ПРИЧИНА: без понимания структуры агент рискует создать некорректный код, нарушить архитектуру или продублировать существующую логику
+- Every new session starts with reading project structure
+- READ: README.md, AGENT_RULES.md, cascade-state.json, worklog.md
+- READ: src/ file tree (LS or Glob) -- to understand actual code structure
+- CROSS-CHECK: verify documents match actual code. If README says "65+ files" but src/ has 100+ files -- that is a cross-gap, fix it
+- REASON: without understanding structure, agent risks creating incorrect code, breaking architecture, or duplicating existing logic
 
-## Правило 2: Читай перед записью (READ BEFORE WRITE)
+## Rule 2: Read before write (READ BEFORE WRITE)
 
-- НИКОГДА не пиши файл, не прочитав его сначала (Read tool)
-- Исключение: если файл не существует (проверь через LS/Glob)
-- Причина: без чтения агент рискует уничтожить существующий код
+- NEVER write a file without reading it first (Read tool)
+- Exception: if file does not exist (verify via LS/Glob)
+- Reason: without reading, agent risks destroying existing code
 
-## Правило 3: Один логический блок -- один коммит
+## Rule 3: One logical block -- one commit
 
-- Закончил meaningful chunk работы -> git add -A && git commit
-- Сообщение коммита: конкретное описание (не "update", не "fix")
-- Коммит без обновлённого worklog -> ОШИБКА (pre-commit hook заблокирует)
+- Finished a meaningful chunk of work -> git add -A && git commit
+- Commit message: specific description (not "update", not "fix")
+- Commit without updated worklog -> ERROR (pre-commit hook will block)
 
-## Правило 4: Запрет на циклы
+## Rule 4: No loops
 
-- Если ты делаешь то же самое 3-й раз с тем же результатом -> СТОП
-- Не пытайся "ещё раз, но по-другому"
-- Напиши в чат: "Застрял на [конкретный шаг], нужна помощь"
-- Это НЕ провал -- это экономия времени пользователя
+- If you are doing the same thing for the 3rd time with the same result -> STOP
+- Do not try "once more, but differently"
+- Write in chat: "Stuck on [specific step], need help"
+- This is NOT a failure -- this saves user time
 
-## Правило 5: Честность в отчётах
+## Rule 5: Honest reporting
 
-- НЕ пиши "работа завершена" если тесты не пройдены
-- НЕ пиши "файл создан" если он не существует
-- НЕ пиши "ошибка исправлена" если не проверил
-- Каждое утверждение -> должно быть верифицируемо
+- Do NOT write "work completed" if tests are not passed
+- Do NOT write "file created" if it does not exist
+- Do NOT write "error fixed" if you did not verify
+- Every claim -> must be verifiable
 
-## Правило 6: Структура работы
+## Rule 6: Work structure
 
-1. Прочитай AGENT_RULES.md и worklog.md
-2. Определи конкретный следующий шаг
-3. Выполни шаг
-4. Зафиксируй в worklog
+1. Read AGENT_RULES.md and worklog.md
+2. Determine the specific next step
+3. Execute the step
+4. Record in worklog
 5. Git commit
-6. Перейди к шагу 2
+6. Go to step 2
 
 ---
 
-## Формат worklog.md
+## worklog.md format
 
 ```markdown
 ---
-Task ID: [номер шага]
-Agent: [имя агента или "main"]
-Task: [что делаем]
+Task ID: [step number]
+Agent: [agent name or "main"]
+Task: [what we are doing]
 
 Work Log:
-- [ФАКТ: что конкретно сделали]
-- [ФАКТ: какой файл изменили, команда]
-- [ФАКТ: результат команды или операции]
+- [FACT: what specifically was done]
+- [FACT: which file was changed, command]
+- [FACT: command result or operation outcome]
 
 Stage Summary:
-- [Что получилось, что дальше]
+- [What was accomplished, what is next]
 ---
 ```
 
@@ -113,7 +113,7 @@ v1.9.28.0 | 2026-06-13 | anti-hallucination-guard
   - `package.json` — "version" field
   - `src/lib/version.js` — VERSION constant
   - `popup/index.html` — .subtitle div (visible to user!)
-  - `README.md` — **Версия:** header + all inline version references
+  - `README.md` -- **Version:** header + all inline version references
 - These files do NOT auto-sync from manifest.json — they must be updated manually
 - BEFORE git push: verify all 5 files have the same version string
 - Violation pattern: pushing 3 version bumps without updating popup (v1.9.23→1.9.28 gap)
@@ -153,14 +153,14 @@ Now ALL of these are checked automatically by pre-commit Phases 4+5.
 
 If a commit is blocked by these checks, FIX the documentation — do NOT bypass with `--no-verify`.
 
-## Rule 9.4: После пуша -- обязательная команда синхронизации
+## Rule 9.4: After push -- mandatory sync command
 
-- После КАЖДОГО успешного `git push` -- НЕМЕДЛЕННО выдай пользователю команду PowerShell для локального обновления
-- Команда: `git stash && git pull && git stash pop && npm run build`
-- Формат: один блок для копирования, без пошаговой прозы
-- Без этой информации push = незавершённая работа -- пользователь на Windows не увидит изменения без ручного pull
-- Это НЕ справочная заметка -- это ОБЯЗАТЕЛЬНЫЙ шаг после каждого пуша
-- Это базовая вещь -- после пуша дать команду для обновления. Не нужно ждать пинка, чтобы это сделать. Должно было быть с самого начала
+- After EVERY successful `git push` -- IMMEDIATELY give the user the PowerShell command for local update
+- Command: `git stash && git pull && git stash pop && npm run build`
+- Format: one copy-paste block, no step-by-step prose
+- Without this information, push = incomplete work -- user on Windows will not see changes without manual pull
+- This is NOT a reference note -- this is a MANDATORY step after every push
+- This is basic -- give the sync command after a push. No kick needed to do this. Should have been there from the start
 - VIOLATION OF THIS RULE IS NOT ACCEPTABLE
 
 ## Rule 10: No unsolicited initiative
