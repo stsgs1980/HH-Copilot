@@ -186,7 +186,13 @@ export function bindTourEvents() {
   if (root) { root.addEventListener('click', handleTourClick); _tourEventsBound = true; }
 }
 
-// Also bind on document as fallback for non-shadow targets
+/** Global keyboard handler: Escape closes the tour (WCAG). */
+function handleTourKeydown(e) {
+  if (e.key === 'Escape' && overlay) { endTour(true); }
+}
+
+// Also bind on document as fallback for non-shadow targets + Escape key
 if (typeof document !== 'undefined') {
   document.addEventListener('click', handleTourClick);
+  document.addEventListener('keydown', handleTourKeydown);
 }

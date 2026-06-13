@@ -21,13 +21,14 @@ import { getWelcomeTourSteps, getTabTourSteps } from '../../lib/tour-steps.js';
  * Bind sidebar click delegation — single click handler for all panel actions.
  */
 export function bindSidebarClicks(container) {
+  /* ── Click delegation ── */
   container.addEventListener('click', (e) => {
     const t = e.target;
 
     /* Close panel */
     if (t.closest('[data-action="close-panel"]')) { toggleSidebar(); return; }
 
-    /* Auth indicator keyboard activation */
+    /* Auth indicator click */
     if (t.closest('#authIndicator')) { resetAuthCache(); updateAuthStateAsync(); return; }
 
     /* Tour */
@@ -52,9 +53,6 @@ export function bindSidebarClicks(container) {
       const href = navLink.getAttribute('href');
       if (href) {
         toggleSidebar(); // close panel
-        // Full navigation — hh.ru loads the page, extension re-initialises on the new URL
-        // pushState alone doesn't trigger hh.ru's SPA router, so the page content
-        // never updates and the user is left with a broken state.
         window.location.href = href;
       }
       return;
@@ -145,5 +143,13 @@ export function bindSidebarClicks(container) {
     /* Conversation select */
     const convItem = t.closest('[data-conv-id]');
     if (convItem) { selectConversation(convItem.dataset.convId); return; }
+  });
+
+  /* ── Keyboard delegation (WCAG: interactive elements must respond to Enter/Space) ── */
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      /* Auth indicator */
+      if (e.target.closest('#authIndicator')) { e.preventDefault(); resetAuthCache(); updateAuthStateAsync(); return; }
+    }
   });
 }

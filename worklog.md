@@ -1798,3 +1798,23 @@ Work Log:
 Stage Summary:
 - AHG v2.3.0 fully activated in project
 - Rule 16: upstream write protection enforced
+
+---
+Task ID: 12
+Agent: main
+Task: WCAG accessibility and typography audit + fix
+
+Work Log:
+- Audited all UI files (sidebar CSS, HTML templates, FAB, popup, tour)
+- Identified 17 WCAG violations across 5 categories
+- Fixed contrast ratios: badge-zinc (#3f3f46→#27272a), popup subtitle/footer (#71717a→#52525b), tour skip/help (#71717a→#52525b)
+- Added @media (prefers-reduced-motion: reduce) block disabling all animations
+- Fixed ARIA: auth indicator Enter/Space, toggle switch role=switch on input, stats radiogroup role=radio + aria-checked + arrow keys, tour Escape key, chat aria-live=polite, label for= associations
+- Added KPI ring role=img + aria-label, score ring role=img + aria-label
+- Added FAB focus-visible outline, popup button focus-visible
+- Added aria-hidden on decorative SVGs (popup logo)
+- Build: v1.9.28.0 compiled successfully
+
+Stage Summary:
+- 17 WCAG violations fixed across 15 files
+- Extension builds and passes all checks

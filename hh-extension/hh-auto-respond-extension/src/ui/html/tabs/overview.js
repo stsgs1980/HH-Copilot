@@ -44,7 +44,7 @@ function overviewKPIHero() {
 
 function kpiRing() {
   return `<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;">
-    <svg width="108" height="108" viewBox="0 0 120 120">
+    <svg width="108" height="108" viewBox="0 0 120 120" role="img" aria-label="Дневной лимит: 0 из 200">
       <defs><linearGradient id="kpiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34D399"/>
       </linearGradient></defs>

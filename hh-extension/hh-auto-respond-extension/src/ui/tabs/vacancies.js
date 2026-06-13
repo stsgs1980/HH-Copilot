@@ -153,7 +153,7 @@ export function renderVacancyList() {
   list.innerHTML = panelState.vacancies.slice(0, 50).map(v => {
     const score = v.matchScore != null ? v.matchScore : 0;
     const sc = score > 0
-      ? `<div class="score-ring" style="--score:${score};"><span>${score}%</span></div>`
+      ? `<div class="score-ring" style="--score:${score};" role="img" aria-label="Совпадение ${score}%"><span>${score}%</span></div>`
       : '';
 
     const applyBtn = (v.hasReply && v.status === 'new')

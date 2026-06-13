@@ -13,7 +13,7 @@ export const SIDEBAR_CSS_COMPONENTS = `
 .badge-amber { background: #FEF3C7; color: #92400E; border: 1px solid rgba(217,119,6,0.15); }
 .badge-red { background: #FEE2E2; color: #B91C1C; border: 1px solid rgba(220,38,38,0.15); }
 .badge-blue { background: #DBEAFE; color: #1E40AF; border: 1px solid rgba(37,99,235,0.15); }
-.badge-zinc { background: #E4E4E7; color: #3f3f46; }
+.badge-zinc { background: #E4E4E7; color: #27272a; }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px;
@@ -184,9 +184,9 @@ export const SIDEBAR_CSS_COMPONENTS = `
   font-size: 12px; font-weight: 600; color: #3b82f6;
   background: #eff6ff; padding: 2px 8px; border-radius: 99px; }
 .hh-tour-skip {
-  background: none; border: none; font-size: 12px; color: #71717a;
+  background: none; border: none; font-size: 12px; color: #52525b;
   cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; }
-.hh-tour-skip:hover { color: #52525b; }
+.hh-tour-skip:hover { color: #18181b; }
 .hh-tour-skip:focus-visible { outline: 2px solid #059669; outline-offset: 2px; border-radius: 4px; }
 .hh-tour-title {
   padding: 8px 14px 0; font-size: 14px; font-weight: 700; color: #18181b; }
@@ -207,7 +207,7 @@ export const SIDEBAR_CSS_COMPONENTS = `
 .hh-tour-help {
   background: none; border: 1px solid #d4d4d8; border-radius: 50%;
   width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 13px; font-weight: 700; color: #71717a;
+  cursor: pointer; font-size: 13px; font-weight: 700; color: #52525b;
   transition: all 0.15s; line-height: 1; }
 .hh-tour-help:hover { background: #f4f4f5; color: #059669; border-color: #059669; }
 .hh-tour-help:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }

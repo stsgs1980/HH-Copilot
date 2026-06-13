@@ -24,6 +24,10 @@ export function renderOverviewKPI() {
   set('kpi-invitations-count', panelState.dailyStats.invitations || 0);
   set('rl-429-count', panelState.dailyStats.errors429 || 0);
 
+  /* Update KPI ring SVG aria-label for screen readers */
+  const kpiSvg = refs.shadowRoot?.querySelector('.kpi-ring-fill')?.closest('svg');
+  if (kpiSvg) kpiSvg.setAttribute('aria-label', `Дневной лимит: ${applied} из ${limit}`);
+
   const hourlyBar = el('kpi-hourly-bar')?.querySelector('.fill');
   if (hourlyBar) hourlyBar.style.width = Math.min(100, (hourly / hourlyLimit) * 100) + '%';
 }

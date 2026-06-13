@@ -180,6 +180,7 @@ If a commit is blocked by these checks, FIX the documentation — do NOT bypass 
 
 
 
+
 <!-- AHG:START -->
 <!-- Do NOT edit between START and END markers. This block is managed by anti-hallucination-guard/setup.sh -->
 <!-- ID: RULE-001 | ver:1.0 | Level: C | Related: RULE-003, RULE-006 -->

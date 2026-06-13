@@ -119,9 +119,10 @@ function bindTimelineToggles(container) {
     if (sub) { toggleSub(sub.dataset.subId, sub.dataset.chevId); return; }
   });
 
-  /* Keyboard support for toggleable elements + vacancy items */
+  /* Keyboard support for toggleable elements, vacancy items, auth indicator, and toggle switches */
   container.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
+      /* Timeline / accordion toggles */
       const tl = e.target.closest('[data-timeline]') || e.target.closest('[data-sub-toggle]');
       if (tl) { e.preventDefault(); tl.click(); return; }
       /* Vacancy item keyboard activation — click the navigate link inside */
@@ -132,6 +133,52 @@ function bindTimelineToggles(container) {
         if (navLink) navLink.click();
       }
     }
+  });
+
+  /* Toggle switch (role=switch checkbox): sync aria-checked on change */
+  container.addEventListener('change', (e) => {
+    const cb = e.target;
+    if (cb.matches('input[type="checkbox"][role="switch"]')) {
+      cb.setAttribute('aria-checked', cb.checked ? 'true' : 'false');
+    }
+  });
+
+  /* Stats period radiogroup: arrow key navigation */
+  container.addEventListener('keydown', (e) => {
+    const radio = e.target.closest('[role="radio"]');
+    if (!radio) return;
+    const group = radio.closest('[role="radiogroup"]');
+    if (!group) return;
+    const radios = Array.from(group.querySelectorAll('[role="radio"]'));
+    const idx = radios.indexOf(radio);
+    let nextIdx = -1;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault(); nextIdx = (idx + 1) % radios.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); nextIdx = (idx - 1 + radios.length) % radios.length;
+    }
+
+    if (nextIdx >= 0) {
+      radios[nextIdx].focus();
+      radios[nextIdx].click();
+    }
+  });
+
+  /* Stats period radiogroup: click syncs aria-checked + active class */
+  container.addEventListener('click', (e) => {
+    const radio = e.target.closest('[role="radio"]');
+    if (!radio) return;
+    const group = radio.closest('[role="radiogroup"]');
+    if (!group) return;
+    group.querySelectorAll('[role="radio"]').forEach(r => {
+      const isActive = r === radio;
+      r.setAttribute('aria-checked', isActive ? 'true' : 'false');
+      r.classList.toggle('active', isActive);
+      /* Sync visual style: primary = selected, outline = unselected */
+      r.classList.toggle('btn-primary', isActive);
+      r.classList.toggle('btn-outline', !isActive);
+    });
   });
 }
 

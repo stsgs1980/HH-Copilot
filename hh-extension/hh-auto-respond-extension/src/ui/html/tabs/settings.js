@@ -63,7 +63,7 @@ function settingsDailyReset() {
           <div style="font-size:12px;font-weight:500;">Авто-сброс счётчиков</div>
           <div style="font-size:11px;color:#52525b;">Время сброса (chrome.alarms)</div>
         </div>
-        <input type="time" id="s-reset-time" value="00:00" style="padding:4px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+        <input type="time" id="s-reset-time" value="00:00" aria-label="Время ежедневного сброса" style="padding:4px 8px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>

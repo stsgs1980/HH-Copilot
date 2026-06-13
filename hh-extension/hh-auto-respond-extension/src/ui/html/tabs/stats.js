@@ -6,10 +6,10 @@ import { ICONS } from '../icons.js';
 export function getStatsSection() {
   return `<div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tabbtn-stats" tabindex="0">
     <div style="display:flex;gap:6px;margin-bottom:12px;" role="radiogroup" aria-label="Период статистики">
-      <button class="btn btn-sm btn-primary stats-period-btn active" data-period="today">Сегодня</button>
-      <button class="btn btn-sm btn-outline stats-period-btn" data-period="week">Неделя</button>
-      <button class="btn btn-sm btn-outline stats-period-btn" data-period="month">Месяц</button>
-      <button class="btn btn-sm btn-outline stats-period-btn" data-period="all">Всё время</button>
+      <button class="btn btn-sm btn-primary stats-period-btn active" data-period="today" role="radio" aria-checked="true">Сегодня</button>
+      <button class="btn btn-sm btn-outline stats-period-btn" data-period="week" role="radio" aria-checked="false">Неделя</button>
+      <button class="btn btn-sm btn-outline stats-period-btn" data-period="month" role="radio" aria-checked="false">Месяц</button>
+      <button class="btn btn-sm btn-outline stats-period-btn" data-period="all" role="radio" aria-checked="false">Всё время</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
       <div class="card fade-in" style="text-align:center;padding:12px 8px;">

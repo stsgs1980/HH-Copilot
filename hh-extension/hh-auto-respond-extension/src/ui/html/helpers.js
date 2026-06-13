@@ -39,6 +39,6 @@ export function settingToggle(label, hint, id, checked) {
       <label for="${id}" style="font-size:12px;font-weight:500;">${label}</label>
       ${hint ? `<div style="font-size:12px;color:#52525b;">${hint}</div>` : ''}
     </div>
-    <div class="toggle" role="switch" aria-checked="${checked ? 'true' : 'false'}" aria-label="${label}"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''}><span class="slider"></span></div>
+    <label class="toggle" aria-label="${label}"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} role="switch" aria-checked="${checked ? 'true' : 'false'}"><span class="slider"></span></label>
   </div>`;
 }

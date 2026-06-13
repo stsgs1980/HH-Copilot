@@ -53,6 +53,17 @@ export function createFab(onClick) {
   refs.fabEl.addEventListener('mouseleave', () => { s.setProperty('transform', 'scale(1)', 'important'); });
   refs.fabEl.addEventListener('click', onClick);
   refs.fabEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } });
+  /* Focus-visible outline for WCAG keyboard accessibility */
+  refs.fabEl.addEventListener('focus', () => {
+    if (refs.fabEl.matches(':focus-visible')) {
+      s.setProperty('outline', '3px solid #059669', 'important');
+      s.setProperty('outline-offset', '3px', 'important');
+    }
+  });
+  refs.fabEl.addEventListener('blur', () => {
+    s.removeProperty('outline');
+    s.removeProperty('outline-offset');
+  });
   document.body.appendChild(refs.fabEl);
 }
 

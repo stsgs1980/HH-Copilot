@@ -101,4 +101,25 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
 .har-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: har-spin 0.8s linear infinite; }
 /* sr-only text for spinner is added via HTML, not CSS ::after */
 @keyframes har-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+/* ═══ Reduced motion (WCAG 2.3.3) ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .fab-panel { transition: none !important; }
+  .tab-section { transition: none !important; }
+  .kpi-ring-fill { animation: none !important; stroke-dashoffset: 123.89; }
+  .kpi-stat { animation: none !important; }
+  .fade-in { animation: none !important; }
+  .slide-right { animation: none !important; }
+  .shimmer { animation: none !important; }
+  .pulse-dot { animation: none !important; opacity: 1; }
+  .typing-cursor::after { animation: none !important; opacity: 1; }
+  .progress-bar .fill { animation: none !important; }
+  .countdown-bar { animation: none !important; }
+}
 `;
