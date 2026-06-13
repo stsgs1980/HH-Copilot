@@ -1919,3 +1919,20 @@ Stage Summary:
 - All JS files ≤ 250 lines except skill-dictionary.js (475) and skill-synonyms.js (333)
 - background/index.js: zero Russian comments remaining
 - 107 Russian comments remain in src/ (lower priority, separate task)
+
+---
+Task ID: ahg-update-v2.5+
+Agent: main
+Task: Update anti-hallucination-guard submodule to latest (d27c3f4)
+
+Work Log:
+- Stashed local changes in submodule (.github/workflows/pr-guard.yml)
+- Updated submodule to d27c3f4 (11 new commits since 8df5f41)
+- Key changes: v2.5 hook-level enforcement, Rule renumbering 1-17, 12 bug fixes from deep audit, co-change checks, line-count checks
+- Ran setup.sh: hooks reinstalled, new scripts deployed (line-count-check.sh, co-change-check.sh)
+- AGENT_RULES.md AHG block updated
+
+Stage Summary:
+- Submodule updated: 8df5f41 → d27c3f4
+- New scripts: line-count-check.sh, co-change-check.sh, setup-branch-protection.sh
+- Pre-commit/pre-push hooks updated
