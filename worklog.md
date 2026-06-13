@@ -1753,3 +1753,17 @@ Stage Summary:
 - AHG submodule back to upstream version 626d6e0
 - All functionality preserved via local .git/hooks/ overrides
 - No changes needed to AHG repo itself
+
+---
+Task ID: 9
+Agent: main
+Task: Update AHG submodule to latest upstream main
+
+Work Log:
+- Fetched AHG origin — new commits available (PR #7 feat/id-system, PR #8 fix/pre-commit-bun-path)
+- Our fix for absolute path in pre-commit hook is now merged upstream via PR #8
+- Updated submodule to 0cbb844 (latest main with all fixes)
+
+Stage Summary:
+- AHG submodule: 626d6e0 → 0cbb844
+- No more local hacks needed — upstream includes our fixes
