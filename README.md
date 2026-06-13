@@ -53,7 +53,7 @@ Current version (1.9.28.0) features a modular architecture based on esbuild. The
 
 **Version sync.** Version is synchronized between manifest.json, package.json, popup/index.html, and src/lib/version.js. The single source of truth is manifest.json (esbuild reads it and injects process.env.VERSION). Module src/lib/version.js contains the constant for reference but is not imported by any module.
 
-**Tests.** 67 unit tests based on Vitest + jsdom. Coverage: anti-hallucination (16 tests -- extractVacancyId, validateVacancyData), parse-experience (13 -- all experience string formats), selectors (9 -- ~= word-match, VotD selectors), vacancy-list (14 -- search page, main page, VotD, sponsored VotD, canonical URL), routing (10 -- all routes including main page). Run: `npm test`, watch mode: `npm run test:watch`.
+**Tests.** 67 unit tests based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), parse-experience (13 -- all experience string formats), selectors (9 -- ~= word-match, VotD selectors), vacancy-list (14 -- search page, main page, VotD, sponsored VotD, canonical URL), routing (10 -- all routes including main page). Run: `npm test`, watch mode: `npm run test:watch`.
 
 **Hot-reload for development.** WebSocket server (ws://localhost:35729) is started by `npm run watch`. On rebuild, the extension automatically reloads via chrome.runtime.reload(). Eliminates manual refresh in chrome://extensions.
 
@@ -136,7 +136,7 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
     resume-tab-reference.png                  -- "Resumes" tab reference
 
   anti-hallucination-guard/                    -- git submodule (anti-hallucination guard)
-  cascade-state.json                           -- 40 tasks, 8 phases (P0-P6 + P0.5)
+  (cascade-state.json removed -- no longer used)
   AGENT_RULES.md                               -- AHG + Cascade rules
   cascade-cli.sh                               -- task navigation CLI
   cascade-init.sh                              -- interactive state generator

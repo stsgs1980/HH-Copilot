@@ -1951,3 +1951,16 @@ Work Log:
 Stage Summary:
 - All non-dictionary violations now have documented exceptions
 - skill-dictionary.js hard cap violation is known and accepted (Russian-language data dictionary)
+
+---
+Task ID: consistency-audit-fixes
+Agent: main
+Task: Fix 2 README discrepancies found in full consistency audit
+
+Work Log:
+- Fixed anti-hallucination test count: 16 → 21 (5 VotD tests added in v1.9.27-28)
+- Fixed cascade-state.json reference: file does not exist, marked as removed
+
+Stage Summary:
+- README now accurately reflects current test counts (21+13+9+14+10=67)
+- cascade-state.json ghost reference eliminated
