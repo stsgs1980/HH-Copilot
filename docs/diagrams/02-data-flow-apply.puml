@@ -1,0 +1,66 @@
+@startuml HH-Copilot Data Flow — Full Apply Pipeline
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 12
+skinparam ArrowColor #64748B
+skinparam ArrowThickness 1.2
+skinparam SequenceMessageAlign center
+skinparam SequenceActorBorderThickness 1.5
+skinparam SequenceParticipantBorderThickness 1.5
+
+title HH-Copilot — Full Apply Pipeline\nFrom search page to submitted application
+
+actor User #1E293B
+participant "page-world.js" as PW #EFF6FF
+participant "main.js" as MAIN #ECFDF5
+participant "main-page-handlers" as MPH #ECFDF5
+participant "vacancy-list.js" as VL #D1FAE5
+participant "match-scorer.js" as MS #EDE9FE
+participant "UI Panel" as Panel #FFF7ED
+participant "apply-orchestrator" as EO #FEF3C7
+participant "rate-limiter.js" as RL #DBEAFE
+participant "apply-actions.js" as EA #FEF3C7
+participant "storage" as STG #CFFAFE
+participant "background.js" as BG #FEE2E2
+
+== Search + Parse ==
+
+User -> PW : Opens hh.ru search
+PW -> MAIN : hh-ar-spa-navigate
+MAIN -> MPH : initPageLogic()
+MPH -> VL : parseVacanciesFromPage()
+VL -> MS : computeMatchScore(resume, vacancy)
+MS --> VL : score + breakdown
+VL --> MPH : scored vacancy list
+MPH -> Panel : updateVacancies()
+Panel --> User : Score cards in sidebar
+
+== Apply Workflow ==
+
+User -> Panel : Click "Apply" or auto-apply
+Panel -> EO : applyToVacancy(id) / applyToAll()
+EO -> RL : check() — rate limit
+RL --> EO : allowed / denied
+
+alt Rate limit OK
+    EO -> STG : isAlreadyApplied(id)?
+    STG --> EO : false
+    EO -> EA : waitForPageReady()
+    EA -> EA : clickApplyButton()
+    EA -> EA : waitForPopupAndSubmit()
+    EA --> EO : success
+    EO -> STG : markAsApplied(id)
+    EO -> BG : incrementApplied()
+else Rate limit hit
+    RL --> EO : denied — wait
+    EO -> Panel : pause + show reason
+end
+
+note over EO, RL
+  Adaptive protection:
+  burst detection,
+  typing simulation,
+  random Gaussian delays
+end note
+
+@enduml

@@ -1,0 +1,58 @@
+@startuml HH-Copilot Match Scoring Breakdown
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
+skinparam ArrowColor #94A3B8
+skinparam ArrowThickness 1.2
+skinparam Padding 6
+skinparam RoundCorner 8
+
+title HH-Copilot — Match Scoring Component Breakdown\n4 dimensions, weighted 40+30+15+15 = 100
+
+package "Input Data" as Input #EFF6FF {
+    component [Resume\nskills + derivedSkills\ntitle + salary + experience] as R #DBEAFE
+    component [Vacancy\nkeySkills + derivedSkills\ntitle + salary + requirements] as V #DBEAFE
+}
+
+package "Match Score 0-100" as Scoring #F0FDF4 {
+    component [Skills 0-40\nmatch-scorer-skills.js\n\nexplicit: 100% weight\nderived: 70% weight\nsynonyms: 50% weight\n\nUses:\nskill-dictionary.js\nskill-synonyms.js] as SK #D1FAE5
+
+    component [Title 0-30\nmatch-scorer-title.js\n\nkeyword overlap +\nsynonym groups +\nabbreviation bonus\n\nGroups:\nleadership, IT, sales,\nmarketing, HR] as TI #D1FAE5
+
+    component [Salary 0-15\nmatch-scorer-salary.js\n\nrange overlap\nwithin range: 15\nwithin 20%: 10-12\noutside: 3-5\nneutral (no data): 8] as SA #D1FAE5
+
+    component [Experience 0-15\nmatch-scorer-experience.js\n\nyears match\noverqualified: 12 (not penalty)\nwithin 1yr below: 10\nno exp required: 15\nneutral: 8] as EX #D1FAE5
+}
+
+package "Output" as Output #FFF7ED {
+    component [Total Score\n%] as SC #FEF3C7
+    component [Breakdown\nper category\nskills/title/salary/exp] as BD #FEF3C7
+    component [Gap Analysis\nmissing skills\nextra skills] as GA #FEF3C7
+    component [Quality Flags\nATS + red flags\nrecommendations] as FL #FEF3C7
+}
+
+R --> SK
+R --> TI
+R --> SA
+R --> EX
+
+V --> SK
+V --> TI
+V --> SA
+V --> EX
+
+SK --> SC
+SK --> BD
+TI --> SC
+TI --> BD
+SA --> SC
+SA --> BD
+EX --> SC
+EX --> BD
+
+SK --> GA
+TI --> GA
+GA --> FL
+
+@enduml

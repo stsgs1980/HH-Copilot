@@ -1,215 +1,386 @@
 ---
 name: anti-monolith
-description: >
-  Anti-monolith standard for React/Next.js projects. Enforces modular component architecture,
-  file size limits, single-responsibility components, custom hook extraction, data-layer separation,
-  barrel exports, and strict layer dependency rules. Activate whenever the user is creating
-  React components, building Next.js pages, refactoring large files, setting up a component library,
-  writing page.tsx or layout.tsx files, or mentions "monolith", "too long", "refactor",
-  "component library", "design system", "modular", "split", "extract component", "file too big",
-  "too many useState", or any situation where a React/Next.js file is growing beyond manageable size.
-  Also use proactively when scaffolding new projects to ensure the architecture is modular from the start.
+version: 1.0
+compatibility: both
+description: "Modular architecture enforcement. Automatically activates when files exceed size limits, components have too many hooks, or code structure violates FSD/layer boundaries. Refactors monoliths into composable, testable modules using a 7-step decomposition strategy. Triggers: file > 250 lines, component > 200 lines, 3+ useState in one component, upward layer imports, mixed concerns in a single file. This skill MUST auto-activate whenever the agent encounters these patterns during ANY task — the agent does not need to be explicitly asked to refactor."
+id: ZAI-ARCH-002
+author: STS
+trigger: monolith, refactor, file too long, too many lines, too many hooks, useState overload, decompose, split component, extract hook, split file, modular architecture, FSD, layer violation, clean architecture, separation of concerns, 250 lines, 200 lines, file exceeds limit
+license: MIT
 ---
 
-# Anti-Monolith Standard for React/Next.js
+# Skill: Anti-Monolith v1.0
 
-## Why this matters
+> ID: ZAI-ARCH-002
+> Version: 1.0
+> Last Updated: 2026-05
 
-Monolithic components are the #1 cause of unmaintainable React code. A single 1000+ line page.tsx with 15+ useState hooks, inline sub-components, and direct data fetching makes the code impossible to test, reuse, or reason about. This skill prevents that pattern from ever forming.
+This skill enforces modular architecture by detecting and decomposing monolithic code. It activates automatically when size or complexity thresholds are exceeded, applying a systematic 7-step refactoring strategy to transform large, tangled files into small, composable, testable modules.
 
 ---
 
-## The 5 Rules
+## AUTO-ACTIVATION RULES
 
-### Rule 1: Line Limits
+**This skill MUST activate automatically whenever ANY of these conditions are detected during ANY task:**
 
-Hard boundaries that force decomposition:
+| Condition | Threshold | Severity |
+|-----------|-----------|----------|
+| File exceeds 250 lines | 250 lines | [C] Critical |
+| Component exceeds 200 lines | 200 lines | [C] Critical |
+| 3+ `useState` in one component | 3 hooks | [W] Warning |
+| Upward layer imports (features -> sections) | 1 violation | [C] Critical |
+| Mixed concerns in single file (data + UI + logic) | 2+ concerns | [W] Warning |
+| Single function exceeds 50 lines | 50 lines | [I] Info |
+| Component renders 4+ sub-sections inline | 4 sections | [W] Warning |
+| `useEffect` with 3+ dependencies | 3 deps | [I] Info |
 
-| Unit | Maximum | Action if exceeded |
-|------|---------|-------------------|
-| Single component function | 150 lines | Extract sub-components |
-| Single file | 200 lines | Split into multiple files |
-| Custom hook | 100 lines | Split into smaller hooks |
-| Barrel index.ts | 50 lines | Group into sub-barrels |
+**Auto-trigger phrases (agent should recognize these patterns in ANY context):**
+- Writing a file that goes past 250 lines
+- Adding the 3rd `useState` to a component
+- Importing from a higher layer
+- A `page.tsx` that contains business logic
+- A component that both fetches data AND renders UI
 
-**How to count:** Lines of code excluding blank lines and comments. If a component exceeds 150 lines, that is a signal that it is doing too much.
+**The agent MUST NOT wait to be asked. When a threshold is crossed during ANY work, the agent MUST:**
+1. STOP writing the monolith
+2. Announce: `[ANTI-MONOLITH] Threshold exceeded: <reason>`
+3. Apply the 7-step decomposition (see below)
+4. Continue the task with decomposed modules
 
-**Exceptions:** Configuration objects, large type definitions, and generated code may exceed limits. Move them to separate files.
+---
 
-### Rule 2: Maximum 3 useState per Component
+## When to Use This Skill
 
-When a component needs more than 3 useState calls, the state logic belongs in a custom hook.
+**MUST apply this skill when:**
+- Writing a file that approaches or exceeds size limits
+- A component accumulates too many hooks or concerns
+- Layer boundaries are violated (upward imports, cross-concern access)
+- User explicitly asks to "refactor", "split", "decompose", "modularize"
+- Code review reveals monolithic patterns
+- Starting a new file that will clearly exceed limits (plan decomposition upfront)
 
+**DO NOT use for:**
+- Configuration files (next.config.ts, tailwind.config.ts) — these are naturally long
+- Auto-generated files (prisma schema, API types)
+- Test files with many test cases
+- CSS/utility files that are inherently flat
+
+---
+
+## The 7-Step Decomposition Strategy
+
+When a monolith is detected, apply these steps in order:
+
+### Step 1: Identify Sub-Components
+
+Scan the monolith for JSX blocks that could be independent components:
+
+```text
+LOOK FOR:
+- Sections of JSX wrapped in <div> with a clear visual boundary
+- Repeated UI patterns (cards, list items, form sections)
+- Blocks with their own conditional rendering
+- Sections that could have their own loading/error states
+
+EXTRACT:
+- Each becomes a new file in sections/ or features/
+- Props replace direct state access
+- Component name describes WHAT it renders, not HOW
 ```
-// BAD: 8 useState in one component
-function Dashboard() {
-  const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('all')
-  const [favorites, setFavorites] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [sortBy, setSortBy] = useState('name')
-  const [viewMode, setViewMode] = useState('grid')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  // ... rendering
+
+**Example:**
+```tsx
+// BEFORE: 200-line monolith page.tsx
+export default function DashboardPage() {
+  // ... 80 lines of state and handlers ...
+  return (
+    <div>
+      {/* 40 lines: header with stats */}
+      {/* 60 lines: chart section */}
+      {/* 40 lines: recent activity table */}
+    </div>
+  )
 }
 
-// GOOD: State extracted into hooks
-function Dashboard() {
-  const filters = useDashboardFilters()    // query, category, sortBy, viewMode
-  const { items, isLoading, error } = useDashboardData(filters)
-  const { favorites, toggleFavorite } = useFavorites()
-  const [selected, setSelected] = useState(null)  // only local UI state
-  // ... clean rendering
+// AFTER: 30-line composer
+import { DashboardHeader } from './sections/dashboard-header'
+import { DashboardChart } from './sections/dashboard-chart'
+import { ActivityTable } from './sections/activity-table'
+
+export default function DashboardPage() {
+  const { stats, chartData, activity } = useDashboardData()
+  return (
+    <div>
+      <DashboardHeader stats={stats} />
+      <DashboardChart data={chartData} />
+      <ActivityTable items={activity} />
+    </div>
+  )
 }
 ```
 
-**Why:** Each useState is a potential source of re-renders and bugs. Grouping related state into hooks makes the logic testable, reusable, and readable.
+### Step 2: Identify State Clusters
 
-### Rule 3: Components Do Not Fetch Data
+Group related `useState` calls and extract into custom hooks:
 
-A component should never call fetch, axios, or any data-loading function directly. Data arrives through props or custom hooks.
+```text
+LOOK FOR:
+- 3+ useState in one component -> extract to use[Feature] hook
+- useState pairs that always update together -> useReducer
+- State that depends on other state -> derive with useMemo
+- State for form handling -> extract to useFormValues hook
 
+RULES:
+- Max 2 useState per component (3rd = extract to hook)
+- Related state must be in same hook
+- Hook name starts with "use" and describes the domain
 ```
-// BAD: Component fetches its own data
-function UserList() {
-  const [users, setUsers] = useState([])
-  useEffect(() => {
-    fetch('/api/users').then(r => r.json()).then(setUsers)
-  }, [])
-  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>
+
+**Example:**
+```tsx
+// BEFORE: 5 useState in one component
+const [name, setName] = useState('')
+const [email, setEmail] = useState('')
+const [errors, setErrors] = useState({})
+const [isSubmitting, setIsSubmitting] = useState(false)
+const [success, setSuccess] = useState(false)
+
+// AFTER: extracted hook
+function useContactForm() {
+  // All 5 states live here
+  return { name, email, errors, isSubmitting, success, submit, reset }
 }
 
-// GOOD: Data comes from outside
-function UserList({ users }: { users: User[] }) {
-  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>
-}
-
-// GOOD: Data comes from a hook
-function UserPage() {
-  const { users, isLoading } = useUsers()
-  if (isLoading) return <Skeleton />
-  return <UserList users={users} />
-}
+// Component uses clean hook
+const form = useContactForm()
 ```
 
-**Why:** Separating data loading from rendering makes components testable (pass mock data), reusable in different contexts, and eliminates useEffect-related bugs.
+### Step 3: Identify Data Loading
 
-**Server Components exception:** In Next.js App Router, Server Components can fetch data directly. This is the recommended pattern. But Client Components ('use client') must never fetch directly.
+Move data fetching to hooks or Server Components:
 
-### Rule 4: Barrel Exports (index.ts)
+```text
+LOOK FOR:
+- useEffect with fetch/axios -> extract to SWR/React Query hook or Server Component
+- Loading states tied to data fetching -> co-locate with data hook
+- Error states for API calls -> co-locate with data hook
+- Multiple useEffect for different data -> separate hooks
 
-Every directory that contains components or hooks must have an index.ts barrel file. The project must have a single master export.
-
-```
-packages/react/src/
-├── ui/
-│   ├── button.tsx
-│   ├── card.tsx
-│   ├── input.tsx
-│   └── index.ts          ← export { Button } from './button'
-├── sections/
-│   ├── hero-section.tsx
-│   ├── footer-section.tsx
-│   └── index.ts          ← export { HeroSection } from './hero-section'
-├── hooks/
-│   ├── use-theme.ts
-│   └── index.ts          ← export { useTheme } from './use-theme'
-└── index.ts              ← MASTER EXPORT
+RULES:
+- Client Components: use SWR or React Query hooks
+- Server Components: fetch directly (no useEffect)
+- Loading/error states belong with the data, not the UI
 ```
 
-Master export (index.ts at root):
-```typescript
-export * from './ui'
-export * from './sections'
-export * from './hooks'
-export * from './providers'
+### Step 4: Classify Each Module
+
+Determine where each extracted piece belongs:
+
+```text
+sections/ — Pure presentation, NO state:
+  - DashboardHeader (receives stats as props)
+  - DashboardChart (receives data as props)
+  - ActivityTable (receives items as props)
+
+features/ — Has state or business logic:
+  - useDashboardData() (fetches + transforms data)
+  - useContactForm() (form state + validation)
+  - useNotifications() (real-time updates)
+
+shared/ — Reusable across features:
+  - StatCard (generic stat display)
+  - DataChart (generic chart wrapper)
 ```
 
-Consumer imports from a single source:
-```typescript
-import { Button, HeroSection, useTheme } from '@my-org/ui'
+### Step 5: Add Dynamic Imports
+
+For heavy dependencies that aren't needed on initial render:
+
+```tsx
+import dynamic from 'next/dynamic'
+
+// Heavy chart library — load only when visible
+const DashboardChart = dynamic(
+  () => import('./sections/dashboard-chart').then(m => m.DashboardChart),
+  { loading: () => <ChartSkeleton />, ssr: false }
+)
+
+// Editor — load on interaction
+const CodeEditor = dynamic(
+  () => import('./sections/code-editor').then(m => m.CodeEditor),
+  { ssr: false }
+)
 ```
 
-**Why:** Barrel exports create a clean public API, enable tree-shaking, and prevent consumers from depending on internal file paths.
+**When to use dynamic imports:**
+- Chart libraries (recharts, d3, chart.js)
+- Code editors (monaco, codemirror)
+- Media players
+- Components below the fold
+- Components behind interaction (modals, tabs)
 
-### Rule 5: Layer Separation
+### Step 6: Create Barrel Exports
 
-Components are organized in layers. Dependencies flow strictly downward:
+Use explicit barrel exports for clean interfaces:
 
-```
-tokens/       ← Colors, spacing, typography (no React, no logic)
-  ↑
-ui/           ← Button, Card, Input (pure presentation, no business logic)
-  ↑
-sections/     ← HeroSection, NavigationSection (compose ui/ components)
-  ↑
-features/     ← FlowCanvas, AgentHierarchy (complex, may have local state)
-  ↑
-hooks/        ← useTheme, useMediaQuery (stateful logic, no JSX)
-  ↑
-providers/    ← ThemeProvider, ErrorBoundary (wrap the app)
+```tsx
+// sections/index.ts — EXPLICIT exports (not export *)
+export { DashboardHeader } from './dashboard-header'
+export { DashboardChart } from './dashboard-chart'
+export { ActivityTable } from './activity-table'
+export { StatCard } from './stat-card'
+
+// features/index.ts
+export { useDashboardData } from './use-dashboard-data'
+export { useContactForm } from './use-contact-form'
 ```
 
 **Rules:**
-- `tokens` imports nothing from other layers
-- `ui` imports only from `tokens`
-- `sections` imports from `ui` and `tokens`
-- `features` imports from `sections`, `ui`, and `tokens`
-- `hooks` imports only from `tokens` (or external libraries)
-- `providers` imports from `hooks`, `ui`, and `tokens`
-- No upward imports. Ever. If `ui/button.tsx` imports from `features/`, the architecture is broken.
+- Use explicit exports for 10+ files in a directory
+- `export *` is acceptable for < 10 files
+- Barrel must be in `index.ts` at the directory root
+- Consumers import from the barrel, not individual files
 
-**Why:** Layer violations create circular dependencies, make testing impossible, and lead to the "everything depends on everything" problem that makes monoliths intractable.
+### Step 7: Verify Layer Separation
 
----
+Run these checks after decomposition:
 
-## Practical Checklist
+```text
+LAYER RULES:
+  app/        -> imports from features/, sections/, shared/
+  features/   -> imports from sections/, shared/  (NEVER app/)
+  sections/   -> imports from shared/ only        (NEVER features/ or app/)
+  shared/     -> imports NOTHING from this project (only external libs)
 
-Before submitting any React/Next.js file, verify:
+VALIDATION:
+  1. No upward imports (sections importing from features)
+  2. No skip-level imports (sections importing from app)
+  3. No circular dependencies
+  4. Each file has a single responsibility
+  5. Each component < 200 lines
+  6. Each file < 250 lines
+  7. Max 2 useState per component
+```
 
-- [ ] File is under 200 lines
-- [ ] No component function exceeds 150 lines
-- [ ] No more than 3 useState in any single component
-- [ ] No direct fetch/axios calls in Client Components
-- [ ] Every component directory has an index.ts barrel
-- [ ] No upward layer imports (features → ui is fine, ui → features is forbidden)
-- [ ] Each component has a single responsibility (one reason to change)
-- [ ] Complex state logic is extracted into custom hooks
-
----
-
-## Refactoring Strategy
-
-When encountering an existing monolith (e.g., a 1200-line page.tsx), follow this sequence:
-
-1. **Identify sub-components** — Find all functions starting with uppercase that return JSX. Extract each into its own file.
-2. **Identify state clusters** — Group related useState calls. Extract each group into a custom hook.
-3. **Identify data loading** — Move all useEffect + fetch patterns into custom hooks or Server Components.
-4. **Create barrel exports** — Add index.ts files for each directory.
-5. **Verify layer separation** — Check that no upward imports exist.
-6. **Test** — Ensure the refactored code works identically to the original.
-
-The result: a 40-line page.tsx that composes well-named, testable, reusable components.
-
----
-
-## File Naming Convention
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| Component | kebab-case | `hero-section.tsx` |
-| Hook | camelCase with use- prefix | `use-theme.ts` |
-| Provider | PascalCase | `ThemeProvider.tsx` |
-| Barrel | index.ts | `index.ts` |
-| Types | kebab-case with .types | `button.types.ts` |
-| Utils | kebab-case | `format-date.ts` |
+**ESLint boundaries config** (add to project):
+```js
+// .eslintrc.js
+rules: {
+  'boundaries/element-types': [2, {
+    default: 'allow',
+    rules: [
+      { from: 'sections', disallow: ['features', 'app'] },
+      { from: 'shared', disallow: ['features', 'sections', 'app'] },
+    ]
+  }]
+}
+```
 
 ---
 
-## What This Skill Does NOT Cover
+## Directory Structure After Decomposition
 
-- Styling methodology (CSS Modules, Tailwind, styled-components — all compatible)
-- State management libraries (Zustand, Redux, Jotai — use what fits, but still extract hooks)
-- Testing frameworks (Vitest, Jest — but the modular structure makes testing easy)
-- Build tools (Vite, Webpack, Turbopack — architecture is tool-agnostic)
+```text
+app/dashboard/
+  page.tsx              <- 30-50 line composer
+  layout.tsx            <- Dashboard layout wrapper
+  sections/
+    dashboard-header.tsx   <- Pure UI, receives stats
+    dashboard-chart.tsx    <- Pure UI, receives data
+    activity-table.tsx     <- Pure UI, receives items
+    stat-card.tsx          <- Shared reusable card
+    index.ts               <- Barrel exports
+  features/
+    use-dashboard-data.ts  <- Data fetching hook
+    use-contact-form.ts    <- Form logic hook
+    index.ts               <- Barrel exports
+  shared/
+    format-date.ts         <- Shared utility
+    constants.ts           <- Dashboard-specific constants
+```
+
+---
+
+## Exception Handling
+
+When decomposition is not practical:
+
+1. **Document the exception** with a comment:
+   ```tsx
+   // [ANTI-MONOLITH EXCEPTION] Reason: Single-form wizard where
+   // decomposition would break linear readability.
+   // Tech Debt ticket: PROJ-123
+   // Approved by: Tech Lead
+   // Revisit date: 2026-Q3
+   ```
+
+2. **Exception is valid when:**
+   - File is under 300 lines AND well-organized with clear sections
+   - Decomposition would harm readability (linear flows, wizards)
+   - Component is temporary/throwaway (prototype, demo)
+   - Auto-generated code (Prisma client, OpenAPI types)
+
+3. **Exception is NOT valid when:**
+   - File exceeds 400 lines (no excuses, decompose)
+   - Multiple developers need to edit the same file
+   - Component has 5+ useState
+   - Any test file for this component is also monolithic
+
+---
+
+## Companion Skills
+
+| Companion Skill | When to Use | What It Covers |
+|----------------|-------------|----------------|
+| **fullstack-dev** | When decomposition requires new API routes or database changes | Backend architecture, API routes, Prisma schemas |
+| **frontend-styling-expert** | When extracted components need polish or responsive adjustments | CSS, Tailwind, responsive, accessibility |
+| **mermaid-diagrams** | When documenting the decomposed architecture | Architecture diagrams, dependency graphs |
+
+---
+
+## Quick Reference Card
+
+```text
+THRESHOLDS:
+  File:     250 lines max (150 recommended)
+  Component: 200 lines max (100 recommended)
+  useState:  2 per component (3rd -> custom hook)
+  Function:  50 lines max
+  useEffect: 2 dependencies max (3+ -> refactor)
+
+7 STEPS:
+  1. Identify sub-components -> extract to sections/
+  2. Identify state clusters -> extract to use[Feature] hooks
+  3. Identify data loading -> Server Components or SWR hooks
+  4. Classify: sections/ (no state) vs features/ (has state)
+  5. Dynamic imports for heavy deps
+  6. Barrel exports (explicit, not export *)
+  7. Verify layer separation (no upward imports)
+
+AUTO-ACTIVATE WHEN:
+  - File crosses 250 lines
+  - 3rd useState added
+  - Upward import detected
+  - Mixed concerns in one file
+```
+
+---
+
+## Communication Style
+
+This skill communicates in a direct, diagnostic style:
+- Announce violations: `[ANTI-MONOLITH] File exceeds 250 lines (312 lines): decompose`
+- Use severity tags: [C] Critical (must fix), [W] Warning (should fix), [I] Info (consider)
+- Show before/after line counts: `DashboardPage: 312 lines -> 38 lines (composer) + 4 modules`
+- No emoji — use text markers: [OK], [FAIL], [VIOLATION], [EXCEPTION]
+
+---
+
+## Related Standards
+
+- **STD-FE-001** (FRONTEND_STANDARD.md): File size limits, FSD decomposition, exception format
+- **STD-IMPL-001** (IMPLEMENTATION_ORDER.md): Large monolith file handling, priority-based fixes
+
+---
+
+Built with: Z.ai Agent Toolkit

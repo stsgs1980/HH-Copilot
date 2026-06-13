@@ -1,0 +1,82 @@
+@startuml HH-Copilot Quality Analysis Pipeline
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
+skinparam ArrowColor #94A3B8
+skinparam ArrowThickness 1.2
+skinparam Padding 6
+skinparam RoundCorner 8
+
+title HH-Copilot — Quality Analysis Pipeline\nATS check + red flags + skill gap -> recommendations
+
+package "Input" as Input #EFF6FF {
+    component [Parsed Resume\n13 fields:\nname, position, salary,\ngender, age, city,\nskills, experience,\neducation, languages,\ncontacts, visibility] as RES #DBEAFE
+    component [Vacancy Skills\nkeySkills + derivedSkills\nfrom vacancy-skills-collector.js] as VAC #DBEAFE
+}
+
+package "Quality Analysis" as Analysis #EDE9FE {
+
+    component [resume-quality-analyzer.js\nFacade / Orchestrator\nCombines all analysis modules] as RQA #DDD6FE
+
+    package "ATS Compatibility" as ATS_Pkg #C4B5FD {
+        component [quality-ats.js\nATS compatibility check\n\nKeyword coverage\nSkill count sufficiency\nContact info present\nStructured sections\nExperience descriptions] as ATS
+    }
+
+    package "Red Flags + Strengths" as FlagsPkg #A78BFA {
+        component [quality-flags.js\nRed flags + recommendations\n\nEmployment gaps\nShort stints\nMissing descriptions\nVague phrasing\nAchievement verbs\nMetric presence] as FLG
+
+        component [quality-experience.js\nCareer progression\n\nRole growth detection\nTitle progression\nScope expansion] as EXP
+
+        component [quality-patterns.js\nPattern constants\n\nACHIEVEMENT_VERBS\nVAGUE_PHRASES\nMETRIC_PATTERNS] as PAT
+
+        component [quality-date-helpers.js\nDate utilities\n\nGap detection\nDuration calculation\nTimeline analysis] as DAT
+    }
+}
+
+package "Output" as Output #FFF7ED {
+    component [ATS Score\n0-100%\nPass/fail per check] as ATSSCORE #FEF3C7
+    component [Red Flags\nlist with severity] as REDFLAGS #FEE2E2
+    component [Strengths\nlist with context] as STRENGTHS #D1FAE5
+    component [Recommendations\nActionable improvement tips\n"Add X skill"\n"Fix gap in Y"] as RECS #FEF3C7
+    component [Skill Gap\nMissing vs vacancy\n4 categories:\ncritical, important,\nnice-to-have, extra] as GAP #DBEAFE
+}
+
+RES --> RQA
+VAC --> RQA
+
+RQA --> ATS
+RQA --> FLG
+
+FLG --> PAT
+FLG --> DAT
+FLG --> EXP
+EXP --> DAT
+
+ATS --> ATSSCORE
+FLG --> REDFLAGS
+FLG --> STRENGTHS
+FLG --> RECS
+FLG --> GAP
+
+note right of ATS
+  ATS filters check:
+  - Keywords from target position
+  - Sufficient skills count
+  - Contact information
+  - Structured data (sections)
+  - Experience descriptions
+end note
+
+note right of GAP
+  Uses vacancy-skills-collector.js
+  to gather vacancy skills from
+  both panelState.vacancies and
+  window.__hhVacDetail.
+
+  Gap = vacancy skills NOT in
+  resume (explicit + derived +
+  experience text).
+end note
+
+@enduml

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #FFFFFF;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'SimHei', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px;
+    gap: 48px;
+  }
+  h1 { font-size: 22px; color: #1E293B; margin-bottom: 8px; }
+  h2 { font-size: 16px; color: #64748B; font-weight: 400; margin-bottom: 24px; }
+  .diagram-block { width: fit-content; min-width: 900px; }
+</style>
+</head>
+<body>
+
+<div>
+  <h1>HH-Copilot Architecture Overview</h1>
+  <h2>Layer diagram + data flow + communication</h2>
+</div>
+
+<!-- DIAGRAM 1: Architecture Layers -->
+<div class="diagram-block">
+  <pre class="mermaid">
+flowchart TB
+    subgraph Browser["Chrome Browser"]
+        subgraph HH_Page["hh.ru Page (MAIN world)"]
+            PW["page-world.js<br>pushState patches<br>SPA navigation"]
+        end
+
+        subgraph Content["Content Script (ISOLATED world)"]
+            MAIN["main.js<br>Orchestrator + Router"]
+            VD["vacancy-detail.js<br>Parse vacancy page"]
+            VDS["vacancy-detail-skills.js<br>Multi-strategy skills"]
+            PR["parse-resume.js<br>Parse resume DOM"]
+            MS["match-scorer.js<br>Score resume-vacancy"]
+            RQ["resume-quality.js<br>Quality flags + gaps"]
+            VSC["vacancy-skills-collector.js<br>Shared skill collector"]
+            MPH["main-page-handlers.js<br>SPA event handlers"]
+        end
+
+        subgraph Panel["Sidebar Panel (Extension Page)"]
+            IDX["panel/index.js<br>Panel controller"]
+            VAC["vacancies.js<br>Vacancy list + scores"]
+            RH["resume-helpers.js<br>Resume card + skills"]
+            RHG["resume-helpers-gap.js<br>Gap analysis"]
+            TOUR["tour-engine.js<br>Guided tour"]
+        end
+
+        subgraph Lib["Lib / Shared"]
+            AH["anti-hallucination.js<br>safeGetText, Logger"]
+            SEL["selectors.js<br>data-qa selectors"]
+            SD["skill-dictionary.js<br>SKILL_PATTERNS"]
+            DS["derive-skills.js<br>Skill derivation"]
+            PE["parse-experience.js<br>Experience parser"]
+        end
+
+        subgraph Background["Background Service Worker"]
+            BG["background.js<br>Auth, Storage, API proxy"]
+        end
+    end
+
+    PW -->|"hh-ar-spa-navigate<br>CustomEvent"| MPH
+    MPH --> MAIN
+    MAIN --> VD
+    MAIN --> PR
+    VD --> VDS
+    PR --> MS
+    VD --> MS
+    RHG --> VSC
+    VAC --> VSC
+    VDS --> SD
+    DS --> SD
+    PR --> DS
+    MS --> SD
+    VD --> SEL
+    PR --> SEL
+    VD --> AH
+    PR --> AH
+    MS --> AH
+    MS --> PE
+    IDX --> MAIN
+    RH --> RHG
+    TOUR --> IDX
+    BG <-->|"chrome.runtime<br>messages"| IDX
+
+    style Browser fill:#F8FAFC,stroke:#94A3B8,stroke-width:2px
+    style HH_Page fill:#EFF6FF,stroke:#3B82F6,stroke-width:1.5px
+    style Content fill:#F0FDF4,stroke:#10B981,stroke-width:1.5px
+    style Panel fill:#FFF7ED,stroke:#F59E0B,stroke-width:1.5px
+    style Lib fill:#F5F3FF,stroke:#8B5CF6,stroke-width:1.5px
+    style Background fill:#FEE2E2,stroke:#EF4444,stroke-width:1.5px
+  </pre>
+</div>
+
+<!-- DIAGRAM 2: Data Flow Sequence -->
+<div class="diagram-block">
+  <pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant PW as page-world.js
+    participant MAIN as main.js
+    participant VD as vacancy-detail.js
+    participant PR as parse-resume.js
+    participant MS as match-scorer.js
+    participant Panel as Sidebar Panel
+
+    User->>PW: Opens vacancy page
+    PW->>MAIN: hh-ar-spa-navigate event
+    MAIN->>VD: parseVacancyDetail()
+    VD-->>MAIN: vacancy object
+    MAIN->>PR: parseResume() / fetch
+    PR-->>MAIN: resume object
+    MAIN->>MS: computeMatchScore(resume, vacancy)
+    MS-->>MAIN: score + breakdown
+    MAIN->>Panel: Update match UI
+    Panel-->>User: Display score + gaps
+
+    Note over MAIN,MS: Safety net: auto-call<br>initPageLogic() after 3s
+  </pre>
+</div>
+
+<!-- DIAGRAM 3: Match Scoring Breakdown -->
+<div class="diagram-block">
+  <pre class="mermaid">
+flowchart LR
+    subgraph Input["Input"]
+        R["Resume<br>skills + derived<br>experience"]
+        V["Vacancy<br>keySkills + derived<br>title + requirements"]
+    end
+
+    subgraph Scoring["Match Score (0-100)"]
+        SK["Skills<br>0-40 pts<br>explicit + derived"]
+        TI["Title<br>0-30 pts<br>synonym groups"]
+        SA["Salary<br>0-15 pts<br>range overlap"]
+        EX["Experience<br>0-15 pts<br>years match"]
+    end
+
+    subgraph Output["Output"]
+        SC["Total Score<br>%"]
+        BD["Breakdown<br>per category"]
+        GA["Gap Analysis<br>missing skills"]
+        FL["Quality Flags<br>warnings + tips"]
+    end
+
+    R --> SK & TI & SA & EX
+    V --> SK & TI & SA & EX
+    SK & TI & SA & EX --> SC & BD & GA
+    GA --> FL
+
+    style Input fill:#EFF6FF,stroke:#3B82F6,stroke-width:1.5px
+    style Scoring fill:#F0FDF4,stroke:#10B981,stroke-width:1.5px
+    style Output fill:#FFF7ED,stroke:#F59E0B,stroke-width:1.5px
+  </pre>
+</div>
+
+<!-- DIAGRAM 4: Communication Patterns -->
+<div class="diagram-block">
+  <pre class="mermaid">
+flowchart TB
+    subgraph Events["CustomEvent Bus (document)"]
+        E1["hh-ar-spa-navigate<br>SPA page change"]
+        E2["hh-ar-init-page-logic<br>Trigger parsing"]
+    end
+
+    subgraph Chrome["chrome.runtime messages"]
+        C1["Auth state sync"]
+        C2["Storage read/write"]
+        C3["API proxy requests"]
+    end
+
+    subgraph DOM["Shared DOM State"]
+        D1["window.__hhVacDiagData<br>Diagnostics"]
+        D2["window.__hhVacDetail<br>Vacancy data"]
+        D3["panelState<br>Panel state object"]
+    end
+
+    Events --> E1 & E2
+    Chrome --> C1 & C2 & C3
+    DOM --> D1 & D2 & D3
+
+    style Events fill:#EFF6FF,stroke:#3B82F6,stroke-width:1.5px
+    style Chrome fill:#FEE2E2,stroke:#EF4444,stroke-width:1.5px
+    style DOM fill:#F5F3FF,stroke:#8B5CF6,stroke-width:1.5px
+  </pre>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#EFF6FF',
+      primaryBorderColor: '#3B82F6',
+      primaryTextColor: '#1E293B',
+      lineColor: '#94A3B8',
+      secondaryColor: '#F0FDF4',
+      secondaryBorderColor: '#10B981',
+      secondaryTextColor: '#1E293B',
+      tertiaryColor: '#FFF7ED',
+      tertiaryBorderColor: '#F59E0B',
+      tertiaryTextColor: '#1E293B',
+      noteBkgColor: '#F8FAFC',
+      noteTextColor: '#6B7280',
+      noteBorderColor: '#E2E8F0',
+      fontSize: '14px',
+      fontFamily: '-apple-system, BlinkMacSystem, PingFang SC, SimHei, sans-serif',
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 32,
+      nodeSpacing: 80,
+      rankSpacing: 80,
+      htmlLabels: true,
+      wrappingWidth: 160,
+    },
+    sequence: { mirrorActors: false, messageAlign: 'center' },
+  });
+</script>
+</body>
+</html>

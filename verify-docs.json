@@ -1,0 +1,27 @@
+{
+  "readme": "README.md",
+  "sourceOfTruth": "hh-extension/hh-auto-respond-extension/package.json",
+  "checks": [
+    {
+      "name": "Extension source files",
+      "source": "glob:hh-extension/hh-auto-respond-extension/src/**/*.js",
+      "exclude": ["test", "spec", "__mocks__"],
+      "readmePattern": "(\\d+) source files"
+    },
+    {
+      "name": "Git commits",
+      "source": "git:HEAD",
+      "readmePattern": "(\\d+) commits",
+      "tolerance": 5
+    }
+  ],
+  "exclude": [
+    "skills/",
+    "docs/diagrams/",
+    "docs/UNICODE_POLICY-v2.1.md",
+    "docs/Z.ai-Sandbox-Guide.md",
+    "docs/assets/",
+    "cascade/",
+    ".ahg/"
+  ]
+}

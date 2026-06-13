@@ -1,0 +1,79 @@
+@startuml HH-Copilot Resume Fetch — 6-Strategy Pipeline
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
+skinparam ArrowColor #94A3B8
+skinparam ArrowThickness 1.2
+skinparam Padding 6
+skinparam RoundCorner 8
+
+title HH-Copilot — Resume Fetch: 6-Strategy Cascading Pipeline\nDOM -> text -> scripts -> iframe -> expand -> API
+
+component [syncAllResumes()] as START #1E293B
+START -> [resume-fetch-list.js\nFetch resume list page\n/applicant/resumes] as LIST
+
+LIST -> [resume-fetch-resume.js\nParse single resume\nThin orchestrator] as SINGLE
+
+SINGLE -> [Strategy 1-3\nresume-fetch-experience.js\nDOM-based parsing\n\nS1: company-card data-qa\nS2: experience-item selectors\nS3: generic block scanning] as S1 #D1FAE5
+
+S1 .> [Strategy 4\nresume-fetch-strategy4-text.js\nText pattern extraction\n\nDate-range regex\nFallback when DOM fails] as S4 #FEF3C7 : fallback
+
+S4 .> [Strategy 5\nstrategy5-scripts.js + scanners.js\nScript JSON parsing\n\nhh.ru embeds ALL data\nin <script> hydration JSON] as S5 #DBEAFE : fallback
+
+S5 .> [Strategy 6\nstrategy6-expand.js\nExpand hidden sections\n\nSSR renders only 3 cards\n"Razvernut" shows all] as S6 #EDE9FE : fallback
+
+package "Strategy 6 Sub-strategies" as S6Sub #F5F3FF {
+    component [strategy6-iframe.js\nLoad in hidden iframe\nClick "Expand" buttons\nParse fully-rendered DOM] as S6I
+    component [strategy6-urls.js\nURL discovery from\n"Expand" button, Magritte state\nKnown API patterns] as S6U
+    component [strategy6-api.js\nInternal hh.ru applicant API\nFetch + parse JSON response] as S6A
+}
+
+S6 --> S6I
+S6 --> S6U
+S6 --> S6A
+
+package "Post-processing" as PostProc #CFFAFE {
+    component [resume-fetch-education-languages.js\nEducation + languages\n+ "about me" parsing] as EDU
+    component [resume-fetch-vis-fallback.js\nFinal visibility decision\nUNKNOWN -> VISIBLE\nDiagnostic dump] as VIS
+    component [resume-fetch-iframe-vis*.js\nvis, vis-dom, vis-adv\n6 sub-strategies\nfor visibility detection] as IFV
+    component [resume-fetch-list-vis*.js\nList-level visibility\nScript/hydration extraction] as LVIS
+    component [resume-fetch-resume-diag.js\nPre-parse diagnostics\nLogging] as DIAG
+}
+
+S1 --> EDU
+S4 --> EDU
+S5 --> EDU
+S6 --> EDU
+
+S1 --> VIS
+S4 --> VIS
+S5 --> VIS
+S6 --> VIS
+
+VIS --> IFV
+VIS --> LVIS
+
+note right of S1
+  Most reliable when DOM
+  has data-qa attributes.
+  hh.ru Magritte redesign
+  changed selectors.
+end note
+
+note right of S5
+  Extracts from React
+  hydration JSON embedded
+  in <script> tags.
+  Works even when DOM
+  has only partial data.
+end note
+
+note right of S6
+  Last resort: fetches
+  hidden content that
+  requires user interaction
+  to reveal.
+end note
+
+@enduml

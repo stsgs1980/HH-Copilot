@@ -1,0 +1,65 @@
+@startuml HH-Copilot Communication Patterns
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
+skinparam ArrowColor #94A3B8
+skinparam ArrowThickness 1.2
+skinparam Padding 6
+skinparam RoundCorner 8
+
+title HH-Copilot — Communication Patterns\nCustomEvent bus + chrome.runtime + DOM state + Storage
+
+package "CustomEvent Bus (document)" as Events #EFF6FF {
+    component [hh-ar-spa-navigate\nSPA page change\nTriggered by pushState patch\nin page-world.js] as E1
+    component [hh-ar-init-page-logic\nTrigger parsing\nDispatched by UI panel] as E2
+    component [hh-ar-load-resume\nLoad/parse resume\nFrom resume tab actions] as E3
+    component [hh-ar-reparse-resume\nRe-parse current resume\nForce refresh] as E4
+    component [hh-ar-sync-resumes\nFetch all resumes\nFull sync via API] as E5
+}
+
+package "chrome.runtime messages" as Chrome #FEE2E2 {
+    component [Auth state sync\nPanel <-> Background] as C1
+    component [Storage read/write\nContent <-> Background] as C2
+    component [Stats increment + daily reset\nApplied count updates] as C3
+    component [Alarm: midnight limit reset\nchrome.alarms API] as C4
+}
+
+package "Shared DOM / Window State" as DOM #F5F3FF {
+    component [window.__hhVisDiag\nVisibility diagnostics data\nAccessible from console] as D1
+    component [window.__hhVacDetail\nParsed vacancy data\nDiagnostic access] as D2
+    component [panelState object\nReactive UI state\nisOpen, isLoggedIn, vacancies] as D3
+    component [MutationObserver\nSPA DOM change detection\nTriggers re-parsing] as D4
+}
+
+package "chrome.storage.local" as Storage #CFFAFE {
+    component [settings + stats\nMode, limits, daily count\nLast reset timestamp] as S1
+    component [myResumes + applyQueue\nParsed resume data\nPending apply queue] as S2
+    component [vacancyDetails + scores\nCached vacancy parses\nMatch score results] as S3
+    component [appliedVacancies + blacklist\nApplied history\nBlocked companies] as S4
+}
+
+' Cross-connections
+E1 ..> D4 : triggers
+D4 ..> E2 : re-parse
+E3 ..> S2 : update
+E5 ..> S2 : full sync
+C4 ..> S1 : reset daily
+
+note bottom of Events
+  All CustomEvents are dispatched
+  on document object in the
+  Content Script isolated world.
+  page-world.js uses window.postMessage
+  to bridge MAIN <-> ISOLATED worlds.
+end note
+
+note bottom of Storage
+  chrome.storage.local is shared
+  between Content Script and
+  Background Service Worker.
+  All storage access goes through
+  lib/storage-*.js barrel modules.
+end note
+
+@enduml
