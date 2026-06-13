@@ -1783,3 +1783,18 @@ Stage Summary:
 - AHG submodule updated to 168cb85 (v2.3.0)
 - Rule 16: upstream write protection in place
 - No modifications to AHG — only using as designed
+
+---
+Task ID: 11
+Agent: main
+Task: Activate AHG v2.3.0 hooks + Rule 16
+
+Work Log:
+- Ran setup.sh after update.sh skipped it
+- Rule 16 verified in AGENT_RULES.md
+- Pre-commit hook updated (v2.3.0)
+- Scripts updated: ahg.sh, audit.sh, check-agent.sh, check-hooks-lib.sh, sync-task-state.sh
+
+Stage Summary:
+- AHG v2.3.0 fully activated in project
+- Rule 16: upstream write protection enforced
