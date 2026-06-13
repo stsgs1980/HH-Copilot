@@ -1964,3 +1964,15 @@ Work Log:
 Stage Summary:
 - README now accurately reflects current test counts (21+13+9+14+10=67)
 - cascade-state.json ghost reference eliminated
+
+---
+Task ID: changelog-recovery-note
+Agent: main
+Task: Add CHANGELOG recovery period note for v1.0.0–v1.9.14
+
+Work Log:
+- Added note to CHANGELOG.md header explaining missing entries for 33 pre-v1.9.15.5 versions
+- Directs readers to README Version Timeline and git log for that period
+
+Stage Summary:
+- CHANGELOG no longer silently omits 33 versions — explicitly documented as recovery period

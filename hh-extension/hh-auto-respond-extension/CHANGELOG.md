@@ -3,6 +3,10 @@
 All notable changes to the extension are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+> **Note:** Versions prior to v1.9.15.5 (v1.0.0 – v1.9.14) were developed during the
+> initial recovery period and have no CHANGELOG entries. Their history is preserved in
+> the README Version Timeline and git log. CHANGELOG coverage begins at v1.9.15.5.
+
 ---
 
 ## [1.9.28.0] — 2026-06-12
