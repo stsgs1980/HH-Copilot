@@ -1,6 +1,10 @@
 /**
  * TESTS: vacancy-list.js — parseVacanciesFromPage + parseVacanciesOfTheDay
  * Uses jsdom to mock hh.ru DOM structure
+ *
+ * ANTI-MONOLITH exception (Rule 12): 295 lines.
+ * Single cohesion block — 14 tests for one parser (vacancy-list.js).
+ * Splitting would break test readability without reducing complexity.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';

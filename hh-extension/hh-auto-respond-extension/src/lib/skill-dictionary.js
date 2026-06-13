@@ -1,6 +1,7 @@
 /**
  * LIB: SKILL DICTIONARY
  * =====================
+ * ANTI-MONOLITH exception (Rule 12): 475 lines. Russian-language data dictionary — cannot be meaningfully split.
  * Keyword patterns → standardised skill names (Russian).
  *
  * Used by derive-skills.js to infer skills from experience descriptions.

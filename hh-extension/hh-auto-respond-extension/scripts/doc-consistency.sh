@@ -1,4 +1,5 @@
 #!/bin/bash
+# ANTI-MONOLITH exception (Rule 12): 276 lines. Single cohesion block — 5 sequential checks. Splitting breaks atomicity.
 # doc-consistency.sh — Anti-Hallucination Guard: Documentation Consistency Check
 # Verifies that project documentation is in sync with actual code state.
 # Blocks commit if documentation gaps are detected.

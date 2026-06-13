@@ -1,6 +1,7 @@
 /**
  * LIB: SKILL SYNONYMS
  * ====================
+ * ANTI-MONOLITH exception (Rule 12): 333 lines. Russian-language data dictionary — cannot be meaningfully split.
  * Synonym groups for related skills.
  * When a vacancy requires skill A and the resume has skill B from the same
  * group, they count as a partial match (synonym match) instead of "missing".
