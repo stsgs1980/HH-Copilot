@@ -9,6 +9,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.28.2] — 2026-06-14
+
+### Fixed
+- **Resume detection safety net** — resume detail pages (`/resume/{hash}`) and applicant view pages (`/applicant/resumes/view?resume=XXX`) had no fallback init like vacancy pages. If the `hh-ar-init-page-logic` event was missed (race condition), resume parsing never started. Safety net now covers all detail page types.
+- **Routing for `/applicant/resumes/view`** — this URL was incorrectly routed to the resume list handler instead of the resume detail handler. Now correctly calls `handleResumeDetailPage()` with query-param ID extraction.
+- **"Sync all" button hidden** — the "All resumes" accordion was collapsed by default, hiding the "Синхронизировать все" button. When no active resume exists, the accordion now auto-expands on panel init.
+- **`renderInitialData()`** now calls `renderMyResumesPanel()` to populate the resume list at boot.
+
+---
+
 ## [1.9.28.0] — 2026-06-12
 
 ### Added

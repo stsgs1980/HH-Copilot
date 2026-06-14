@@ -1,10 +1,10 @@
 {
   "ahgVersion": "2.5.0",
-  "previousVersion": "none",
-  "previousCommit": "d27c3f4763a74a0c296a67c6f7f07847a47a280b",
-  "currentCommit": "fa51233d8cd213b7b3b0b971c1938f3ff5af6e37",
-  "updatedAt": "2026-06-13T22:37:03Z",
-  "changedFiles": ".ahgrc .git-hooks/post-checkout .github/CODEOWNERS .gitignore AGENT_RULES.md CHANGELOG.md README.md registry.json scripts/ahg.sh scripts/line-count-check.sh scripts/validate.sh setup.sh setup/03-install-pre-commit-hook.sh setup/05-deploy-monitoring-scripts.sh setup/07-install-verify-docs.sh setup/08-integrate-cascade-guard.sh setup/09-git-staging.sh skills/anti-hallucination-guard/SKILL.md tools/verify-docs/CONSUMER_GUIDE.md tools/verify-docs/package.json tools/verify-docs/src/discover-versions.ts update.sh verify-docs.json ",
+  "previousVersion": "2.5.0",
+  "previousCommit": "fa51233d8cd213b7b3b0b971c1938f3ff5af6e37",
+  "currentCommit": "0313d36436e9f48912ddbc86126abe318a509466",
+  "updatedAt": "2026-06-14T12:12:12Z",
+  "changedFiles": "skills/anti-hallucination-guard/SKILL.md tools/verify-docs/package.json ",
   "items": [
     {"id": "PROC-COCHANGE", "version": "1.0", "level": "critical", "status": "active"},
     {"id": "PROC-LINECOUNT", "version": "1.0", "level": "critical", "status": "active"},

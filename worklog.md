@@ -2031,3 +2031,21 @@ Work Log:
 Stage Summary:
 - render.js: auto-expand res-sync-body accordion when panelState.resume is empty
 - render.js: added renderMyResumesPanel() call in renderInitialData()
+
+---
+Task ID: version-bump-1.9.28.2
+Agent: main
+Task: Bump version to 1.9.28.2 per Rule 9.2 — sync all 5 version references
+
+Work Log:
+- Updated manifest.json: 1.9.28.0 → 1.9.28.2
+- Updated package.json: 1.9.28.0 → 1.9.28.2
+- Updated src/lib/version.js: 1.9.28.0 → 1.9.28.2
+- Updated popup/index.html: v1.9.28.0 → v1.9.28.2
+- Updated README.md: 4 occurrences of 1.9.28.0 → 1.9.28.2
+- Added CHANGELOG.md entry for v1.9.28.2 with all 4 fixes
+- Build + tests pass
+
+Stage Summary:
+- All 5 version sources synchronized to 1.9.28.2
+- CHANGELOG updated
