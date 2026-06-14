@@ -1994,3 +1994,25 @@ Stage Summary:
 - AHG submodule at fa51233
 - New config files: .ahgrc, .ahg-integrity.json, cascade-state.json, verify-docs.json
 - Hooks and scripts reinstalled
+
+---
+Task ID: resume-detection-fix
+Agent: main
+Task: Fix extension not detecting resumes on hh.ru
+
+Work Log:
+- Investigated all resume-related file splits (resume-fetch-resume.js, resume-fetch-resume-skills.js, parse-resume-sections.js, parse-resume-skills.js) — all import/export chains intact
+- Found root cause #1: Missing safety net for resume pages in main.js — vacancy pages had setTimeout fallback but resume pages didn't
+- Found root cause #2: /applicant/resumes/view?resume=XXX URL routed to resumeList instead of resumeDetail
+- Fix #1: Added safety net for resume detail + applicant view pages (same pattern as vacancy detail safety net)
+- Fix #2: Added /applicant/resumes/view route → handleResumeDetailPage + resume ID extraction from query param
+- Updated routing.test.js with new test cases for /applicant/resumes/view route
+- Build: passes (23ms)
+- Tests: 68 passed (67 + 1 new)
+
+Stage Summary:
+- main.js: safety net extended from vacancy-only to vacancy+resume+applicant-view pages
+- main-page-handlers.js: new route for /applicant/resumes/view → resumeDetail
+- main-page-handlers-pages.js: handleResumeDetailPage now handles applicant view pages with query-param ID fallback
+- routing.test.js: +1 test for /applicant/resumes/view route
+- File split imports verified: all intact, esbuild bundles correctly

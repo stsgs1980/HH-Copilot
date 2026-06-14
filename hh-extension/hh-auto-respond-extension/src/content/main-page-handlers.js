@@ -122,6 +122,9 @@ async function routeToHandler(path) {
     await handleVacancySearchPage();
   } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
     await handleResumeDetailPage(path);
+  } else if (/\/applicant\/resumes\/view/.test(path)) {
+    // Applicant's own resume view page — treat as resume detail, not list
+    await handleResumeDetailPage(path);
   } else if (path.startsWith('/applicant/resumes')) {
     await handleResumeListPage();
   } else if (/^\/vacancy\/\d+/.test(path)) {

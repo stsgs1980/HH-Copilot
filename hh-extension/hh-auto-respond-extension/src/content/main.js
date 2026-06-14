@@ -123,12 +123,16 @@ async function init() {
     initPageLogic();
   });
 
-  // ── Safety net: auto-init page logic on vacancy detail pages ──
+  // ── Safety net: auto-init page logic on detail pages ──
   // If auth was already detected before the panel dispatched the event
   // (e.g. fast page loads), we also try after a delay.
-  if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
+  // Covers vacancy detail, resume detail, and applicant resume view pages.
+  const isDetailPage = /^\/vacancy\/\d+/.test(window.location.pathname)
+    || /^\/resume\/[a-f0-9]+/.test(window.location.pathname)
+    || /^\/applicant\/resumes\/view/.test(window.location.pathname);
+  if (isDetailPage) {
     setTimeout(() => {
-      // initPageLogic is idempotent — it checks lastHandledPath to avoid duplicates
+      // initPageLogic is idempotent — it checks pageLogicInitialized to avoid duplicates
       initPageLogic();
     }, 3000);
   }

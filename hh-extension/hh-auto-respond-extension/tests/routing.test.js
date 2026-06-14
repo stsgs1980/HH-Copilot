@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 function matchRoute(path) {
   if (path.startsWith('/search/vacancy')) return 'vacancySearch';
   if (/^\/resume\/[a-f0-9]+/.test(path)) return 'resumeDetail';
+  if (/\/applicant\/resumes\/view/.test(path)) return 'resumeDetail';
   if (path.startsWith('/applicant/resumes')) return 'resumeList';
   if (/^\/vacancy\/\d+/.test(path)) return 'vacancyDetail';
   if (path === '/' || path === '') return 'mainPage';
@@ -41,6 +42,11 @@ describe('routeToHandler — path matching', () => {
 
   it('routes /applicant/resumes to resumeList', () => {
     expect(matchRoute('/applicant/resumes')).toBe('resumeList');
+  });
+
+  it('routes /applicant/resumes/view?resume=X to resumeDetail (not list)', () => {
+    expect(matchRoute('/applicant/resumes/view?resume=abcdef123456')).toBe('resumeDetail');
+    expect(matchRoute('/applicant/resumes/view?resume=a1b2c3d4')).toBe('resumeDetail');
   });
 
   it('routes / (main page) to mainPage', () => {

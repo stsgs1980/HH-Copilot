@@ -52,6 +52,7 @@ export async function handleVacancySearchPage() {
 
 export async function handleResumeDetailPage(path) {
   if (/\/resume\/edit\//.test(path)) {
+    // Edit page: DOM differs from view, fetch the view URL instead
     const editMatch = path.match(/\/resume\/([a-f0-9]+)/);
     if (editMatch) {
       const resumeId = editMatch[1];
@@ -67,7 +68,23 @@ export async function handleResumeDetailPage(path) {
         pageLog.warn('Failed to fetch resume from edit page: ' + err.message);
       }
     }
+  } else if (/\/applicant\/resumes\/view/.test(path)) {
+    // Applicant's own resume view: parse the current page directly
+    // (URL like /applicant/resumes/view?resume=XXX — DOM is similar to /resume/{hex})
+    pageLog.info('Applicant resume view page detected');
+    await expandHiddenSections();
+    const resume = parseResume();
+    // Fallback: if parseResume couldn't extract ID from pathname, get it from query param
+    if (!resume.id) {
+      const qMatch = window.location.search.match(/[?&]resume=([a-f0-9]+)/);
+      if (qMatch) resume.id = qMatch[1];
+    }
+    if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
+      await saveResumeToState(resume);
+      pageLog.info('Auto-parsed resume (applicant view): ' + resume.title);
+    }
   } else {
+    // Standard resume page: /resume/{hex}
     await expandHiddenSections();
     const resume = parseResume();
     if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
