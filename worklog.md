@@ -2386,3 +2386,20 @@ Work Log:
 
 Stage Summary:
 - Vacancies now display as "1. Title", "2. Title", etc. in the sidebar list
+
+---
+Task ID: 3
+Agent: main
+Task: Fix resume experience description punctuation/paragraph parsing
+
+Work Log:
+- Root cause: parse-company-card.js used stepContent.textContent which glues all text nodes together without spaces between sentences
+- Fix 1 (parser): Instead of .textContent, query block-level text elements individually ([data-qa="cell-text-content"], .magritte-text, p, li), skip position/period/duration texts, collect description paragraphs
+- Fix 1 fallback: If no block elements found, split glued sentences using regex ".X" -> ".\nX" (period + uppercase Cyrillic/Latin)
+- Fix 2 (renderer): section-builders.js now splits description by \n and renders each paragraph as a separate <div> with margin-bottom
+- Description now stored with \n separators between paragraphs
+- Build OK, 104/104 tests passing
+
+Stage Summary:
+- Resume experience descriptions now properly parsed with paragraph structure
+- Each achievement/paragraph rendered on its own line instead of glued text

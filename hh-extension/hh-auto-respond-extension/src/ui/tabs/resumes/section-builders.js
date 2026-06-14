@@ -63,7 +63,7 @@ export function buildExperienceSection(r) {
     return '<div style="margin-bottom:' + (isLast ? '0' : '8px') + ';padding-bottom:' + (isLast ? '0' : '8px') + ';' + (isLast ? '' : 'border-bottom:1px solid rgba(0,0,0,0.05);') + '">' +
       '<div style="font-weight:600;">' + esc(j.position || '?') + '</div>' +
       (companyLine ? '<div style="color:#52525b;margin-top:2px;">' + companyLine + '</div>' : '') +
-      (j.description ? '<div style="color:#52525b;margin-top:3px;font-size:11px;">' + esc(j.description) + '</div>' : '') +
+      (j.description ? '<div style="color:#52525b;margin-top:3px;font-size:11px;line-height:1.5;">' + esc(j.description).split('\n').map(p => '<div style="margin-bottom:2px;">' + p + '</div>').join('') + '</div>' : '') +
     '</div>';
   }).join('');
   return buildSubAccordion(
