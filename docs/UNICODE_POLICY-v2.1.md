@@ -1,7 +1,7 @@
 # Standard: No-Unicode Policy v2.1
 
 > ID: STD-DOC-003
-> Version: 2.1.3
+> Version: 1.9.30.059
 > Level: **[C] Critical** + **[W] Warning** + **[I] Info**
 > Related: Markdown Standard (STD-DOC-002)
 

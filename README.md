@@ -1,6 +1,6 @@
 # HH Copilot -- Chrome Extension
 
-**Version:** 1.9.28.2
+**Version:** 1.9.30.0
 **Type:** Chrome Extension (Manifest V3)
 **Target Platform:** hh.ru (Magritte design system)
 **License:** Private project. All rights reserved.

@@ -2085,3 +2085,19 @@ Work Log:
 
 Stage Summary:
 - v1.9.30.0: 3 bug fixes + 2 minor fixes in 7 files (+25/-7 lines)
+
+---
+Task ID: version-sync-fix
+Agent: main
+Task: Fix version sync violation (Rule 9.2, Rule 13) — ahg bump broke popup
+
+Work Log:
+- Previous commit violated Rule 9.2: only updated manifest.json + package.json, missed version.js, popup/index.html, README.md
+- Used ahg bump 1.9.30.0 — it updated 38 files but corrupted popup/index.html (duplicated content)
+- Manually restored popup/index.html with correct v1.9.30.0
+- Updated README.md from 1.9.28.2 to 1.9.30.0
+- Verified all 5 version references now match: 1.9.30.0
+
+Stage Summary:
+- All 5 version files synchronized: manifest.json, package.json, version.js, popup/index.html, README.md
+- ahg bump has a bug with HTML files — corrupted popup/index.html (reported to user)
