@@ -169,10 +169,10 @@ export function renderVacancyList() {
     // Enrichment depth indicator
     // detail = full analysis (iframe/fetch), cached = from storage, shallow = SERP tags only
     const enrichBadge = v.keySkills && v.keySkills.length > 0
-      ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;" title="Полный анализ описания вакансии">deep</span>'
+      ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;" title="Полный анализ описания вакансии">полный</span>'
       : v.enrichmentSource === 'cache'
-        ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;" title="Данные из кэша (ранее посещённая вакансия)">cache</span>'
-        : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#F4F4F5;color:#71717A;border:1px solid #D4D4D8;" title="Только данные из карточки поиска -- полный анализ в процессе">serp</span>';
+        ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;" title="Данные из кэша (ранее посещённая вакансия)">кэш</span>'
+        : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#F4F4F5;color:#71717A;border:1px solid #D4D4D8;" title="Только данные из карточки поиска -- полный анализ в процессе">предварительный</span>';
 
     const skillCount = (v.keySkills && v.keySkills.length > 0)
       ? `<span style="font-size:11px;color:#059669;" title="Навыки из описания вакансии">${v.keySkills.length} навыков</span>`

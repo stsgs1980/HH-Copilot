@@ -2415,3 +2415,16 @@ Work Log:
 
 Stage Summary:
 - Version 1.9.34.0 synchronized
+
+---
+Task ID: 5
+Agent: main
+Task: Translate enrichment badges to Russian (deep -> полный, serp -> предварительный, cache -> кэш)
+
+Work Log:
+- Changed enrichment depth badges in vacancies.js: deep -> полный, cache -> кэш, serp -> предварительный
+- Version bump 1.9.34.0 -> 1.9.35.0 (all 5 sources)
+- Build OK, 104/104 tests passing
+
+Stage Summary:
+- UI badges now in Russian: полный (green), кэш (amber), предварительный (grey)
