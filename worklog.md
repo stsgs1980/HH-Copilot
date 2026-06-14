@@ -2273,3 +2273,29 @@ Stage Summary:
 - Three sources of skill noise eliminated: v.tags, v.skills, and merge-all-vacancies
 - Only employer-listed keySkills used for comparison (derivedSkills as last resort)
 - 3 files modified total (collector, scorer, + previous UI fixes)
+
+---
+Task ID: version-bump-1.9.32.0
+Agent: main
+Task: Bump version to 1.9.32.0 after skill scoring bugfixes
+
+Work Log:
+- Updated all 5 version sources: package.json, manifest.json, src/lib/version.js, popup/index.html, README.md
+- Build successful: v1.9.32.0
+
+Stage Summary:
+- Version 1.9.31.0 → 1.9.32.0
+- All 5 sources consistent
+
+---
+Task ID: version-bump-1.9.32.0-retry
+Agent: main
+Task: Bump version to 1.9.32.0 after skill scoring bugfixes
+
+Work Log:
+- Updated all 5 version sources: package.json, manifest.json, src/lib/version.js, popup/index.html, README.md
+- Build successful: v1.9.32.0
+
+Stage Summary:
+- Version 1.9.31.0 → 1.9.32.0
+- All 5 sources consistent
