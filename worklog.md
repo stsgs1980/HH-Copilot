@@ -2072,3 +2072,16 @@ Stage Summary:
 - CHANGED: apply-actions fills cover letter instead of skipping
 - CHANGED: salary/experience merged into top-level during enrichment
 - CHANGED: vacancy-detail.js uses parseVacancyDetailFromDoc()
+
+---
+Task ID: commit-v1.9.30.0
+Agent: main
+Task: Commit v1.9.30.0 — vacancy-fetch audit bug fixes
+
+Work Log:
+- Audited complete vacancy-fetch pipeline (already implemented in v1.9.29.0)
+- Found and fixed 3 bugs + 2 minor issues
+- 104/104 tests pass, build OK
+
+Stage Summary:
+- v1.9.30.0: 3 bug fixes + 2 minor fixes in 7 files (+25/-7 lines)

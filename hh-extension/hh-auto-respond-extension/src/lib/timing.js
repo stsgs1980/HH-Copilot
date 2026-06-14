@@ -9,11 +9,12 @@ export function gaussianRandom(mean, stddev) {
   mean = mean || 10.0; stddev = stddev || 4.0;
   let u1 = Math.max(1e-10, Math.min(1 - 1e-10, Math.random()));
   const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * Math.random());
-  return Math.max(2.0, z * stddev + mean);
+  return z * stddev + mean;
 }
 
 export function randomDelay() {
-  return new Promise(r => setTimeout(r, gaussianRandom() * 1000));
+  // Floor of 2.0s (2000ms) for default reading/simulation delays
+  return new Promise(r => setTimeout(r, Math.max(2000, gaussianRandom() * 1000)));
 }
 
 export function gaussianDelay(minMs, maxMs) {
@@ -21,7 +22,8 @@ export function gaussianDelay(minMs, maxMs) {
   maxMs = maxMs || 5000;
   const mean = (minMs + maxMs) / 2;
   const stddev = (maxMs - minMs) / 4;
-  const delay = Math.max(minMs, gaussianRandom(mean / 1000, stddev / 1000) * 1000);
+  // Clamp to [minMs, maxMs] range
+  const delay = Math.max(minMs, Math.min(maxMs, gaussianRandom(mean / 1000, stddev / 1000) * 1000));
   return new Promise(r => setTimeout(r, delay));
 }
 

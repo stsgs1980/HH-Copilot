@@ -95,6 +95,16 @@ function parseVacancySalaryString(salaryStr) {
   if (!nums || nums.length === 0) return {};
   const parsed = nums.map(n => parseInt(n.replace(/\s/g, ''), 10)).filter(n => !isNaN(n));
   if (parsed.length === 0) return {};
+
+  // Handle "от N" / "до N" prefixes (SERP salary strings)
+  const lowerStr = salaryStr.toLowerCase();
+  if (/^от|^from/i.test(lowerStr) && parsed.length >= 1) {
+    return { min: parsed[0], max: null };
+  }
+  if (/^до|^up\s*to/i.test(lowerStr) && parsed.length >= 1) {
+    return { min: null, max: parsed[0] };
+  }
+
   if (parsed.length === 1) return { min: parsed[0], max: parsed[0] };
   // Take first two numbers as min/max
   return { min: parsed[0], max: parsed[1] };

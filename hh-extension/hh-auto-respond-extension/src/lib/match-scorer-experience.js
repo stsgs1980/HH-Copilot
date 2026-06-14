@@ -45,7 +45,8 @@ export function scoreExperience(resume, vacancy) {
   }
 
   // If we can't determine vacancy experience requirement
-  if (vacExp.min === null && vacExp.max === null) {
+  // Use == null to catch both null and undefined (defensive against empty string experience)
+  if (vacExp.min == null && vacExp.max == null) {
     return { score: 8, reason: 'unknown-vacancy-exp' };
   }
 

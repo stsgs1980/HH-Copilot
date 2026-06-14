@@ -209,7 +209,7 @@ export async function parseVacanciesOfTheDay(resume) {
     const vacancy = {
       id: vacancyId, title, company,
       salary: salary || 'Не указана', location: '',
-      experience: '', skills: [],
+      experience: parseExperienceString(''), skills: [],
       url: canonicalUrl,
       hasReply: !!replyEl, status: 'new', source: 'votd',
       parsedAt: new Date().toISOString(), matchScore: null

@@ -72,6 +72,11 @@ export function enrichVacancy(vacancy, detail, resume) {
     vacancy.experience = { ...vacancy.experience, ...detail.experience };
   }
 
+  // ── Location (detail page has more precise address with map) ──
+  if (detail.location && (!vacancy.location || vacancy.location.length < detail.location.length)) {
+    vacancy.location = detail.location;
+  }
+
   // ── Employment details ──
   if (detail.employment) vacancy.employment = detail.employment;
   if (detail.schedule) vacancy.schedule = detail.schedule;
