@@ -9,6 +9,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.31.0] — 2026-06-15
+
+### Added
+- **Role-implied skills** — skills self-evident from position title are no longer shown as "missing". When a person holds the title "Руководитель отделов продаж", skills like "руководство коллективом" and "управление проектами" are assumed present.
+  - `role-implied-skills.js` — local static map (7 role groups: Руководитель, Руководитель отдела продаж, Менеджер по продажам, Маркетолог, HR-специалист, Проектный менеджер, Финансовый специалист). Inspired by ESCO essential/optional concept, adapted for hh.ru Russian market.
+  - 5-tier skill match hierarchy in scorer: Explicit (100%) → Derived (70%) → Synonym (50%) → Implied (40%) → Missing (0%)
+  - `quality-recommendations.js` — implied skills filtered from "missing" and shown separately at low priority
+  - `match-scorer-skills.js` — implied skills get 40% partial credit in scoring
+
+### Research
+- `docs/research/01-role-implied-skills.md` — ESCO essential/optional skills research, API verification, implementation plan
+- `docs/research/02-kula-ai-ats.md` — Kula.ai AI-native ATS analysis, applicable concepts (must-have vs nice-to-have, semantic matching)
+- `docs/research/INDEX.md` — research index with conclusions and TODO items
+
+### Changed
+- `ARCHITECTURE.md` — added Section 9 (Skill Matching Pipeline) and Section 10 (Documentation Structure)
+- `06-quality-analysis.puml` — added role-implied-skills.js component and 5-tier match hierarchy
+- `01-architecture-layers.puml` — added IMP and QR components, fixed wrong arrows (MSSK→SD→IMP, QF→SSYN→QR→SSYN+IMP), removed dead VDS
+
+### Removed
+- `parsers/vacancy-detail-skills.js` — dead code (logic moved to `vacancy-fetch-text.js` in v1.9.30.0)
+- `parsers/vacancy-detail-parsers.js` — dead code (logic moved to `vacancy-fetch-text.js` in v1.9.30.0)
+- 6 unused barrel `index.js` files (lib, parsers, services, ui, ui/tabs, ui/html/tabs)
+
+---
+
+## [1.9.30.0] — 2026-06-14
+
+### Added
+- **Cover letter generator** — tailored cover letters using vacancy detail + resume data (`cover-letter-generator.js`, 17 tests)
+- **Parser unification** — `vacancy-detail.js` now delegates to `parseVacancyDetailFromDoc()` from `vacancy-fetch-text.js`
+
+### Changed
+- `apply-actions.js` fills cover letter instead of skipping
+- Salary/experience merged into top-level (removed *Structured)
+
+---
+
 ## [1.9.29.0] — 2026-06-14
 
 ### Added
