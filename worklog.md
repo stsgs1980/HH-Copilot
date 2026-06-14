@@ -2137,3 +2137,22 @@ Stage Summary:
 - Role-implied skills: code written, integration in quality-recommendations done
 - match-scorer-skills.js: NOT yet updated with implied weight (pending)
 - Research fully documented in docs/research/
+
+---
+Task ID: implied-scorer-integration
+Agent: main
+Task: Integrate implied weight (40%) into match-scorer-skills.js
+
+Work Log:
+- Added import: getRoleImpliedSkills, IMPLIED_WEIGHT from role-implied-skills.js
+- Added impliedMatch[] array between synonym and missing in scoring loop
+- Added impliedMatch.length * IMPLIED_WEIGHT to effectiveMatches calculation
+- Added impliedMatch to return object and log output
+- Updated match-scorer.js: added impliedMatchSkills to details
+- All 104 tests passed
+- Reality check: Руководитель отделов продаж gets +7 score from implied skills
+
+Stage Summary:
+- match-scorer-skills.js: 5-tier hierarchy fully implemented
+- match-scorer.js: passes impliedMatchSkills through details
+- Test result: Руководитель 21/40 vs Менеджер 14/40 (same vacancy)

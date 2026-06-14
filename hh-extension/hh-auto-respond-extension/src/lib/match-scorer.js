@@ -60,6 +60,7 @@ export function computeMatchScore(resume, vacancy) {
     matchingSkills: skillResult.matching,
     derivedMatchSkills: skillResult.derivedMatch,
     synonymMatchSkills: skillResult.synonymMatch,
+    impliedMatchSkills: skillResult.impliedMatch,
     missingSkills: skillResult.missing,
     extraSkills: skillResult.extra,
     titleSimilarity: titleResult.similarity,
