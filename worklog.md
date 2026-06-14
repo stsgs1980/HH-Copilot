@@ -2195,3 +2195,21 @@ Work Log:
 
 Stage Summary:
 - All 5 version sources now at 1.9.31.0
+
+---
+Task ID: version-sync-complete
+Agent: main
+Task: Complete version sync to 1.9.31.0 across ALL files
+
+Work Log:
+- README.md: 1.9.30.0 → 1.9.31.0
+- popup/index.html: 1.9.30.0 → 1.9.31.0 (user-visible version!)
+- package-lock.json: 1.9.30.0 → 1.9.31.0
+- cascade/state.json _meta: 1.9.30.0 → 1.9.31.0
+- docs/UNICODE_POLICY-v2.1.md: 1.9.30.0 → 1.9.31.0
+- dist/ rebuilt via esbuild (content.js, page-world.js, manifest.json all show 1.9.31.0)
+
+Stage Summary:
+- All version references in project now at 1.9.31.0
+- Only exception: cascade-state.json PROC-COCHANGE (AHG internal, not ours)
+- File creation headers (v1.9.30.0: created) left as-is (historical)
