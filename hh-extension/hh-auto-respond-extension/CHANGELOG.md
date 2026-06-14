@@ -38,12 +38,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [1.9.30.0] — 2026-06-14
 
 ### Added
-- **Cover letter generator** — tailored cover letters using vacancy detail + resume data (`cover-letter-generator.js`, 17 tests)
-- **Parser unification** — `vacancy-detail.js` now delegates to `parseVacancyDetailFromDoc()` from `vacancy-fetch-text.js`
+- **Cover letter generator** — tailored cover letters using vacancy detail + resume data (`cover-letter-generator.js`, 538 lines, 17 tests)
+- **Parser unification** — `vacancy-detail.js` now delegates to `parseVacancyDetailFromDoc()` from `vacancy-fetch-text.js` (single source of truth for vacancy parsing)
+- **Vacancy enrichment fixes** — `vacancy-fetch-enrichment.js` now merges location from detail page (was missing)
+- **Cover letter tests** — 17 new tests (`tests/cover-letter.test.js`)
+- **Vacancy fetch tests** — new tests (`tests/vacancy-fetch.test.js`)
+- **Salary parsing** — `match-scorer-salary.js` now handles от/до prefixes via `parseVacancySalaryString`
 
 ### Changed
 - `apply-actions.js` fills cover letter instead of skipping
 - Salary/experience merged into top-level (removed *Structured)
+- `enrichmentSource` correctly shows 'cache' (was always 'detail')
+
+### Fixed
+- **Vacancy experience scoring** — empty experience '' always scored 15/15 instead of neutral 8/15 (`vacancy-list.js`, `match-scorer-experience.js`)
+- **gaussianRandom** — floor of 2.0s overrode FETCH_DELAY_MIN=1500ms (moved `Math.max(2.0)` from `gaussianRandom` to `randomDelay` only)
+- **gaussianDelay** — no upper bound clamp; ~0.3% delays exceeded maxMs (added `Math.min(maxMs)` clamp)
+- **Russian stem regex** — `quality-experience.js` added `[а-яА-ЯёЁ]*` suffix absorber for Cyrillic word endings
+- Duplicate `querySelector` in `vacancy-detail-parsers.js`
 
 ---
 
