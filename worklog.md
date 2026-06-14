@@ -2445,3 +2445,4 @@ Stage Summary:
 - Courier/waiter/accountant vacancies now score max 25% instead of 51%
 - Sales director vacancies with 10+ matching skills unaffected (confidence=1.0)
 
+

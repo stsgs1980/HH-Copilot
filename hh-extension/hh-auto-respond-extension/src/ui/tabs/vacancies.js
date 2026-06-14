@@ -163,10 +163,10 @@ export function renderVacancyList() {
   if (irrelevant.length > 0) {
     html += '<div style="margin-top:8px;padding:8px 10px;background:#F4F4F5;border-radius:8px;border:1px solid #E4E4E7;">';
     html += '<button data-action="toggle-irrelevant" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;cursor:pointer;font-size:11px;color:#71717A;padding:0;">';
-    html += '<svg class="irrelevant-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.15s;"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '<svg class="irrelevant-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.15s;transform:rotate(180deg);"><polyline points="6 9 12 15 18 9"/></svg>';
     html += '<span>Низкое совпадение (' + irrelevant.length + ')</span>';
     html += '</button>';
-    html += '<div class="irrelevant-list" style="display:none;margin-top:6px;">';
+    html += '<div class="irrelevant-list" style="margin-top:6px;">';
     html += irrelevant.map((v, idx) => renderVacancyItem(v, relevant.length + idx, true)).join('');
     html += '</div></div>';
   }
