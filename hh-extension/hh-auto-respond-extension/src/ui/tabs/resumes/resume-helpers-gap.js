@@ -154,8 +154,8 @@ function updateSynonymGapRow(rowId, countId, listId, synonyms) {
     const visible = synonyms.slice(0, 5);
     const remainder = synonyms.length - visible.length;
     let html = visible.map(s =>
-      '<span class="skill-tag skill-synonym" title="Связанный навык: «' + esc(s.resume) + '» ≈ «' + esc(s.vacancy) + '»">' +
-      esc(s.vacancy) + ' ≈ ' + esc(s.resume) + '</span>'
+      '<span class="skill-tag skill-synonym" title="Связанный навык: «' + esc(s.resume) + '» ~ «' + esc(s.vacancy) + '»">' +
+      esc(s.vacancy) + ' ~ ' + esc(s.resume) + '</span>'
     ).join('');
     if (remainder > 0) {
       html += '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>';

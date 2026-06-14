@@ -2299,3 +2299,22 @@ Work Log:
 Stage Summary:
 - Version 1.9.31.0 → 1.9.32.0
 - All 5 sources consistent
+
+---
+Task ID: typography-fix-approx
+Agent: main
+Task: Fix typography — replace ≈ (U+2248) with ~ in skill synonym display
+
+Work Log:
+- User reported typography issues in extension panel
+- VLM analysis showed possible □ (replacement character) in synonym skill tags
+- Root cause: ≈ (U+2248 ALMOST EQUAL TO) not supported by Inter font or fallbacks
+- Replaced ≈ with ~ (tilde) in 3 files:
+  - resume-helpers-gap.js (UI display)
+  - match-scorer-skills.js (scorer output)
+  - quality-recommendations.js (recommendations text)
+- Build successful
+
+Stage Summary:
+- ≈ → ~ in all skill synonym displays
+- 3 files modified

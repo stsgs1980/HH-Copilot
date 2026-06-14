@@ -69,7 +69,7 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
 
       const synMatch = findSynonymMatch(vs, allResume);
       if (synMatch) {
-        related.push(vs + ' ≈ ' + synMatch);
+        related.push(vs + ' ~ ' + synMatch);
       } else {
         missing.push(vs);
       }

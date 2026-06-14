@@ -67,7 +67,7 @@ export function scoreSkills(resume, vacancy) {
       // v1.9.22.0: Check synonym groups — "переговоры" matches "работа с возражениями"
       const synMatch = findSynonymMatch(skill, allResume);
       if (synMatch) {
-        synonymMatch.push(skill + ' ≈ ' + synMatch);
+        synonymMatch.push(skill + ' ~ ' + synMatch);
       } else if (roleImplied.has(skill)) {
         // v1.9.31.0: Role-implied — skill self-evident from position title
         impliedMatch.push(skill);
