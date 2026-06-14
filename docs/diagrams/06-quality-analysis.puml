@@ -32,14 +32,22 @@ package "Quality Analysis" as Analysis #EDE9FE {
 
         component [quality-date-helpers.js\nDate utilities\n\nGap detection\nDuration calculation\nTimeline analysis] as DAT
     }
+
+    package "Skill Matching" as SkillPkg #BFDBFE {
+        component [skill-synonyms.js\n50+ synonym groups\n\nWeight: 50%\nRelated skills count\nas partial match] as SYN #93C5FD
+
+        component [derive-skills.js\n+ skill-dictionary.js\n\nWeight: 70%\nSkills extracted from\nexperience descriptions] as DER #93C5FD
+
+        component [role-implied-skills.js\nPosition → implied skills\n\nWeight: 40%\nSkills self-evident\nfrom job title\n(e.g. "Руководитель" →\nуправление командой)] as IMP #60A5FA
+    }
 }
 
 package "Output" as Output #FFF7ED {
     component [ATS Score\n0-100%\nPass/fail per check] as ATSSCORE #FEF3C7
     component [Red Flags\nlist with severity] as REDFLAGS #FEE2E2
     component [Strengths\nlist with context] as STRENGTHS #D1FAE5
-    component [Recommendations\nActionable improvement tips\n"Add X skill"\n"Fix gap in Y"] as RECS #FEF3C7
-    component [Skill Gap\nMissing vs vacancy\n4 categories:\ncritical, important,\nnice-to-have, extra] as GAP #DBEAFE
+    component [Recommendations\nActionable improvement tips\n5 categories:\ncritical, high, medium,\nlow, info] as RECS #FEF3C7
+    component [Skill Gap\nMissing vs vacancy\n5-tier match:\nexplicit(100%), derived(70%),\nsynonym(50%), implied(40%),\nmissing(0%)] as GAP #DBEAFE
 }
 
 RES --> RQA
@@ -47,6 +55,9 @@ VAC --> RQA
 
 RQA --> ATS
 RQA --> FLG
+RQA --> SYN
+RQA --> DER
+RQA --> IMP
 
 FLG --> PAT
 FLG --> DAT
@@ -57,7 +68,9 @@ ATS --> ATSSCORE
 FLG --> REDFLAGS
 FLG --> STRENGTHS
 FLG --> RECS
-FLG --> GAP
+SYN --> GAP
+DER --> GAP
+IMP --> GAP
 
 note right of ATS
   ATS filters check:
@@ -68,6 +81,22 @@ note right of ATS
   - Experience descriptions
 end note
 
+note right of IMP
+  Based on ESCO essential/optional
+  concept. Maps position title
+  keywords to implied skills.
+
+  Example:
+  "Руководитель отделов продаж"
+  → управление командой,
+    переговоры, воронка продаж,
+    мотивация персонала...
+
+  These skills are NOT shown
+  as "missing" in recommendations.
+  Research: docs/research/01-role-implied-skills.md
+end note
+
 note right of GAP
   Uses vacancy-skills-collector.js
   to gather vacancy skills from
@@ -76,7 +105,8 @@ note right of GAP
 
   Gap = vacancy skills NOT in
   resume (explicit + derived +
-  experience text).
+  synonym + implied + experience
+  text).
 end note
 
 @enduml

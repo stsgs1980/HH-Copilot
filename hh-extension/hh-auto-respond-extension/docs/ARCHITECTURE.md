@@ -1,6 +1,6 @@
 # HH Copilot -- Extension Architecture
 
-**Version:** 1.9.28.2
+**Version:** 1.9.31.0
 **Type:** Chrome Extension (Manifest V3)
 **Target Platform:** hh.ru (Magritte design system)
 
@@ -41,6 +41,7 @@
 |  |  |  synonyms        red-flags          tour-steps     | |  |
 |  |  |  derive-skills   recommend.         tour-tooltip   | |  |
 |  |  |  vacancy-skills  resume-analyzer                    | |  |
+|  |  |  role-implied                                      | |  |
 |  |  +----------------------------------------------------+ |  |
 |  +-------------------------------+------------------------+  |
 |                                  |                            |
@@ -514,3 +515,88 @@ Without debounce, every DOM change (including React's intermediate render states
 ### 8.4 Cross-page Navigation
 
 When clicking "Apply" in the panel on the search page, you need to navigate to /vacancy/{id}. This causes a full page reload and re-loading of content.js. To preserve state between pages, chrome.storage.local is used: pendingApply is saved with a timestamp; when the vacancy page loads, pendingApply is checked and the application process continues. If pendingApply is older than 2 minutes, it is ignored (protection against stale state).
+
+
+## 9. Skill Matching Pipeline
+
+### 9.1 Skill Match Categories
+
+When comparing vacancy skills against resume skills, the system uses a 5-tier hierarchy:
+
+| Category | Weight | Description | Source |
+|----------|--------|-------------|--------|
+| Explicit | 100% | Skill directly declared in resume skills section | `match-scorer-skills.js` |
+| Derived | 70% | Skill inferred from experience descriptions | `derive-skills.js` → `match-scorer-skills.js` |
+| Synonym | 50% | Related skill from same synonym group | `skill-synonyms.js` → `match-scorer-skills.js` |
+| Implied | 40% | Skill self-evident from position title | `role-implied-skills.js` → `match-scorer-skills.js` |
+| Missing | 0% | Skill not found anywhere | — |
+
+### 9.2 Role-Implied Skills (v1.9.31.0)
+
+**Problem:** Skills like "руководство коллективом" or "управление проектами" were shown as "missing" for a person with title "Руководитель отделов продаж" — even though these skills are self-evident from the position.
+
+**Solution:** `role-implied-skills.js` maps position title keywords to a set of implied skills. Based on ESCO's essential/optional skills concept.
+
+**How it works:**
+1. `getRoleImpliedSkills(title)` returns Set of normalized skill names implied by the position
+2. In `quality-recommendations.js`: implied skills are filtered from "missing" and shown with priority "low"
+3. In `match-scorer-skills.js`: implied skills get 40% partial credit (future integration)
+
+**Key mappings:**
+- Руководитель/Директор/Начальник → управление командой, делегирование, мотивация персонала, стратегическое планирование, etc.
+- Менеджер по продажам → переговоры, воронка продаж, работа с клиентами, etc.
+- Руководитель отдела продаж → combined (leadership + sales) implied skills
+- Маркетолог → маркетинг, продвижение, маркетинговые исследования, etc.
+- HR-специалист → подбор персонала, рекрутинг, адаптация персонала, etc.
+
+**Research:** `docs/research/01-role-implied-skills.md`
+
+### 9.3 Synonym Matching (v1.9.22.0)
+
+`skill-synonyms.js` contains 50+ synonym groups. When a vacancy requires skill A and the resume has skill B from the same group, they count as a partial match (50% weight).
+
+Example: "переговоры" matches "работа с возражениями" because objection handling IS part of negotiations.
+
+### 9.4 Skill Derivation (v1.9.20.0)
+
+`derive-skills.js` + `skill-dictionary.js` automatically extract skills from work experience descriptions. 50+ Russian skill keyword patterns. Integrated into both resume parsing paths (DOM and fetch).
+
+
+## 10. Documentation Structure
+
+```
+HH-Copilot-repo/
+├── AGENT_RULES.md          -- Agent work rules (MUST read before every session)
+├── README.md               -- Project overview
+├── CHANGELOG.md            -- Root-level changelog
+├── cascade-state.json      -- Task cascade state
+├── worklog.md              -- Root-level worklog
+│
+├── docs/
+│   ├── diagrams/           -- Architecture diagrams (PlantUML)
+│   ├── wireframes/         -- UI wireframes
+│   └── worklog.md          -- Root docs worklog
+│
+└── hh-extension/hh-auto-respond-extension/
+    ├── docs/
+    │   ├── ARCHITECTURE.md         -- This file (extension architecture)
+    │   ├── TASK-CASCADE.md         -- Task breakdown and status
+    │   ├── UNICODE_POLICY.md       -- Unicode handling rules
+    │   ├── PLANTUML-REFERENCE.md   -- Diagram syntax reference
+    │   └── research/               -- Research documents (NEW v1.9.31.0)
+    │       ├── INDEX.md            -- Research index with conclusions
+    │       ├── 01-role-implied-skills.md  -- ESCO essential/optional → role-implied
+    │       └── 02-kula-ai-ats.md          -- Kula.ai AI-Native ATS analysis
+    │
+    ├── src/                        -- Source code
+    ├── tests/                      -- Test files
+    ├── scripts/                    -- Build and utility scripts
+    ├── worklog.md                  -- Extension-level worklog
+    └── CHANGELOG.md                -- Extension-level changelog
+```
+
+Key cross-references:
+- `AGENT_RULES.md` (repo root) → referenced by all scripts, setup.sh, audit.sh
+- `docs/research/` → referenced by `role-implied-skills.js` and future skill modules
+- `TASK-CASCADE.md` → tracks all implementation tasks
+- `ARCHITECTURE.md` → this file, describes all modules and data flows

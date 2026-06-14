@@ -9,6 +9,7 @@
  */
 
 import { findSynonymMatch } from './skill-synonyms.js';
+import { getRoleImpliedSkills } from './role-implied-skills.js';
 
 /**
  * Build prioritized recommendations for resume improvement.
@@ -40,7 +41,7 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     recs.push({ priority: 'high', text: f });
   }
 
-  // Vacancy skills missing from resume (v1.9.21.0, v1.9.22.0)
+  // Vacancy skills missing from resume (v1.9.21.0, v1.9.22.0, v1.9.31.0)
   if (vacancySkills && vacancySkills.size > 0) {
     const resumeExplicit = normalizeSkillSet(r.skills || []);
     const resumeDerived = normalizeSkillSet(r.derivedSkills || []);
@@ -48,13 +49,23 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     const descText = (r.experience || []).map(e => e.description || '').join(' ').toLowerCase();
     const descNorm = descText.replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
 
+    // v1.9.31.0: Role-implied skills — skills self-evident from position title
+    const roleImplied = getRoleImpliedSkills(r.title || '');
+
     const missing = [];
     const related = [];
+    const implied = []; // v1.9.31.0: skills implied by role, shown separately
 
     for (const vs of vacancySkills) {
       if (resumeExplicit.has(vs)) continue;
       if (resumeDerived.has(vs)) continue;
       if (vs.length > 3 && descNorm.includes(vs)) continue;
+
+      // v1.9.31.0: Skip if skill is implied by the position title
+      if (roleImplied.has(vs)) {
+        implied.push(vs);
+        continue;
+      }
 
       const synMatch = findSynonymMatch(vs, allResume);
       if (synMatch) {
@@ -81,6 +92,17 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
         priority: 'medium',
         text: 'Связанные навыки: ' + sample + suffix + ' — упомяните явно для точного мэтчинга',
         tooltip: related.map(s => '«' + s + '»').join(', ')
+      });
+    }
+
+    // v1.9.31.0: Skills implied by position (self-evident from role, low priority)
+    if (implied.length > 0) {
+      const sample = implied.slice(0, 5).map(s => '«' + s + '»').join(', ');
+      const suffix = implied.length > 5 ? ' и ещё ' + (implied.length - 5) : '';
+      recs.push({
+        priority: 'low',
+        text: implied.length + ' навыков подразумеваются должностью: ' + sample + suffix,
+        tooltip: implied.map(s => '«' + s + '»').join(', ')
       });
     }
   }

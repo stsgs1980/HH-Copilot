@@ -2117,3 +2117,23 @@ Stage Summary:
 - Fixed career progression detection for all Russian position titles with suffixes/declensions
 - "Руководитель отделов продаж" now correctly triggers isTopLevel=true
 ---
+
+---
+Task ID: session-2026-06-15-research
+Agent: main
+Task: Research documentation (ESCO, Kula.ai), role-implied skills, architecture update
+
+Work Log:
+- Created docs/research/01-role-implied-skills.md — ESCO essential/optional research
+- Created docs/research/02-kula-ai-ats.md — Kula.ai AI-native ATS analysis
+- Created docs/research/INDEX.md — research index with conclusions
+- Created src/lib/role-implied-skills.js — 7 role groups, getRoleImpliedSkills(), IMPLIED_WEIGHT=0.4
+- Updated quality-recommendations.js — filter implied skills from missing
+- Updated ARCHITECTURE.md — skill matching pipeline section, docs structure
+- Updated 06-quality-analysis.puml — diagram changes
+- Committed and pushed all changes
+
+Stage Summary:
+- Role-implied skills: code written, integration in quality-recommendations done
+- match-scorer-skills.js: NOT yet updated with implied weight (pending)
+- Research fully documented in docs/research/
