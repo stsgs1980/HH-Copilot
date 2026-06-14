@@ -150,7 +150,7 @@ export function renderVacancyList() {
     return;
   }
 
-  list.innerHTML = panelState.vacancies.slice(0, 50).map(v => {
+  list.innerHTML = panelState.vacancies.slice(0, 50).map((v, idx) => {
     const score = v.matchScore != null ? v.matchScore : 0;
     const sc = score > 0
       ? `<div class="score-ring" style="--score:${score};" role="img" aria-label="Совпадение ${score}%"><span>${score}%</span></div>`
@@ -187,7 +187,7 @@ export function renderVacancyList() {
       <div style="flex-shrink:0;">${sc}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-          <a href="${esc(v.url)}" data-action="navigate" style="font-weight:600;color:#059669;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;">${esc(v.title)}</a>
+          <a href="${esc(v.url)}" data-action="navigate" style="font-weight:600;color:#059669;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;"><span style="color:#71717a;font-weight:400;margin-right:3px;">${idx + 1}.</span>${esc(v.title)}</a>
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">${enrichBadge}${badge}</div>
         </div>
         <div style="display:flex;gap:10px;font-size:12px;color:#64748b;margin-bottom:6px;">

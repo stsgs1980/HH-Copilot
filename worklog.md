@@ -2372,3 +2372,17 @@ Stage Summary:
 - 129 files modified, 886+ Unicode violations eliminated
 - Version 1.9.33.0 synchronized across manifest.json, package.json, version.js, popup/index.html, README.md
 - Full UNICODE_POLICY (STD-DOC-003) compliance achieved
+
+---
+Task ID: 2
+Agent: main
+Task: Add vacancy numbering in sidebar list
+
+Work Log:
+- Added (v, idx) to .map() callback in renderVacancyList() (src/ui/tabs/vacancies.js L153)
+- Prepended "<span style=color:#71717a;font-weight:400;margin-right:3px>N.</span>" before vacancy title
+- Number is styled subtle grey (#71717a) so it doesn't compete with the green title
+- Build OK, 104/104 tests passing
+
+Stage Summary:
+- Vacancies now display as "1. Title", "2. Title", etc. in the sidebar list
