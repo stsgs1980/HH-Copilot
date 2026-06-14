@@ -116,7 +116,7 @@ function splitDescriptionSections(root) {
     if (!text) continue;
 
     const isHeading = el.tagName.match(/^H[2-4]$/) ||
-      (el.tagName === 'P' && (el.querySelector('strong, b') || el.querySelector('strong, b')));
+      (el.tagName === 'P' && el.querySelector('strong, b'));
 
     if (isHeading) {
       let matched = false;

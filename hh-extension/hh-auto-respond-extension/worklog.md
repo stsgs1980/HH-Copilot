@@ -547,3 +547,82 @@ Stage Summary:
 - All JS files now ≤ 250 lines except skill-dictionary.js (475) and skill-synonyms.js (333) — Russian-language data dictionaries
 - background/index.js: zero Russian comments remaining
 - 107 Russian comments remain in src/ files (lower priority, separate task)
+
+---
+Task ID: 1
+Agent: main
+Task: Implement vacancy deep fetch (background enrichment) for accurate SERP scoring
+
+Work Log:
+- Investigated vacancy parsing architecture: vacancy-list.js (shallow, 2-5 tags) vs vacancy-detail.js (deep, 10-20+ skills + description)
+- Confirmed user's intuition: SERP scoring was based on header-only data, no mechanism to fetch full vacancy pages
+- Studied resume-fetch architecture (27 files, iframe+text strategies) as reference
+- Designed vacancy-fetch with 4 modules (simpler than resume-fetch — no visibility, no expand buttons)
+- Implemented vacancy-fetch-iframe.js: Strategy 1 — hidden iframe, wait for hydration, parse DOM
+- Implemented vacancy-fetch-text.js: Strategy 2 — fetch HTML + DOMParser (fallback), shared parseVacancyDetailFromDoc()
+- Implemented vacancy-fetch-enrichment.js: merge detail into shallow vacancy, re-score with computeMatchScore()
+- Implemented vacancy-fetch.js: orchestrator — cache enrichment → background fetch → re-score → UI update
+- Integrated with main-page-handlers-pages.js: handleVacancySearchPage + handleMainPage now run enrichment
+- Updated vacancies.js UI: enrichment depth badges (deep/cache/serp), skill counts
+- Added 19 tests in vacancy-fetch.test.js — all passing
+- Updated CHANGELOG.md for v1.9.29.0
+- Bumped version to 1.9.29.0 in manifest.json
+- Build successful, 60/87 tests pass (27 pre-existing failures unrelated to this change)
+
+Stage Summary:
+- New files: src/lib/vacancy-fetch.js, vacancy-fetch-iframe.js, vacancy-fetch-text.js, vacancy-fetch-enrichment.js
+- Modified files: src/content/main-page-handlers-pages.js, src/ui/tabs/vacancies.js, CHANGELOG.md, manifest.json
+- Test file: tests/vacancy-fetch.test.js (19 tests, all passing)
+- Version: 1.9.28.2 → 1.9.29.0
+- Key architectural decision: two-strategy approach (iframe primary, text fetch fallback) with cache enrichment first
+
+---
+Task ID: 8
+Agent: Main
+Task: Vacancy fetch integration audit, bug fixes, cover letter generator, parser unification
+
+Work Log:
+- Investigated vacancy-fetch system — discovered it ALREADY EXISTS (4 files, working since v1.9.29.0)
+- Full integration audit: cache enrichment → iframe/text fetch → re-scoring → UI update — all connected
+- Found 3 bugs: dead cache badge, duplicate querySelector, version mismatch
+- Found critical GAP: cover letter template placeholders {position}/{experience}/{skills} NEVER replaced with actual data
+- Created src/lib/cover-letter-generator.js (540 lines): generateCoverLetter(), fillTemplate(), findVacancyData()
+  - Template-based generation with 7 placeholders: {position}, {company}, {experience}, {skills}, {matching}, {matching_sentence}, {requirements}
+  - Rich letter generation when vacancy has keySkills + description: structured cover letter with matching skills, experience summary, value proposition
+  - restoreOriginalCase() preserves skill name capitalization from vacancy/resume (scorer normalizes to lowercase)
+  - extractExperienceText() with proper Russian grammar: год/года/лет, месяц/месяца/месяцев
+- Integrated cover letter into apply flow: apply-actions.js fillCoverLetter() + setActiveResumeForCoverLetter()
+- Updated apply-orchestrator.js to pass resume to applyToVacancy/applyToAll
+- Updated main.js event listeners to pass panelState.resume
+- Updated negotiations.js template with new placeholders and help text
+- Fixed salary/experience dual model: removed *Structured properties, merged into top-level fields during enrichment
+- Updated vacancies.js UI to handle both string and object salary
+- Unified parsers: vacancy-detail.js now delegates to parseVacancyDetailFromDoc() (single source of truth)
+- Created tests/cover-letter.test.js (17 tests)
+- All 104 tests pass across 7 test files
+
+Stage Summary:
+- BUG FIX: enrichmentSource now correctly 'cache' when enriching from storage (was always 'detail')
+- BUG FIX: Duplicate querySelector in vacancy-detail-parsers.js:119 removed
+- BUG FIX: version.js synced to 1.9.29.0
+- NEW: src/lib/cover-letter-generator.js — full cover letter generation system
+- NEW: tests/cover-letter.test.js — 17 tests for cover letter generator
+- CHANGED: apply-actions.js — fills cover letter input instead of skipping it
+- CHANGED: apply-orchestrator.js — passes resume for cover letter generation
+- CHANGED: main.js — passes panelState.resume to apply functions
+- CHANGED: vacancy-fetch-enrichment.js — salary/experience merged into top-level fields
+- CHANGED: vacancy-detail.js — unified with parseVacancyDetailFromDoc()
+- CHANGED: vacancies.js — handles both string and object salary
+- CHANGED: negotiations.js — updated template with more placeholders
+
+---
+Task ID: 8-commit
+Agent: Main
+Task: Commit all changes from Task 8
+
+Work Log:
+- All changes from Task 8 committed: cover letter generator, bug fixes, parser unification
+- 104 tests passing
+
+Stage Summary:
+- Committing for push

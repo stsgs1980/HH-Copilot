@@ -14,10 +14,12 @@ import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
 import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
+import { enrichFromCache, fetchVacancyDetails, abortVacancyFetch, isVacancyFetching } from '../lib/vacancy-fetch.js';
 import { continueApply } from '../engine/index.js';
 import { computeMatchScore } from '../lib/match-scorer.js';
 import { panelState, updateVacancies, updateStats } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
+import { renderVacancyList } from '../ui/tabs/vacancies.js';
 import { setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.js';
 
 const pageLog = createLogger('Main');
@@ -28,9 +30,17 @@ let searchObserverActive = false;
 
 export async function handleVacancySearchPage() {
   const vacancies = await parseVacanciesFromPage(panelState.resume);
+
+  // Step 1: Enrich from cache (instant — no network)
+  await enrichFromCache(vacancies, panelState.resume);
   updateVacancies(vacancies);
+
   const stats = getStats();
   updateStats(stats);
+
+  // Step 2: Background deep fetch for vacancies without keySkills
+  // Runs asynchronously — UI updates as each vacancy is enriched
+  startBackgroundEnrichment(vacancies);
 
   // Set up SPA MutationObserver only once
   if (!searchObserverActive) {
@@ -38,10 +48,14 @@ export async function handleVacancySearchPage() {
     let timer = null;
     new MutationObserver(() => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
+      timer = setTimeout(async () => {
         if (!window.location.pathname.startsWith('/search/vacancy')) return;
-        const fresh = parseVacanciesFromPage(panelState.resume);
-        fresh.then(v => updateVacancies(v));
+        // Abort any previous enrichment batch
+        abortVacancyFetch();
+        const fresh = await parseVacanciesFromPage(panelState.resume);
+        await enrichFromCache(fresh, panelState.resume);
+        updateVacancies(fresh);
+        startBackgroundEnrichment(fresh);
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
     pageLog.info('SPA observer active');
@@ -180,11 +194,17 @@ export async function handleMainPage() {
   const recommended = await parseVacanciesFromPage(panelState.resume);
   const votd = await parseVacanciesOfTheDay(panelState.resume);
   const allVacancies = [...recommended, ...votd];
+
+  // Enrich from cache (instant)
+  await enrichFromCache(allVacancies, panelState.resume);
   updateVacancies(allVacancies);
   const stats = getStats();
   updateStats(stats);
 
   pageLog.info('Main page: ' + recommended.length + ' recommended + ' + votd.length + ' VotD = ' + allVacancies.length + ' total');
+
+  // Background deep fetch
+  startBackgroundEnrichment(allVacancies);
 
   if (!mainPageObserverActive) {
     mainPageObserverActive = true;
@@ -193,9 +213,13 @@ export async function handleMainPage() {
       clearTimeout(timer);
       timer = setTimeout(async () => {
         if (window.location.pathname !== '/' && window.location.pathname !== '') return;
+        abortVacancyFetch();
         const rec = await parseVacanciesFromPage(panelState.resume);
         const vd = await parseVacanciesOfTheDay(panelState.resume);
-        updateVacancies([...rec, ...vd]);
+        const fresh = [...rec, ...vd];
+        await enrichFromCache(fresh, panelState.resume);
+        updateVacancies(fresh);
+        startBackgroundEnrichment(fresh);
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
     pageLog.info('Main page SPA observer active');
@@ -203,6 +227,44 @@ export async function handleMainPage() {
 }
 
 // ── Helper ──
+
+/**
+ * Start background enrichment of vacancies via iframe/text fetch.
+ * Each enriched vacancy triggers a UI re-render with updated score.
+ * Runs as fire-and-forget — errors are logged but not thrown.
+ *
+ * @param {Object[]} vacancies — Shallow vacancy objects to enrich
+ */
+function startBackgroundEnrichment(vacancies) {
+  if (!vacancies || vacancies.length === 0) return;
+
+  // Don't start if already fetching (previous batch still running)
+  if (isVacancyFetching()) {
+    pageLog.info('Background enrichment already in progress — skipping');
+    return;
+  }
+
+  // Fire-and-forget: run in background, update UI as each vacancy is enriched
+  fetchVacancyDetails(vacancies, panelState.resume, {
+    onVacancyEnriched(vacancy) {
+      // Re-render the vacancy list with updated scores
+      try {
+        renderVacancyList();
+        pageLog.info('UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" → ' + vacancy.matchScore + '%');
+      } catch (e) {
+        pageLog.warn('UI update after enrichment failed: ' + e.message);
+      }
+    },
+    onBatchComplete() {
+      pageLog.info('Background enrichment batch complete');
+    },
+    onProgress(current, total, title) {
+      pageLog.info('Enriching ' + current + '/' + total + ': ' + title.substring(0, 40));
+    }
+  }).catch(err => {
+    pageLog.error('Background enrichment error: ' + err.message);
+  });
+}
 
 export async function saveResumeToState(resume) {
   setActiveResumeState(resume);

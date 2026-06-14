@@ -14,7 +14,7 @@ import { createLogger } from '../lib/anti-hallucination.js';
 import rateLimiter from '../lib/rate-limiter.js';
 import { isAlreadyApplied, incrementApplied, markAsApplied } from '../lib/storage.js';
 import { getQueue, setQueue, processNextInQueue } from './apply-queue.js';
-import { waitForPageReady, clickApplyButton, waitForPopupAndSubmit } from './apply-actions.js';
+import { waitForPageReady, clickApplyButton, waitForPopupAndSubmit, setActiveResumeForCoverLetter } from './apply-actions.js';
 
 const autoLog = createLogger('AutoRespond');
 
@@ -24,8 +24,14 @@ const autoLog = createLogger('AutoRespond');
  * @param {string} vacancyId
  * @returns {Promise<{success: boolean, reason?: string}>}
  */
-export async function applyToVacancy(vacancyId) {
+export async function applyToVacancy(vacancyId, resume) {
   autoLog.info('Apply to vacancy: ' + vacancyId);
+
+  // Set resume for cover letter generation before navigating
+  if (resume) {
+    setActiveResumeForCoverLetter(resume);
+  }
+
   const rateCheck = await rateLimiter.check();
   if (!rateCheck.allowed) { autoLog.warn(rateCheck.reason); return { success: false, reason: rateCheck.reason }; }
   if (await isAlreadyApplied(vacancyId)) return { success: false, reason: 'Уже откликнулся' };
@@ -103,8 +109,14 @@ export async function continueApply(pending) {
  * @param {number} [minScore=70] - Minimum match score to apply
  * @returns {Promise<{processed: number, reason?: string}>}
  */
-export async function applyToAll(vacancies, minScore) {
+export async function applyToAll(vacancies, minScore, resume) {
   minScore = minScore || 70;
+
+  // Set resume for cover letter generation before navigating
+  if (resume) {
+    setActiveResumeForCoverLetter(resume);
+  }
+
   const eligible = vacancies.filter(v => v.status === 'new' && v.hasReply)
     .filter(v => v.matchScore === null || v.matchScore >= minScore)
     .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));

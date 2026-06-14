@@ -8,6 +8,8 @@
 import { createLogger } from '../lib/anti-hallucination.js';
 import { findElement } from '../lib/selectors.js';
 import { randomDelay } from '../lib/timing.js';
+import { generateCoverLetter, findVacancyData } from '../lib/cover-letter-generator.js';
+import { getVacancyDetail } from '../lib/storage-vacancies.js';
 
 const autoLog = createLogger('AutoRespond');
 
@@ -138,10 +140,10 @@ export async function waitForPopupAndSubmit() {
 
         autoLog.info('Found submit button in popup: ' + sel);
 
-        // Check for optional cover letter input
+        // Fill cover letter if input is present
         const letterInput = findElement('coverLetterInput');
         if (letterInput) {
-          autoLog.info('Cover letter input found (skipping — empty letter)');
+          await fillCoverLetter(letterInput);
         }
 
         // Handle relocation warning if present
@@ -171,4 +173,115 @@ export async function waitForPopupAndSubmit() {
 
   autoLog.warn('Popup/submit button not found after 8s');
   return { success: false, reason: 'Попап не появился или кнопка отправки не найдена' };
+}
+
+// ═══════════════════════════════════════════════
+// COVER LETTER FILLING
+// ═══════════════════════════════════════════════
+
+/**
+ * Active resume reference — set by the apply orchestrator
+ * before calling waitForPopupAndSubmit().
+ * This avoids importing panelState (circular dependency risk).
+ */
+let _activeResume = null;
+
+/**
+ * Set the active resume for cover letter generation.
+ * Called by the apply orchestrator before navigating to vacancy page.
+ * @param {Object|null} resume
+ */
+export function setActiveResumeForCoverLetter(resume) {
+  _activeResume = resume;
+}
+
+/**
+ * Fill the cover letter textarea with a tailored letter.
+ * Uses vacancy data (from __hhVacDetail or storage) and resume data
+ * to generate a personalized cover letter.
+ *
+ * @param {HTMLTextAreaElement|HTMLElement} inputEl — The cover letter input element
+ * @returns {Promise<boolean>} Whether a letter was filled
+ */
+async function fillCoverLetter(inputEl) {
+  try {
+    // Get vacancy ID from current URL
+    const urlMatch = window.location.pathname.match(/\/vacancy\/(\d+)/);
+    const vacancyId = urlMatch ? urlMatch[1] : null;
+
+    if (!vacancyId) {
+      autoLog.info('Cannot extract vacancy ID for cover letter');
+      return false;
+    }
+
+    // Collect vacancy data from multiple sources
+    let vacancy = window.__hhVacDetail || null;
+
+    // If no detail page data, try storage
+    if (!vacancy || vacancy.id !== vacancyId) {
+      try {
+        vacancy = await getVacancyDetail(vacancyId);
+      } catch (e) {
+        autoLog.warn('Could not load vacancy detail from storage: ' + e.message);
+      }
+    }
+
+    if (!vacancy) {
+      autoLog.info('No vacancy data available for cover letter generation');
+      return false;
+    }
+
+    // Get resume data
+    const resume = _activeResume;
+
+    // Read custom template from sidebar (if panel is open)
+    let template = null;
+    try {
+      const sidebarEl = document.querySelector('#hh-copilot-sidebar');
+      if (sidebarEl) {
+        const shadowRoot = sidebarEl.shadowRoot;
+        if (shadowRoot) {
+          const textarea = shadowRoot.getElementById('cover-letter-text');
+          if (textarea && textarea.value) {
+            template = textarea.value;
+          }
+        }
+      }
+    } catch (e) {
+      // Sidebar not available — use default template
+    }
+
+    // Generate cover letter
+    const result = generateCoverLetter(vacancy, resume, { template });
+
+    if (!result.text || result.text.length < 10) {
+      autoLog.info('Cover letter generation returned empty text (method: ' + result.method + ')');
+      return false;
+    }
+
+    // Fill the input — use native input value setter for React compatibility
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLTextAreaElement.prototype, 'value'
+    )?.set;
+
+    if (nativeInputValueSetter) {
+      nativeInputValueSetter.call(inputEl, result.text);
+    } else {
+      inputEl.value = result.text;
+    }
+
+    // Dispatch input event so React/Magritte picks up the change
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+
+    autoLog.info(
+      'Cover letter filled (' + result.text.length + ' chars, method: ' + result.method +
+      ', skills: ' + (result.placeholders.matching || 'none') + ')'
+    );
+
+    return true;
+  } catch (err) {
+    autoLog.warn('Cover letter fill failed: ' + err.message);
+    return false;
+  }
 }

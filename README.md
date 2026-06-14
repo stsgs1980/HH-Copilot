@@ -53,7 +53,7 @@ Current version (1.9.28.2) features a modular architecture based on esbuild. The
 
 **Version sync.** Version is synchronized between manifest.json, package.json, popup/index.html, and src/lib/version.js. The single source of truth is manifest.json (esbuild reads it and injects process.env.VERSION). Module src/lib/version.js contains the constant for reference but is not imported by any module.
 
-**Tests.** 67 unit tests based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), parse-experience (13 -- all experience string formats), selectors (9 -- ~= word-match, VotD selectors), vacancy-list (14 -- search page, main page, VotD, sponsored VotD, canonical URL), routing (10 -- all routes including main page). Run: `npm test`, watch mode: `npm run test:watch`.
+**Tests.** 68 unit tests based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), parse-experience (13 -- all experience string formats), selectors (9 -- ~= word-match, VotD selectors), vacancy-list (14 -- search page, main page, VotD, sponsored VotD, canonical URL), routing (10 -- all routes including main page). Run: `npm test`, watch mode: `npm run test:watch`.
 
 **Hot-reload for development.** WebSocket server (ws://localhost:35729) is started by `npm run watch`. On rebuild, the extension automatically reloads via chrome.runtime.reload(). Eliminates manual refresh in chrome://extensions.
 
@@ -204,7 +204,7 @@ src/                           -- source modules (140 JS files)
     tour-engine.js, tour-steps.js, tour-tooltip.js
     -- resume constants --
     resume-constants.js, resume-constants-core.js, resume-constants-title.js, resume-constants-visibility.js
-    -- resume fetch (27 files) --
+    -- resume fetch (26 files) --
     resume-fetch.js, resume-fetch-list.js, resume-fetch-resume.js, resume-fetch-resume-skills.js,
     resume-fetch-*.js (experience, strategy4-6, json-utils, education-languages, helpers,
     parse, parse-edu, vis-fallback, iframe-vis*, list-vis*, resume-diag, resume-exp-orch, resume-page-vis)
@@ -217,11 +217,11 @@ src/                           -- source modules (140 JS files)
     vacancy-detail-parsers.js   -- salary, experience, description parsers
     negotiations.js             -- stub (Phase 1)
     resume-detail.js            -- barrel to resume-detail/
-    resume-detail/ (14 files):
+    resume-detail/ (15 files):
       index.js, parse-resume.js, parse-company-card.js, parse-resume-sections.js,
       parse-resume-education.js, parse-resume-personal.js, parse-resume-contacts.js,
-      parse-resume-conditions.js, diagnose.js, diagnose-blocks.js, diagnose-elements.js,
-      diagnose-structure.js, resume-detail-debug-vis.js, resume-detail-list-parser.js
+      parse-resume-conditions.js, parse-resume-skills.js, diagnose.js, diagnose-blocks.js,
+      diagnose-elements.js, diagnose-structure.js, resume-detail-debug-vis.js, resume-detail-list-parser.js
   engine/ (4 files):
     index.js, apply-orchestrator.js, apply-actions.js, apply-queue.js
   services/ (1 file):
@@ -383,7 +383,7 @@ hh.ru is built on React 18 with Magritte UI. React uses synthetic events, so dir
 
 ### Rules
 
-The extension version is specified in manifest.json in the "version" field and follows the SemVer format (MAJOR.MINOR.PATCH). Every commit to the main branch with functional changes must be accompanied by a version bump. The version is automatically synchronized between manifest.json, package.json, popup/index.html, and src/ui/html/shell.js via the src/lib/version.js module. The single source of truth is manifest.json.
+The extension version is specified in manifest.json in the "version" field and follows the SemVer format (MAJOR.MINOR.PATCH). Every commit to the main branch with functional changes must be accompanied by a version bump. The version is automatically synchronized between manifest.json, package.json, popup/index.html, and src/lib/version.js. The single source of truth is manifest.json (esbuild reads it and injects `process.env.VERSION` at build time).
 
 **PATCH (third digit).** Bug fixes, selector updates without logic changes, minor popup style tweaks, documentation text updates. Example: 1.7.2 becomes 1.7.3.
 

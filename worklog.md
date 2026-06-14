@@ -2049,3 +2049,26 @@ Work Log:
 Stage Summary:
 - All 5 version sources synchronized to 1.9.28.2
 - CHANGELOG updated
+
+---
+Task ID: 8
+Agent: Main
+Task: Vacancy fetch integration audit, bug fixes, cover letter generator, parser unification
+
+Work Log:
+- Audited vacancy-fetch system — already exists and working (4 files, v1.9.29.0)
+- Fixed 3 bugs: cache badge, duplicate querySelector, version mismatch
+- Created cover-letter-generator.js — tailored cover letters using vacancy + resume data
+- Integrated cover letter into apply flow (fillCoverLetter + setActiveResumeForCoverLetter)
+- Unified parsers: vacancy-detail.js delegates to parseVacancyDetailFromDoc()
+- Merged salary/experience into top-level fields (removed *Structured dual model)
+- 104 tests passing across 7 test files
+
+Stage Summary:
+- NEW: cover-letter-generator.js (540 lines)
+- NEW: cover-letter.test.js (17 tests)
+- BUG FIX: enrichmentSource='cache' now works
+- BUG FIX: querySelector duplication removed
+- CHANGED: apply-actions fills cover letter instead of skipping
+- CHANGED: salary/experience merged into top-level during enrichment
+- CHANGED: vacancy-detail.js uses parseVacancyDetailFromDoc()

@@ -9,6 +9,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.29.0] — 2026-06-14
+
+### Added
+- **Vacancy deep fetch (background enrichment)** — previously, vacancy scoring on the search results page used only 2–5 tag skills from SERP cards. The system now fetches full vacancy detail pages in the background (via hidden iframe + text fetch fallback), parses keySkills, derivedSkills, description sections, structured salary/experience, and re-scores with enriched data. This makes match scoring as accurate on the search page as on the vacancy detail page.
+  - `vacancy-fetch.js` — orchestrator: cache enrichment → background fetch → re-score → UI update
+  - `vacancy-fetch-iframe.js` — Strategy 1: load vacancy page in hidden iframe, parse fully-rendered DOM
+  - `vacancy-fetch-text.js` — Strategy 2: fetch HTML via `fetch()`, parse with DOMParser (fallback)
+  - `vacancy-fetch-enrichment.js` — merge detail data into shallow vacancy objects, re-compute match score
+  - `parseVacancyDetailFromDoc()` — shared parser used by both strategies (no dependency on global `document`)
+- **Cache-based enrichment** — previously stored vacancy details (from visiting `/vacancy/{id}` pages) are now automatically used to enrich SERP vacancies. No network request needed for cached data < 24h old.
+- **Enrichment depth indicator in UI** — each vacancy card now shows a badge: `deep` (full analysis), `cache` (from storage), or `serp` (tags only, fetch in progress). Skill count shown per vacancy.
+- **Live score updates** — as each vacancy is enriched in the background, the vacancy list re-renders with the updated match score.
+- **Rate limiting** — gaussian delay (1.5–3.5s) between fetches, max 50 per batch, priority order (higher scores first).
+- **Tests** — 19 new tests for vacancy-fetch, vacancy-fetch-enrichment, and parseVacancyDetailFromDoc.
+
+### Changed
+- `handleVacancySearchPage()` now runs cache enrichment immediately, then starts background deep fetch
+- `handleMainPage()` now also enriches vacancies from cache and background fetch
+- SPA MutationObserver re-triggers enrichment when search results change
+- `renderVacancyList()` shows enrichment badges and skill counts
+
+---
+
 ## [1.9.28.2] — 2026-06-14
 
 ### Fixed
@@ -40,7 +63,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **VotD parsing (0/14)** — "Vacancy of the Day" on the hh.ru homepage returned 0 elements. Cause: VotD links are tracking URLs (`content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=XXX`), not standard `/vacancy/XXX`. `extractVacancyId()` now recognizes `?vacancyId=NNN` in query parameters. `parseVacanciesOfTheDay()` uses `titleEl.closest('a')` to find the click-URL.
 - Added 5 `extractVacancyId` tests for VotD URL patterns.
 - Added 6 VotD parsing tests with realistic DOM structure.
-- Test suite: 67 tests passing.
+- Test suite: 68 tests passing.
 
 ---
 

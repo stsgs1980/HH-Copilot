@@ -76,13 +76,13 @@ async function init() {
   window.addEventListener('hh-ar-apply', async (e) => {
     if (!panelState.isLoggedIn) return;
     const { applyToVacancy } = await import('../engine/index.js');
-    await applyToVacancy(e.detail.vacancyId);
+    await applyToVacancy(e.detail.vacancyId, panelState.resume);
   });
 
   window.addEventListener('hh-ar-apply-all', async () => {
     if (!panelState.isLoggedIn) return;
     const { applyToAll } = await import('../engine/index.js');
-    await applyToAll(panelState.vacancies);
+    await applyToAll(panelState.vacancies, undefined, panelState.resume);
   });
 
   window.addEventListener('hh-ar-refresh', async () => {

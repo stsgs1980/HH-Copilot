@@ -130,7 +130,7 @@ check_cascade_state() {
 
     # Check lastUpdated freshness
     local last_updated
-    last_updated=$(grep -oP '"lastUpdated"\s*:\s*"\K[^"]+' "$cascade_path" | head -1)
+    last_updated=$(grep -oP '"(lastUpdated|updatedAt)"\s*:\s*"\K[^"]+' "$cascade_path" | head -1)
 
     if [ -n "$last_updated" ]; then
         echo "  lastUpdated: $last_updated"
