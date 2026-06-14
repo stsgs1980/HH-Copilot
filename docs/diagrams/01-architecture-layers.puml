@@ -1,4 +1,4 @@
-@startuml HH-Copilot Architecture v1.9.30
+@startuml HH-Copilot Architecture v1.9.31
 !theme plain
 skinparam backgroundColor #FFFFFF
 skinparam componentStyle rectangle
@@ -18,7 +18,7 @@ skinparam package {
     FontStyle bold
 }
 
-title HH-Copilot v1.9.30 — Full Architecture\nSource: github.com/stsgs1980/HH-Copilot
+title HH-Copilot v1.9.31 — Full Architecture\nSource: github.com/stsgs1980/HH-Copilot
 
 package "Chrome Browser (Manifest V3)" as Browser {
 
