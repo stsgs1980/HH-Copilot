@@ -3,7 +3,7 @@
 **Document version:** 4.0.0
 **Date:** 2026-06-10
 **Status:** Master planning document
-**Current extension version:** 1.7.2
+**Current extension version:** 1.9.31.0
 
 ---
 
