@@ -8,6 +8,7 @@ All research documents for HH-Copilot project. Each document contains: findings,
 |---|------|-------|------|--------|-----------------|
 | 01 | [01-role-implied-skills.md](./01-role-implied-skills.md) | ESCO essential/optional skills → role-implied skills concept | 2026-06-15 | Research done, implementation partial | `role-implied-skills.js`, `quality-recommendations.js` |
 | 02 | [02-kula-ai-ats.md](./02-kula-ai-ats.md) | Kula.ai AI-Native ATS — features, scoring, matching | 2026-06-15 | Research done, not yet applied | Future: semantic matching, career alignment |
+| 03 | [03-votd-irrelevant-vacancies.md](./03-votd-irrelevant-vacancies.md) | VOTD irrelevant vacancies — root cause, DOM analysis, code trace | 2026-06-15 | Research done, NOT yet applied | `vacancy-fetch.js` filter, `main-page-handlers-pages.js` |
 
 ## Key Conclusions Summary
 
@@ -24,8 +25,20 @@ All research documents for HH-Copilot project. Each document contains: findings,
 - AI scoring on multiple axes (we have 4-axis, Kula has similar)
 - Career trajectory alignment (we detect progression, but don't use for scoring)
 
+### VOTD Irrelevant Vacancies (03)
+- **Problem:** 14/19 vacancies on main page are irrelevant VOTD ads (courier, cook, cleaner)
+- **Root cause:** VOTD is a PAID promotional product, NOT personalized. Only geo-filtered (region).
+- **Evidence:** Real DOM analysis of hh.ru main page + official hh.ru articles
+- **Waste:** 14 useless fetches × 2.5s = ~35s wasted network activity per page load
+- **Key insight:** SERP-stage matchScore (10-25%) is already sufficient to filter — fetch changes nothing
+- **Marker:** `source: 'votd'` already exists in code (vacancy-list.js:214) but not used for filtering
+
 ## TODO (from research, not yet implemented)
 - [ ] Integrate implied skills into `match-scorer-skills.js` (40% weight)
 - [ ] Expand role-implied map with more professions
 - [ ] Future: embedding-based semantic skill matching
 - [ ] Future: career trajectory alignment bonus
+- [ ] Add matchScore threshold to `fetchVacancyDetails()` filter (skip < minMatchScore)
+- [ ] Add source='votd' filter to skip fetch for VOTD vacancies
+- [ ] Optionally: separate VOTD in UI with clear labeling
+- [ ] Optionally: add setting to exclude VOTD entirely
