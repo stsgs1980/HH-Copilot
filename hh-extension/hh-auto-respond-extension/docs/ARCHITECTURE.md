@@ -1,6 +1,6 @@
 # HH Copilot -- Extension Architecture
 
-**Version:** 1.9.31.0
+**Version:** 1.9.30.0
 **Type:** Chrome Extension (Manifest V3)
 **Target Platform:** hh.ru (Magritte design system)
 

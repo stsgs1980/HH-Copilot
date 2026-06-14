@@ -1,4 +1,4 @@
-@startuml HH-Copilot Architecture v1.9.23
+@startuml HH-Copilot Architecture v1.9.30
 !theme plain
 skinparam backgroundColor #FFFFFF
 skinparam componentStyle rectangle
@@ -18,7 +18,7 @@ skinparam package {
     FontStyle bold
 }
 
-title HH-Copilot v1.9.23 — Full Architecture\nSource: github.com/stsgs1980/HH-Copilot
+title HH-Copilot v1.9.30 — Full Architecture\nSource: github.com/stsgs1980/HH-Copilot
 
 package "Chrome Browser (Manifest V3)" as Browser {
 
@@ -44,7 +44,6 @@ package "Chrome Browser (Manifest V3)" as Browser {
         package "Parsers" as Parsers #D1FAE5 {
             component [vacancy-list.js\nSearch results parser] as VL
             component [vacancy-detail.js\nVacancy page parser] as VD
-            component [vacancy-detail-skills.js\n3-strategy skill extraction] as VDS
             component [vacancy-diagnostic.js\nDiagnostics] as VDIAG
             component [negotiations.js\n**STUB — TODO**] as NEG #FEE2E2
 
@@ -107,7 +106,8 @@ package "Chrome Browser (Manifest V3)" as Browser {
 
         package "Quality Analysis" as Quality #DDD6FE {
             component [resume-quality-analyzer.js\nFacade] as RQA
-            component [quality-flags.js\nRed flags + recommendations] as QF
+            component [quality-flags.js\nRed flags] as QF
+            component [quality-recommendations.js\nRecommendations + implied] as QR
             component [quality-ats.js\nATS compatibility] as QAT
             component [quality-experience.js\nProgression detection] as QE
             component [quality-patterns.js\nAchievement verbs, metrics] as QP
@@ -143,6 +143,7 @@ package "Chrome Browser (Manifest V3)" as Browser {
             component [skill-dictionary.js\nSKILL_PATTERNS 50+] as SD
             component [skill-synonyms.js\nSynonym groups 50% weight] as SSYN
             component [derive-skills.js\nExperience -> skills] as DS
+            component [role-implied-skills.js\nPosition → implied skills 40%] as IMP
             component [vacancy-skills-collector.js\nShared skill collector] as VSC
             component [parse-experience.js\nExperience string parser] as PE
             component [timing.js\nGaussian delays, typing sim] as TIMING
@@ -189,9 +190,6 @@ MRL --> RF
 
 MSYNC --> RF
 
-VD --> VDS
-VDS --> SD
-VDS --> AH
 
 EO --> EA
 EO --> EQ
@@ -205,17 +203,19 @@ MS_LIB --> MSSK
 MS_LIB --> MSTI
 MS_LIB --> MSSA
 MS_LIB --> MSEX
-MSSK --> SD
+MSSK --> IMP
 MSSK --> SSYN
 MSEX --> PE
 
 MPH --> RQA
 RQA --> QF
+RQA --> QR
 RQA --> QAT
 QF --> QP
 QF --> QE
 QF --> QD
-QF --> SSYN
+QR --> SSYN
+QR --> IMP
 
 RDP --> RDPC
 RDP --> RDPSEC
@@ -255,6 +255,7 @@ UIP --> TOUR
 TRES --> VSC
 TVAC --> VSC
 TRES --> QF
+TRES --> QR
 
 UIP --> HIDX
 HIDX --> HTABS
@@ -267,6 +268,5 @@ MSYNC --> STGQ
 BGI <--> UIP : chrome.runtime\nmessages
 
 EO --> RL
-VL --> RL
 
 @enduml

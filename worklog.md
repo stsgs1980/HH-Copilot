@@ -2156,3 +2156,26 @@ Stage Summary:
 - match-scorer-skills.js: 5-tier hierarchy fully implemented
 - match-scorer.js: passes impliedMatchSkills through details
 - Test result: Руководитель 21/40 vs Менеджер 14/40 (same vacancy)
+
+---
+Task ID: audit-fixes-cleanup
+Agent: main
+Task: Fix all issues found in file relationship audit
+
+Work Log:
+- Deleted dead code: parsers/vacancy-detail-skills.js, parsers/vacancy-detail-parsers.js (orphaned since c536b74)
+- Fixed ARCHITECTURE.md version: 1.9.31.0 → 1.9.30.0 (was ahead of code)
+- Updated PUML 01-architecture-layers.puml: version v1.9.23 → v1.9.30
+- Removed VDS (vacancy-detail-skills.js) component and arrows from PUML
+- Added IMP (role-implied-skills.js) component to PUML
+- Added QR (quality-recommendations.js) component to PUML
+- Fixed PUML arrows: MSSK→SD→MSSK→IMP, QF→SSYN→QR→SSYN+QR→IMP
+- Added RQA→QR, TRES→QR connections
+- Removed false VL→RL arrow (rate-limiter used only by apply-orchestrator)
+- Deleted 6 unused barrel index.js files: lib/, parsers/, services/, ui/, ui/tabs/, ui/html/tabs/
+- All 104 tests pass
+
+Stage Summary:
+- 8 files deleted, 2 files updated
+- PUML diagram now matches actual import graph
+- Version sync: all sources at 1.9.30.0
