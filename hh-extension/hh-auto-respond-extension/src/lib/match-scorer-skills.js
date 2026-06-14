@@ -28,8 +28,10 @@ export function scoreSkills(resume, vacancy) {
   const resumeSkills = normalizeSkillSet(resume.skills || []);
   const derivedSkills = normalizeSkillSet(resume.derivedSkills || []);
 
-  // v1.9.19.0: Use vacancy.derivedSkills when no explicit keySkills
-  let vacancySkillsRaw = vacancy.keySkills || vacancy.skills || [];
+  // v1.9.32.0: Only use keySkills (employer-listed). Never fall back to
+  // vacancy.skills (search card tags — too noisy, 5-10 random pills per card).
+  // derivedSkills used only when keySkills is empty.
+  let vacancySkillsRaw = vacancy.keySkills || [];
   if (vacancySkillsRaw.length === 0 && vacancy.derivedSkills && vacancy.derivedSkills.length > 0) {
     skillLog.info('No vacancy keySkills — using derivedSkills (' + vacancy.derivedSkills.length + ')');
     vacancySkillsRaw = vacancy.derivedSkills;

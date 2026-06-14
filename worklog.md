@@ -2249,3 +2249,27 @@ Work Log:
 Stage Summary:
 - Bug fixed: skill comparison now uses only the currently open vacancy, not all search results
 - 2 files modified
+
+---
+Task ID: fix-skills-v2-deep
+Agent: main
+Task: Deep fix for skill scoring — remove vacancy.skills/tags from all paths
+
+Work Log:
+- User reported 70 missing skills from skill gap analysis (21 match + 7 synonym + 70 miss = 98 total)
+- Traced all data paths that feed vacancy skills into scoring/recommendations
+- Root cause #1: collectFromVacancyObject() merged v.tags + v.skills + v.keySkills + v.derivedSkills into one Set
+  - v.tags and v.skills come from search card bloko-tag pills (5-10 per card, 20+ cards = 100-200 tags)
+  - These are NOT employer-listed requirements, just search metadata
+- Root cause #2: match-scorer-skills.js used `vacancy.keySkills || vacancy.skills || []`, falling back to noisy tags
+- Fix in vacancy-skills-collector.js:
+  - collectDetailVacancySkills() now uses keySkills ONLY, derivedSkills as fallback when keySkills empty
+  - collectAllVacancySkills() also fixed: keySkills only, never tags/skills
+- Fix in match-scorer-skills.js:
+  - Removed `vacancy.skills` from fallback chain: `vacancy.keySkills || []` + derivedSkills fallback
+- Build successful
+
+Stage Summary:
+- Three sources of skill noise eliminated: v.tags, v.skills, and merge-all-vacancies
+- Only employer-listed keySkills used for comparison (derivedSkills as last resort)
+- 3 files modified total (collector, scorer, + previous UI fixes)
