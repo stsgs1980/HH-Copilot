@@ -57,7 +57,7 @@ const QUEUE_ITEM_MAX_AGE = 600000;
 export async function processNextInQueue() {
   const queue = await getApplyQueue();
   if (queue.length === 0) {
-    autoLog.info('Queue empty — mass apply complete');
+    autoLog.info('Queue empty -- mass apply complete');
     return;
   }
 

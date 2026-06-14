@@ -119,7 +119,7 @@ async function init() {
   // panel/index.js dispatches 'hh-ar-init-page-logic' when auth changes to true.
   // This avoids dynamic import() which doesn't work in esbuild IIFE bundles.
   window.addEventListener('hh-ar-init-page-logic', () => {
-    mainLog.info('Received hh-ar-init-page-logic event → calling initPageLogic()');
+    mainLog.info('Received hh-ar-init-page-logic event -> calling initPageLogic()');
     initPageLogic();
   });
 
@@ -145,7 +145,7 @@ async function init() {
     const resume = e.detail?.resume || panelState.resume;
     if (!resume) return;
     if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
-    mainLog.info('Resume loaded — re-scoring vacancy detail page');
+    mainLog.info('Resume loaded -- re-scoring vacancy detail page');
     try {
       const detail = parseVacancyDetail();
       if (detail) {
@@ -230,12 +230,12 @@ if (!('update_url' in chrome.runtime.getManifest())) {
     const hmr = new WebSocket('ws://localhost:35729');
     hmr.onmessage = (e) => {
       if (e.data === 'reload') {
-        mainLog.info('[hmr] Reload signal received — reloading extension');
+        mainLog.info('[hmr] Reload signal received -- reloading extension');
         chrome.runtime.reload();
       }
     };
     hmr.onopen = () => mainLog.info('[hmr] Connected to dev server');
-    hmr.onerror = () => {}; // server not running — that's fine
+    hmr.onerror = () => {}; // server not running -- that's fine
     hmr.onclose = () => mainLog.info('[hmr] Disconnected from dev server');
   } catch (e) {
     // WebSocket not available — ignore

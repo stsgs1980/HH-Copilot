@@ -16,10 +16,10 @@ import {
  */
 export function checkBodyIndicators(bodyText) {
   if (hasHiddenIndicator(bodyText)) {
-    return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S3:body-has-hidden-indicator → HIDDEN' };
+    return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S3:body-has-hidden-indicator -> HIDDEN' };
   }
   if (hasVisibleIndicator(bodyText)) {
-    return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S3:body-has-visible-indicator → VISIBLE' };
+    return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S3:body-has-visible-indicator -> VISIBLE' };
   }
   return { visibility: null, trace: 'iframe-S3:body-no-indicators' };
 }
@@ -32,10 +32,10 @@ export function checkBodyIndicators(bodyText) {
 export function checkBodyVisibilityText(bodyText) {
   const bodyLower = bodyText.toLowerCase();
   if (bodyLower.includes('не видят') || bodyLower.includes('не\u00A0видят') || bodyLower.includes('не видно')) {
-    return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S5:body-has-"не видят/не видно" → HIDDEN' };
+    return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S5:body-has-"не видят/не видно" -> HIDDEN' };
   }
   if (bodyLower.includes('видно всем')) {
-    return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S5:body-has-"видно всем" → VISIBLE' };
+    return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S5:body-has-"видно всем" -> VISIBLE' };
   }
   return { visibility: null, trace: null };
 }
@@ -52,10 +52,10 @@ export function checkScriptPatterns(iframeDoc) {
       if (t.length < 50) continue;
       if (/"hidden"\s*:\s*true/.test(t) || /"isHidden"\s*:\s*true/.test(t) ||
           /"visibility"\s*:\s*"hidden"/.test(t) || /"status"\s*:\s*"hidden"/.test(t)) {
-        return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S6:script-has-hidden-pattern → HIDDEN' };
+        return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S6:script-has-hidden-pattern -> HIDDEN' };
       }
       if (/"hidden"\s*:\s*false/.test(t) || /"visibility"\s*:\s*"visible"/.test(t)) {
-        return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S6:script-has-visible-pattern → VISIBLE' };
+        return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S6:script-has-visible-pattern -> VISIBLE' };
       }
     }
   } catch (e) {
@@ -79,7 +79,7 @@ export function checkNotificationBanners(iframeDoc) {
     if (el) {
       const elText = normalizeWs(el.textContent || '').toLowerCase();
       if (elText.includes('не видят') || elText.includes('скрыт') || elText.includes('сделать видим')) {
-        return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S7:notification=' + sel + ' text="' + elText.substring(0, 40) + '" → HIDDEN' };
+        return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S7:notification=' + sel + ' text="' + elText.substring(0, 40) + '" -> HIDDEN' };
       }
     }
   }
@@ -96,7 +96,7 @@ export function checkActionLinks(iframeDoc) {
     const href = (link.getAttribute('href') || '').toLowerCase();
     const linkText = normalizeWs((link.textContent || '')).toLowerCase();
     if (href.includes('publish') || href.includes('make_visible') || href.includes('show')) {
-      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S8:action-link href="' + href.substring(0, 60) + '" text="' + linkText.substring(0, 40) + '" → HIDDEN' };
+      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S8:action-link href="' + href.substring(0, 60) + '" text="' + linkText.substring(0, 40) + '" -> HIDDEN' };
     }
   }
   return { visibility: null, trace: 'iframe-S8:no-action-links' };

@@ -182,7 +182,7 @@ export async function parseVacanciesOfTheDay(resume) {
     }
 
     if (!vacancyId) {
-      parserLog.warn('VotD #' + i + ': could not extract vacancy ID — skipping');
+      parserLog.warn('VotD #' + i + ': could not extract vacancy ID -- skipping');
       continue;
     }
 

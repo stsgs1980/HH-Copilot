@@ -25,7 +25,7 @@ export function parseExperienceString(raw) {
   }
 
   // "N–M лет" / "N-M лет" / "N — M лет" (range)
-  const rangeMatch = text.match(/(\d+)\s*[–—\-\s]+\s*(\d+)/);
+  const rangeMatch = text.match(/(\d+)\s*[----\-\s]+\s*(\d+)/);
   if (rangeMatch) {
     return { raw, min: parseInt(rangeMatch[1], 10), max: parseInt(rangeMatch[2], 10) };
   }

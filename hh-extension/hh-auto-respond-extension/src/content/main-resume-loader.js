@@ -125,7 +125,7 @@ async function loadFromResumePage(path) {
     window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume } }));
   } else {
     setStatus('Не удалось распознать резюме на этой странице (нет данных)');
-    loadLog.warn('Parse result has no useful data — not saving. Found: ' +
+    loadLog.warn('Parse result has no useful data -- not saving. Found: ' +
       JSON.stringify(resume._debug?.found) + ' Missing: ' +
       JSON.stringify(resume._debug?.missing));
   }
@@ -149,7 +149,7 @@ async function loadFromResumeListPage() {
     // Notify listeners that resume is available
     window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: synced[0] } }));
   } else {
-    setStatus('Найдено резюме: ' + list.length + '. Нажмите «Синхронизировать» для загрузки');
+    setStatus('Найдено резюме: ' + list.length + '. Нажмите "Синхронизировать" для загрузки');
   }
 }
 
@@ -165,7 +165,7 @@ async function loadFromSyncedData() {
     // Notify listeners that resume is available
     window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: synced[0] } }));
   } else {
-    setStatus('Нет сохранённых резюме. Используйте «Синхронизировать все»');
+    setStatus('Нет сохранённых резюме. Используйте "Синхронизировать все"');
     loadLog.info('No synced resumes available on non-resume page');
   }
 }

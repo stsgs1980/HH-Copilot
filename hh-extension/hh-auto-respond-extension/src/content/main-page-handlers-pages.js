@@ -148,7 +148,7 @@ export async function handleVacancyDetailPage(path) {
         saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
         window.dispatchEvent(new CustomEvent('hh-ar-match-updated', { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
       } else {
-        pageLog.info('No active resume — skip match scoring');
+        pageLog.info('No active resume -- skip match scoring');
       }
       pageLog.info('Vacancy parsed: ' + detail.title + ' | skills=' + detail.keySkills.length + ' | salary=' + detail.salary.raw);
       window.__hhVacDetail = detail;
@@ -189,7 +189,7 @@ export async function handleVacancyDetailPage(path) {
 let mainPageObserverActive = false;
 
 export async function handleMainPage() {
-  pageLog.info('Main page detected — parsing recommended vacancies + "Vacancy of the Day"');
+  pageLog.info('Main page detected -- parsing recommended vacancies + "Vacancy of the Day"');
 
   const recommended = await parseVacanciesFromPage(panelState.resume);
   const votd = await parseVacanciesOfTheDay(panelState.resume);
@@ -240,7 +240,7 @@ function startBackgroundEnrichment(vacancies) {
 
   // Don't start if already fetching (previous batch still running)
   if (isVacancyFetching()) {
-    pageLog.info('Background enrichment already in progress — skipping');
+    pageLog.info('Background enrichment already in progress -- skipping');
     return;
   }
 
@@ -250,7 +250,7 @@ function startBackgroundEnrichment(vacancies) {
       // Re-render the vacancy list with updated scores
       try {
         renderVacancyList();
-        pageLog.info('UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" → ' + vacancy.matchScore + '%');
+        pageLog.info('UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" -> ' + vacancy.matchScore + '%');
       } catch (e) {
         pageLog.warn('UI update after enrichment failed: ' + e.message);
       }
@@ -276,5 +276,5 @@ export async function saveResumeToState(resume) {
     });
   });
   window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume } }));
-  pageLog.info('Resume loaded → dispatched hh-ar-resume-loaded');
+  pageLog.info('Resume loaded -> dispatched hh-ar-resume-loaded');
 }

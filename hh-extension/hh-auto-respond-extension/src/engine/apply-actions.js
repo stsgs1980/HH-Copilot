@@ -167,7 +167,7 @@ export async function waitForPopupAndSubmit() {
   // or the page already shows "already applied"
   const alreadyEl = findElement('alreadyApplied');
   if (alreadyEl) {
-    autoLog.info('Popup not needed — already applied indicator found');
+    autoLog.info('Popup not needed -- already applied indicator found');
     return { success: true };
   }
 

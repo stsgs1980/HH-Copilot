@@ -61,7 +61,7 @@ export function renderMyResumesPanel() {
   }
 
   if (resumes.length === 0) {
-    listEl.innerHTML = '<div style="padding:8px;text-align:center;">Нажмите «Синхронизировать все» для загрузки резюме</div>';
+    listEl.innerHTML = '<div style="padding:8px;text-align:center;">Нажмите "Синхронизировать все" для загрузки резюме</div>';
     return;
   }
 
@@ -86,7 +86,7 @@ export function renderMyResumesPanel() {
     const reparseIcon = isActive
       ? '<button class="btn btn-outline btn-sm" data-action="reparse-resume" title="' + (vis === 'hidden' ? 'Перепарсить скрытое' : 'Перепарсить') + '" ' +
         'style="padding:2px 6px;font-size:13px;line-height:1;' + (vis === 'hidden' ? 'color:#b45309;border-color:#fbbf24;' : '') + '">' +
-        '↻</button>'
+        '(R)</button>'
       : '';
     return '<div class="har-my-resume-item" data-resume-idx="' + idx + '" style="padding:8px;border-bottom:1px solid #e4e4e7;cursor:pointer;display:flex;align-items:flex-start;gap:8px;' +
       (isActive ? 'background:#f0fdf4;border-radius:6px;' : '') +
@@ -134,7 +134,7 @@ export function renderResumeListPanel() {
   if (!container) return;
   const list = panelState.resumeList;
   if (!list || list.length === 0) {
-    container.innerHTML = '<div class="har-empty">Список резюме пуст.<br>Нажмите «Загрузить» для выбора.</div>';
+    container.innerHTML = '<div class="har-empty">Список резюме пуст.<br>Нажмите "Загрузить" для выбора.</div>';
     return;
   }
   container.innerHTML =
@@ -146,7 +146,7 @@ export function renderResumeListPanel() {
         (isActive ? '<span class="har-resume-loaded-badge">загружено</span>' : '') +
         '</div>';
     }).join('') +
-    '<div class="har-resume-list-hint">Нажмите, чтобы открыть резюме в новой вкладке, затем нажмите «Загрузить».</div>';
+    '<div class="har-resume-list-hint">Нажмите, чтобы открыть резюме в новой вкладке, затем нажмите "Загрузить".</div>';
 
   container.querySelectorAll('.har-resume-list-link').forEach(link => {
     link.addEventListener('click', (e) => {

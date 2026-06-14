@@ -55,12 +55,12 @@ export async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) 
     const iframeVisResult = detectVisibilityFromIframeDoc(iframeDoc);
     iframeVisResult.iframeDiag = iframeDiag;
     fetchLog.info('[VIS-DIAG] iframe visibility: ' + iframeVisResult.visibility +
-      ' (trace: ' + iframeVisResult.trace.join(' → ') + ')');
+      ' (trace: ' + iframeVisResult.trace.join(' -> ') + ')');
 
     // Count experience cards before expansion
     const preCards = iframeDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
     const preSteppers = iframeDoc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
-    fetchLog.info('Strategy 6 iframe: before expand — ' + preCards.length + ' company-cards, ' + preSteppers.length + ' stepper-items');
+    fetchLog.info('Strategy 6 iframe: before expand -- ' + preCards.length + ' company-cards, ' + preSteppers.length + ' stepper-items');
 
     // Click "Развернуть" buttons
     const clicked = clickExpandButtons(iframeDoc);
@@ -72,7 +72,7 @@ export async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) 
 
     const postCards = iframeDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
     const postSteppers = iframeDoc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
-    fetchLog.info('Strategy 6 iframe: after expand — ' + postCards.length + ' company-cards, ' + postSteppers.length + ' stepper-items');
+    fetchLog.info('Strategy 6 iframe: after expand -- ' + postCards.length + ' company-cards, ' + postSteppers.length + ' stepper-items');
 
     const entries = parseExperienceFromIframeDoc(iframeDoc);
     fetchLog.info('Strategy 6 iframe: parsed ' + entries.length + ' experience entries');

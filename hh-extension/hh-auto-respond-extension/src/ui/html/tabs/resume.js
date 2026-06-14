@@ -17,7 +17,7 @@ export function getResumeSection() {
       </div>
       <div class="timeline-body" id="res-sync-body" style="margin-top:10px;">
         <div id="res-sync-list" style="font-size:11px;color:#52525b;">
-          Нажмите «Синхронизировать все» для загрузки резюме
+          Нажмите "Синхронизировать все" для загрузки резюме
         </div>
         <div id="res-cta-load" style="padding-top:6px;display:none;">
           <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">

@@ -56,7 +56,7 @@ export async function tryApplicantApi(resumeId, currentCount) {
 
         const jsonEntries = parseExperienceFromJson(data);
         if (jsonEntries.length > currentCount) {
-          fetchLog.info('Strategy 6: SUCCESS from ' + source + ' — got ' + jsonEntries.length + ' experiences');
+          fetchLog.info('Strategy 6: SUCCESS from ' + source + ' -- got ' + jsonEntries.length + ' experiences');
           return jsonEntries;
         }
         fetchLog.info('Strategy 6: [' + source + '] JSON had ' + jsonEntries.length + ' experiences (need > ' + currentCount + ')');

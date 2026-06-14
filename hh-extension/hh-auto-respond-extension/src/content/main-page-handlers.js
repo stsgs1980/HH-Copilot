@@ -36,7 +36,7 @@ let pageLogicInitialized = false;
  */
 export async function initPageLogic() {
   if (pageLogicInitialized) {
-    pageLog.info('Page logic already initialized — skipping duplicate');
+    pageLog.info('Page logic already initialized -- skipping duplicate');
     return;
   }
   pageLogicInitialized = true;
@@ -105,7 +105,7 @@ function onSPANavigate(newPath) {
   spaTimer = setTimeout(async () => {
     if (window.location.pathname === lastHandledPath) return;
     const path = window.location.pathname;
-    pageLog.info('SPA navigate: ' + lastHandledPath + ' → ' + path);
+    pageLog.info('SPA navigate: ' + lastHandledPath + ' -> ' + path);
     await routeToHandler(path);
     lastHandledPath = path;
   }, 300);

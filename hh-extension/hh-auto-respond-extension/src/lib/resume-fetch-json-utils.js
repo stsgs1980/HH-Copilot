@@ -76,7 +76,7 @@ export function buildEntryFromApiItem(item) {
     const rawEnd = item.end || item.endDate;
     const end = rawEnd || (isCurrent ? 'настоящее время' : '');
     if (typeof start === 'string') {
-      job.period = start + ' — ' + end;
+      job.period = start + ' -- ' + end;
     } else if (start && start.year) {
       const months = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
       const startStr = (start.month ? months[start.month - 1] + ' ' : '') + start.year;
@@ -86,7 +86,7 @@ export function buildEntryFromApiItem(item) {
       } else if (end && typeof end === 'string' && end.length > 0) {
         endStr = end;
       }
-      job.period = startStr + ' — ' + endStr;
+      job.period = startStr + ' -- ' + endStr;
     }
   }
   if (item.description) job.description = item.description;

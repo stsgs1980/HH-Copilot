@@ -76,33 +76,33 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     }
 
     if (missing.length > 0) {
-      const sample = missing.slice(0, 5).map(s => '«' + s + '»').join(', ');
+      const sample = missing.slice(0, 5).map(s => '"' + s + '"').join(', ');
       const suffix = missing.length > 5 ? ' и ещё ' + (missing.length - 5) : '';
       recs.push({
         priority: 'high',
-        text: missing.length + ' навыков вакансии нет в резюме: ' + sample + suffix + ' — добавьте для лучшего мэтчинга',
-        tooltip: missing.map(s => '«' + s + '»').join(', ')
+        text: missing.length + ' навыков вакансии нет в резюме: ' + sample + suffix + ' -- добавьте для лучшего мэтчинга',
+        tooltip: missing.map(s => '"' + s + '"').join(', ')
       });
     }
 
     if (related.length > 0) {
-      const sample = related.slice(0, 3).map(s => '«' + s + '»').join(', ');
+      const sample = related.slice(0, 3).map(s => '"' + s + '"').join(', ');
       const suffix = related.length > 3 ? ' и ещё ' + (related.length - 3) : '';
       recs.push({
         priority: 'medium',
-        text: 'Связанные навыки: ' + sample + suffix + ' — упомяните явно для точного мэтчинга',
-        tooltip: related.map(s => '«' + s + '»').join(', ')
+        text: 'Связанные навыки: ' + sample + suffix + ' -- упомяните явно для точного мэтчинга',
+        tooltip: related.map(s => '"' + s + '"').join(', ')
       });
     }
 
     // v1.9.31.0: Skills implied by position (self-evident from role, low priority)
     if (implied.length > 0) {
-      const sample = implied.slice(0, 5).map(s => '«' + s + '»').join(', ');
+      const sample = implied.slice(0, 5).map(s => '"' + s + '"').join(', ');
       const suffix = implied.length > 5 ? ' и ещё ' + (implied.length - 5) : '';
       recs.push({
         priority: 'low',
         text: implied.length + ' навыков подразумеваются должностью: ' + sample + suffix,
-        tooltip: implied.map(s => '«' + s + '»').join(', ')
+        tooltip: implied.map(s => '"' + s + '"').join(', ')
       });
     }
   }

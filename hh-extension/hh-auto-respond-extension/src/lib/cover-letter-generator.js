@@ -56,7 +56,7 @@ const MAX_REQUIREMENTS_QUOTE = 3;
  */
 export function generateCoverLetter(vacancy, resume, options) {
   if (!vacancy) {
-    clLog.warn('No vacancy provided — returning empty letter');
+    clLog.warn('No vacancy provided -- returning empty letter');
     return { text: '', placeholders: {}, method: 'none' };
   }
 
@@ -265,7 +265,7 @@ function parsePeriodToMonths(period) {
   };
 
   // Match "Month Year — Month Year" or "Month Year — Present/Настоящее"
-  const rangeMatch = period.match(/(\w{3})\s*(\d{4})\s*[–\-—]\s*(?:(\w{3})\s*(\d{4})|(настоящее|настоящее время|present|сейчас))/i);
+  const rangeMatch = period.match(/(\w{3})\s*(\d{4})\s*[--\---]\s*(?:(\w{3})\s*(\d{4})|(настоящее|настоящее время|present|сейчас))/i);
   if (!rangeMatch) return 0;
 
   const startMonth = months[rangeMatch[1].toLowerCase().substring(0, 3)] || 1;
@@ -335,7 +335,7 @@ function extractKeyPhrases(text, maxPhrases) {
   const scored = lines.map(line => {
     let score = 0;
     // Bullet points are usually key requirements
-    if (/^[–\-•·▪▸▹→]/.test(line)) score += 2;
+    if (/^[--\->]/.test(line)) score += 2;
     // Lines with skill keywords
     if (/зна(?:ние|ю|ния)|владел|опыт|умение|работа\s*с|пониман/i.test(line)) score += 3;
     // Medium-length lines (not too short, not too long)

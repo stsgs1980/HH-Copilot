@@ -17,10 +17,10 @@ export function checkVisibilityCard(iframeDoc) {
   if (visCard) {
     const cardText = normalizeWs(visCard.textContent || '').toLowerCase();
     if (cardText.includes('не видно никому') || cardText.includes('не\u00A0видно никому')) {
-      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S0:visibility-card="не видно никому" → HIDDEN' };
+      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S0:visibility-card="не видно никому" -> HIDDEN' };
     }
     if (cardText.includes('видно всем') || cardText.includes('видно\u00A0всем')) {
-      return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S0:visibility-card="видно всем" → VISIBLE' };
+      return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S0:visibility-card="видно всем" -> VISIBLE' };
     }
     return { visibility: null, trace: 'iframe-S0:visibility-card-unknown-text="' + cardText.substring(0, 60) + '"' };
   }
@@ -35,7 +35,7 @@ export function checkHiddenDataQa(iframeDoc) {
   for (const sel of VISIBILITY_HIDDEN_DATA_QA) {
     const found = iframeDoc.querySelector(sel);
     if (found) {
-      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S1:data-qa=' + sel + ' → HIDDEN' };
+      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S1:data-qa=' + sel + ' -> HIDDEN' };
     }
   }
   return { visibility: null, trace: 'iframe-S1:no-data-qa-hidden' };
@@ -51,10 +51,10 @@ export function checkKeyButtons(allButtons) {
     const text = normalizeWs((btn.textContent || '')).toLowerCase();
     const qa = (btn.getAttribute('data-qa') || '').toLowerCase();
     if (text.includes('сделать видимым') || qa.includes('make-visible') || qa.includes('show-resume')) {
-      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S2:btn="сделать видимым" → HIDDEN' };
+      return { visibility: VISIBILITY_HIDDEN, trace: 'iframe-S2:btn="сделать видимым" -> HIDDEN' };
     }
     if (text.includes('скрыть резюме') || qa.includes('hide-resume') || qa.includes('resume-action-hide')) {
-      return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S2:btn="скрыть резюме" → VISIBLE' };
+      return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S2:btn="скрыть резюме" -> VISIBLE' };
     }
   }
   return { visibility: null, trace: 'iframe-S2:no-key-buttons' };
@@ -67,7 +67,7 @@ export function checkKeyButtons(allButtons) {
 export function checkHideLink(iframeDoc) {
   const hideLink = iframeDoc.querySelector('[data-qa="resume-action-hide"], [data-qa*="resume-hide"], a[data-qa*="hide-resume"]');
   if (hideLink) {
-    return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S4:hide-link-found → VISIBLE' };
+    return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S4:hide-link-found -> VISIBLE' };
   }
   return { visibility: null, trace: 'iframe-S4:no-hide-link' };
 }

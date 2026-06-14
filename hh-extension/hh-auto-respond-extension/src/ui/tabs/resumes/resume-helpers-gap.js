@@ -90,11 +90,11 @@ export function updateSkillGapSection(r) {
   if (subtitle) {
     const resumeTitle = r.title || 'Без названия';
     if (matchPct >= 80) {
-      subtitle.textContent = resumeTitle + ' — топ ' + Math.round(100 - matchPct) + '% кандидатов';
+      subtitle.textContent = resumeTitle + ' -- топ ' + Math.round(100 - matchPct) + '% кандидатов';
     } else if (matchPct >= 50) {
-      subtitle.textContent = resumeTitle + ' — совпадение ' + matchPct + '%';
+      subtitle.textContent = resumeTitle + ' -- совпадение ' + matchPct + '%';
     } else {
-      subtitle.textContent = resumeTitle + ' — рекомендуется дополнить навыки';
+      subtitle.textContent = resumeTitle + ' -- рекомендуется дополнить навыки';
     }
   }
 
@@ -154,7 +154,7 @@ function updateSynonymGapRow(rowId, countId, listId, synonyms) {
     const visible = synonyms.slice(0, 5);
     const remainder = synonyms.length - visible.length;
     let html = visible.map(s =>
-      '<span class="skill-tag skill-synonym" title="Связанный навык: «' + esc(s.resume) + '» ~ «' + esc(s.vacancy) + '»">' +
+      '<span class="skill-tag skill-synonym" title="Связанный навык: "' + esc(s.resume) + '" ~ "' + esc(s.vacancy) + '"">' +
       esc(s.vacancy) + ' ~ ' + esc(s.resume) + '</span>'
     ).join('');
     if (remainder > 0) {

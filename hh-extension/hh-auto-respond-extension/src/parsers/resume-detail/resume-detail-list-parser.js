@@ -46,7 +46,7 @@ export function parseResumeList() {
     resumeLog.info('Strategy 0: all ' + resumes.length + ' resumes detected from link text');
   } else {
     const unknownResumes = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
-    resumeLog.info('Strategy 0: ' + (resumes.length - unknownResumes.length) + ' detected, ' + unknownResumes.length + ' unknown — trying data-qa cards');
+    resumeLog.info('Strategy 0: ' + (resumes.length - unknownResumes.length) + ' detected, ' + unknownResumes.length + ' unknown -- trying data-qa cards');
 
     // Strategy 1: data-qa card containers
     let filled = 0;
@@ -117,7 +117,7 @@ export function parseResumeList() {
   // Summary
   const stillUnknown = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
   if (stillUnknown.length > 0) {
-    resumeLog.info('List visibility: ' + stillUnknown.length + ' resumes still UNKNOWN — will be resolved by detail page detection');
+    resumeLog.info('List visibility: ' + stillUnknown.length + ' resumes still UNKNOWN -- will be resolved by detail page detection');
   }
   const hiddenCount = resumes.filter(r => r.visibility === VISIBILITY_HIDDEN).length;
   const visibleCount = resumes.filter(r => r.visibility === VISIBILITY_VISIBLE).length;

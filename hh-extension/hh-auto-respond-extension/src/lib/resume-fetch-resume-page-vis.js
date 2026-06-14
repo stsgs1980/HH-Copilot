@@ -32,19 +32,19 @@ const visLog = createLogger('ResumeFetch');
  * @returns {{ visibility: string, trace: string[] }}
  */
 export function detectVisibilityFromResumePage(doc, html) {
-  const diag = []; // diagnostic trace — every step logged
+  const diag = []; // diagnostic trace -- every step logged
 
   // ═══ Strategy 0: Check resume-visibility-card (PRIMARY for Magritte) ═══
   const visCard = doc.querySelector('[data-qa="resume-visibility-card"]');
   if (visCard) {
     const cardText = normalizeWs(visCard.textContent || '').toLowerCase();
     if (cardText.includes('не видно никому') || cardText.includes('не\u00A0видно никому')) {
-      diag.push('S0:visibility-card="не видно никому" → HIDDEN');
+      diag.push('S0:visibility-card="не видно никому" -> HIDDEN');
       visLog.info('[VIS-DIAG] ' + diag.join(' | '));
       return { visibility: VISIBILITY_HIDDEN, trace: diag };
     }
     if (cardText.includes('видно всем') || cardText.includes('видно\u00A0всем')) {
-      diag.push('S0:visibility-card="видно всем" → VISIBLE');
+      diag.push('S0:visibility-card="видно всем" -> VISIBLE');
       visLog.info('[VIS-DIAG] ' + diag.join(' | '));
       return { visibility: VISIBILITY_VISIBLE, trace: diag };
     }
@@ -57,7 +57,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   for (const sel of VISIBILITY_HIDDEN_DATA_QA) {
     const found = doc.querySelector(sel);
     if (found) {
-      diag.push('S1:data-qa=' + sel + ' → HIDDEN');
+      diag.push('S1:data-qa=' + sel + ' -> HIDDEN');
       visLog.info('[VIS-DIAG] ' + diag.join(' | '));
       return { visibility: VISIBILITY_HIDDEN, trace: diag };
     }
@@ -74,13 +74,13 @@ export function detectVisibilityFromResumePage(doc, html) {
       btnDetails.push('"' + text.substring(0, 40) + '"' + (qa ? '[qa=' + qa + ']' : ''));
     }
     if (text.includes('сделать видимым')) {
-      diag.push('S2:btn="сделать видимым" → HIDDEN');
+      diag.push('S2:btn="сделать видимым" -> HIDDEN');
       visLog.info('[VIS-DIAG] ' + diag.join(' | '));
       visLog.info('[VIS-DIAG] All vis-related buttons: ' + JSON.stringify(btnDetails));
       return { visibility: VISIBILITY_HIDDEN, trace: diag, btnDetails };
     }
     if (text.includes('скрыть резюме')) {
-      diag.push('S2:btn="скрыть резюме" → VISIBLE');
+      diag.push('S2:btn="скрыть резюме" -> VISIBLE');
       visLog.info('[VIS-DIAG] ' + diag.join(' | '));
       visLog.info('[VIS-DIAG] All vis-related buttons: ' + JSON.stringify(btnDetails));
       return { visibility: VISIBILITY_VISIBLE, trace: diag, btnDetails };
@@ -95,7 +95,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     for (const ind of ['многие не видят', 'сделать видимым', 'не видно']) {
       const pos = lower.indexOf(ind);
       if (pos !== -1) {
-        diag.push('S3:body has "' + ind + '" @' + pos + ' → HIDDEN');
+        diag.push('S3:body has "' + ind + '" @' + pos + ' -> HIDDEN');
         break;
       }
     }
@@ -103,7 +103,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     return { visibility: VISIBILITY_HIDDEN, trace: diag };
   }
   if (hasVisibleIndicator(bodyText)) {
-    diag.push('S3:body has visible indicator → VISIBLE');
+    diag.push('S3:body has visible indicator -> VISIBLE');
     visLog.info('[VIS-DIAG] ' + diag.join(' | '));
     return { visibility: VISIBILITY_VISIBLE, trace: diag };
   }
@@ -117,7 +117,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     for (const ind of ['многие не видят', 'сделать видимым', 'не видно']) {
       const pos = lower.indexOf(ind);
       if (pos !== -1) {
-        diag.push('S4:html has "' + ind + '" @' + pos + ' → HIDDEN');
+        diag.push('S4:html has "' + ind + '" @' + pos + ' -> HIDDEN');
         break;
       }
     }
@@ -125,7 +125,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     return { visibility: VISIBILITY_HIDDEN, trace: diag };
   }
   if (hasVisibleIndicator(htmlNorm)) {
-    diag.push('S4:html has visible indicator → VISIBLE');
+    diag.push('S4:html has visible indicator -> VISIBLE');
     visLog.info('[VIS-DIAG] ' + diag.join(' | '));
     return { visibility: VISIBILITY_VISIBLE, trace: diag };
   }
@@ -148,7 +148,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     }
   }
   if (scriptPatterns.length > 0) {
-    diag.push('S5:script=' + scriptPatterns.join(',') + ' → HIDDEN');
+    diag.push('S5:script=' + scriptPatterns.join(',') + ' -> HIDDEN');
     visLog.info('[VIS-DIAG] ' + diag.join(' | '));
     return { visibility: VISIBILITY_HIDDEN, trace: diag, scriptPatterns };
   }
@@ -158,7 +158,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   const hideLink = doc.querySelector('[data-qa="resume-action-hide"], [data-qa*="resume-hide"], a[data-qa*="hide-resume"]');
   if (hideLink) {
     const hideQa = hideLink.getAttribute('data-qa') || '';
-    diag.push('S6:hide-link qa=' + hideQa + ' → VISIBLE');
+    diag.push('S6:hide-link qa=' + hideQa + ' -> VISIBLE');
     visLog.info('[VIS-DIAG] ' + diag.join(' | '));
     return { visibility: VISIBILITY_VISIBLE, trace: diag };
   }
@@ -171,7 +171,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     diag.push('EXTRA:hide-qa=' + hideQas.join(','));
   }
 
-  diag.push('→ UNKNOWN');
+  diag.push('-> UNKNOWN');
   visLog.info('[VIS-DIAG] ' + diag.join(' | '));
   return { visibility: VISIBILITY_UNKNOWN, trace: diag };
 }

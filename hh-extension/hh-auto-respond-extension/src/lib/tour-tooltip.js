@@ -63,7 +63,7 @@ export function renderTooltip(targetEl, step, idx, stepsLen) {
     positionTooltip(tooltip, targetRect, pos);
     // Make visible after positioning
     tooltip.style.visibility = 'visible';
-    console.log('[Tour] tooltip visible — positioned and shown');
+    console.log('[Tour] tooltip visible -- positioned and shown');
   });
 }
 

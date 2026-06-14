@@ -53,7 +53,7 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
     iframeDiag = iframeResult.iframeDiag;
 
     if (iframeResult.entries.length > currentCount) {
-      fetchLog.info('Strategy 6: SUCCESS via iframe — got ' + iframeResult.entries.length + ' experiences, vis=' + iframeVis);
+      fetchLog.info('Strategy 6: SUCCESS via iframe -- got ' + iframeResult.entries.length + ' experiences, vis=' + iframeVis);
       return {
         entries: iframeResult.entries,
         iframeVis, iframeVisTrace, iframeDiag
@@ -88,7 +88,7 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
       fetchLog.info('Strategy 6: fetching [' + source + '] ' + url);
       const urlEntries = await tryFetchExpandedUrl(url, currentCount);
       if (urlEntries && urlEntries.length > currentCount) {
-        fetchLog.info('Strategy 6: SUCCESS from ' + source + ' — got ' + urlEntries.length + ' experiences');
+        fetchLog.info('Strategy 6: SUCCESS from ' + source + ' -- got ' + urlEntries.length + ' experiences');
         return withVis({ entries: urlEntries });
       }
     } catch (err) {
@@ -125,7 +125,7 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
         if (expCards.length > currentCount || stepperItems.length > currentCount) {
           const parsed = parseExperienceFromExpandedDoc(expandedDoc, expandedHtml, currentCount);
           if (parsed.length > currentCount) {
-            fetchLog.info('Strategy 6: SUCCESS from ' + source + ' — got ' + parsed.length + ' experiences');
+            fetchLog.info('Strategy 6: SUCCESS from ' + source + ' -- got ' + parsed.length + ' experiences');
             return withVis({ entries: parsed });
           }
         }

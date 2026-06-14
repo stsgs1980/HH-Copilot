@@ -67,7 +67,7 @@ export function extractVisibilityStatus(doc, resumes, html) {
     alreadyDetected + ' already from link text, ' + needDetection + ' need detection)');
 
   if (needDetection === 0) {
-    visLog.info('All resumes already detected from link text — skipping other strategies');
+    visLog.info('All resumes already detected from link text -- skipping other strategies');
     logVisibilitySummary(resumes);
     return;
   }
@@ -130,9 +130,9 @@ export function extractVisibilityStatus(doc, resumes, html) {
   // NO FINAL FALLBACK: Keep UNKNOWN as UNKNOWN — detail page will resolve
   const unknownAfterAll = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
   if (unknownAfterAll.length > 0) {
-    visLog.info('[VIS-DIAG] List: ' + unknownAfterAll.length + ' resumes still UNKNOWN — will be resolved by detail page detection');
+    visLog.info('[VIS-DIAG] List: ' + unknownAfterAll.length + ' resumes still UNKNOWN -- will be resolved by detail page detection');
     unknownAfterAll.forEach(r => {
-      visLog.info('[VIS-DIAG]   List: ' + r.id.substring(0, 8) + ' "' + (r.title || '').substring(0, 30) + '" → ' + r.visibility);
+      visLog.info('[VIS-DIAG]   List: ' + r.id.substring(0, 8) + ' "' + (r.title || '').substring(0, 30) + '" -> ' + r.visibility);
     });
   }
 

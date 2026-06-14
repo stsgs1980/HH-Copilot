@@ -19,14 +19,14 @@ export function checkSelectors() {
       try {
         const el = document.querySelector(sel);
         if (el && document.body.contains(el)) {
-          console.log('%c  ✓ ' + key + ' → ' + sel, 'color:#22c55e', 'text:', (el.textContent || '').trim().substring(0, 60));
+          console.log('%c  + ' + key + ' -> ' + sel, 'color:#22c55e', 'text:', (el.textContent || '').trim().substring(0, 60));
           found = true;
           break;
         }
       } catch (e) {}
     }
     if (!found) {
-      console.log('%c  ✗ ' + key + ' → none matched', 'color:#ef4444', 'tried:', sels);
+      console.log('%c  x ' + key + ' -> none matched', 'color:#ef4444', 'tried:', sels);
     }
   });
   console.groupEnd();

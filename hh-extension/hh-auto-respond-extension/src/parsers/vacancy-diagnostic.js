@@ -114,7 +114,7 @@ export function diagnoseVacancyPage() {
 
   // Send to page-world.js
   window.postMessage({ type: 'HH-AR-VAC-DIAG', payload: result }, '*');
-  diagLog.info('Vacancy diagnostic complete — use __hhVacDiag() in console');
+  diagLog.info('Vacancy diagnostic complete -- use __hhVacDiag() in console');
 
   return result;
 }

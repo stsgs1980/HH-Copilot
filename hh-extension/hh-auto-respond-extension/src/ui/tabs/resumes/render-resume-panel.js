@@ -57,9 +57,9 @@ export function renderResumePanel() {
     const pageType = getResumePageType();
     let hint = 'Выберите резюме ниже или перейдите на страницу резюме.';
     if (pageType === 'resume-list') {
-      hint = 'Нажмите «Синхронизировать все» ниже.';
+      hint = 'Нажмите "Синхронизировать все" ниже.';
     } else if (pageType === 'resume-detail') {
-      hint = 'Нажмите «Взять со страницы» ниже.';
+      hint = 'Нажмите "Взять со страницы" ниже.';
     }
     container.innerHTML = '<div class="har-empty">Действующее резюме не выбрано.<br>' + hint + '</div>';
     updateAccordionHeader(null);
@@ -78,7 +78,7 @@ export function renderResumePanel() {
     '<div class="tl-item">' + buildLanguagesSection(r) + '</div>' +
     '<div class="tl-item">' + buildContactsSection(r) + '</div>' +
     (vis === 'hidden'
-      ? '<div style="font-size:10px;color:#92400e;padding:6px 4px 0 28px;">Скрытое резюме не видно работодателям — мэтчинг недоступен</div>'
+      ? '<div style="font-size:10px;color:#92400e;padding:6px 4px 0 28px;">Скрытое резюме не видно работодателям -- мэтчинг недоступен</div>'
       : '');
 
   // Attach sub-accordion toggle listeners
@@ -127,10 +127,10 @@ function updateResumeScore(r) {
   // ── Verdict subtitle ──
   const subtitle = refs.shadowRoot?.getElementById('res-score-subtitle');
   if (subtitle) {
-    if (pct >= 80) subtitle.textContent = 'Сильное резюме — ATS пропустит, HR заметит';
-    else if (pct >= 60) subtitle.textContent = 'Хорошее резюме — есть что усилить';
-    else if (pct >= 40) subtitle.textContent = 'Среднее — ATS может отсеять, HR не увидит ценности';
-    else subtitle.textContent = 'Слабое — высокая вероятность отсева на этапе ATS';
+    if (pct >= 80) subtitle.textContent = 'Сильное резюме -- ATS пропустит, HR заметит';
+    else if (pct >= 60) subtitle.textContent = 'Хорошее резюме -- есть что усилить';
+    else if (pct >= 40) subtitle.textContent = 'Среднее -- ATS может отсеять, HR не увидит ценности';
+    else subtitle.textContent = 'Слабое -- высокая вероятность отсева на этапе ATS';
   }
 
   // ── ATS + Experience mini-scores ──

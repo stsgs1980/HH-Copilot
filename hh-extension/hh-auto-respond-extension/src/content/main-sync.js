@@ -39,7 +39,7 @@ export async function handleSyncResumes() {
     const results = await syncAllResumes({
       onProgress: (done, total, msg) => {
         syncLog.info('Sync: [' + done + '/' + total + '] ' + msg);
-        setStatus('Синхр.: ' + done + '/' + total + ' — ' + msg);
+        setStatus('Синхр.: ' + done + '/' + total + ' -- ' + msg);
         renderSyncProgress(done, total, msg);
       },
       onError: (item, err) => {

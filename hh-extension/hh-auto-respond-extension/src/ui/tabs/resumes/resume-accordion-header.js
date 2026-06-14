@@ -59,7 +59,7 @@ export function updateAccordionHeader(resume) {
       const expYears = calcExperienceYears(resume);
       if (expYears > 0) parts.push(expYears + ' ' + yearWord(expYears) + ' опыта');
       if (resume.skills && resume.skills.length) parts.push(resume.skills.length + ' навыков');
-      subtitleEl.textContent = parts.join(' • ') || 'Резюме загружено';
+      subtitleEl.textContent = parts.join(' - ') || 'Резюме загружено';
     }
     if (badgeEl) {
       const vis = resume.visibility || (resume.hidden ? 'hidden' : 'unknown');

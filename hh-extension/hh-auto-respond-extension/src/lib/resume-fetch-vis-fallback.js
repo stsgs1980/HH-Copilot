@@ -24,16 +24,16 @@ export function applyVisibilityFallback(results, visDiag) {
   const iframeNotRan = stillUnknown.filter(r => !r._visDiag?.iframeRan);
 
   if (iframeNotRan.length > 0) {
-    fetchLog.info('[VIS-DIAG] Final fallback: ' + iframeNotRan.length + ' resumes UNKNOWN (iframe not run) → defaulting to VISIBLE');
+    fetchLog.info('[VIS-DIAG] Final fallback: ' + iframeNotRan.length + ' resumes UNKNOWN (iframe not run) -> defaulting to VISIBLE');
     visDiag.summary.unknownFallbackToVisible = iframeNotRan.length;
     iframeNotRan.forEach(r => {
-      fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" UNKNOWN→VISIBLE (iframe not run)');
+      fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" UNKNOWN->VISIBLE (iframe not run)');
       r.visibility = VISIBILITY_VISIBLE;
       r.hidden = false;
       const diagEntry = visDiag.resumes.find(d => d.id === r.id);
       if (diagEntry) {
         diagEntry.finalVisibility = VISIBILITY_VISIBLE;
-        diagEntry.decisionReason += ' [FALLBACK: UNKNOWN→VISIBLE, iframe not run]';
+        diagEntry.decisionReason += ' [FALLBACK: UNKNOWN->VISIBLE, iframe not run]';
       }
     });
   }
@@ -41,7 +41,7 @@ export function applyVisibilityFallback(results, visDiag) {
   if (iframeRan.length > 0) {
     fetchLog.info('[VIS-DIAG] Keeping UNKNOWN for ' + iframeRan.length + ' resumes (iframe ran but returned UNKNOWN)');
     iframeRan.forEach(r => {
-      fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" → UNKNOWN (iframe ran, no indicators found)');
+      fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" -> UNKNOWN (iframe ran, no indicators found)');
       const diagEntry = visDiag.resumes.find(d => d.id === r.id);
       if (diagEntry) {
         diagEntry.finalVisibility = VISIBILITY_UNKNOWN;
@@ -71,14 +71,14 @@ export function finalizeVisDiag(results, visDiag) {
   visDiag.summary.unknown = results.filter(r => r.visibility === VISIBILITY_UNKNOWN).length;
   visDiag.finishedAt = new Date().toISOString();
 
-  fetchLog.info('[VIS-DIAG] ═══ FINAL VISIBILITY SUMMARY ═══');
+  fetchLog.info('[VIS-DIAG] === FINAL VISIBILITY SUMMARY ===');
   fetchLog.info('[VIS-DIAG] Total: ' + visDiag.summary.total +
     ', Visible: ' + visDiag.summary.visible +
     ', Hidden: ' + visDiag.summary.hidden +
     ', Unknown: ' + visDiag.summary.unknown +
     ', Fallbacks: ' + visDiag.summary.unknownFallbackToVisible);
   results.forEach(r => {
-    fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" → ' + r.visibility);
+    fetchLog.info('[VIS-DIAG]   ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 30) + '" -> ' + r.visibility);
   });
 
   // Expose global diagnostic via window + postMessage

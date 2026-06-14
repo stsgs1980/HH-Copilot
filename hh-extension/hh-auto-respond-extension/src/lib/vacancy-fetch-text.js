@@ -215,9 +215,9 @@ function parseSalaryFromDoc(doc, vacancy) {
 
   vacancy.salary.net = raw.includes('на руки') || raw.includes('после вычета');
 
-  if (raw.includes('₽') || raw.includes('руб')) vacancy.salary.currency = 'RUB';
+  if (raw.includes('руб.') || raw.includes('руб')) vacancy.salary.currency = 'RUB';
   else if (raw.includes('$') || raw.includes('USD')) vacancy.salary.currency = 'USD';
-  else if (raw.includes('€') || raw.includes('EUR')) vacancy.salary.currency = 'EUR';
+  else if (raw.includes('евро') || raw.includes('EUR')) vacancy.salary.currency = 'EUR';
 }
 
 function parseExperienceFromDoc(doc, vacancy) {

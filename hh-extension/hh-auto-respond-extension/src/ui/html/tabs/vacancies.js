@@ -146,7 +146,7 @@ export function getVacanciesSection() {
         </div>
         <div id="res-gap-match-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
       </div>
-      <!-- Row 2: Synonym (v1.9.22.0 — related skills) -->
+      <!-- Row 2: Synonym (v1.9.22.0 -- related skills) -->
       <div id="res-gap-synonym-row" style="margin-bottom:8px;display:none;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
           <span style="width:7px;height:7px;border-radius:50%;background:#D97706;flex-shrink:0;"></span>

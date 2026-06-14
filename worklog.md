@@ -2318,3 +2318,33 @@ Work Log:
 Stage Summary:
 - ≈ → ~ in all skill synonym displays
 - 3 files modified
+
+---
+Task ID: unicode-policy-enforcement
+Agent: main
+Task: Enforce UNICODE_POLICY (STD-DOC-003) - remove all [C] violations from UI code
+
+Work Log:
+- User flagged typography issues caused by Unicode characters violating UNICODE_POLICY
+- Audited all .js files against policy: ASCII + Cyrillic only for [C] level
+- Found 255 violations across 49 files
+- Mass-replaced in UI-facing code:
+  - « » (guillemets) -> " " (straight quotes)
+  - — (em dash) -> -- (double hyphen)
+  - → (right arrow) -> ->
+  - ≥ -> >=
+  - ₽ -> руб.
+  - € -> евро
+  - • (bullet) -> -
+  - ↻ -> (R)
+  - ✓ -> +
+  - ✗ -> x
+  - ═ -> =
+  - 🚀 (emoji!) -> removed
+- Exempted: page-world.js (debug console, [I] level), regex patterns in parsers
+- Build successful
+
+Stage Summary:
+- 225 Unicode characters replaced across 49 files
+- 1 remaining: ₽ in vacancy-diagnostic-detectors.js regex (parser pattern matching, [I] level)
+- All [C] level violations eliminated

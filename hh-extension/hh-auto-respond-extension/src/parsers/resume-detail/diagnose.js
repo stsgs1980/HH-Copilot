@@ -17,7 +17,7 @@ import { dumpExperienceBlock, dumpEducationBlock } from './diagnose-blocks.js';
  * Delegates to focused scanners for each diagnostic area.
  */
 export function diagnoseResumeDOM() {
-  console.log('%c[HH-AR][DIAG] ═══ DOM DIAGNOSTIC DUMP ═══', 'color:#2964FF;font-weight:bold;font-size:14px');
+  console.log('%c[HH-AR][DIAG] === DOM DIAGNOSTIC DUMP ===', 'color:#2964FF;font-weight:bold;font-size:14px');
   console.log('[HH-AR][DIAG] URL:', window.location.href);
   console.log('[HH-AR][DIAG] Page type:', getResumePageType());
 
@@ -37,6 +37,6 @@ export function diagnoseResumeDOM() {
   dumpExperienceBlock();
   dumpEducationBlock();
 
-  console.log('%c[HH-AR][DIAG] ═══ END DUMP ═══', 'color:#2964FF;font-weight:bold');
+  console.log('%c[HH-AR][DIAG] === END DUMP ===', 'color:#2964FF;font-weight:bold');
   console.log('%c[HH-AR][DIAG] Скопируй ВЕСЬ вывод из консоли и отправь мне.', 'color:#ef4444;font-size:13px');
 }

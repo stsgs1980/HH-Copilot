@@ -110,7 +110,7 @@ export function buildLanguagesSection(r) {
       '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' +
       (r.languages || []).map(l => {
         if (typeof l === 'string') {
-          const parts = l.split(/\s*[—–-]\s*/);
+          const parts = l.split(/\s*[-----]\s*/);
           const lang = parts[0] || l;
           const level = parts[1] || '\u2014';
           return '<span style="color:#52525b;">' + esc(lang) + '</span><span style="font-weight:500;">' + esc(level) + '</span>';

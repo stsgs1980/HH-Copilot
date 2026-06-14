@@ -33,7 +33,7 @@ export function scoreSkills(resume, vacancy) {
   // derivedSkills used only when keySkills is empty.
   let vacancySkillsRaw = vacancy.keySkills || [];
   if (vacancySkillsRaw.length === 0 && vacancy.derivedSkills && vacancy.derivedSkills.length > 0) {
-    skillLog.info('No vacancy keySkills — using derivedSkills (' + vacancy.derivedSkills.length + ')');
+    skillLog.info('No vacancy keySkills -- using derivedSkills (' + vacancy.derivedSkills.length + ')');
     vacancySkillsRaw = vacancy.derivedSkills;
   }
   const vacancySkills = normalizeSkillSet(vacancySkillsRaw);
@@ -94,7 +94,7 @@ export function scoreSkills(resume, vacancy) {
 
   skillLog.info('explicit=' + matching.length + ' derived=' + derivedMatch.length +
     ' synonym=' + synonymMatch.length + ' implied=' + impliedMatch.length +
-    ' missing=' + missing.length + ' → ' + score + '/40');
+    ' missing=' + missing.length + ' -> ' + score + '/40');
 
   return { score, matching, missing, extra, derivedMatch, synonymMatch, impliedMatch };
 }

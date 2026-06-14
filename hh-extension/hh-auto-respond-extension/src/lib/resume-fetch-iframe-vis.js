@@ -88,7 +88,7 @@ export function detectVisibilityFromIframeDoc(iframeDoc) {
     visLog.info('[VIS-IFRAME] Related elements: ' + JSON.stringify(visElements));
   }
 
-  trace.push('→ UNKNOWN');
+  trace.push('-> UNKNOWN');
   visLog.info('[VIS-IFRAME] All strategies exhausted. Buttons found: ' + diagButtons.length +
     ', Related elements: ' + visElements.length);
   return { visibility: VISIBILITY_UNKNOWN, trace };

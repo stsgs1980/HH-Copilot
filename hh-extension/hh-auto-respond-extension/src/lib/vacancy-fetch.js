@@ -96,7 +96,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
   }
 
   if (isFetching) {
-    fetchLog.warn('Fetch already in progress — skipping');
+    fetchLog.warn('Fetch already in progress -- skipping');
     return { fetched: 0, failed: 0, cached: 0, total: 0 };
   }
 

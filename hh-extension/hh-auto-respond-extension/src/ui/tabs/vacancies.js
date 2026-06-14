@@ -38,11 +38,11 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
   const subtitle = refs.shadowRoot?.getElementById('vac-match-subtitle');
   if (subtitle) {
     if (score >= 70) {
-      subtitle.textContent = 'Отличное совпадение — рекомендуем откликнуться';
+      subtitle.textContent = 'Отличное совпадение -- рекомендуем откликнуться';
     } else if (score >= 40) {
-      subtitle.textContent = 'Частичное совпадение — стоит рассмотреть';
+      subtitle.textContent = 'Частичное совпадение -- стоит рассмотреть';
     } else {
-      subtitle.textContent = 'Низкое совпадение — навыки не подходят';
+      subtitle.textContent = 'Низкое совпадение -- навыки не подходят';
     }
   }
 
@@ -172,7 +172,7 @@ export function renderVacancyList() {
       ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;" title="Полный анализ описания вакансии">deep</span>'
       : v.enrichmentSource === 'cache'
         ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;" title="Данные из кэша (ранее посещённая вакансия)">cache</span>'
-        : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#F4F4F5;color:#71717A;border:1px solid #D4D4D8;" title="Только данные из карточки поиска — полный анализ в процессе">serp</span>';
+        : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#F4F4F5;color:#71717A;border:1px solid #D4D4D8;" title="Только данные из карточки поиска -- полный анализ в процессе">serp</span>';
 
     const skillCount = (v.keySkills && v.keySkills.length > 0)
       ? `<span style="font-size:11px;color:#059669;" title="Навыки из описания вакансии">${v.keySkills.length} навыков</span>`

@@ -44,11 +44,11 @@ export function analyzeExperience(r) {
 
   add('Метрики в описаниях', 18,
     hasMetrics,
-    'HR ищет цифры: "на 30%", "в 2 раза", "100+ серверов" — без них описание = перечень обязанностей'
+    'HR ищет цифры: "на 30%", "в 2 раза", "100+ серверов" -- без них описание = перечень обязанностей'
   );
   add('3+ метрики', 7,
     metricCount >= 3,
-    '3 и более метрик — сигнал что вы фокусируетесь на результатах, а не процессе'
+    '3 и более метрик -- сигнал что вы фокусируетесь на результатах, а не процессе'
   );
 
   // ── Глаголы достижений ──
@@ -56,7 +56,7 @@ export function analyzeExperience(r) {
   const achievementVerbCount = ACHIEVEMENT_VERBS.filter(v => descLower.includes(v)).length;
   add('Глаголы достижений', 12,
     achievementVerbCount > 0,
-    'Начинайте с "увеличил", "внедрил", "автоматизировал" — это язык результатов, не обязанностей'
+    'Начинайте с "увеличил", "внедрил", "автоматизировал" -- это язык результатов, не обязанностей'
   );
 
   // ── Нет размытых формулировок ──
@@ -70,9 +70,9 @@ export function analyzeExperience(r) {
   const expsWithDesc = exps.filter(e => e.description && e.description.length > 50);
   add('Описания к позициям', 10,
     expsWithDesc.length > 0,
-    'HR не видит ценности в позиции без описания — что вы там делали?'
+    'HR не видит ценности в позиции без описания -- что вы там делали?'
   );
-  add('Все позиции с описанием ≥50 символов', 5,
+  add('Все позиции с описанием >=50 символов', 5,
     exps.length > 0 && expsWithDesc.length === exps.length,
     'Каждая позиция заслуживает описания хотя бы в 2-3 предложения'
   );
@@ -98,7 +98,7 @@ export function analyzeExperience(r) {
   const progressionPassed = hasProgression || isTopLevel;
   const progressionTip = progressionPassed
     ? ''
-    : 'Рост в должностях — сильный сигнал для HR (специалист → старший → руководитель)';
+    : 'Рост в должностях -- сильный сигнал для HR (специалист -> старший -> руководитель)';
   add('Карьерный рост', 8,
     progressionPassed,
     progressionTip
@@ -111,14 +111,14 @@ export function analyzeExperience(r) {
   );
   add('Позиция релевантна опыту', 7,
     titleRelevant || positions.length === 0,
-    'Заголовок резюме должен соответствовать последней позиции — иначе HR запутается'
+    'Заголовок резюме должен соответствовать последней позиции -- иначе HR запутается'
   );
 
   // ── О себе ──
   const aboutLen = (r.additionalInfo || '').length;
   add('Блок "О себе"', 5,
     aboutLen > 50,
-    'Краткое саммари из 2-3 предложений — первое, что читает HR'
+    'Краткое саммари из 2-3 предложений -- первое, что читает HR'
   );
 
   const score = total > 0 ? Math.round((earned / total) * 100) : 0;

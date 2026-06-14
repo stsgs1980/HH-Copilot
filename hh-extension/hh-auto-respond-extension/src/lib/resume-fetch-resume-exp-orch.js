@@ -103,7 +103,7 @@ function applyIframeVisibilityOverride(resume, iframeVis, iframeVisTrace, iframe
 
   if (iframeVis === VISIBILITY_HIDDEN && prevVis !== VISIBILITY_HIDDEN) {
     expLog.info('[VIS-DIAG] iframe OVERRIDE: ' + (resume.id ? resume.id.substring(0, 8) : '?') +
-      ' was ' + prevVis + ', iframe says HIDDEN → overriding');
+      ' was ' + prevVis + ', iframe says HIDDEN -> overriding');
     resume.visibility = VISIBILITY_HIDDEN;
     resume.hidden = true;
     if (resume._visDiag) {
@@ -113,7 +113,7 @@ function applyIframeVisibilityOverride(resume, iframeVis, iframeVisTrace, iframe
     }
   } else if (iframeVis === VISIBILITY_VISIBLE && prevVis === VISIBILITY_UNKNOWN) {
     expLog.info('[VIS-DIAG] iframe OVERRIDE: ' + (resume.id ? resume.id.substring(0, 8) : '?') +
-      ' was UNKNOWN, iframe says VISIBLE → overriding');
+      ' was UNKNOWN, iframe says VISIBLE -> overriding');
     resume.visibility = VISIBILITY_VISIBLE;
     resume.hidden = false;
     if (resume._visDiag) {

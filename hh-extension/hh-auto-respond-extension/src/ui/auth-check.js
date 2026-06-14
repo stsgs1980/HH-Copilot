@@ -82,10 +82,10 @@ export async function checkAuthAsync() {
     // Sync says "authorized" — verify via cookies as second opinion
     const cookieResult = await checkCookiesViaBackground();
     if (cookieResult === null) {
-      return syncResult; // Background unavailable — trust sync
+      return syncResult; // Background unavailable -- trust sync
     }
     if (!cookieResult) {
-      console.log('[HH-AR][Auth] Async: sync=authorized, cookies=NO → false');
+      console.log('[HH-AR][Auth] Async: sync=authorized, cookies=NO -> false');
       return false;
     }
     return true;
@@ -94,7 +94,7 @@ export async function checkAuthAsync() {
   // Sync says NOT authorized — check cookies as potential override
   const cookieResult = await checkCookiesViaBackground();
   if (cookieResult === true) {
-    console.log('[HH-AR][Auth] Async: sync=not authorized, cookies=YES → true (cookie override)');
+    console.log('[HH-AR][Auth] Async: sync=not authorized, cookies=YES -> true (cookie override)');
     return true;
   }
 

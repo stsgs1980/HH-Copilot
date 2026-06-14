@@ -22,12 +22,12 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
   // Russian month names used by hh.ru in date ranges
   const MONTHS = 'январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья]';
   const DATE_RANGE_RE = new RegExp(
-    '(' + MONTHS + ')\\s*\\d{4}\\s*[—\\-–]\\s*(?:(' + MONTHS + ')\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)',
+    '(' + MONTHS + ')\\s*\\d{4}\\s*[--\\---]\\s*(?:(' + MONTHS + ')\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)',
     'gi'
   );
 
   // Also try numeric date patterns: "01.2020 — настоящее время"
-  const NUM_DATE_RE = /\d{2}\.\d{4}\s*[—\-–]\s*(?:\d{2}\.\d{4}|настоящее\s*время|по\s+настоящее\s+время)/gi;
+  const NUM_DATE_RE = /\d{2}\.\d{4}\s*[--\---]\s*(?:\d{2}\.\d{4}|настоящее\s*время|по\s+настоящее\s+время)/gi;
 
   // Search the ENTIRE HTML for date ranges first (section boundaries may be wrong)
   const allDateRanges = [];
