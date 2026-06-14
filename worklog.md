@@ -2213,3 +2213,20 @@ Stage Summary:
 - All version references in project now at 1.9.31.0
 - Only exception: cascade-state.json PROC-COCHANGE (AHG internal, not ours)
 - File creation headers (v1.9.30.0: created) left as-is (historical)
+
+---
+Task ID: version-sync-cleanup
+Agent: main
+Task: Sync stale version references in README.md and TASK-CASCADE.md
+
+Work Log:
+- Found 4 files with stale/corrupted version strings after v1.9.31.0 bump
+- Reverted overreaching commit that incorrectly modified standard docs (UNICODE_POLICY.md)
+- Applied targeted fixes: README.md (1.9.28.2→1.9.31.0, 3 locations), TASK-CASCADE.md (1.7.2→1.9.31.0 header)
+- Left UNICODE_POLICY.md version untouched — it is STD-DOC-003, version belongs to the standard not the extension
+- Committed, pushed, built v1.9.31.0 dist, created zip
+
+Stage Summary:
+- README.md + TASK-CASCADE.md synced to 1.9.31.0
+- UNICODE_POLICY.md NOT modified (standard document, not project version)
+- v1.9.31.0 pushed, built, zip in /download/
