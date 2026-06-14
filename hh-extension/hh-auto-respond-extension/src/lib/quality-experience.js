@@ -93,7 +93,7 @@ export function analyzeExperience(r) {
   const hasProgression = detectProgression(positions);
   // Если человек уже на руководящей позиции — считаем рост достигнутым
   const isTopLevel = positions.some(p =>
-    /(?:^|[\s/(-])(head|руководител|руководств|director|директор|начальник|cто|cto|vp)(?:$|[\s/)-,.])/i.test(p)
+    /(?:^|[\s/(-])(head|руководител[а-яА-ЯёЁ]*|руководств[а-яА-ЯёЁ]*|director|директор[а-яА-ЯёЁ]*|начальник[а-яА-ЯёЁ]*|cто|cto|vp)(?:$|[\s/)-,.])/i.test(p)
   );
   const progressionPassed = hasProgression || isTopLevel;
   const progressionTip = progressionPassed
@@ -142,10 +142,10 @@ export function detectProgression(positions) {
 
   const lvl = (p) => {
     const pl = p.toLowerCase();
-    if (/(?:^|[\s/(-])(intern|стажёр|стажер|junior|младш|trainee)(?:$|[\s/)-,.])/i.test(pl)) return 1;
-    if (/(?:^|[\s/(-])(middle|средн)(?:$|[\s/)-,.])/i.test(pl)) return 2;
-    if (/(?:^|[\s/(-])(senior|ведущ|старш|lead|principal|staff)(?:$|[\s/)-,.])/i.test(pl)) return 3;
-    if (/(?:^|[\s/(-])(head|руководител|руководств|director|директор|начальник|cто|cto|vp)(?:$|[\s/)-,.])/i.test(pl)) return 4;
+    if (/(?:^|[\s/(-])(intern|стажёр[а-яА-ЯёЁ]*|стажер[а-яА-ЯёЁ]*|junior|младш[а-яА-ЯёЁ]*|trainee)(?:$|[\s/)-,.])/i.test(pl)) return 1;
+    if (/(?:^|[\s/(-])(middle|средн[а-яА-ЯёЁ]*)(?:$|[\s/)-,.])/i.test(pl)) return 2;
+    if (/(?:^|[\s/(-])(senior|ведущ[а-яА-ЯёЁ]*|старш[а-яА-ЯёЁ]*|lead|principal|staff)(?:$|[\s/)-,.])/i.test(pl)) return 3;
+    if (/(?:^|[\s/(-])(head|руководител[а-яА-ЯёЁ]*|руководств[а-яА-ЯёЁ]*|director|директор[а-яА-ЯёЁ]*|начальник[а-яА-ЯёЁ]*|cто|cto|vp)(?:$|[\s/)-,.])/i.test(pl)) return 4;
     return 2;
   };
 

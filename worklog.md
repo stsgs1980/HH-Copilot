@@ -2101,3 +2101,19 @@ Work Log:
 Stage Summary:
 - All 5 version files synchronized: manifest.json, package.json, version.js, popup/index.html, README.md
 - ahg bump has a bug with HTML files — corrupted popup/index.html (reported to user)
+
+---
+Task ID: 6
+Agent: main
+Task: Fix Russian stem regex in quality-experience.js — Cyrillic word endings broke career progression detection
+
+Work Log:
+- Diagnosed bug: Russian stems like "руководител" didn't match "руководитель" because "ь" after stem wasn't in boundary charset
+- Same issue affected "старший", "младший", "ведущий", "директор", "начальник" in all declined forms
+- Added [а-яА-ЯёЁ]* suffix absorber after all Russian stems in both isTopLevel regex and detectProgression lvl() function
+- 104/104 tests pass, build OK
+
+Stage Summary:
+- Fixed career progression detection for all Russian position titles with suffixes/declensions
+- "Руководитель отделов продаж" now correctly triggers isTopLevel=true
+---
