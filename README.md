@@ -16,7 +16,7 @@ The project was originally developed as part of a large automation system (Next.
 
 The target audience is job seekers who send dozens of responses per day and want to speed up this process without losing quality. The extension doesn't replace the person entirely, but automates the mechanical part: searching, filtering, filling in fields, sending responses. The decision about which vacancies to respond to is made by the user (manual mode) or the scoring algorithm (semi-automatic and automatic modes).
 
-Current version (1.9.31.0) features a modular architecture based on esbuild. The content script is built from 140 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI (↻ for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions) -- all of this is working. AI cover letters and negotiations parser are stubs, planned for subsequent phases.
+Current version (1.9.28.2) features a modular architecture based on esbuild. The content script is built from 140 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI (↻ for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions) -- all of this is working. AI cover letters and negotiations parser are stubs, planned for subsequent phases.
 
 
 ## 2. Features
@@ -155,7 +155,7 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
 ### Extension code (hh-extension/hh-auto-respond-extension/)
 
 ```
-manifest.json                  -- Manifest V3 configuration (v1.9.31.0, source of truth for version)
+manifest.json                  -- Manifest V3 configuration (v1.9.28.2, source of truth for version)
 package.json                   -- esbuild, build/watch scripts
 esbuild.config.mjs              -- build configuration (IIFE, bundle, output → dist/)
 dist/                          -- build directory (load in Chrome as unpacked extension)
@@ -397,7 +397,7 @@ Each commit must start with a change type: feat:, fix:, refactor:, docs:, chore:
 
 ### Changelog
 
-Full version history is maintained in the CHANGELOG.md file in the extension root. Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.9.31.0.
+Full version history is maintained in the CHANGELOG.md file in the extension root. Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.9.28.2.
 
 ### Version timeline
 
