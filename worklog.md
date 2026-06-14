@@ -2230,3 +2230,22 @@ Stage Summary:
 - README.md + TASK-CASCADE.md synced to 1.9.31.0
 - UNICODE_POLICY.md NOT modified (standard document, not project version)
 - v1.9.31.0 pushed, built, zip in /download/
+
+---
+Task ID: fix-vacancy-skills-merge
+Agent: main
+Task: Fix nonsensical skill recommendations (e.g., "выкладка товаров", "работа на кассе" for marketing resumes)
+
+Work Log:
+- User reported popup showing 30 missing skills including irrelevant ones: "выкладка товаров", "работа на кассе", "расчёт покупателей", "контроль сроков годности", "обслуживание покупателей"
+- Traced data flow: vacancy-skills-collector.js → quality-recommendations.js → render-resume-panel.js
+- Root cause: collectAllVacancySkills(panelState.vacancies) merges skills from ALL vacancies in search results (20+), including unrelated ones (cashier, merchandiser, store manager)
+- Fix: Replaced collectAllVacancySkills(panelState.vacancies) with collectDetailVacancySkills() in both:
+  - src/ui/tabs/resumes/render-resume-panel.js (quality recommendations)
+  - src/ui/tabs/resumes/resume-helpers-gap.js (skill gap analysis)
+- collectDetailVacancySkills() uses only window.__hhVacDetail (the currently open vacancy page)
+- Build successful
+
+Stage Summary:
+- Bug fixed: skill comparison now uses only the currently open vacancy, not all search results
+- 2 files modified

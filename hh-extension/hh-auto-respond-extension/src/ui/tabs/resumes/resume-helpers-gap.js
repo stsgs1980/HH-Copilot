@@ -10,7 +10,7 @@
 
 import { refs, panelState } from '../../state.js';
 import { esc } from '../../html.js';
-import { collectAllVacancySkills } from '../../../lib/vacancy-skills-collector.js';
+import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 import { findSynonymMatch, SYNONYM_WEIGHT } from '../../../lib/skill-synonyms.js';
 
 // ═══════════════════════════════════════════════
@@ -33,7 +33,9 @@ export function updateSkillGapSection(r) {
   const resumeSkills = normalizeSkills(r.skills);
   const derivedSkills = normalizeSkills(r.derivedSkills || []);
   const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
-  const vacancySkills = collectAllVacancySkills(panelState.vacancies);
+  // v1.9.32.0: Use detail-only skills — collecting from ALL search results
+  // merged skills from unrelated vacancies (cashier, merchandiser, etc.)
+  const vacancySkills = collectDetailVacancySkills();
 
   if (vacancySkills.size === 0) {
     // No vacancies loaded — hide the gap section entirely (no point showing 0% ring)

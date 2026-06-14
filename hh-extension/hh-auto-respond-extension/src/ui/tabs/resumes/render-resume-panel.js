@@ -20,7 +20,7 @@ import {
 import { setActiveResume } from '../../../lib/storage.js';
 import { updateAccordionHeader } from './resume-accordion-header.js';
 import { analyzeResumeQuality } from '../../../lib/resume-quality-analyzer.js';
-import { collectAllVacancySkills } from '../../../lib/vacancy-skills-collector.js';
+import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 
 // ═══════════════════════════════════════════════
 // MAIN RESUME PANEL RENDER
@@ -105,7 +105,9 @@ function updateResumeScore(r) {
   if (!r || !r.id) { section.style.display = 'none'; return; }
   section.style.display = '';
 
-  const vacancySkills = collectAllVacancySkills(panelState.vacancies);
+  // v1.9.32.0: Use detail-only skills — collecting from ALL search results
+  // merged skills from unrelated vacancies (cashier, merchandiser, etc.)
+  const vacancySkills = collectDetailVacancySkills();
   const result = analyzeResumeQuality(r, vacancySkills);
   const pct = result.totalScore;
 
