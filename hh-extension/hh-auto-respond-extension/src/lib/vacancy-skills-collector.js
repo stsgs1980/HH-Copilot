@@ -8,7 +8,7 @@
  * duplication between gap analysis and quality recommendations.
  *
  * v1.9.21.0: Initial extraction
- * v1.9.32.0: Critical fix — only use keySkills (employer-listed).
+ * v1.9.32.0: Critical fix -- only use keySkills (employer-listed).
  *   Previously merged tags + skills + keySkills + derivedSkills from
  *   ALL search results, producing 70-100+ irrelevant "missing" skills
  *   (e.g., "выкладка товаров" for a marketing manager resume).
@@ -24,15 +24,15 @@
 function normalizeSkillName(name) {
   return (name || '')
     .toLowerCase().trim()
-    .replace(/[-–—]/g, ' ')   // hyphens/dashes → space ("B2B-Продажи" → "b2b продажи")
-    .replace(/ё/g, 'е')       // ё → е
+    .replace(/[-\u2013\u2014]/g, ' ')   // hyphens/dashes -> space ("B2B-Продажи" -> "b2b продажи")
+    .replace(/ё/g, 'е')       // ё -> е
     .replace(/\s+/g, ' ');    // collapse multiple spaces
 }
 
 /**
  * Add items from an array into a normalized Set.
- * @param {Array} arr — raw skill array (strings or {name} objects)
- * @param {Set<string>} target — set to add normalized names to
+ * @param {Array} arr -- raw skill array (strings or {name} objects)
+ * @param {Set<string>} target -- set to add normalized names to
  */
 function addNormalized(arr, target) {
   if (!Array.isArray(arr)) return;
@@ -47,13 +47,13 @@ function addNormalized(arr, target) {
  * Collect vacancy skills only from the detail page (window.__hhVacDetail).
  *
  * Strategy (v1.9.32.0):
- *   1. keySkills — official employer-listed skills from vacancy page
+ *   1. keySkills -- official employer-listed skills from vacancy page
  *      (parsed from [data-qa="skills-element"]). These are the REAL
- *      requirements — typically 5-15 items.
- *   2. derivedSkills — fallback ONLY when keySkills is empty.
+ *      requirements -- typically 5-15 items.
+ *   2. derivedSkills -- fallback ONLY when keySkills is empty.
  *      These are inferred from description text via SKILL_PATTERNS.
  *      Can be noisy (20-30 items) but better than nothing.
- *   3. tags / skills — NEVER used. These come from search result
+ *   3. tags / skills -- NEVER used. These come from search result
  *      cards and contain bloko-tag pills from ALL vacancies in the
  *      list, producing 70-100+ irrelevant skills.
  *
@@ -71,7 +71,7 @@ export function collectDetailVacancySkills() {
     return skills;
   }
 
-  // Priority 2: derivedSkills (inferred from description — noisy but better than nothing)
+  // Priority 2: derivedSkills (inferred from description -- noisy but better than nothing)
   const hasDerived = Array.isArray(detail.derivedSkills) && detail.derivedSkills.length > 0;
   if (hasDerived) {
     const skills = new Set();
@@ -88,10 +88,10 @@ export function collectDetailVacancySkills() {
  * but should not be used for skill gap / quality recommendations.
  *
  * Collect all vacancy skills from both sources:
- *   1. panelState.vacancies (search results) — uses skills, keySkills
- *   2. window.__hhVacDetail (detail page) — uses keySkills, derivedSkills
+ *   1. panelState.vacancies (search results) -- uses skills, keySkills
+ *   2. window.__hhVacDetail (detail page) -- uses keySkills, derivedSkills
  *
- * @param {Array} vacancies — panelState.vacancies array
+ * @param {Array} vacancies -- panelState.vacancies array
  * @returns {Set<string>}
  */
 export function collectAllVacancySkills(vacancies) {

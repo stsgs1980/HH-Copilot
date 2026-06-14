@@ -1,17 +1,17 @@
 /**
- * PARSER: RESUME DETAIL — parseCompanyCard()
+ * PARSER: RESUME DETAIL -- parseCompanyCard()
  * ============================================
  * Parses a single experience company card element.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PARSE SINGLE COMPANY CARD (Experience)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseCompanyCard(card) {
   const job = {};
 
-  // ── Компания и длительность ──
+  // -- Компания и длительность --
   const cellLeft = card.querySelector('[data-qa="cell-left-side"]');
   if (cellLeft) {
     const cellTexts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
@@ -23,7 +23,7 @@ export function parseCompanyCard(card) {
     }
   }
 
-  // ── Позиция, период, описание ──
+  // -- Позиция, период, описание --
   const stepContent = card.querySelector('[data-qa="magritte-stepper-step-content"]');
   if (stepContent) {
     const stepCellLeft = stepContent.querySelector('[data-qa="cell-left-side"]');
@@ -39,7 +39,7 @@ export function parseCompanyCard(card) {
         job.period = rawPeriod;
       }
     }
-    // Описание — текст stepContent без позиции и периода
+    // Описание -- текст stepContent без позиции и периода
     const fullStepText = (stepContent.textContent || '').trim();
     let desc = fullStepText;
     const posText = job.position || '';

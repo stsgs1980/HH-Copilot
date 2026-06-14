@@ -1,5 +1,5 @@
 /**
- * UI: PANEL — Render helpers
+ * UI: PANEL -- Render helpers
  * ============================
  * Sidebar content rendering (auth states, initial data).
  * Event binding is handled by index.js after render to avoid circular deps.
@@ -17,9 +17,9 @@ import { renderMyResumesPanel } from '../tabs/resumes.js';
 import { startTour, isTourDone } from '../../lib/tour-engine.js';
 import { getWelcomeTourSteps } from '../../lib/tour-steps.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // RENDER STATES
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function renderSidebarContent() {
   const content = refs.shadowRoot?.querySelector('.har-content');
@@ -68,7 +68,7 @@ export function renderSidebarContent() {
 
 /**
  * Update the header status text to reflect actual auth state.
- * The initial HTML always shows "Проверяем авторизацию..." — this
+ * The initial HTML always shows "Проверяем авторизацию..." -- this
  * function updates it to "Не авторизован" or leaves it for the full
  * logged-in re-render.
  */

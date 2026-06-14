@@ -3,15 +3,15 @@
  * ====================================
  * Scans resume experience descriptions and title for skill keywords
  * using the SKILL_PATTERNS dictionary. Derived skills are added to
- * resume.derivedSkills[] — they do NOT replace resume.skills[].
+ * resume.derivedSkills[] -- they do NOT replace resume.skills[].
  *
  * Also scans vacancy keySkills that are NOT in resume.skills and tries
  * to match them against experience text (reverse derivation).
  *
  * Flow:
- *   parseSkills()       → resume.skills[]     (explicit tags from page)
- *   deriveSkillsFromExperience() → resume.derivedSkills[] (inferred from text)
- *   scoreSkills()       → merges both for matching
+ *   parseSkills()       -> resume.skills[]     (explicit tags from page)
+ *   deriveSkillsFromExperience() -> resume.derivedSkills[] (inferred from text)
+ *   scoreSkills()       -> merges both for matching
  */
 
 import { SKILL_PATTERNS } from './skill-dictionary.js';
@@ -23,7 +23,7 @@ const deriveLog = createLogger('DeriveSkills');
  * Derive skills from resume experience descriptions and title.
  * Modifies resume object in-place: adds resume.derivedSkills[].
  *
- * @param {Object} resume — parsed resume object
+ * @param {Object} resume -- parsed resume object
  * @returns {string[]} Array of derived skill names
  */
 export function deriveSkillsFromExperience(resume) {
@@ -96,8 +96,8 @@ export function deriveSkillsFromExperience(resume) {
  * Useful for "reverse derivation": vacancy wants "управление командой",
  * we check if experience text contains relevant keywords.
  *
- * @param {Object} resume — parsed resume object
- * @param {string[]} vacancySkillNames — skills from vacancy
+ * @param {Object} resume -- parsed resume object
+ * @param {string[]} vacancySkillNames -- skills from vacancy
  * @returns {string[]} Vacancy skills that appear to be present in experience
  */
 export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
@@ -125,7 +125,7 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
 
   for (const skill of vacancySkillNames) {
     const normalized = skill.toLowerCase().trim();
-    // Already in explicit skills — skip
+    // Already in explicit skills -- skip
     if (existingSkills.has(normalized)) continue;
 
     // Check if the skill name itself appears in text

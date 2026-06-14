@@ -1,5 +1,5 @@
 /**
- * LIB: RESUME FETCH RESUME — Diagnostics & Visibility
+ * LIB: RESUME FETCH RESUME -- Diagnostics & Visibility
  * ======================================================
  * Pre-parse diagnostic logging and visibility decision resolution.
  * Split from resume-fetch-resume.js for anti-monolith compliance.
@@ -26,11 +26,11 @@ export function logPreParseDiagnostics(html, doc) {
     fetchLog.info('ExpCard HTML snippet (first 2000 chars): ' + expCardHtml.outerHTML.substring(0, 2000));
   }
 
-  const MONTHS_RE = /(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}\s*[--\---]\s*(?:(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}|настоящее\s*время|по\s+настоящее\s+время|сейчас|по\s+сейчас)/gi;
+  const MONTHS_RE = /(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}\s*[\u2013\u2014\-]\s*(?:(?:январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья])\s*\d{4}|настоящее\s*время|по\s+настоящее\s+время|сейчас|по\s+сейчас)/gi;
   const allDateRanges = html.match(MONTHS_RE) || [];
   fetchLog.info('Full HTML date ranges: ' + allDateRanges.length + ' found: ' + JSON.stringify(allDateRanges));
 
-  const numDateRanges = html.match(/\d{2}\.\d{4}\s*[--\---]\s*(?:\d{2}\.\d{4}|настоящее\s*время|по\s+настоящее\s*время|сейчас|по\s+сейчас)/gi) || [];
+  const numDateRanges = html.match(/\d{2}\.\d{4}\s*[\u2013\u2014\-]\s*(?:\d{2}\.\d{4}|настоящее\s*время|по\s+настоящее\s*время|сейчас|по\s+сейчас)/gi) || [];
   fetchLog.info('Numeric date ranges: ' + numDateRanges.length + ' found: ' + JSON.stringify(numDateRanges));
 
   const scripts = doc.querySelectorAll('script:not([src])');

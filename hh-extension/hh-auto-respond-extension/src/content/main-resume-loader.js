@@ -36,12 +36,12 @@ export async function handleLoadResume() {
     loadLog.error('Load resume error: ' + err.message);
     setStatus('Ошибка: ' + err.message);
   } finally {
-    // Signal completion for button loading state — ALWAYS dispatch
+    // Signal completion for button loading state -- ALWAYS dispatch
     window.dispatchEvent(new CustomEvent('hh-ar-load-resume-done'));
   }
 }
 
-// ── Reparse: fetch active resume fresh from server ──
+// -- Reparse: fetch active resume fresh from server --
 
 /** Handle hh-ar-reparse-resume: ALWAYS fetches from server by URL. */
 export async function handleReparseResume(e) {
@@ -81,7 +81,7 @@ export async function handleReparseResume(e) {
   }
 }
 
-// ── Page-specific loaders ──
+// -- Page-specific loaders --
 
 async function loadFromResumePage(path) {
   let resume;
@@ -170,7 +170,7 @@ async function loadFromSyncedData() {
   }
 }
 
-// ── UI Helpers ──
+// -- UI Helpers --
 
 /**
  * Show a loading spinner in the resume panel content area.

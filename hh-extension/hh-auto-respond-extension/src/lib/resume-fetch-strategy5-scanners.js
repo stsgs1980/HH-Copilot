@@ -1,11 +1,11 @@
 /**
- * Strategy 5 JSON scanners — experience extraction from various JSON patterns.
+ * Strategy 5 JSON scanners -- experience extraction from various JSON patterns.
  *
  * Split from resume-fetch-strategy5-scripts.js for modularity.
  * Contains the three JSON scanning approaches used by Strategy 5:
  *   1. Structured JSON ("experience":[...])
  *   2. Array scan (flexible [{...}] with experience fields)
- *   3. Deep scan (raw HTML — last resort)
+ *   3. Deep scan (raw HTML -- last resort)
  */
 import { createLogger } from './anti-hallucination.js';
 import { extractJsonArray, extractJsonArrayFromHtml, buildEntryFromApiItem } from './resume-fetch-json-utils.js';
@@ -99,7 +99,7 @@ export function extractExperienceFromArray(text) {
 
 /**
  * Deep scan raw HTML for JSON arrays containing objects with date-like properties.
- * This is the last resort — looks for ANY array of objects that have
+ * This is the last resort -- looks for ANY array of objects that have
  * recognizable date fields (year, month, start, end).
  * @param {string} html - Raw HTML string
  * @returns {Array} Parsed experience entries

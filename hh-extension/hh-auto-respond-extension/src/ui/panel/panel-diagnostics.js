@@ -1,5 +1,5 @@
 /**
- * UI: PANEL — DIAGNOSTIC ACTIONS
+ * UI: PANEL -- DIAGNOSTIC ACTIONS
  * ================================
  * Diagnostic functions for the panel: clear resume, dump to console, test parse.
  * Extracted from events.js to keep it focused on event binding.

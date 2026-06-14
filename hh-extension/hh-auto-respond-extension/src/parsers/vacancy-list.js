@@ -36,7 +36,7 @@ function findTitleLink(card) {
 
 /**
  * Parse vacancy cards from search results or main page.
- * @param {Object|null} resume — active resume for match scoring (optional)
+ * @param {Object|null} resume -- active resume for match scoring (optional)
  * @returns {Promise<Object[]>}
  */
 export async function parseVacanciesFromPage(resume) {
@@ -125,7 +125,7 @@ export async function parseVacanciesFromPage(resume) {
  * Key: vacancy ID is in the click-URL's ?vacancyId=XXX param,
  * NOT in /vacancy/XXX path. extractVacancyId() handles both formats.
  *
- * @param {Object|null} resume — active resume for match scoring (optional)
+ * @param {Object|null} resume -- active resume for match scoring (optional)
  * @returns {Promise<Object[]>}
  */
 export async function parseVacanciesOfTheDay(resume) {
@@ -145,7 +145,7 @@ export async function parseVacanciesOfTheDay(resume) {
     const title = (titleEl.textContent || '').trim();
     if (!title) continue;
 
-    // ── Extract vacancy ID from the tracking click-URL ──
+    // -- Extract vacancy ID from the tracking click-URL --
     // The title <div> is inside an <a> with tracking href like:
     //   content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=132537734&...
     // Or for sponsored: adsrv.hh.ru/click?...vacancyId=... (encoded in meta param)
@@ -167,7 +167,7 @@ export async function parseVacanciesOfTheDay(resume) {
       }
     }
 
-    // Fallback 2: sponsored VotD (adsrv.hh.ru) — vacancy ID is in parent element's id attribute
+    // Fallback 2: sponsored VotD (adsrv.hh.ru) -- vacancy ID is in parent element's id attribute
     // e.g. <div id="131408939">...<a href="adsrv.hh.ru/click?meta=..."><div data-qa="vacancy_of_the_day_title">...
     if (!vacancyId) {
       let ancestor = titleEl.parentElement;
@@ -186,7 +186,7 @@ export async function parseVacanciesOfTheDay(resume) {
       continue;
     }
 
-    // ── Find compensation and company ──
+    // -- Find compensation and company --
     // They are siblings near the title, walk up to their common parent
     const container = titleEl.closest('div[class]') || titleEl.parentElement;
     const searchRoot = container?.parentElement || container;
@@ -199,11 +199,11 @@ export async function parseVacanciesOfTheDay(resume) {
     const salary = compEl ? (compEl.textContent || '').trim() : 'Не указана';
     const company = companyEl ? (companyEl.textContent || '').trim() : '';
 
-    // ── Check for reply/apply button ──
+    // -- Check for reply/apply button --
     const replyEl = searchRoot?.querySelector('[data-qa="vacancy-response-link-top-again"]')
       || container?.querySelector('[data-qa="vacancy-response-link-top-again"]');
 
-    // ── Build vacancy object with canonical hh.ru URL ──
+    // -- Build vacancy object with canonical hh.ru URL --
     const canonicalUrl = 'https://hh.ru/vacancy/' + vacancyId;
 
     const vacancy = {

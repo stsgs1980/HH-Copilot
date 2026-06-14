@@ -12,12 +12,12 @@
  *     salary, education
  *
  * Template placeholders:
- *   {position}   → vacancy title
- *   {company}    → vacancy company name
- *   {experience} → years of experience from resume
- *   {skills}     → top matching skills (up to 3)
- *   {matching}   → matching skills list
- *   {requirements} → key requirements from vacancy description
+ *   {position}   -> vacancy title
+ *   {company}    -> vacancy company name
+ *   {experience} -> years of experience from resume
+ *   {skills}     -> top matching skills (up to 3)
+ *   {matching}   -> matching skills list
+ *   {requirements} -> key requirements from vacancy description
  *
  * v1.9.30.0
  */
@@ -42,16 +42,16 @@ const MAX_SKILLS_MENTION = 5;
 /** Maximum requirements to quote from vacancy description */
 const MAX_REQUIREMENTS_QUOTE = 3;
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PUBLIC API
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Generate a tailored cover letter using vacancy and resume data.
  *
- * @param {Object} vacancy — Parsed vacancy object (shallow or enriched)
- * @param {Object} resume — Parsed resume object
- * @param {Object} [options] — { template, maxLength, includeRequirements }
+ * @param {Object} vacancy -- Parsed vacancy object (shallow or enriched)
+ * @param {Object} resume -- Parsed resume object
+ * @param {Object} [options] -- { template, maxLength, includeRequirements }
  * @returns {{ text: string, placeholders: Object, method: string }}
  */
 export function generateCoverLetter(vacancy, resume, options) {
@@ -97,8 +97,8 @@ export function generateCoverLetter(vacancy, resume, options) {
  * Supports: {position}, {company}, {experience}, {skills},
  * {matching}, {requirements}, {matching_sentence}
  *
- * @param {string} template — Template string with {placeholder} syntax
- * @param {Object} values — Map of placeholder name → replacement string
+ * @param {string} template -- Template string with {placeholder} syntax
+ * @param {Object} values -- Map of placeholder name -> replacement string
  * @returns {string}
  */
 export function fillTemplate(template, values) {
@@ -117,7 +117,7 @@ export function fillTemplate(template, values) {
  * Looks in both panelState.vacancies and window.__hhVacDetail.
  *
  * @param {string} vacancyId
- * @param {Object[]} [vacancies] — panelState.vacancies array
+ * @param {Object[]} [vacancies] -- panelState.vacancies array
  * @returns {Object|null}
  */
 export function findVacancyData(vacancyId, vacancies) {
@@ -135,9 +135,9 @@ export function findVacancyData(vacancyId, vacancies) {
   return null;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PLACEHOLDER EXTRACTION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Extract all placeholder values from vacancy and resume data.
@@ -149,16 +149,16 @@ export function findVacancyData(vacancyId, vacancies) {
 function extractPlaceholders(vacancy, resume) {
   const p = {};
 
-  // {position} — vacancy title
+  // {position} -- vacancy title
   p.position = vacancy.title || 'эту позицию';
 
-  // {company} — vacancy company
+  // {company} -- vacancy company
   p.company = vacancy.company || 'вашу компанию';
 
-  // {experience} — years of experience from resume
+  // {experience} -- years of experience from resume
   p.experience = extractExperienceText(resume);
 
-  // {skills} — top matching skills (preserving original case from vacancy/resume)
+  // {skills} -- top matching skills (preserving original case from vacancy/resume)
   const matchResult = resume ? computeMatchScore(resume, vacancy) : null;
   const matchingSkills = matchResult ? (matchResult.details.matchingSkills || []) : [];
 
@@ -177,17 +177,17 @@ function extractPlaceholders(vacancy, resume) {
       ? formatSkillList(vacancy.keySkills.slice(0, MAX_SKILLS_MENTION))
       : 'сфере деятельности');
 
-  // {matching} — matching skills as a simple list
+  // {matching} -- matching skills as a simple list
   p.matching = allMatches.length > 0
     ? allMatches.join(', ')
     : '';
 
-  // {matching_sentence} — a sentence about matching skills
+  // {matching_sentence} -- a sentence about matching skills
   p.matching_sentence = allMatches.length > 0
     ? 'Мой опыт включает ' + formatSkillList(allMatches) + ', что соответствует требованиям вакансии. '
     : '';
 
-  // {requirements} — key requirements from vacancy description
+  // {requirements} -- key requirements from vacancy description
   p.requirements = extractRequirementsText(vacancy);
 
   return p;
@@ -219,7 +219,7 @@ function extractExperienceText(resume) {
         if (years) totalMonths += parseInt(years[1], 10) * 12;
         if (months) totalMonths += parseInt(months[1], 10);
       } else if (entry.period) {
-        // Parse period "MMM YYYY — Present" or "MMM YYYY — MMM YYYY"
+        // Parse period "MMM YYYY -- Present" or "MMM YYYY -- MMM YYYY"
         const periodMonths = parsePeriodToMonths(entry.period);
         if (periodMonths > 0) totalMonths += periodMonths;
       }
@@ -248,8 +248,8 @@ function extractExperienceText(resume) {
 
 /**
  * Parse a date period string into approximate months.
- * Handles: "Январь 2020 — Настоящее время", "Jan 2020 — Present",
- * "Мар 2018 — Июн 2022"
+ * Handles: "Январь 2020 -- Настоящее время", "Jan 2020 -- Present",
+ * "Мар 2018 -- Июн 2022"
  *
  * @param {string} period
  * @returns {number} months
@@ -264,8 +264,8 @@ function parsePeriodToMonths(period) {
     'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
   };
 
-  // Match "Month Year — Month Year" or "Month Year — Present/Настоящее"
-  const rangeMatch = period.match(/(\w{3})\s*(\d{4})\s*[--\---]\s*(?:(\w{3})\s*(\d{4})|(настоящее|настоящее время|present|сейчас))/i);
+  // Match "Month Year -- Month Year" or "Month Year -- Present/Настоящее"
+  const rangeMatch = period.match(/(\w{3})\s*(\d{4})\s*[\u2013\u2014\-]\s*(?:(\w{3})\s*(\d{4})|(настоящее|настоящее время|present|сейчас))/i);
   if (!rangeMatch) return 0;
 
   const startMonth = months[rangeMatch[1].toLowerCase().substring(0, 3)] || 1;
@@ -349,9 +349,9 @@ function extractKeyPhrases(text, maxPhrases) {
   return selected.join('; ');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // RICH LETTER GENERATION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Check if we have enough data for a rich cover letter.
@@ -380,7 +380,7 @@ function hasRichData(vacancy, resume) {
  *
  * @param {Object} vacancy
  * @param {Object} resume
- * @param {Object} placeholders — pre-extracted placeholder values
+ * @param {Object} placeholders -- pre-extracted placeholder values
  * @returns {string|null} Rich cover letter or null if not enough data
  */
 function generateRichLetter(vacancy, resume, placeholders) {
@@ -416,7 +416,7 @@ function generateRichLetter(vacancy, resume, placeholders) {
     parts.push(skillSentence);
   }
 
-  // 4. Value proposition — reference specific vacancy requirements
+  // 4. Value proposition -- reference specific vacancy requirements
   if (vacancy.description && vacancy.description.sections) {
     const sections = vacancy.description.sections;
     const requirementsText = sections.requirements || '';
@@ -445,14 +445,14 @@ function generateRichLetter(vacancy, resume, placeholders) {
   return letter.length > 20 ? letter : null;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // FORMATTING HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Format a list of skills as natural Russian text.
  * Examples: ["Python"], ["Python", "SQL"], ["Python", "SQL", "Docker"]
- * → "Python", "Python и SQL", "Python, SQL и Docker"
+ * -> "Python", "Python и SQL", "Python, SQL и Docker"
  *
  * @param {string[]} skills
  * @returns {string}
@@ -470,15 +470,15 @@ function formatSkillList(skills) {
  * The scorer normalizes skill names for matching, but we want to display
  * the original case in the cover letter (e.g., "Python" not "python").
  *
- * @param {string[]} normalizedSkills — lowercase skill names from scorer
- * @param {Object} vacancy — source for vacancy skill names
- * @param {Object|null} resume — source for resume skill names
+ * @param {string[]} normalizedSkills -- lowercase skill names from scorer
+ * @param {Object} vacancy -- source for vacancy skill names
+ * @param {Object|null} resume -- source for resume skill names
  * @returns {string[]} original-case skill names
  */
 function restoreOriginalCase(normalizedSkills, vacancy, resume) {
   if (!normalizedSkills || normalizedSkills.length === 0) return [];
 
-  // Build a map: normalized → original
+  // Build a map: normalized -> original
   const caseMap = new Map();
 
   // Collect from vacancy: keySkills, skills, derivedSkills
@@ -487,7 +487,7 @@ function restoreOriginalCase(normalizedSkills, vacancy, resume) {
     if (!Array.isArray(arr)) continue;
     for (const s of arr) {
       const name = typeof s === 'string' ? s : (s?.name || '');
-      if (name) caseMap.set(name.toLowerCase().trim().replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' '), name);
+      if (name) caseMap.set(name.toLowerCase().trim().replace(/[-\u2013\u2014]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' '), name);
     }
   }
 
@@ -498,7 +498,7 @@ function restoreOriginalCase(normalizedSkills, vacancy, resume) {
       if (!Array.isArray(arr)) continue;
       for (const s of arr) {
         const name = typeof s === 'string' ? s : (s?.name || '');
-        if (name) caseMap.set(name.toLowerCase().trim().replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' '), name);
+        if (name) caseMap.set(name.toLowerCase().trim().replace(/[-\u2013\u2014]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' '), name);
       }
     }
   }

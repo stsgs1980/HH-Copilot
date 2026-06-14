@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════
-// ENGINE MODULES — barrel index
-// ═══════════════════════════════════════════════
+// ===============================================
+// ENGINE MODULES -- barrel index
+// ===============================================
 
 // Public API (orchestrator)
 export { applyToVacancy, continueApply, applyToAll } from './apply-orchestrator.js';

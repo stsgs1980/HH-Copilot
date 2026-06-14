@@ -1,9 +1,9 @@
 /**
- * PARSER: VACANCY DETAIL — Orchestrator
+ * PARSER: VACANCY DETAIL -- Orchestrator
  * ========================================
  * Parses a single vacancy detail page (/vacancy/{id}).
  * Delegates to parseVacancyDetailFromDoc() from vacancy-fetch-text.js
- * for the core parsing logic — single source of truth.
+ * for the core parsing logic -- single source of truth.
  *
  * v1.9.30.0: Unified with vacancy-fetch-text.js parser.
  *   - parseVacancyDetailFromDoc() is the canonical parser
@@ -22,7 +22,7 @@ const vacLog = createLogger('VacDetail');
  * Returns a structured vacancy object or null on failure.
  *
  * Uses parseVacancyDetailFromDoc(document, href) as the canonical
- * parser — same code that runs in background iframe/text fetches.
+ * parser -- same code that runs in background iframe/text fetches.
  */
 export function parseVacancyDetail() {
   const t0 = performance.now();
@@ -35,7 +35,7 @@ export function parseVacancyDetail() {
     return null;
   }
 
-  // ── Page-level extras that only make sense on the actual page ──
+  // -- Page-level extras that only make sense on the actual page --
 
   // Apply button detection (uses findElement for visibility check)
   try {

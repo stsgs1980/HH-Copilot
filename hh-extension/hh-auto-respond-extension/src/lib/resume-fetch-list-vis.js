@@ -38,7 +38,7 @@ export function extractVisibilityStatus(doc, resumes, html) {
 
   const htmlLower = html.toLowerCase();
 
-  // ═══ STRATEGY 0: Check resumes already detected by extractResumeLinks ═══
+  // === STRATEGY 0: Check resumes already detected by extractResumeLinks ===
   let alreadyDetected = 0;
   let needDetection = 0;
   resumes.forEach(r => {
@@ -79,7 +79,7 @@ export function extractVisibilityStatus(doc, resumes, html) {
     ? globalIndicators.filter(i => i.pos !== -1).map(i => '"' + i.text + '"@' + i.pos).join(', ')
     : 'NONE FOUND'));
 
-  // ═══ STRATEGY 1: data-qa card containers ═══
+  // === STRATEGY 1: data-qa card containers ===
   let strategyUsed = false;
   for (const sel of RESUME_CARD_SELECTORS) {
     const cards = doc.querySelectorAll(sel);
@@ -112,7 +112,7 @@ export function extractVisibilityStatus(doc, resumes, html) {
   if (stillUnknown === 0) strategyUsed = true;
   else if (!strategyUsed) visLog.info('Strategy 1: no data-qa cards matched, trying next strategy');
 
-  // ═══ STRATEGY 2: Script/hydration state ═══
+  // === STRATEGY 2: Script/hydration state ===
   if (!strategyUsed) {
     const scriptResult = extractVisibilityFromScripts(doc, resumes, html);
     if (scriptResult) {
@@ -121,13 +121,13 @@ export function extractVisibilityStatus(doc, resumes, html) {
     }
   }
 
-  // ═══ STRATEGY 3: Proximity search with script stripping ═══
+  // === STRATEGY 3: Proximity search with script stripping ===
   if (!strategyUsed) {
     runProximitySearch(resumes, html);
     strategyUsed = true;
   }
 
-  // NO FINAL FALLBACK: Keep UNKNOWN as UNKNOWN — detail page will resolve
+  // NO FINAL FALLBACK: Keep UNKNOWN as UNKNOWN -- detail page will resolve
   const unknownAfterAll = resumes.filter(r => r.visibility === VISIBILITY_UNKNOWN);
   if (unknownAfterAll.length > 0) {
     visLog.info('[VIS-DIAG] List: ' + unknownAfterAll.length + ' resumes still UNKNOWN -- will be resolved by detail page detection');

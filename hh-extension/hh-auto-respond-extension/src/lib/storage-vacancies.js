@@ -1,17 +1,17 @@
 /**
- * LIB: STORAGE — Vacancy Details
+ * LIB: STORAGE -- Vacancy Details
  * =================================
  * chrome.storage.local wrappers for parsed vacancy detail data.
  * Split from storage-queue.js for anti-monolith compliance.
  *
  * Storage keys:
- *   'vacancyDetails' → Map<id, detail> stored as array of {id, detail}
- *   'vacancyScores'  → Map<id, score> stored as array of {id, score, breakdown, computedAt}
+ *   'vacancyDetails' -> Map<id, detail> stored as array of {id, detail}
+ *   'vacancyScores'  -> Map<id, score> stored as array of {id, score, breakdown, computedAt}
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // VACANCY DETAILS (full parsed data)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Get all stored vacancy details.
@@ -26,7 +26,7 @@ export async function getVacancyDetails() {
 
 /**
  * Get a single vacancy detail by ID.
- * @param {string} id — vacancy ID (digits)
+ * @param {string} id -- vacancy ID (digits)
  * @returns {Object|null}
  */
 export async function getVacancyDetail(id) {
@@ -37,7 +37,7 @@ export async function getVacancyDetail(id) {
 /**
  * Save or update a vacancy detail.
  * Merges with existing detail (prefers newer data).
- * @param {Object} detail — parsed vacancy detail object
+ * @param {Object} detail -- parsed vacancy detail object
  */
 export async function saveVacancyDetail(detail) {
   if (!detail || !detail.id) return;
@@ -74,9 +74,9 @@ export async function clearVacancyDetails() {
   await chrome.storage.local.set({ vacancyDetails: [] });
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // MATCH SCORES (computed match scores)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Get all stored match scores.
@@ -91,10 +91,10 @@ export async function getVacancyScores() {
 
 /**
  * Save a match score for a vacancy.
- * @param {string} id — vacancy ID
- * @param {number} score — total score 0–100
- * @param {Object} breakdown — { skills, title, salary, experience }
- * @param {Object} details — { matchingSkills, missingSkills, ... }
+ * @param {string} id -- vacancy ID
+ * @param {number} score -- total score 0-100
+ * @param {Object} breakdown -- { skills, title, salary, experience }
+ * @param {Object} details -- { matchingSkills, missingSkills, ... }
  */
 export async function saveVacancyScore(id, score, breakdown, details) {
   if (!id) return;

@@ -1,5 +1,5 @@
 /**
- * LIB: RESUME CONSTANTS — Title cleaning utilities.
+ * LIB: RESUME CONSTANTS -- Title cleaning utilities.
  * Shared regex patterns and cleanResumeTitle() for extracting resume titles
  * from hh.ru's Magritte-concatenated link text.
  */
@@ -31,7 +31,7 @@ export const LINE_BREAK_INJECTORS = [
 
 /**
  * Clean a raw title string from hh.ru DOM.
- * Steps: normalize ws → inject newlines → filter lines → strip suffixes → fallback.
+ * Steps: normalize ws -> inject newlines -> filter lines -> strip suffixes -> fallback.
  */
 export function cleanResumeTitle(rawText, fallback) {
   fallback = fallback || 'Untitled';

@@ -1,5 +1,5 @@
 /**
- * QUALITY DATE HELPERS — парсинг дат, длительности, поиск пробелов в стаже.
+ * QUALITY DATE HELPERS -- парсинг дат, длительности, поиск пробелов в стаже.
  * Используется quality-flags.js для детекции красных флагов.
  */
 
@@ -33,14 +33,14 @@ export function findEmploymentGaps(exps) {
 }
 
 /**
- * Распарсить период типа "Март 2020 — Июнь 2023" или "2020 — 2023".
+ * Распарсить период типа "Март 2020 -- Июнь 2023" или "2020 -- 2023".
  * @returns {{start: Date|null, end: Date|null}}
  */
 export function parsePeriodDates(period) {
   const result = { start: null, end: null };
 
   const m = period.match(
-    /([а-яА-ЯёЁ]+\s+\d{4})\s*[-----]\s*([а-яА-ЯёЁ]+\s+\d{4}|Настоящее\s+время|настоящее\s+время|по\s+настоящее)/i
+    /([а-яА-ЯёЁ]+\s+\d{4})\s*[\u2013\u2014\-]\s*([а-яА-ЯёЁ]+\s+\d{4}|Настоящее\s+время|настоящее\s+время|по\s+настоящее)/i
   );
   if (m) {
     result.start = parseRuDate(m[1]);
@@ -50,7 +50,7 @@ export function parsePeriodDates(period) {
     return result;
   }
 
-  const m2 = period.match(/(\d{4})\s*[-----]\s*(\d{4})/);
+  const m2 = period.match(/(\d{4})\s*[\u2013\u2014\-]\s*(\d{4})/);
   if (m2) {
     result.start = new Date(parseInt(m2[1]), 0);
     result.end = new Date(parseInt(m2[2]), 11);
@@ -59,7 +59,7 @@ export function parsePeriodDates(period) {
 }
 
 /**
- * Распарсить длительность типа "3 года 6 месяцев" → 42 месяца.
+ * Распарсить длительность типа "3 года 6 месяцев" -> 42 месяца.
  */
 export function parseDurationToMonths(duration) {
   if (!duration) return 0;

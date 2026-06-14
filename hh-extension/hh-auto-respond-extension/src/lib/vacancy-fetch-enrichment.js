@@ -1,5 +1,5 @@
 /**
- * VACANCY FETCH — Enrichment Logic
+ * VACANCY FETCH -- Enrichment Logic
  * ===================================
  * Merges deep vacancy detail data into shallow SERP vacancy objects.
  * When a vacancy is parsed from a search results card, it only has
@@ -33,15 +33,15 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
  *
  * After merging, recomputes matchScore if resume is provided.
  *
- * @param {Object} vacancy — Shallow vacancy from vacancy-list parser
- * @param {Object} detail — Full vacancy detail from fetch/cache
- * @param {Object|null} resume — Active resume for re-scoring (optional)
+ * @param {Object} vacancy -- Shallow vacancy from vacancy-list parser
+ * @param {Object} detail -- Full vacancy detail from fetch/cache
+ * @param {Object|null} resume -- Active resume for re-scoring (optional)
  * @returns {Object} The enriched vacancy (mutated in place, also returned)
  */
 export function enrichVacancy(vacancy, detail, resume) {
   if (!vacancy || !detail) return vacancy;
 
-  // ── Skills enrichment (the most impactful) ──
+  // -- Skills enrichment (the most impactful) --
   if (detail.keySkills && detail.keySkills.length > 0) {
     vacancy.keySkills = detail.keySkills;
   }
@@ -52,12 +52,12 @@ export function enrichVacancy(vacancy, detail, resume) {
     vacancy._skillsSource = detail._skillsSource;
   }
 
-  // ── Description ──
+  // -- Description --
   if (detail.description && detail.description.text) {
     vacancy.description = detail.description;
   }
 
-  // ── Structured salary (merge into top-level salary field) ──
+  // -- Structured salary (merge into top-level salary field) --
   if (detail.salary && typeof detail.salary === 'object' && detail.salary.raw) {
     // Merge: keep the display string from SERP in .raw, add structured data
     if (typeof vacancy.salary === 'string') {
@@ -67,32 +67,32 @@ export function enrichVacancy(vacancy, detail, resume) {
     vacancy.salary = { ...vacancy.salary, ...detail.salary };
   }
 
-  // ── Structured experience (merge into top-level experience field) ──
+  // -- Structured experience (merge into top-level experience field) --
   if (detail.experience && typeof detail.experience === 'object' && detail.experience.raw) {
     vacancy.experience = { ...vacancy.experience, ...detail.experience };
   }
 
-  // ── Location (detail page has more precise address with map) ──
+  // -- Location (detail page has more precise address with map) --
   if (detail.location && (!vacancy.location || vacancy.location.length < detail.location.length)) {
     vacancy.location = detail.location;
   }
 
-  // ── Employment details ──
+  // -- Employment details --
   if (detail.employment) vacancy.employment = detail.employment;
   if (detail.schedule) vacancy.schedule = detail.schedule;
   if (detail.isRemote !== undefined) vacancy.isRemote = detail.isRemote;
   if (detail.hiringFormat) vacancy.hiringFormat = detail.hiringFormat;
 
-  // ── Company URL ──
+  // -- Company URL --
   if (detail.companyUrl) vacancy.companyUrl = detail.companyUrl;
 
-  // ── Mark as enriched ──
+  // -- Mark as enriched --
   vacancy.enrichedAt = new Date().toISOString();
   // If detail came from storage (no _fetchMethod), mark as 'cache';
   // otherwise use the fetch method ('iframe' or 'text')
   vacancy.enrichmentSource = detail._fetchMethod || 'cache';
 
-  // ── Re-compute match score with enriched data ──
+  // -- Re-compute match score with enriched data --
   if (resume) {
     try {
       // Build a scoring-compatible vacancy object:
@@ -118,15 +118,15 @@ export function enrichVacancy(vacancy, detail, resume) {
 /**
  * Build a vacancy object compatible with computeMatchScore().
  * The scorer expects:
- *   - vacancy.skills[] or vacancy.keySkills[] — for skill matching
- *   - vacancy.salary — string or { min, max, ... } for salary scoring
- *   - vacancy.experience — string or { raw, min, max } for experience scoring
- *   - vacancy.title — for title matching
+ *   - vacancy.skills[] or vacancy.keySkills[] -- for skill matching
+ *   - vacancy.salary -- string or { min, max, ... } for salary scoring
+ *   - vacancy.experience -- string or { raw, min, max } for experience scoring
+ *   - vacancy.title -- for title matching
  *
  * When enrichment provides structured data, we need to put it
  * where the scorer expects it.
  *
- * @param {Object} vacancy — Enriched vacancy object
+ * @param {Object} vacancy -- Enriched vacancy object
  * @returns {Object} Scorer-compatible vacancy
  */
 function buildScoringVacancy(vacancy) {
@@ -150,8 +150,8 @@ function buildScoringVacancy(vacancy) {
 
 /**
  * Check if cached detail data is fresh enough for enrichment.
- * @param {Object} detail — Stored vacancy detail
- * @param {number} [ttlMs=CACHE_TTL_MS] — Max age in milliseconds
+ * @param {Object} detail -- Stored vacancy detail
+ * @param {number} [ttlMs=CACHE_TTL_MS] -- Max age in milliseconds
  * @returns {boolean}
  */
 export function isDetailFresh(detail, ttlMs) {
@@ -164,9 +164,9 @@ export function isDetailFresh(detail, ttlMs) {
  * Enrich a list of shallow vacancies using stored detail data.
  * Skips vacancies that already have keySkills from a detail parse.
  *
- * @param {Object[]} vacancies — Array of shallow vacancy objects
- * @param {Object[]} storedDetails — Array of stored detail objects from storage
- * @param {Object|null} resume — Active resume for re-scoring
+ * @param {Object[]} vacancies -- Array of shallow vacancy objects
+ * @param {Object[]} storedDetails -- Array of stored detail objects from storage
+ * @param {Object|null} resume -- Active resume for re-scoring
  * @returns {{ enriched: number, cached: number, skipped: number }}
  */
 export function enrichVacanciesFromCache(vacancies, storedDetails, resume) {

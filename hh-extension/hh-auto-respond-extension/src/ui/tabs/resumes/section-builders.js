@@ -1,5 +1,5 @@
 /**
- * UI: RESUMES — Section Builders
+ * UI: RESUMES -- Section Builders
  * ================================
  * Build HTML for each of the 6 accordion sections:
  * Личные данные, Зарплата, Опыт, Образование, Языки, Контакты
@@ -8,9 +8,9 @@
 import { esc } from '../../html.js';
 import { buildSubAccordion, buildGrid } from './resume-helpers.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PERSONAL DATA
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildPersonalSection(r) {
   const count = [r.name, r.title, r.address, r.gender || r.age].filter(Boolean).length;
@@ -27,9 +27,9 @@ export function buildPersonalSection(r) {
   );
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SALARY & CONDITIONS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildSalarySection(r) {
   const count = [r.salary, r.employmentType, r.workFormat, r.schedule, r.relocation].filter(Boolean).length;
@@ -46,18 +46,18 @@ export function buildSalarySection(r) {
   );
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // EXPERIENCE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildExperienceSection(r) {
   const expCount = (r.experience || []).length;
   const expContent = (r.experience || []).map((j, idx) => {
-    // Build timeline period: "Компания • 2021 — н.в. (3 года)"
+    // Build timeline period: "Компания * 2021 -- н.в. (3 года)"
     const companyParts = [];
     if (j.company) companyParts.push(esc(j.company));
     if (j.period) companyParts.push(esc(j.period));
-    const companyLine = companyParts.join(' \u2022 ');
+    const companyLine = companyParts.join(' * ');
     const isLast = idx === expCount - 1;
 
     return '<div style="margin-bottom:' + (isLast ? '0' : '8px') + ';padding-bottom:' + (isLast ? '0' : '8px') + ';' + (isLast ? '' : 'border-bottom:1px solid rgba(0,0,0,0.05);') + '">' +
@@ -75,9 +75,9 @@ export function buildExperienceSection(r) {
   );
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // EDUCATION (structured grid: ВУЗ, Факультет, Год, Степень)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildEducationSection(r) {
   const eduCount = (r.education || []).length;
@@ -99,9 +99,9 @@ export function buildEducationSection(r) {
   );
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // LANGUAGES (language + level grid)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildLanguagesSection(r) {
   const langCount = (r.languages || []).length;
@@ -110,12 +110,12 @@ export function buildLanguagesSection(r) {
       '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' +
       (r.languages || []).map(l => {
         if (typeof l === 'string') {
-          const parts = l.split(/\s*[-----]\s*/);
+          const parts = l.split(/\s*[\u2013\u2014-]\s*/);
           const lang = parts[0] || l;
-          const level = parts[1] || '\u2014';
+          const level = parts[1] || '--';
           return '<span style="color:#52525b;">' + esc(lang) + '</span><span style="font-weight:500;">' + esc(level) + '</span>';
         }
-        return '<span style="color:#52525b;">' + esc(l.name || l) + '</span><span style="font-weight:500;">' + esc(l.level || '\u2014') + '</span>';
+        return '<span style="color:#52525b;">' + esc(l.name || l) + '</span><span style="font-weight:500;">' + esc(l.level || '--') + '</span>';
       }).join('') +
       '</div></div>'
     : '<div style="padding:8px;font-size:11px;color:#52525b;">Языки не указаны</div>';
@@ -126,9 +126,9 @@ export function buildLanguagesSection(r) {
   );
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // CONTACTS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildContactsSection(r) {
   const contactCount = [r.phone, r.email, r.telegram].filter(Boolean).length;

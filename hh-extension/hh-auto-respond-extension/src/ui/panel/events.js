@@ -1,5 +1,5 @@
 /**
- * UI: PANEL — EVENT BINDING
+ * UI: PANEL -- EVENT BINDING
  * ===========================
  * Tab switching, timeline/accordion toggling, and input change handlers.
  * Sidebar click delegation is in ./sidebar-events.js.
@@ -11,9 +11,9 @@ import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList } from '../tabs/negotiations.js';
 import { bindSidebarClicks } from './sidebar-events.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // TAB SWITCHING (6 tabs, CSS class toggle)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function switchTab(tabId) {
   setActiveTab(tabId);
@@ -43,9 +43,9 @@ function switchTab(tabId) {
 /** Public wrapper for tab switching from other modules. */
 export function switchTabPublic(tabId) { switchTab(tabId); }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // TIMELINE / ACCORDION TOGGLES
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function toggleTimeline(toggleEl) {
   const body = toggleEl.nextElementSibling;
@@ -65,9 +65,9 @@ function toggleSub(subId, chevId) {
   if (chev) chev.classList.toggle('open');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // EVENT BINDING
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function bindAllEvents(container) {
   bindTabClicks(container);
@@ -125,7 +125,7 @@ function bindTimelineToggles(container) {
       /* Timeline / accordion toggles */
       const tl = e.target.closest('[data-timeline]') || e.target.closest('[data-sub-toggle]');
       if (tl) { e.preventDefault(); tl.click(); return; }
-      /* Vacancy item keyboard activation — click the navigate link inside */
+      /* Vacancy item keyboard activation -- click the navigate link inside */
       const vacItem = e.target.closest('.vacancy-item');
       if (vacItem) {
         e.preventDefault();

@@ -175,12 +175,12 @@ export async function waitForPopupAndSubmit() {
   return { success: false, reason: 'Попап не появился или кнопка отправки не найдена' };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // COVER LETTER FILLING
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
- * Active resume reference — set by the apply orchestrator
+ * Active resume reference -- set by the apply orchestrator
  * before calling waitForPopupAndSubmit().
  * This avoids importing panelState (circular dependency risk).
  */
@@ -200,7 +200,7 @@ export function setActiveResumeForCoverLetter(resume) {
  * Uses vacancy data (from __hhVacDetail or storage) and resume data
  * to generate a personalized cover letter.
  *
- * @param {HTMLTextAreaElement|HTMLElement} inputEl — The cover letter input element
+ * @param {HTMLTextAreaElement|HTMLElement} inputEl -- The cover letter input element
  * @returns {Promise<boolean>} Whether a letter was filled
  */
 async function fillCoverLetter(inputEl) {
@@ -248,7 +248,7 @@ async function fillCoverLetter(inputEl) {
         }
       }
     } catch (e) {
-      // Sidebar not available — use default template
+      // Sidebar not available -- use default template
     }
 
     // Generate cover letter
@@ -259,7 +259,7 @@ async function fillCoverLetter(inputEl) {
       return false;
     }
 
-    // Fill the input — use native input value setter for React compatibility
+    // Fill the input -- use native input value setter for React compatibility
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
       window.HTMLTextAreaElement.prototype, 'value'
     )?.set;

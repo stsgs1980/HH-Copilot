@@ -5,12 +5,12 @@
  * Uses data-qa attributes (Magritte-compatible) and Bloko BEM classes.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SELECTORS MAP
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export const HH_SELECTORS = {
-  // ── Vacancy Search ──
+  // -- Vacancy Search --
   // ~= matches word in space-separated data-qa (e.g. "vacancy-serp__vacancy vacancy-serp-item_clickme")
   vacancyCard: ['[data-qa~="vacancy-serp__vacancy"]', '[data-qa="vacancy-serp__vacancy"]', '[class*="vacancy-serp-item"]'],
   vacancyTitleLink: ['a[data-qa="serp-item__title"]', 'a[data-qa="vacancy-serp__vacancy-title"]', 'a[href*="/vacancy/"]'],
@@ -22,13 +22,13 @@ export const HH_SELECTORS = {
   vacancyTags: ['.bloko-tag__text', '[data-qa*="tag"]'],
   replyButton: ['[data-qa="vacancy-serp__vacancy_response"]', '[data-qa="vacancy-response-link-top"]'],
   nextPage: ['[data-qa="pager-next"]'],
-  // ── Main Page: Vacancy of the Day ──
+  // -- Main Page: Vacancy of the Day --
   vacancyOfTheDayCard: ['[data-qa="vacancy_of_the_day_title"]'],
   vacancyOfTheDayTitle: ['[data-qa="vacancy_of_the_day_title"]'],
   vacancyOfTheDayCompensation: ['[data-qa="vacancy_of_the_day_compensation"]'],
   vacancyOfTheDayCompany: ['[data-qa="vacancy_of_the_day_company"]'],
   vacancyOfTheDayReply: ['[data-qa="vacancy-response-link-top-again"]'],
-  // ── Vacancy Page ──
+  // -- Vacancy Page --
   vacancyTitleOnPage: ['[data-qa="vacancy-title"]', 'h1.bloko-header-section-1'],
   vacancyCompanyOnPage: ['[data-qa="vacancy-company-name"]', 'a[data-qa="vacancy-company-name"]'],
   vacancyDescription: ['[data-qa="vacancy-description"]'],
@@ -55,7 +55,7 @@ export const HH_SELECTORS = {
   testTaskWarning: ['[data-qa="test-task-required"]'],
   alreadyApplied: ['[data-qa="already-applied"]', '[data-qa="vacancy-response-already-sent"]'],
   indirectEmployerAlert: ['[data-qa="indirect-employer-alert"]'],
-  // ── Resume Page ──
+  // -- Resume Page --
   // MAGRITE: hashed CSS-classes НЕ работают!
   // Только data-qa и Bloko BEM (бесхэшовые) классы.
   // parseResume() дополнительно использует автообнаружение по h2-заголовкам.
@@ -81,7 +81,7 @@ export const HH_SELECTORS = {
   resumePersonalName: [
     '[data-qa="resume-personal-name"]'
   ],
-  // ── Resume List Page (applicant/resumes) ──
+  // -- Resume List Page (applicant/resumes) --
   resumeListItem: [
     '[data-qa="resume-list-item"]'
   ],
@@ -92,19 +92,19 @@ export const HH_SELECTORS = {
   resumeListLink: [
     'a[href*="/resume/"]'
   ],
-  // ── Negotiations ──
+  // -- Negotiations --
   negotiationsChatItem: ['[data-qa="negotiations-chat-item"]', '[class*="negotiations-chat"]'],
   negotiationsChatUnread: ['[data-qa="negotiations-chat-unread"]', '[class*="unread"]'],
-  // ── Auth ──
+  // -- Auth --
   loginEmailInput: ['input[name="username"]', 'input[type="email"]', 'input[data-qa="login-input-username"]'],
   loginPasswordInput: ['input[name="password"]', 'input[type="password"]', 'input[data-qa="login-input-password"]'],
   loginCaptchaImage: ['img[src*="captcha"]', '.g-recaptcha'],
   logged_in_indicator: ['[data-qa="mainmenu_applicant"]', '[data-qa="mainmenu_user_name"]', 'a[data-qa="mainmenu_myResumes"]']
 };
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SELECTOR HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function getSelectors(name) {
   const s = HH_SELECTORS[name];

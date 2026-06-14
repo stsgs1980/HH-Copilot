@@ -7,14 +7,14 @@
  * Exported for testability, but not part of the public auth API.
  */
 
-// ─── NEGATIVE DETECTION ──────────────────────────────────────────────
+// --- NEGATIVE DETECTION ----------------------------------------------
 
 /**
  * Check if the user is logged out.
  * Uses layered checks: URL, data-qa, inputs, and HEADER-ONLY text scan.
  */
 export function isLoggedOut() {
-  // 1. URL check — if explicitly on login/signup page
+  // 1. URL check -- if explicitly on login/signup page
   const url = window.location.pathname;
   if (/\/account\/login/.test(url) || /\/login/.test(url) || /\/signup/.test(url)) {
     return true;
@@ -61,7 +61,7 @@ export function isLoggedOut() {
     } catch (e) {}
   }
 
-  // 4. TEXT SCAN — look for "Войти" ONLY in the HEADER area (top 120px).
+  // 4. TEXT SCAN -- look for "Войти" ONLY in the HEADER area (top 120px).
   //    Scanning the entire page caused false positives from banners, content, etc.
   const allButtons = document.querySelectorAll('a, button, [role="button"]');
   for (const el of allButtons) {
@@ -85,7 +85,7 @@ export function isLoggedOut() {
   return false;
 }
 
-// ─── POSITIVE DETECTION ───────────────────────────────────────────────
+// --- POSITIVE DETECTION -----------------------------------------------
 
 /**
  * Check if the user is logged in by looking for applicant-specific elements.
@@ -93,7 +93,7 @@ export function isLoggedOut() {
  */
 export function isLoggedIn() {
   const authSelectors = [
-    // data-qa selectors (primary — hh.ru test automation attributes)
+    // data-qa selectors (primary -- hh.ru test automation attributes)
     '[data-qa="mainmenu_applicant"]',
     '[data-qa="mainmenu_user_name"]',
     'a[data-qa="mainmenu_myResumes"]',

@@ -1,5 +1,5 @@
 /**
- * PAGE WORLD SCRIPT — runs in the page's MAIN world (not isolated).
+ * PAGE WORLD SCRIPT -- runs in the page's MAIN world (not isolated).
  * This file is injected as a content script with "world": "MAIN" in manifest.json.
  *
  * Purpose: Expose __hhVis() / __hhVisTable() / __hhVisDiag to the browser console
@@ -17,12 +17,12 @@ window.addEventListener('message', function(event) {
   if (!event.data || event.data.type !== 'HH-AR-VISDIAG') return;
 
   window.__hhVisDiag = event.data.payload;
-  console.log('%c[HH-AR][VIS-DIAG] Data updated — use __hhVis() or __hhVisTable()', 'color:#22c55e;font-weight:bold');
+  console.log('%c[HH-AR][VIS-DIAG] Data updated -- use __hhVis() or __hhVisTable()', 'color:#22c55e;font-weight:bold');
 });
 
 /**
  * Console helper: print a formatted visibility diagnostic report.
- * Usage: __hhVis() — after running "Синхронизировать все" in the panel.
+ * Usage: __hhVis() -- after running "Синхронизировать все" in the panel.
  */
 window.__hhVis = function() {
   var d = window.__hhVisDiag;
@@ -31,7 +31,7 @@ window.__hhVis = function() {
     return;
   }
 
-  console.log('%c[HH-AR][VIS-DIAG] ═══ VISIBILITY DIAGNOSTIC DUMP ═══', 'color:#2964FF;font-weight:bold;font-size:14px');
+  console.log('%c[HH-AR][VIS-DIAG] === VISIBILITY DIAGNOSTIC DUMP ===', 'color:#2964FF;font-weight:bold;font-size:14px');
   console.log('Started:', d.startedAt);
   console.log('Finished:', d.finishedAt);
   console.log('List source:', d.listSource, '| HTML length:', d.listRawHtmlLength);
@@ -44,10 +44,10 @@ window.__hhVis = function() {
   console.group('%cPer-resume details:', 'color:#2964FF;font-weight:bold');
   (d.resumes || []).forEach(function(r) {
     var color = r.finalVisibility === 'visible' ? '#22c55e' : r.finalVisibility === 'hidden' ? '#ef4444' : '#f59e0b';
-    console.log('%c  ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 40) + '" → %c' + r.finalVisibility, 'font-weight:bold', 'color:' + color + ';font-weight:bold');
+    console.log('%c  ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 40) + '" -> %c' + r.finalVisibility, 'font-weight:bold', 'color:' + color + ';font-weight:bold');
     console.log('    list: ' + r.listVis + ' | page: ' + r.pageVis + ' | iframe: ' + (r.iframeVis || '-') + ' | reason: ' + r.decisionReason);
     if (r.pageTrace && r.pageTrace.length > 0) {
-      console.log('    trace:', r.pageTrace.join(' → '));
+      console.log('    trace:', r.pageTrace.join(' -> '));
     }
     // Show iframe diagnostic data if available
     if (r.iframeDiag) {
@@ -93,9 +93,9 @@ window.__hhVisTable = function() {
   return d.resumes;
 };
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // VACANCY PAGE DIAGNOSTIC
-// ═══════════════════════════════════════════════
+// ===============================================
 
 window.__hhVacDiagData = null;
 
@@ -103,7 +103,7 @@ window.addEventListener('message', function(event) {
   if (!event.data || event.data.type !== 'HH-AR-VAC-DIAG') return;
 
   window.__hhVacDiagData = event.data.payload;
-  console.log('%c[HH-AR][VAC-DIAG] Data updated — use __hhVacDiag()', 'color:#3b82f6;font-weight:bold');
+  console.log('%c[HH-AR][VAC-DIAG] Data updated -- use __hhVacDiag()', 'color:#3b82f6;font-weight:bold');
 });
 
 /**
@@ -121,16 +121,16 @@ window.__hhVacDiag = function() {
 
   var d = window.__hhVacDiagData;
 
-  console.log('%c[HH-AR][VAC-DIAG] ═══ VACANCY PAGE DIAGNOSTIC ═══', 'color:#3b82f6;font-weight:bold;font-size:14px');
+  console.log('%c[HH-AR][VAC-DIAG] === VACANCY PAGE DIAGNOSTIC ===', 'color:#3b82f6;font-weight:bold;font-size:14px');
   console.log('URL:', d.url);
   console.log('Vacancy ID:', d.vacancyId);
   console.log('Timestamp:', d.timestamp);
 
-  // ── Known selectors ──
+  // -- Known selectors --
   console.group('%c1. Known Selectors', 'color:#3b82f6;font-weight:bold');
   Object.keys(d.selectors || {}).forEach(function(key) {
     var s = d.selectors[key];
-    var icon = s.found ? '%c✓' : '%c✗';
+    var icon = s.found ? '%c+' : '%cx';
     var color = s.found ? 'color:#22c55e' : 'color:#ef4444';
     console.log(icon + ' ' + key + '%c  ' + (s.matchedSelector || '(none matched)'), color, 'color:#71717a');
     if (s.found) {
@@ -141,31 +141,31 @@ window.__hhVacDiag = function() {
   });
   console.groupEnd();
 
-  // ── Auto-detected fields ──
+  // -- Auto-detected fields --
   console.group('%c2. Auto-Detected Fields', 'color:#3b82f6;font-weight:bold');
   var auto = d.autoDetect || {};
   ['title', 'company', 'salary', 'location', 'experience', 'employment', 'schedule'].forEach(function(field) {
     var f = auto[field];
     if (!f) return;
-    var icon = f.value ? '%c✓' : '%c✗';
+    var icon = f.value ? '%c+' : '%cx';
     var color = f.value ? 'color:#22c55e' : 'color:#ef4444';
     console.log(icon + ' ' + field + '%c  src=' + (f.source || '-') + '  value=' + (f.value || '(null)'), color, 'color:#71717a');
   });
   if (auto.keySkills && auto.keySkills.value) {
-    console.log('%c✓ keySkills%c  src=' + auto.keySkills.source + '  count=' + auto.keySkills.count, 'color:#22c55e', 'color:#71717a');
+    console.log('%c+ keySkills%c  src=' + auto.keySkills.source + '  count=' + auto.keySkills.count, 'color:#22c55e', 'color:#71717a');
     console.log('   ', auto.keySkills.value);
   }
   if (auto.description && auto.description.found) {
-    console.log('%c✓ description%c  src=' + auto.description.source + '  textLen=' + auto.description.textLength, 'color:#22c55e', 'color:#71717a');
+    console.log('%c+ description%c  src=' + auto.description.source + '  textLen=' + auto.description.textLength, 'color:#22c55e', 'color:#71717a');
     console.log('   headings:', auto.description.headings);
     console.log('   snippet:', auto.description.textSnippet);
   }
   if (auto.brandedDescription && auto.brandedDescription.found) {
-    console.log('%c✓ brandedDescription%c  textLen=' + auto.brandedDescription.textLength, 'color:#22c55e', 'color:#71717a');
+    console.log('%c+ brandedDescription%c  textLen=' + auto.brandedDescription.textLength, 'color:#22c55e', 'color:#71717a');
   }
   console.groupEnd();
 
-  // ── All data-qa groups ──
+  // -- All data-qa groups --
   console.group('%c3. All data-qa Groups (' + (auto.dataQaCount || 0) + ' prefixes)', 'color:#3b82f6;font-weight:bold');
   if (auto.dataQaGroups) {
     Object.keys(auto.dataQaGroups).sort().forEach(function(prefix) {
@@ -175,7 +175,7 @@ window.__hhVacDiag = function() {
   }
   console.groupEnd();
 
-  // ── Info blocks ──
+  // -- Info blocks --
   console.group('%c4. Info Blocks (' + ((d.rawData || {}).infoBlocks || []).length + ')', 'color:#3b82f6;font-weight:bold');
   if (d.rawData && d.rawData.infoBlocks) {
     d.rawData.infoBlocks.forEach(function(b) {
@@ -190,9 +190,9 @@ window.__hhVacDiag = function() {
 
 console.log('%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable() / __hhVacDiag()', 'color:#71717a;font-size:11px');
 
-// ═══════════════════════════════════════════════
-// SPA NAVIGATION — pushState patch for content script communication
-// ═══════════════════════════════════════════════
+// ===============================================
+// SPA NAVIGATION -- pushState patch for content script communication
+// ===============================================
 //
 // Problem: Content script runs in isolated world and can't intercept
 // pushState/replaceState calls made by hh.ru's own JavaScript.
@@ -202,10 +202,10 @@ console.log('%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable
 // NOTE: We do NOT intercept link clicks here. hh.ru has its own SPA router
 // that handles in-page navigation via pushState. Our click interception was
 // breaking navigation because pushState alone doesn't trigger hh.ru's router
-// to load new page content — it only changes the URL bar.
+// to load new page content -- it only changes the URL bar.
 
 (function setupSPANavigation() {
-  // ── 1. Patch pushState & replaceState ──
+  // -- 1. Patch pushState & replaceState --
   var origPush = history.pushState;
   history.pushState = function() {
     origPush.apply(this, arguments);

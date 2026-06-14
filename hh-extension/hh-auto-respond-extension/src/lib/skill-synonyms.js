@@ -1,7 +1,7 @@
 /**
  * LIB: SKILL SYNONYMS
  * ====================
- * ANTI-MONOLITH exception (Rule 12): 333 lines. Russian-language data dictionary — cannot be meaningfully split.
+ * ANTI-MONOLITH exception (Rule 12): 333 lines. Russian-language data dictionary -- cannot be meaningfully split.
  * Synonym groups for related skills.
  * When a vacancy requires skill A and the resume has skill B from the same
  * group, they count as a partial match (synonym match) instead of "missing".
@@ -16,14 +16,14 @@
  */
 
 /**
- * Each group is an array of normalized skill names (lowercase, hyphens→spaces, ё→е).
+ * Each group is an array of normalized skill names (lowercase, hyphens->spaces, ё->е).
  * All skills in a group are considered semantically related.
  */
 const SYNONYM_GROUPS = [
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // ПРОДАЖИ / ПЕРЕГОВОРЫ
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'переговоры',
     'работа с возражениями',
@@ -77,9 +77,9 @@ const SYNONYM_GROUPS = [
     'ведение отчетности',
   ],
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // УПРАВЛЕНИЕ / ЛИДЕРСТВО
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'управление командой',
     'руководство командой',
@@ -119,9 +119,9 @@ const SYNONYM_GROUPS = [
     'распределение задач',
   ],
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // МАРКЕТИНГ / АНАЛИТИКА
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'маркетинг',
     'продвижение',
@@ -142,9 +142,9 @@ const SYNONYM_GROUPS = [
     'онлайн маркетинг',
   ],
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // ФИНАНСЫ
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'p&l',
     'план факт',
@@ -159,9 +159,9 @@ const SYNONYM_GROUPS = [
     'бюджетирование',
   ],
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // ПРОЕКТЫ / ПРОДУКТ
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'управление проектами',
     'project management',
@@ -180,9 +180,9 @@ const SYNONYM_GROUPS = [
     'вывод продукта на рынок',
   ],
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // HR / КАДРЫ
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'подбор персонала',
     'рекрутинг',
@@ -200,9 +200,9 @@ const SYNONYM_GROUPS = [
     'performance review',
   ],
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // ЛОГИСТИКА / СЕТЬ
-  // ═══════════════════════════════════════════
+  // ===========================================
   [
     'работа с поставщиками',
     'закупки',
@@ -216,9 +216,9 @@ const SYNONYM_GROUPS = [
     'fmcg',
   ],
 
-  // ═══════════════════════════════════════════
-  // IT — related tech skills
-  // ═══════════════════════════════════════════
+  // ===========================================
+  // IT -- related tech skills
+  // ===========================================
   [
     'javascript',
     'js',
@@ -241,12 +241,12 @@ const SYNONYM_GROUPS = [
   ],
 ];
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // LOOKUP ENGINE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
- * Build a reverse index: normalized skill name → Set of synonym group members.
+ * Build a reverse index: normalized skill name -> Set of synonym group members.
  * Built once on first call, then cached.
  */
 let _synonymIndex = null;
@@ -277,7 +277,7 @@ function buildSynonymIndex() {
 function normalize(name) {
   return (name || '')
     .toLowerCase().trim()
-    .replace(/[-–—]/g, ' ')
+    .replace(/[-\u2013\u2014]/g, ' ')
     .replace(/ё/g, 'е')
     .replace(/\s+/g, ' ');
 }
@@ -286,9 +286,9 @@ function normalize(name) {
  * Check if skillA has a synonym match with any skill in the provided set.
  * Returns the matched synonym from the set, or null if no synonym match.
  *
- * @param {string} skillA — normalized skill name to check
- * @param {Set<string>} skillSet — set of normalized skill names
- * @returns {string|null} — the synonym found in skillSet, or null
+ * @param {string} skillA -- normalized skill name to check
+ * @param {Set<string>} skillSet -- set of normalized skill names
+ * @returns {string|null} -- the synonym found in skillSet, or null
  */
 export function findSynonymMatch(skillA, skillSet) {
   if (!_synonymIndex) _synonymIndex = buildSynonymIndex();
@@ -306,7 +306,7 @@ export function findSynonymMatch(skillA, skillSet) {
  * Get all synonyms for a skill (normalized).
  * Returns an empty Set if the skill has no synonym group.
  *
- * @param {string} skill — skill name (will be normalized)
+ * @param {string} skill -- skill name (will be normalized)
  * @returns {Set<string>}
  */
 export function getSynonyms(skill) {
@@ -317,8 +317,8 @@ export function getSynonyms(skill) {
 /**
  * Check if two normalized skills are in the same synonym group.
  *
- * @param {string} skillA — normalized skill name
- * @param {string} skillB — normalized skill name
+ * @param {string} skillA -- normalized skill name
+ * @param {string} skillB -- normalized skill name
  * @returns {boolean}
  */
 export function areSynonyms(skillA, skillB) {

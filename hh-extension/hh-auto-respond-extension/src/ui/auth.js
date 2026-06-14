@@ -7,9 +7,9 @@
  * from '../ui/auth.js' or './auth.js' continue to work unchanged.
  *
  * Modules:
- *   - auth-detection.js — isLoggedOut(), isLoggedIn() (pure DOM detection)
- *   - auth-check.js     — checkAuth(), checkAuthAsync(), resetAuthCache()
- *   - auth-user.js      — getUserName()
+ *   - auth-detection.js -- isLoggedOut(), isLoggedIn() (pure DOM detection)
+ *   - auth-check.js     -- checkAuth(), checkAuthAsync(), resetAuthCache()
+ *   - auth-user.js      -- getUserName()
  */
 
 export { isLoggedOut, isLoggedIn } from './auth-detection.js';

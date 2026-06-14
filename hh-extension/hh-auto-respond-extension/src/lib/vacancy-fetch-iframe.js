@@ -1,5 +1,5 @@
 /**
- * VACANCY FETCH — Strategy 1: iframe
+ * VACANCY FETCH -- Strategy 1: iframe
  * =====================================
  * Fetches a vacancy detail page in a hidden iframe, waits for
  * React/Magritte hydration, then parses the fully-rendered DOM
@@ -29,7 +29,7 @@ const HYDRATION_DELAY = 3000;
  * Fetch and parse a vacancy detail page via hidden iframe.
  * Returns a full vacancy detail object or null on failure.
  *
- * @param {string} vacancyUrl — Full URL like https://hh.ru/vacancy/12345
+ * @param {string} vacancyUrl -- Full URL like https://hh.ru/vacancy/12345
  * @returns {Promise<Object|null>}
  */
 export async function fetchVacancyViaIframe(vacancyUrl) {

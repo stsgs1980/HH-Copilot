@@ -1,5 +1,5 @@
 /**
- * UI: TABS — STATS
+ * UI: TABS -- STATS
  * ===================
  * Renders statistics tab: KPIs, weekly chart, funnel, logs.
  */

@@ -1,5 +1,5 @@
 /**
- * Iframe visibility detection — text/script/notification strategies.
+ * Iframe visibility detection -- text/script/notification strategies.
  * Extracted from resume-fetch-iframe-vis.js for anti-monolith compliance.
  *
  * Strategies: S3 (body indicators), S5 (body text), S6 (script JSON),

@@ -1,5 +1,5 @@
 /**
- * QUALITY EXPERIENCE — анализ качества опыта в резюме.
+ * QUALITY EXPERIENCE -- анализ качества опыта в резюме.
  *
  * HR оценивает:
  *  - Достижения vs обязанности (есть ли метрики/результаты)
@@ -33,7 +33,7 @@ export function analyzeExperience(r) {
     if (passed) earned += weight;
   };
 
-  // ── Метрики в описаниях ──
+  // -- Метрики в описаниях --
   const allDescriptions = exps
     .map(e => e.description || '')
     .filter(d => d.length > 0);
@@ -51,7 +51,7 @@ export function analyzeExperience(r) {
     '3 и более метрик -- сигнал что вы фокусируетесь на результатах, а не процессе'
   );
 
-  // ── Глаголы достижений ──
+  // -- Глаголы достижений --
   const descLower = descText.toLowerCase();
   const achievementVerbCount = ACHIEVEMENT_VERBS.filter(v => descLower.includes(v)).length;
   add('Глаголы достижений', 12,
@@ -59,14 +59,14 @@ export function analyzeExperience(r) {
     'Начинайте с "увеличил", "внедрил", "автоматизировал" -- это язык результатов, не обязанностей'
   );
 
-  // ── Нет размытых формулировок ──
+  // -- Нет размытых формулировок --
   const vagueCount = VAGUE_PHRASES.filter(v => descLower.includes(v)).length;
   add('Без размытых формулировок', 8,
     vagueCount === 0,
     'Замените "участие в", "помощь в" на конкретные действия и результаты'
   );
 
-  // ── Полнота описаний ──
+  // -- Полнота описаний --
   const expsWithDesc = exps.filter(e => e.description && e.description.length > 50);
   add('Описания к позициям', 10,
     expsWithDesc.length > 0,
@@ -77,7 +77,7 @@ export function analyzeExperience(r) {
     'Каждая позиция заслуживает описания хотя бы в 2-3 предложения'
   );
 
-  // ── Связь навыков с опытом ──
+  // -- Связь навыков с опытом --
   const skillLower = skills.map(s => s.toLowerCase().trim());
   const skillsInDesc = skillLower.filter(s => s.length > 2 && descLower.includes(s));
   const skillCoverage = skillLower.length > 0
@@ -88,10 +88,10 @@ export function analyzeExperience(r) {
     'HR сверяет: навыки должны упоминаться в описаниях опыта'
   );
 
-  // ── Карьерный рост ──
+  // -- Карьерный рост --
   const positions = exps.map(e => e.position || '').filter(p => p.length > 0);
   const hasProgression = detectProgression(positions);
-  // Если человек уже на руководящей позиции — считаем рост достигнутым
+  // Если человек уже на руководящей позиции -- считаем рост достигнутым
   const isTopLevel = positions.some(p =>
     /(?:^|[\s/(-])(head|руководител[а-яА-ЯёЁ]*|руководств[а-яА-ЯёЁ]*|director|директор[а-яА-ЯёЁ]*|начальник[а-яА-ЯёЁ]*|cто|cto|vp)(?:$|[\s/)-,.])/i.test(p)
   );
@@ -104,7 +104,7 @@ export function analyzeExperience(r) {
     progressionTip
   );
 
-  // ── Релевантность заголовка ──
+  // -- Релевантность заголовка --
   const titleRelevant = title.length > 0 && positions.some(p =>
     p.toLowerCase().includes(title.toLowerCase().split(/\s+/)[0]) ||
     title.toLowerCase().split(/\s+/).some(w => w.length > 3 && p.toLowerCase().includes(w))
@@ -114,7 +114,7 @@ export function analyzeExperience(r) {
     'Заголовок резюме должен соответствовать последней позиции -- иначе HR запутается'
   );
 
-  // ── О себе ──
+  // -- О себе --
   const aboutLen = (r.additionalInfo || '').length;
   add('Блок "О себе"', 5,
     aboutLen > 50,
@@ -129,13 +129,13 @@ export function analyzeExperience(r) {
   };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // CAREER PROGRESSION DETECTION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Распознать карьерный рост в последовательности должностей.
- * Ищем повышение уровня: junior → middle → senior, etc.
+ * Ищем повышение уровня: junior -> middle -> senior, etc.
  */
 export function detectProgression(positions) {
   if (positions.length < 2) return false;

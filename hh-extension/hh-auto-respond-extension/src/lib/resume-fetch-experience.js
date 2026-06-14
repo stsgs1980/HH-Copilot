@@ -1,10 +1,10 @@
 /**
- * Experience parsing — Strategies 1-3 (DOM-based).
+ * Experience parsing -- Strategies 1-3 (DOM-based).
  *
  * Parse experience entries from a DOM document using:
  * - Strategy 1: company cards (data-qa="profile-experience-company-card")
  * - Strategy 2: remaining stepper items not covered by company cards
- * - Strategy 3: fallback — all stepper items directly
+ * - Strategy 3: fallback -- all stepper items directly
  */
 import { createLogger } from './anti-hallucination.js';
 import { parseCompanyCardFromDoc } from './resume-fetch-parse.js';

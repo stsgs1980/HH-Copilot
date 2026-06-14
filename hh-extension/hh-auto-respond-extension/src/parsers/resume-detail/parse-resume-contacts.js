@@ -1,5 +1,5 @@
 /**
- * PARSER: RESUME DETAIL — Contacts (phone, email, telegram).
+ * PARSER: RESUME DETAIL -- Contacts (phone, email, telegram).
  * Extracted from parse-resume-personal.js for anti-monolith compliance.
  */
 
@@ -7,7 +7,7 @@
 const HH_SYSTEM_ACCOUNTS = ['hh_ru_official', 'hhru', 'hh_ru', 'hhcareers', 'headhunter_ru'];
 
 export function parseContacts(dbg, resume) {
-  // ── Phone ──
+  // -- Phone --
   // Strategy 1: data-qa selectors (may include label text)
   const phoneSelectors = [
     '[data-qa="resume-contact-phone"] a',
@@ -18,7 +18,7 @@ export function parseContacts(dbg, resume) {
   for (const sel of phoneSelectors) {
     const el = document.querySelector(sel);
     if (el) {
-      // Prefer href (tel:) — clean phone number without label
+      // Prefer href (tel:) -- clean phone number without label
       const href = el.getAttribute('href') || '';
       if (href.startsWith('tel:')) {
         resume.phone = dbg('phone (tel:)', href.replace('tel:', '').trim());
@@ -55,8 +55,8 @@ export function parseContacts(dbg, resume) {
     }
   }
 
-  // ── Email ──
-  // Strategy 1: mailto: link (cleanest — just the email, no label)
+  // -- Email --
+  // Strategy 1: mailto: link (cleanest -- just the email, no label)
   const mailtoLink = document.querySelector('a[href^="mailto:"]');
   if (mailtoLink) {
     const href = mailtoLink.getAttribute('href') || '';
@@ -96,8 +96,8 @@ export function parseContacts(dbg, resume) {
     }
   }
 
-  // ── Telegram ──
-  // ONLY look within the contacts block — avoid hh.ru footer/nav links
+  // -- Telegram --
+  // ONLY look within the contacts block -- avoid hh.ru footer/nav links
   const contactBlock = document.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
   if (contactBlock) {
     // Strategy 1: t.me/ links in contact block

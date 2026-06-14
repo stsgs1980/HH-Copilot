@@ -1,5 +1,5 @@
 /**
- * Strategy 6 — iframe sub-strategy.
+ * Strategy 6 -- iframe sub-strategy.
  *
  * Load the resume page in a hidden iframe, click "Развернуть" buttons
  * to expand all experience entries, then parse the fully-rendered DOM.
@@ -48,10 +48,10 @@ export async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) 
       throw new Error('Cannot access iframe document (cross-origin or blocked)');
     }
 
-    // ═══ DIAGNOSTIC: dump iframe state for debugging ═══
+    // === DIAGNOSTIC: dump iframe state for debugging ===
     const iframeDiag = buildIframeDiag(iframeDoc, iframe);
 
-    // ═══ VISIBILITY DETECTION from fully-hydrated iframe DOM ═══
+    // === VISIBILITY DETECTION from fully-hydrated iframe DOM ===
     const iframeVisResult = detectVisibilityFromIframeDoc(iframeDoc);
     iframeVisResult.iframeDiag = iframeDiag;
     fetchLog.info('[VIS-DIAG] iframe visibility: ' + iframeVisResult.visibility +
@@ -85,7 +85,7 @@ export async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) 
   }
 }
 
-// ── Helpers ──
+// -- Helpers --
 
 function buildIframeDiag(iframeDoc, iframe) {
   const diag = {};

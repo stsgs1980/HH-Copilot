@@ -1,11 +1,11 @@
 /**
- * PARSER: RESUME DETAIL — Salary conditions (employment, format, schedule, relocation).
+ * PARSER: RESUME DETAIL -- Salary conditions (employment, format, schedule, relocation).
  * Extracted from parse-resume-personal.js for anti-monolith compliance.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ЗАРПЛАТА И УСЛОВИЯ (employment, format, schedule, relocation)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseSalaryConditions(dbg, resume) {
   const posCard = document.querySelector('[data-qa="resume-position-card"]');
@@ -23,7 +23,7 @@ export function parseSalaryConditions(dbg, resume) {
 
   // NOTE: \b does NOT work with Cyrillic in JS (\w = [a-zA-Z0-9_] only),
   //       so we use (^|\s) / ($|[,;\s]) boundaries instead.
-  // hh.ru naming: «Полная занятость» or «Постоянная работа» — same meaning
+  // hh.ru naming: "Полная занятость" or "Постоянная работа" -- same meaning
   const empPatterns = [
     /(?:^|\s)(Полная занятость|Постоянная работа)(?:$|[,;\s])/i,
     /(?:^|\s)(Частичная занятость)(?:$|[,;\s])/i,
@@ -31,8 +31,8 @@ export function parseSalaryConditions(dbg, resume) {
     /(?:^|\s)(Стажировка)(?:$|[,;\s])/i,
     /(?:^|\s)(Волонтёрство)(?:$|[,;\s])/i,
   ];
-  // Work format: hh.ru writes «На месте работодателя», «Удалённо», «Гибрид»
-  // Can be comma-separated: «На месте работодателя, Удалённо, Гибрид»
+  // Work format: hh.ru writes "На месте работодателя", "Удалённо", "Гибрид"
+  // Can be comma-separated: "На месте работодателя, Удалённо, Гибрид"
   const fmtPatterns = [
     /(?:^|\s)(На месте работодателя|Офис|В офисе)(?:$|[,;\s])/i,
     /(?:^|\s)(Удал[а-яё]+(?: работа)?|Удалённо)(?:$|[,;\s])/i,

@@ -13,9 +13,9 @@ import { MIN_HASH_LEN, cleanResumeTitle, VISIBILITY_UNKNOWN, detectVisibilityFro
 
 const helperLog = createLogger('ResumeFetchH');
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // FETCH HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Fetch HTML content from a URL with credentials (for hh.ru authenticated pages).
@@ -57,9 +57,9 @@ export function safeGetText(el, fallback) {
   return text.length > 0 ? text : fallback;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // RESUME LINK EXTRACTORS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Extract resume links from a list of anchor elements on /applicant/resumes page.

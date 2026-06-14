@@ -1,26 +1,26 @@
 /**
- * LIB: MATCH SCORER — Orchestrator
+ * LIB: MATCH SCORER -- Orchestrator
  * ==================================
  * Computes a match score between a resume and a vacancy.
- * Thin orchestrator — delegates to focused modules:
- *   - match-scorer-skills.js      → skill overlap (0–40)
- *   - match-scorer-title.js       → title similarity (0–30)
- *   - match-scorer-salary.js      → salary fit (0–15)
- *   - match-scorer-experience.js  → experience match (0–15)
+ * Thin orchestrator -- delegates to focused modules:
+ *   - match-scorer-skills.js      -> skill overlap (0-40)
+ *   - match-scorer-title.js       -> title similarity (0-30)
+ *   - match-scorer-salary.js      -> salary fit (0-15)
+ *   - match-scorer-experience.js  -> experience match (0-15)
  *
- * Score breakdown (0–100):
- *   skills     0–40
- *   title      0–30
- *   salary     0–15
- *   experience 0–15
+ * Score breakdown (0-100):
+ *   skills     0-40
+ *   title      0-30
+ *   salary     0-15
+ *   experience 0-15
  *
  * v1.9.23.0: split from monolith into 4 focused modules
  *
  * Usage:
  *   const result = computeMatchScore(resume, vacancy);
- *   result.total       → 0–100
- *   result.breakdown   → { skills, title, salary, experience }
- *   result.details     → { matchingSkills, missingSkills, ... }
+ *   result.total       -> 0-100
+ *   result.breakdown   -> { skills, title, salary, experience }
+ *   result.details     -> { matchingSkills, missingSkills, ... }
  */
 
 import { createLogger } from './anti-hallucination.js';
@@ -33,8 +33,8 @@ const scoreLog = createLogger('Scorer');
 
 /**
  * Compute match score between a resume and a vacancy.
- * @param {Object} resume  — parsed resume object (from parseResume)
- * @param {Object} vacancy — parsed vacancy object (from parseVacancyDetail or vacancy-list)
+ * @param {Object} resume  -- parsed resume object (from parseResume)
+ * @param {Object} vacancy -- parsed vacancy object (from parseVacancyDetail or vacancy-list)
  * @returns {{ total: number, breakdown: Object, details: Object }}
  */
 export function computeMatchScore(resume, vacancy) {

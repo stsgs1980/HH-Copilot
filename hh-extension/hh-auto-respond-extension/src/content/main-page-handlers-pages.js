@@ -1,5 +1,5 @@
 /**
- * CONTENT: PAGE HANDLERS — Handler implementations
+ * CONTENT: PAGE HANDLERS -- Handler implementations
  * ================================================
  * Individual page handler functions extracted from main-page-handlers.js
  * for anti-monolith compliance.
@@ -24,14 +24,14 @@ import { setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.j
 
 const pageLog = createLogger('Main');
 
-// ── Vacancy search page ──
+// -- Vacancy search page --
 
 let searchObserverActive = false;
 
 export async function handleVacancySearchPage() {
   const vacancies = await parseVacanciesFromPage(panelState.resume);
 
-  // Step 1: Enrich from cache (instant — no network)
+  // Step 1: Enrich from cache (instant -- no network)
   await enrichFromCache(vacancies, panelState.resume);
   updateVacancies(vacancies);
 
@@ -39,7 +39,7 @@ export async function handleVacancySearchPage() {
   updateStats(stats);
 
   // Step 2: Background deep fetch for vacancies without keySkills
-  // Runs asynchronously — UI updates as each vacancy is enriched
+  // Runs asynchronously -- UI updates as each vacancy is enriched
   startBackgroundEnrichment(vacancies);
 
   // Set up SPA MutationObserver only once
@@ -62,7 +62,7 @@ export async function handleVacancySearchPage() {
   }
 }
 
-// ── Resume detail page ──
+// -- Resume detail page --
 
 export async function handleResumeDetailPage(path) {
   if (/\/resume\/edit\//.test(path)) {
@@ -84,7 +84,7 @@ export async function handleResumeDetailPage(path) {
     }
   } else if (/\/applicant\/resumes\/view/.test(path)) {
     // Applicant's own resume view: parse the current page directly
-    // (URL like /applicant/resumes/view?resume=XXX — DOM is similar to /resume/{hex})
+    // (URL like /applicant/resumes/view?resume=XXX -- DOM is similar to /resume/{hex})
     pageLog.info('Applicant resume view page detected');
     await expandHiddenSections();
     const resume = parseResume();
@@ -108,7 +108,7 @@ export async function handleResumeDetailPage(path) {
   }
 }
 
-// ── Resume list page ──
+// -- Resume list page --
 
 export async function handleResumeListPage() {
   const resumeList = parseResumeList();
@@ -119,7 +119,7 @@ export async function handleResumeListPage() {
   pageLog.info('Resume list page: ' + resumeList.length + ' resumes');
 }
 
-// ── Vacancy detail page ──
+// -- Vacancy detail page --
 
 export async function handleVacancyDetailPage(path) {
   pageLog.info('Vacancy detail page detected');
@@ -184,7 +184,7 @@ export async function handleVacancyDetailPage(path) {
   }
 }
 
-// ── Main page (/) ──
+// -- Main page (/) --
 
 let mainPageObserverActive = false;
 
@@ -226,14 +226,14 @@ export async function handleMainPage() {
   }
 }
 
-// ── Helper ──
+// -- Helper --
 
 /**
  * Start background enrichment of vacancies via iframe/text fetch.
  * Each enriched vacancy triggers a UI re-render with updated score.
- * Runs as fire-and-forget — errors are logged but not thrown.
+ * Runs as fire-and-forget -- errors are logged but not thrown.
  *
- * @param {Object[]} vacancies — Shallow vacancy objects to enrich
+ * @param {Object[]} vacancies -- Shallow vacancy objects to enrich
  */
 function startBackgroundEnrichment(vacancies) {
   if (!vacancies || vacancies.length === 0) return;

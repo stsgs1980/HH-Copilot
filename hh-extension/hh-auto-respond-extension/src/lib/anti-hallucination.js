@@ -5,9 +5,9 @@
  * Prevents "hallucinated" data from invisible/hidden elements.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SAFE DOM ACCESS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function safeGetText(el, fallback) {
   fallback = fallback || '';
@@ -27,9 +27,9 @@ export function safeGetAttr(el, attr, fallback) {
   return v !== null ? v : fallback;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // VALIDATION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function validateVacancyData(v) {
   const errors = [];
@@ -53,9 +53,9 @@ export function extractVacancyId(url) {
   return '';
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ASYNC DOM HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function waitForElement(selectors, timeout, root) {
   timeout = timeout || 10000;
@@ -108,9 +108,9 @@ export function safeInput(el, text, label) {
   return true;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // LOGGER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function createLogger(module) {
   return {

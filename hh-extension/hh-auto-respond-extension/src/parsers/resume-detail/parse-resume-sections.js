@@ -1,5 +1,5 @@
 /**
- * PARSER: RESUME DETAIL — Experience, Languages & About.
+ * PARSER: RESUME DETAIL -- Experience, Languages & About.
  * ========================================================
  * Skills parsing moved to parse-resume-skills.js.
  * Personal data, salary/conditions, contacts moved to parse-resume-personal.js.
@@ -14,9 +14,9 @@ const resumeLog = createLogger('Resume');
 // Re-export parseSkills for backward compatibility
 export { parseSkills };
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // EXPERIENCE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseExperience(dbg, resume) {
   const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
@@ -93,9 +93,9 @@ export function parseExperience(dbg, resume) {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // LANGUAGES & ADDITIONAL INFO
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseLanguagesAndAbout(dbg, resume) {
   const langTags = document.querySelectorAll('[data-qa="resume-about-card"] .bloko-tag__text, [data-qa="resume-position-card"] .bloko-tag__text');

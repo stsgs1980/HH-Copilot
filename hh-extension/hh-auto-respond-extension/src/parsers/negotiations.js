@@ -1,7 +1,7 @@
 /**
  * PARSER: NEGOTIATIONS
  * =====================
- * Stub — will parse negotiations/messages page.
+ * Stub -- will parse negotiations/messages page.
  * To be implemented in future phases.
  */
 

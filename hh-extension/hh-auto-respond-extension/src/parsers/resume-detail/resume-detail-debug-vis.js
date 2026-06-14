@@ -1,5 +1,5 @@
 /**
- * Resume visibility diagnostic — console debugging tool.
+ * Resume visibility diagnostic -- console debugging tool.
  * Split from resume-detail/index.js for anti-monolith compliance.
  */
 import {

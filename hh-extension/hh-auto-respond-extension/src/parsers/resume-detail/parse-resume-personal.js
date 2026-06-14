@@ -1,16 +1,16 @@
 /**
- * PARSER: RESUME DETAIL — Personal data (name, gender, age, address).
- * Salary conditions → parse-resume-conditions.js
- * Contacts → parse-resume-contacts.js
+ * PARSER: RESUME DETAIL -- Personal data (name, gender, age, address).
+ * Salary conditions -> parse-resume-conditions.js
+ * Contacts -> parse-resume-contacts.js
  */
 
 import { safeGetText, createLogger } from '../../lib/anti-hallucination.js';
 
 const resumeLog = createLogger('Resume');
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ПЕРСОНАЛЬНЫЕ ДАННЫЕ (name, gender, age, address)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parsePersonalData(titleEl, dbg, resume) {
   const personalText = [];

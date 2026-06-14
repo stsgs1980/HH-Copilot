@@ -1,5 +1,5 @@
 /**
- * UI: PANEL — Helpers
+ * UI: PANEL -- Helpers
  * ======================
  * Blacklist management, conversation select, vacancy filtering.
  */
@@ -9,9 +9,9 @@ import { renderBlacklist } from '../tabs/settings.js';
 import { addLogEntry } from '../tabs/stats.js';
 import { renderNegotiationList, renderChatMessages } from '../tabs/negotiations.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // BLACKLIST MANAGEMENT
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function addBlacklistItem() {
   const input = refs.shadowRoot?.getElementById('bl-input');
@@ -30,9 +30,9 @@ export function removeBlacklistItem(name) {
   renderBlacklist();
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // CONVERSATION SELECT
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function selectConversation(convId) {
   setActiveConversation(convId);
@@ -40,9 +40,9 @@ export function selectConversation(convId) {
   renderChatMessages();
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // VACANCY FILTERING (client-side)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function filterVacancies() {
   const search = (refs.shadowRoot?.getElementById('vac-search')?.value || '').toLowerCase();

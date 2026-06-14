@@ -1,9 +1,9 @@
 /**
- * LIB: RESUME CONSTANTS — Barrel re-export.
+ * LIB: RESUME CONSTANTS -- Barrel re-export.
  * All constants and utilities re-exported from focused sub-modules:
- *   - resume-constants-core.js       — base constants, normalizeWs, selectors
- *   - resume-constants-title.js      — UI_NOISE, TITLE_SUFFIX_NOISE, cleanResumeTitle
- *   - resume-constants-visibility.js — visibility detection functions
+ *   - resume-constants-core.js       -- base constants, normalizeWs, selectors
+ *   - resume-constants-title.js      -- UI_NOISE, TITLE_SUFFIX_NOISE, cleanResumeTitle
+ *   - resume-constants-visibility.js -- visibility detection functions
  *
  * Existing import paths remain unchanged.
  */

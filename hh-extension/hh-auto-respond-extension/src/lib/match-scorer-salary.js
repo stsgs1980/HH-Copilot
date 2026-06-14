@@ -1,16 +1,16 @@
 /**
- * MATCH SCORER: SALARY (0–15)
+ * MATCH SCORER: SALARY (0-15)
  * =============================
  * Salary compatibility between resume expectation and vacancy range.
  * Split from match-scorer.js for anti-monolith compliance.
  *
  * Scoring:
- *   Within range          → 15/15
- *   Slightly below (≤20%) → 12/15
- *   Slightly above (≤20%) → 10/15
- *   No data on either     → 8/15  (neutral)
- *   Way below             → 5/15
- *   Way above             → 3/15
+ *   Within range          -> 15/15
+ *   Slightly below (<=20%) -> 12/15
+ *   Slightly above (<=20%) -> 10/15
+ *   No data on either     -> 8/15  (neutral)
+ *   Way below             -> 5/15
+ *   Way above             -> 3/15
  *
  * v1.9.23.0: extracted from match-scorer.js
  */
@@ -26,12 +26,12 @@ export function scoreSalary(resume, vacancy) {
   const resumeSalary = parseResumeSalary(resume.salary || '');
   let vacSalary = vacancy.salary || {};
 
-  // Handle string salary from vacancy-list parser (e.g., "150 000 – 200 000 ₽")
+  // Handle string salary from vacancy-list parser (e.g., "150 000 - 200 000 rub")
   if (typeof vacSalary === 'string') {
     vacSalary = parseVacancySalaryString(vacSalary);
   }
 
-  // If no salary info on either side — neutral score
+  // If no salary info on either side -- neutral score
   if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
     return { score: 8, reason: 'no-data' };
   }
@@ -72,9 +72,9 @@ export function scoreSalary(resume, vacancy) {
   return { score: 3, reason: 'above-range' };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /** Parse resume salary string into a number. */
 function parseResumeSalary(salaryStr) {
@@ -85,12 +85,12 @@ function parseResumeSalary(salaryStr) {
   return parseInt(nums[0].replace(/\s/g, ''), 10) || null;
 }
 
-/** Parse vacancy salary string like "150 000 – 200 000 ₽" into { min, max }. */
+/** Parse vacancy salary string like "150 000 - 200 000 rub" into { min, max }. */
 function parseVacancySalaryString(salaryStr) {
   if (!salaryStr || typeof salaryStr !== 'string') return {};
   // Remove currency symbols and normalize spaces
   const cleaned = salaryStr.replace(/[руб.$евроруб\.]/gi, '').replace(/\s+/g, ' ');
-  // Find all number groups (e.g., "150 000" → "150000")
+  // Find all number groups (e.g., "150 000" -> "150000")
   const nums = cleaned.match(/\d[\d\s]*\d/g);
   if (!nums || nums.length === 0) return {};
   const parsed = nums.map(n => parseInt(n.replace(/\s/g, ''), 10)).filter(n => !isNaN(n));

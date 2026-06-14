@@ -1,5 +1,5 @@
 /**
- * UI: RESUMES — Shared Helpers
+ * UI: RESUMES -- Shared Helpers
  * ==============================
  * Common utilities for resume rendering:
  * getInitials, buildSubAccordion, buildGrid, toggleSub, attachSubToggle,
@@ -11,9 +11,9 @@
 import { refs } from '../../state.js';
 import { esc } from '../../html.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // INITIALS FROM NAME
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function getInitials(text) {
   if (!text) return '?';
@@ -22,9 +22,9 @@ export function getInitials(text) {
   return text.substring(0, 2).toUpperCase();
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SUB-ACCORDION TOGGLE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function toggleSub(sectionId, chevronId) {
   const body = refs.shadowRoot?.getElementById(sectionId);
@@ -34,9 +34,9 @@ export function toggleSub(sectionId, chevronId) {
   if (chev) chev.classList.toggle('open');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // BUILD SUB-ACCORDION HTML
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildSubAccordion(bodyId, chevronId, title, count, dotColor, contentHtml) {
   return '' +
@@ -51,9 +51,9 @@ export function buildSubAccordion(bodyId, chevronId, title, count, dotColor, con
     '<div class="sub-body" id="' + bodyId + '">' + contentHtml + '</div>';
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // BUILD KEY-VALUE GRID
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function buildGrid(pairs) {
   const rows = pairs
@@ -66,9 +66,9 @@ export function buildGrid(pairs) {
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + rows + '</div></div>';
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ATTACH SUB-ACCORDION TOGGLE EVENT
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function attachSubToggle(bodyId, chevronId) {
   const toggleEl = refs.shadowRoot?.querySelector('[data-sub-toggle="' + bodyId + '"]');
@@ -84,9 +84,9 @@ export function attachSubToggle(bodyId, chevronId) {
   });
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // UPDATE SKILLS CARD
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function updateSkillsSection(r) {
   const section = refs.shadowRoot?.getElementById('res-skills-section');

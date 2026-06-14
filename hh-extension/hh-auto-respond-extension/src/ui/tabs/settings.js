@@ -1,5 +1,5 @@
 /**
- * UI: TABS — SETTINGS
+ * UI: TABS -- SETTINGS
  * =======================
  * Renders settings tab: read/write settings, blacklist management.
  */

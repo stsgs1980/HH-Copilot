@@ -1,5 +1,5 @@
 /**
- * UI: TABS — VACANCIES
+ * UI: TABS -- VACANCIES
  * =======================
  * Renders vacancy list and stats in the sidebar vacancies tab.
  * Uses new design system: vacancy-item cards with match score ring.
@@ -55,7 +55,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
   set('vac-match-salary', b.salary + '/15');
   set('vac-match-exp', b.experience + '/15');
 
-  // Stacked bar — fill 100% width proportionally
+  // Stacked bar -- fill 100% width proportionally
   const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
   const barSkills = el('vac-match-bar-skills');
   const barTitle = el('vac-match-bar-title');
@@ -91,7 +91,7 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
         }
       }
 
-      // Derived matching skills (amber — inferred from experience)
+      // Derived matching skills (amber -- inferred from experience)
       const derivedRow = el('vac-match-derived-skills');
       const derivedList = el('vac-match-derived-list');
       if (derivedRow && derivedList) {
@@ -136,7 +136,7 @@ export function tryShowVacancyMatch() {
     const score = computeMatchScore(resume, detail);
     renderVacancyMatchScore(detail.id, score.total, score.breakdown, score.details);
   } else {
-    // No resume — show score without skill details
+    // No resume -- show score without skill details
     renderVacancyMatchScore(detail.id, detail.matchScore, detail.matchBreakdown, null);
   }
 }

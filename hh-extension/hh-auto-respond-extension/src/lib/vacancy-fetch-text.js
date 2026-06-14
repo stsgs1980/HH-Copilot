@@ -1,10 +1,10 @@
 /**
- * VACANCY FETCH — Strategy 2: Text fetch + DOMParser
+ * VACANCY FETCH -- Strategy 2: Text fetch + DOMParser
  * =====================================================
  * Fetches vacancy HTML via fetch() and parses it with DOMParser.
  * Fallback when iframe is blocked or cross-origin restricted.
  *
- * Also contains parseVacancyDetailFromDoc() — shared parser used by
+ * Also contains parseVacancyDetailFromDoc() -- shared parser used by
  * both text-fetch and iframe strategies. Extracts vacancy data from
  * a Document object (from DOMParser or iframe.contentDocument).
  *
@@ -28,7 +28,7 @@ const fetchLog = createLogger('VacFetchText');
  * Fetch vacancy HTML and parse via DOMParser.
  * Returns a full vacancy detail object or null on failure.
  *
- * @param {string} vacancyUrl — Full URL like https://hh.ru/vacancy/12345
+ * @param {string} vacancyUrl -- Full URL like https://hh.ru/vacancy/12345
  * @returns {Promise<Object|null>}
  */
 export async function fetchVacancyViaText(vacancyUrl) {
@@ -68,17 +68,17 @@ export async function fetchVacancyViaText(vacancyUrl) {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SHARED DOCUMENT PARSER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Parse a vacancy detail from a Document object.
  * Works with both DOMParser output and iframe.contentDocument.
- * This is the core parser — no dependency on global `document`.
+ * This is the core parser -- no dependency on global `document`.
  *
- * @param {Document} doc — Parsed document (from DOMParser or iframe)
- * @param {string} url — Full vacancy URL
+ * @param {Document} doc -- Parsed document (from DOMParser or iframe)
+ * @param {string} url -- Full vacancy URL
  * @returns {Object|null} Vacancy detail object or null
  */
 export function parseVacancyDetailFromDoc(doc, url) {
@@ -111,7 +111,7 @@ export function parseVacancyDetailFromDoc(doc, url) {
     source: 'detail',
   };
 
-  // ── Title ──
+  // -- Title --
   const titleEl = doc.querySelector('[data-qa="vacancy-title"]');
   if (titleEl) {
     vacancy.title = (titleEl.textContent || '').trim();
@@ -125,7 +125,7 @@ export function parseVacancyDetailFromDoc(doc, url) {
     return null;
   }
 
-  // ── Company ──
+  // -- Company --
   const companyEl = doc.querySelector(
     '[data-qa="vacancy-company-name"], [data-qa="vacancy-company"]'
   );
@@ -137,10 +137,10 @@ export function parseVacancyDetailFromDoc(doc, url) {
     }
   }
 
-  // ── Salary ──
+  // -- Salary --
   parseSalaryFromDoc(doc, vacancy);
 
-  // ── Location ──
+  // -- Location --
   const addrEl = doc.querySelector(
     '[data-qa="vacancy-address-with-map"], [data-qa="vacancy-view-raw-address"]'
   );
@@ -148,35 +148,35 @@ export function parseVacancyDetailFromDoc(doc, url) {
     vacancy.location = (addrEl.textContent || '').trim().replace(/\s+/g, ' ');
   }
 
-  // ── Experience ──
+  // -- Experience --
   parseExperienceFromDoc(doc, vacancy);
 
-  // ── Employment type ──
+  // -- Employment type --
   const empEl = doc.querySelector(
     '[data-qa="common-employment-text"], [data-qa*="employment"]'
   );
   if (empEl) vacancy.employment = (empEl.textContent || '').trim();
 
-  // ── Schedule ──
+  // -- Schedule --
   const schedEl = doc.querySelector(
     '[data-qa="work-schedule-by-days-text"], [data-qa*="work-schedule"], [data-qa*="schedule"]'
   );
   if (schedEl) vacancy.schedule = (schedEl.textContent || '').trim();
 
-  // ── Remote ──
+  // -- Remote --
   vacancy.isRemote = !!doc.querySelector('[data-qa="vacancy-label-work-schedule-remote"]');
 
-  // ── Description (BEFORE skills — text is used for derivation) ──
+  // -- Description (BEFORE skills -- text is used for derivation) --
   parseDescriptionFromDoc(doc, vacancy);
 
-  // ── Key Skills ──
+  // -- Key Skills --
   parseKeySkillsFromDoc(doc, vacancy);
 
-  // ── Hiring format ──
+  // -- Hiring format --
   const hireEl = doc.querySelector('[data-qa="vacancy-hiring-formats"]');
   if (hireEl) vacancy.hiringFormat = (hireEl.textContent || '').trim().replace(/\s+/g, ' ');
 
-  // ── Apply button ──
+  // -- Apply button --
   vacancy.hasApplyButton = !!doc.querySelector(
     '[data-qa="vacancy-response-link-top"], [data-qa="vacancy-apply-button"]'
   );
@@ -184,9 +184,9 @@ export function parseVacancyDetailFromDoc(doc, url) {
   return vacancy;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SECTION PARSERS (from Document, not global)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function parseSalaryFromDoc(doc, vacancy) {
   const salEl = doc.querySelector('[data-qa="vacancy-salary"]');
@@ -361,9 +361,9 @@ function parseKeySkillsFromDoc(doc, vacancy) {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function _getDescriptionText(vacancy) {
   if (vacancy.description && vacancy.description.text) {
@@ -400,7 +400,7 @@ function _deriveSkillsFromText(text) {
 
 function _normalizeSkill(name) {
   return name.toLowerCase().trim()
-    .replace(/[-–—]/g, ' ')
+    .replace(/[-\u2013\u2014]/g, ' ')
     .replace(/ё/g, 'е')
     .replace(/\s+/g, ' ');
 }

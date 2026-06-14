@@ -1,5 +1,5 @@
 /**
- * Iframe visibility detection — DOM-based strategies.
+ * Iframe visibility detection -- DOM-based strategies.
  * Extracted from resume-fetch-iframe-vis.js for anti-monolith compliance.
  *
  * Strategies: S0 (visibility-card), S1 (data-qa), S2 (key buttons), S4 (hide-link).

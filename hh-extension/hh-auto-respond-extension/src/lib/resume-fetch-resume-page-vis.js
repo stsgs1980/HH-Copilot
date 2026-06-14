@@ -19,7 +19,7 @@ const visLog = createLogger('ResumeFetch');
  * Detect visibility status from the resume detail page HTML.
  *
  * Strategies:
- * 0. data-qa="resume-visibility-card" (PRIMARY for Magritte — "не видно никому" / "видно всем")
+ * 0. data-qa="resume-visibility-card" (PRIMARY for Magritte -- "не видно никому" / "видно всем")
  * 1. Hidden-specific data-qa attributes (resume-make-visible, resume-status-hidden)
  * 2. Button text ("Сделать видимым" = hidden, "Скрыть резюме" = visible)
  * 3. Page body text for hidden/visible indicators
@@ -34,7 +34,7 @@ const visLog = createLogger('ResumeFetch');
 export function detectVisibilityFromResumePage(doc, html) {
   const diag = []; // diagnostic trace -- every step logged
 
-  // ═══ Strategy 0: Check resume-visibility-card (PRIMARY for Magritte) ═══
+  // === Strategy 0: Check resume-visibility-card (PRIMARY for Magritte) ===
   const visCard = doc.querySelector('[data-qa="resume-visibility-card"]');
   if (visCard) {
     const cardText = normalizeWs(visCard.textContent || '').toLowerCase();
@@ -53,7 +53,7 @@ export function detectVisibilityFromResumePage(doc, html) {
     diag.push('S0:no-visibility-card');
   }
 
-  // ═══ Strategy 1: Check for hidden-specific data-qa attributes ═══
+  // === Strategy 1: Check for hidden-specific data-qa attributes ===
   for (const sel of VISIBILITY_HIDDEN_DATA_QA) {
     const found = doc.querySelector(sel);
     if (found) {
@@ -64,7 +64,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   }
   diag.push('S1:no-data-qa-hidden');
 
-  // ═══ Strategy 2: Check for "Сделать видимым" / "Скрыть резюме" buttons ═══
+  // === Strategy 2: Check for "Сделать видимым" / "Скрыть резюме" buttons ===
   const allButtons = doc.querySelectorAll('button, a');
   let btnDetails = [];
   for (const btn of allButtons) {
@@ -88,7 +88,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   }
   diag.push('S2:no-key-buttons' + (btnDetails.length ? '(saw:' + btnDetails.length + ' partial)' : ''));
 
-  // ═══ Strategy 3: Check page body text for hidden/visible indicators ═══
+  // === Strategy 3: Check page body text for hidden/visible indicators ===
   const bodyText = doc.body ? normalizeWs(doc.body.textContent || '') : '';
   if (hasHiddenIndicator(bodyText)) {
     const lower = bodyText.toLowerCase();
@@ -109,7 +109,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   }
   diag.push('S3:body-no-indicators');
 
-  // ═══ Strategy 4: Check raw HTML for hidden/visible indicators (with &nbsp; normalization) ═══
+  // === Strategy 4: Check raw HTML for hidden/visible indicators (with &nbsp; normalization) ===
   const htmlForSearch = html.replace(/&nbsp;/g, ' ').toLowerCase();
   const htmlNorm = normalizeWs(htmlForSearch);
   if (hasHiddenIndicator(htmlNorm)) {
@@ -131,7 +131,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   }
   diag.push('S4:html-no-indicators');
 
-  // ═══ Strategy 5: Check script/hydration JSON for hidden status ═══
+  // === Strategy 5: Check script/hydration JSON for hidden status ===
   const scriptEls = doc.querySelectorAll('script:not([src])');
   let scriptPatterns = [];
   for (const script of scriptEls) {
@@ -154,7 +154,7 @@ export function detectVisibilityFromResumePage(doc, html) {
   }
   diag.push('S5:no-script-patterns');
 
-  // ═══ Strategy 6: If we find a "Скрыть" action link/button specific to this resume ═══
+  // === Strategy 6: If we find a "Скрыть" action link/button specific to this resume ===
   const hideLink = doc.querySelector('[data-qa="resume-action-hide"], [data-qa*="resume-hide"], a[data-qa*="hide-resume"]');
   if (hideLink) {
     const hideQa = hideLink.getAttribute('data-qa') || '';

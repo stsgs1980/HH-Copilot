@@ -5,8 +5,8 @@
  * Design: green accent (#059669), 720px panel, closed Shadow DOM.
  *
  * Split into two modules for anti-monolith compliance:
- *   sidebar-css-core.js       — base styles, panel shell, tabs, cards, animations
- *   sidebar-css-components.js — badges, buttons, vacancy items, timeline, etc.
+ *   sidebar-css-core.js       -- base styles, panel shell, tabs, cards, animations
+ *   sidebar-css-components.js -- badges, buttons, vacancy items, timeline, etc.
  */
 
 import { SIDEBAR_CSS_CORE } from './sidebar-css-core.js';

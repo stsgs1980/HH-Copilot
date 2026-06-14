@@ -1,18 +1,18 @@
 /**
- * TOUR STEPS — определения шагов гида по вкладкам.
+ * TOUR STEPS -- определения шагов гида по вкладкам.
  *
  * Каждый шаг: { target, tab?, title, text, position? }
- *   target   — CSS-селектор внутри shadowRoot (или документа для FAB)
- *   tab      — вкладка, которую нужно активировать перед показом
- *   title    — заголовок шага
- *   text     — описание шага
- *   position — top|bottom|left|right|center (авто-определяется если не указан)
+ *   target   -- CSS-селектор внутри shadowRoot (или документа для FAB)
+ *   tab      -- вкладка, которую нужно активировать перед показом
+ *   title    -- заголовок шага
+ *   text     -- описание шага
+ *   position -- top|bottom|left|right|center (авто-определяется если не указан)
  */
 
 /** Полный тур для нового пользователя (по порядку вкладок) */
 export function getWelcomeTourSteps() {
   return [
-    // ── Welcome ──
+    // -- Welcome --
     {
       target: '.har-tabbar',
       tab: 'overview',
@@ -20,7 +20,7 @@ export function getWelcomeTourSteps() {
       text: '6 вкладок помогают автоматизировать поиск работы на hh.ru. Пройдёмся по каждой -- это займёт минуту.',
       position: 'bottom',
     },
-    // ── Overview ──
+    // -- Overview --
     {
       target: '#kpi-daily-count',
       tab: 'overview',
@@ -35,7 +35,7 @@ export function getWelcomeTourSteps() {
       text: 'Одна кнопка -- и Copilot откликается на все подходящие вакансии с вашим сопроводительным письмом.',
       position: 'bottom',
     },
-    // ── Resume ──
+    // -- Resume --
     {
       target: '[data-action="sync-resumes"]',
       tab: 'resume',
@@ -50,7 +50,7 @@ export function getWelcomeTourSteps() {
       text: 'Оценка того, как ваше резюме выглядит для ATS и HR: ATS-совместимость, качество опыта, красные флаги и рекомендации.',
       position: 'left',
     },
-    // ── Vacancies ──
+    // -- Vacancies --
     {
       target: '[data-action="refresh"]',
       tab: 'vacancies',
@@ -72,7 +72,7 @@ export function getWelcomeTourSteps() {
       text: 'После парсинга -- выберите вакансии и запустите массовый отклик. Copilot сам заполнит формы и отправит.',
       position: 'top',
     },
-    // ── Negotiations ──
+    // -- Negotiations --
     {
       target: '#neg-list',
       tab: 'negotiations',
@@ -87,7 +87,7 @@ export function getWelcomeTourSteps() {
       text: 'Шаблон сопроводительного письма подставляется автоматически при каждом отклике. Настройте текст под себя.',
       position: 'top',
     },
-    // ── Settings ──
+    // -- Settings --
     {
       target: '#s-daily-limit',
       tab: 'settings',
@@ -102,7 +102,7 @@ export function getWelcomeTourSteps() {
       text: 'Добавляйте компании, в которые не хотите откликаться. Copilot пропустит их при массовом отклике.',
       position: 'bottom',
     },
-    // ── Stats ──
+    // -- Stats --
     {
       target: '#stat-chart',
       tab: 'stats',
@@ -117,7 +117,7 @@ export function getWelcomeTourSteps() {
       text: 'Подробный лог всех действий: отклики, ошибки, капчи, замедления. Полный контроль над процессом.',
       position: 'top',
     },
-    // ── Final ──
+    // -- Final --
     {
       target: '.har-tabbar',
       tab: 'overview',

@@ -1,5 +1,5 @@
 /**
- * UI: TABS — OVERVIEW
+ * UI: TABS -- OVERVIEW
  * =====================
  * Renders overview tab content: KPI values, rate limits, activity timeline.
  */

@@ -3,9 +3,9 @@
  * =======================
  * Re-exports all storage functions from focused sub-modules.
  *
- *   storage-settings.js — defaults, settings, stats, daily reset
- *   storage-queue.js    — resumes, queues, blacklist, apply tracking
- *   storage-vacancies.js — vacancy details, match scores
+ *   storage-settings.js -- defaults, settings, stats, daily reset
+ *   storage-queue.js    -- resumes, queues, blacklist, apply tracking
+ *   storage-vacancies.js -- vacancy details, match scores
  */
 
 export {

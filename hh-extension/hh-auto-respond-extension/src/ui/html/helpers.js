@@ -2,7 +2,7 @@
  * Shared helper functions
  */
 
-/* HTML-escape helper — normalizes non-breaking spaces to regular spaces */
+/* HTML-escape helper -- normalizes non-breaking spaces to regular spaces */
 export function esc(s) {
   if (!s) return '';
   // Replace \u00A0 (nbsp) and other non-standard spaces with regular space

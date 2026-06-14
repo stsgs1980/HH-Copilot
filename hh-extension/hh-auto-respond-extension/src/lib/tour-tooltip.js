@@ -1,5 +1,5 @@
 /**
- * TOUR TOOLTIP — rendering and positioning for guided tour tooltips.
+ * TOUR TOOLTIP -- rendering and positioning for guided tour tooltips.
  * Extracted from tour-engine.js for anti-monolith compliance.
  *
  * All elements are appended to .fab-panel and use position:absolute
@@ -9,9 +9,9 @@
  * Key design decisions:
  * - z-index set IMMEDIATELY on creation (not in rAF) so tooltip is always
  *   above the overlay from the very first frame.
- * - No CSS animation on the tooltip — avoids transform conflict with
+ * - No CSS animation on the tooltip -- avoids transform conflict with
  *   position:absolute positioning.
- * - Two-phase render: append hidden → measure → position → show.
+ * - Two-phase render: append hidden -> measure -> position -> show.
  */
 
 import { refs } from '../ui/state.js';
@@ -89,9 +89,9 @@ export function renderCenteredTooltip(step, idx, stepsLen) {
   console.log('[Tour] renderCenteredTooltip done');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HTML BUILDER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function buildTooltipHTML(step, idx, stepsLen) {
   const isLast = idx === stepsLen - 1;
@@ -112,9 +112,9 @@ function buildTooltipHTML(step, idx, stepsLen) {
     '</div>';
 }
 
-// ═══════════════════════════════════════════════
-// POSITIONING — all coords relative to .fab-panel
-// ═══════════════════════════════════════════════
+// ===============================================
+// POSITIONING -- all coords relative to .fab-panel
+// ===============================================
 
 function positionTooltip(tipEl, targetRect, pos) {
   const panel = getPanel();
@@ -152,7 +152,7 @@ function positionTooltip(tipEl, targetRect, pos) {
   left = Math.max(8, Math.min(left, panelRect.width - tipRect.width - 8));
   top = Math.max(8, Math.min(top, panelRect.height - tipRect.height - 8));
 
-  // Apply position — keep z-index from initial cssText
+  // Apply position -- keep z-index from initial cssText
   tipEl.style.top = top + 'px';
   tipEl.style.left = left + 'px';
 

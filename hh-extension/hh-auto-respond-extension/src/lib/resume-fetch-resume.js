@@ -1,14 +1,14 @@
 /**
- * Single resume parsing — fetches and parses a resume page.
+ * Single resume parsing -- fetches and parses a resume page.
  *
- * Thin orchestrator — delegates to focused modules:
- *   - resume-fetch-resume-page-vis.js — page-level visibility detection + decision
- *   - resume-fetch-resume-exp-orch.js  — experience strategies 1-6 + iframe vis override
- *   - resume-fetch-parse.js           — personal data + company card parsing
- *   - resume-fetch-parse-edu.js       — education parsing
- *   - resume-fetch-education-languages.js — education section, languages, about me
- *   - resume-fetch-resume-diag.js     — pre-parse diagnostics + visibility resolution
- *   - resume-fetch-resume-skills.js   — skills parsing (5 strategies)
+ * Thin orchestrator -- delegates to focused modules:
+ *   - resume-fetch-resume-page-vis.js -- page-level visibility detection + decision
+ *   - resume-fetch-resume-exp-orch.js  -- experience strategies 1-6 + iframe vis override
+ *   - resume-fetch-parse.js           -- personal data + company card parsing
+ *   - resume-fetch-parse-edu.js       -- education parsing
+ *   - resume-fetch-education-languages.js -- education section, languages, about me
+ *   - resume-fetch-resume-diag.js     -- pre-parse diagnostics + visibility resolution
+ *   - resume-fetch-resume-skills.js   -- skills parsing (5 strategies)
  */
 import { createLogger } from './anti-hallucination.js';
 import { fetchHtml, htmlToDoc, safeGetText } from './resume-fetch-helpers.js';
@@ -107,7 +107,7 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   return resume;
 }
 
-// ── Section parsers (small enough to stay in this file) ──
+// -- Section parsers (small enough to stay in this file) --
 
 function parseHeader(doc, dbg, resume) {
   const titleEl = doc.querySelector('[data-qa="resume-block-title-position"]');
@@ -120,7 +120,7 @@ function parseHeader(doc, dbg, resume) {
   if (salaryEl) resume.salary = dbg('resumeSalary (data-qa)', safeGetText(salaryEl));
 }
 
-// ── Salary conditions (employment, format, schedule, relocation) ──
+// -- Salary conditions (employment, format, schedule, relocation) --
 
 function parseSalaryConditionsFromDoc(doc, dbg, resume) {
   const posCard = doc.querySelector('[data-qa="resume-position-card"]');

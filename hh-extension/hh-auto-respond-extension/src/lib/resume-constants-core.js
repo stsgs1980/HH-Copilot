@@ -1,5 +1,5 @@
 /**
- * LIB: RESUME CONSTANTS — Core utilities.
+ * LIB: RESUME CONSTANTS -- Core utilities.
  * Base constants and utilities shared by title and visibility sub-modules.
  * No dependencies on other resume-constants sub-modules.
  */

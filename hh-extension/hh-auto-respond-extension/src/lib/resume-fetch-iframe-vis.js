@@ -1,6 +1,6 @@
 /**
  * Iframe visibility detection.
- * Detects visibility from the fully-hydrated iframe DOM — the MOST RELIABLE method
+ * Detects visibility from the fully-hydrated iframe DOM -- the MOST RELIABLE method
  * because hh.ru renders visibility indicators client-side via React, not in SSR HTML.
  *
  * Split from resume-fetch-strategy6-iframe.js for anti-monolith compliance.

@@ -1,6 +1,6 @@
 /**
  * TESTS: selectors.js
- * Tests selector matching against mock DOM — verifies ~= word-match, fallbacks
+ * Tests selector matching against mock DOM -- verifies ~= word-match, fallbacks
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -31,7 +31,7 @@ describe('HH_SELECTORS', () => {
   });
 });
 
-describe('findElement — word-match ~= selector', () => {
+describe('findElement -- word-match ~= selector', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -72,7 +72,7 @@ describe('findElement — word-match ~= selector', () => {
   });
 });
 
-describe('findAllElements — multiple cards', () => {
+describe('findAllElements -- multiple cards', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });

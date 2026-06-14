@@ -1,16 +1,16 @@
 /**
- * MATCH SCORER: EXPERIENCE (0–15)
+ * MATCH SCORER: EXPERIENCE (0-15)
  * =================================
  * Experience requirement match between resume and vacancy.
  * Split from match-scorer.js for anti-monolith compliance.
  *
  * Scoring:
- *   Within range              → 15/15
- *   No experience required    → 15/15
- *   Slightly below (≤1 year)  → 10/15
- *   Above max (overqualified) → 8/15 (NOT a penalty in Russian market)
- *   Unknown on either side    → 8/15 (neutral)
- *   Significantly below       → 3/15
+ *   Within range              -> 15/15
+ *   No experience required    -> 15/15
+ *   Slightly below (<=1 year)  -> 10/15
+ *   Above max (overqualified) -> 8/15 (NOT a penalty in Russian market)
+ *   Unknown on either side    -> 8/15 (neutral)
+ *   Significantly below       -> 3/15
  *
  * v1.9.23.0: extracted from match-scorer.js
  */
@@ -72,9 +72,9 @@ export function scoreExperience(resume, vacancy) {
   return { score: 3, reason: 'below-range' };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /** Calculate total years of experience from resume experience array. */
 function calcResumeYears(experience) {

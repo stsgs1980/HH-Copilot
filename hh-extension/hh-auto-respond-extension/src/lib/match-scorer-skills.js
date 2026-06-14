@@ -1,15 +1,15 @@
 /**
- * MATCH SCORER: SKILLS (0–40)
+ * MATCH SCORER: SKILLS (0-40)
  * ============================
  * Skill overlap between resume and vacancy.
  * Split from match-scorer.js for anti-monolith compliance.
  *
  * Weights:
- *   Explicit match  → 100% (skill declared in resume skills section)
- *   Derived match   → 70%  (skill inferred from experience descriptions)
- *   Synonym match   → 50%  (related skill from same synonym group)
- *   Implied match   → 40%  (skill self-evident from position title)
- *   Missing         → 0%
+ *   Explicit match  -> 100% (skill declared in resume skills section)
+ *   Derived match   -> 70%  (skill inferred from experience descriptions)
+ *   Synonym match   -> 50%  (related skill from same synonym group)
+ *   Implied match   -> 40%  (skill self-evident from position title)
+ *   Missing         -> 0%
  *
  * v1.9.23.0: extracted from match-scorer.js
  */
@@ -29,7 +29,7 @@ export function scoreSkills(resume, vacancy) {
   const derivedSkills = normalizeSkillSet(resume.derivedSkills || []);
 
   // v1.9.32.0: Only use keySkills (employer-listed). Never fall back to
-  // vacancy.skills (search card tags — too noisy, 5-10 random pills per card).
+  // vacancy.skills (search card tags -- too noisy, 5-10 random pills per card).
   // derivedSkills used only when keySkills is empty.
   let vacancySkillsRaw = vacancy.keySkills || [];
   if (vacancySkillsRaw.length === 0 && vacancy.derivedSkills && vacancy.derivedSkills.length > 0) {
@@ -42,7 +42,7 @@ export function scoreSkills(resume, vacancy) {
   const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
 
   if (vacancySkills.size === 0) {
-    // v1.9.19.0: Reduced neutral fallback from 20→10 (20 was too generous for "no data")
+    // v1.9.19.0: Reduced neutral fallback from 20->10 (20 was too generous for "no data")
     return { score: 10, matching: [], missing: [], extra: [], derivedMatch: [], synonymMatch: [], impliedMatch: [] };
   }
 
@@ -64,12 +64,12 @@ export function scoreSkills(resume, vacancy) {
     } else if (derivedSkills.has(skill)) {
       derivedMatch.push(skill);
     } else {
-      // v1.9.22.0: Check synonym groups — "переговоры" matches "работа с возражениями"
+      // v1.9.22.0: Check synonym groups -- "переговоры" matches "работа с возражениями"
       const synMatch = findSynonymMatch(skill, allResume);
       if (synMatch) {
         synonymMatch.push(skill + ' ~ ' + synMatch);
       } else if (roleImplied.has(skill)) {
-        // v1.9.31.0: Role-implied — skill self-evident from position title
+        // v1.9.31.0: Role-implied -- skill self-evident from position title
         impliedMatch.push(skill);
       } else {
         missing.push(skill);
@@ -99,16 +99,16 @@ export function scoreSkills(resume, vacancy) {
   return { score, matching, missing, extra, derivedMatch, synonymMatch, impliedMatch };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Normalize skill names: lowercase, trim, unify separators.
- * v1.9.19.0: Added hyphen/dash → space, ё → е normalization.
- *   "B2B-Продажи" → "b2b продажи"
- *   "B2B Продажи" → "b2b продажи"  (same result)
- *   "Всё" → "все"
+ * v1.9.19.0: Added hyphen/dash -> space, ё -> е normalization.
+ *   "B2B-Продажи" -> "b2b продажи"
+ *   "B2B Продажи" -> "b2b продажи"  (same result)
+ *   "Всё" -> "все"
  */
 export function normalizeSkillSet(skills) {
   const set = new Set();
@@ -117,8 +117,8 @@ export function normalizeSkillSet(skills) {
     if (name) {
       set.add(
         name.toLowerCase().trim()
-          .replace(/[-–—]/g, ' ')   // hyphens/dashes → space
-          .replace(/ё/g, 'е')       // ё → е
+          .replace(/[-\u2013\u2014]/g, ' ')   // hyphens/dashes -> space
+          .replace(/ё/g, 'е')       // ё -> е
           .replace(/\s+/g, ' ')     // collapse multiple spaces
       );
     }

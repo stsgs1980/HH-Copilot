@@ -24,9 +24,9 @@ import { bindTourEvents, isTourActive } from '../../lib/tour-engine.js';
 
 const panelLog = createLogger('Panel');
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // AUTH STATE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function updateAuthState(forceUI = false) {
   const was = panelState.isLoggedIn;
@@ -34,7 +34,7 @@ export function updateAuthState(forceUI = false) {
   if (was !== now || forceUI) {
     setAuthState(now);
     panelLog.info('Auth: ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
-    // Skip DOM rebuild while tour is active — it would destroy tour elements
+    // Skip DOM rebuild while tour is active -- it would destroy tour elements
     if (!isTourActive()) renderSidebarContent();
     if (panelState.isLoggedIn) {
       const container = refs.shadowRoot?.querySelector('.fab-panel');
@@ -56,7 +56,7 @@ export function updateAuthState(forceUI = false) {
   }
 }
 
-/** Enhanced async auth check — used for manual re-checks via cookie API */
+/** Enhanced async auth check -- used for manual re-checks via cookie API */
 export async function updateAuthStateAsync() {
   const was = panelState.isLoggedIn;
   const now = await checkAuthAsync();
@@ -102,9 +102,9 @@ function showAuthFeedback(isLoggedIn) {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SIDEBAR CREATION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function createSidebar() {
   if (refs.sidebarEl) return;
@@ -137,7 +137,7 @@ export function createSidebar() {
   /* Bind tour click delegation inside shadowRoot */
   bindTourEvents();
 
-  /* Escape key handler — close sidebar */
+  /* Escape key handler -- close sidebar */
   refs.sidebarEl.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && panelState.isOpen) {
       e.preventDefault();
@@ -194,9 +194,9 @@ export function toggleSidebar() {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PUBLIC API
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function updateVacancies(vacancies) {
   setVacancies(vacancies);

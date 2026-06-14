@@ -1,5 +1,5 @@
 /**
- * UI: RESUMES — Main Resume Panel
+ * UI: RESUMES -- Main Resume Panel
  * =================================
  * Renders the parsed resume data in the sidebar resume tab.
  * Wireframe: 6 accordion sections + skills card + gap analysis card.
@@ -22,9 +22,9 @@ import { updateAccordionHeader } from './resume-accordion-header.js';
 import { analyzeResumeQuality } from '../../../lib/resume-quality-analyzer.js';
 import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // MAIN RESUME PANEL RENDER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Render the main resume panel in the sidebar.
@@ -94,9 +94,9 @@ export function renderResumePanel() {
   renderMyResumesPanel();
 }
 
-// ═══════════════════════════════════════════════
-// RESUME SCORE — качественная оценка глазами HR/ATS
-// ═══════════════════════════════════════════════
+// ===============================================
+// RESUME SCORE -- качественная оценка глазами HR/ATS
+// ===============================================
 
 function updateResumeScore(r) {
   const section = refs.shadowRoot?.getElementById('res-score-section');
@@ -105,13 +105,13 @@ function updateResumeScore(r) {
   if (!r || !r.id) { section.style.display = 'none'; return; }
   section.style.display = '';
 
-  // v1.9.32.0: Use detail-only skills — collecting from ALL search results
+  // v1.9.32.0: Use detail-only skills -- collecting from ALL search results
   // merged skills from unrelated vacancies (cashier, merchandiser, etc.)
   const vacancySkills = collectDetailVacancySkills();
   const result = analyzeResumeQuality(r, vacancySkills);
   const pct = result.totalScore;
 
-  // ── Ring chart ──
+  // -- Ring chart --
   const ring = refs.shadowRoot?.getElementById('res-score-ring');
   if (ring) {
     const deg = Math.round(pct * 3.6);
@@ -124,7 +124,7 @@ function updateResumeScore(r) {
     }
   }
 
-  // ── Verdict subtitle ──
+  // -- Verdict subtitle --
   const subtitle = refs.shadowRoot?.getElementById('res-score-subtitle');
   if (subtitle) {
     if (pct >= 80) subtitle.textContent = 'Сильное резюме -- ATS пропустит, HR заметит';
@@ -133,7 +133,7 @@ function updateResumeScore(r) {
     else subtitle.textContent = 'Слабое -- высокая вероятность отсева на этапе ATS';
   }
 
-  // ── ATS + Experience mini-scores ──
+  // -- ATS + Experience mini-scores --
   const atsScoreEl = refs.shadowRoot?.getElementById('res-ats-score');
   const atsBar = refs.shadowRoot?.getElementById('res-ats-bar');
   if (atsScoreEl) {
@@ -152,7 +152,7 @@ function updateResumeScore(r) {
   }
   if (expBar) expBar.style.width = result.experienceScore + '%';
 
-  // ── Red flags ──
+  // -- Red flags --
   const redFlagsContainer = refs.shadowRoot?.getElementById('res-red-flags');
   const redFlagsList = refs.shadowRoot?.getElementById('res-red-flags-list');
   if (redFlagsContainer && redFlagsList) {
@@ -168,7 +168,7 @@ function updateResumeScore(r) {
     }
   }
 
-  // ── Strengths ──
+  // -- Strengths --
   const strengthsContainer = refs.shadowRoot?.getElementById('res-strengths');
   const strengthsList = refs.shadowRoot?.getElementById('res-strengths-list');
   if (strengthsContainer && strengthsList) {
@@ -184,7 +184,7 @@ function updateResumeScore(r) {
     }
   }
 
-  // ── Recommendations ──
+  // -- Recommendations --
   const recsContainer = refs.shadowRoot?.getElementById('res-recommendations');
   const recsList = refs.shadowRoot?.getElementById('res-recommendations-list');
   if (recsContainer && recsList) {

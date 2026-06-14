@@ -1,14 +1,14 @@
 /**
- * TOUR ENGINE — lightweight guided tour for HH Copilot.
+ * TOUR ENGINE -- lightweight guided tour for HH Copilot.
  *
  * Core: step management, overlay, spotlight, tab switching.
- * Tooltip rendering → tour-tooltip.js
+ * Tooltip rendering -> tour-tooltip.js
  *
  * Z-index stack (all inside .fab-panel):
  *   overlay   = 9999998  (dark backdrop)
  *   spotlight = 9999999  (glow around target)
  *   tooltip   = 10000001 (on top of everything)
- * CSS classes set z-index — no inline z-index needed.
+ * CSS classes set z-index -- no inline z-index needed.
  */
 
 import { refs } from '../ui/state.js';
@@ -23,9 +23,9 @@ let spotlight = null;
 let onDone = null;
 let _tourEventsBound = false;
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PUBLIC API
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /** Start a guided tour. */
 export function startTour(tourSteps, onFinish) {
@@ -68,16 +68,16 @@ export function isTourActive() {
   return overlay !== null;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // OVERLAY + SPOTLIGHT
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function createOverlay() {
   const panel = refs.shadowRoot?.querySelector('.fab-panel');
   if (!panel) { console.warn('[Tour] createOverlay: no .fab-panel'); return; }
 
   // Make panel a positioning context for position:absolute children
-  // (it already is — position:fixed — but be explicit)
+  // (it already is -- position:fixed -- but be explicit)
   if (!panel.style.position) panel.style.position = 'fixed';
 
   overlay = document.createElement('div');
@@ -108,9 +108,9 @@ function removeOverlay() {
   overlay = spotlight = null;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // STEP NAVIGATION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function showStep(idx) {
   if (idx < 0 || idx >= steps.length) { endTour(true); return; }
@@ -150,9 +150,9 @@ function positionSpotlight(el) {
   spotlight.style.height = (elRect.height + pad * 2) + 'px';
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // TAB SWITCHING
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function switchToTab(tabId) {
   const root = refs.shadowRoot;
@@ -165,9 +165,9 @@ function switchToTab(tabId) {
   if (section) section.classList.add('active');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // EVENT DELEGATION
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function handleTourClick(e) {
   const btn = e.target.closest('[data-tour]');

@@ -1,6 +1,6 @@
 /**
  * TESTS: routing logic
- * Tests routeToHandler path matching — extracted logic without side effects
+ * Tests routeToHandler path matching -- extracted logic without side effects
  */
 
 import { describe, it, expect } from 'vitest';
@@ -19,7 +19,7 @@ function matchRoute(path) {
   return null;
 }
 
-describe('routeToHandler — path matching', () => {
+describe('routeToHandler -- path matching', () => {
   it('routes /search/vacancy to vacancySearch', () => {
     expect(matchRoute('/search/vacancy')).toBe('vacancySearch');
     expect(matchRoute('/search/vacancy?text=python')).toBe('vacancySearch');

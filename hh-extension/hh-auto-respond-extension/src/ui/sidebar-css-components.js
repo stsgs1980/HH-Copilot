@@ -1,5 +1,5 @@
 /**
- * SIDEBAR CSS — Components (raw string)
+ * SIDEBAR CSS -- Components (raw string)
  * ========================================
  * Component styles: badges, buttons, vacancy items, timeline, skill tags, etc.
  * Part 2 of 2. Combined in sidebar-css.js.
@@ -162,7 +162,7 @@ export const SIDEBAR_CSS_COMPONENTS = `
 .score-ring.medium span { color: #B45309; }
 .score-ring.low span { color: #DC2626; }
 
-/* ═══ Guided Tour ═══ */
+/* === Guided Tour === */
 /* Overlay, spotlight, tooltip use position:absolute inside .fab-panel
    because the sidebar host has CSS transform, which makes position:fixed
    relative to the host instead of the viewport. */
@@ -175,7 +175,7 @@ export const SIDEBAR_CSS_COMPONENTS = `
   border: 1px solid rgba(0,0,0,0.06);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden; z-index: 10000001;
-  /* NO animation — transform:scale() in keyframes breaks position:absolute coords */
+  /* NO animation -- transform:scale() in keyframes breaks position:absolute coords */
 }
 .hh-tour-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -212,7 +212,7 @@ export const SIDEBAR_CSS_COMPONENTS = `
 .hh-tour-help:hover { background: #f4f4f5; color: #059669; border-color: #059669; }
 .hh-tour-help:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
 
-/* Visually hidden — accessible to screen readers */
+/* Visually hidden -- accessible to screen readers */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 /* Overflow word-break */

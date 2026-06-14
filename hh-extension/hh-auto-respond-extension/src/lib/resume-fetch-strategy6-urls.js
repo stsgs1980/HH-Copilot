@@ -1,5 +1,5 @@
 /**
- * Strategy 6 — URL discovery + expansion URL fetch.
+ * Strategy 6 -- URL discovery + expansion URL fetch.
  *
  * Find candidate expansion URLs from the "Развернуть" button, Magritte state,
  * and known API patterns. Then try fetching each URL and parsing the result.
@@ -33,7 +33,7 @@ export function findExpansionUrls(doc, html, resumeId) {
     urls.push({ url: fullUrl, source });
   };
 
-  // ── Source 1: "Развернуть" / "Показать все" button data-attributes ──
+  // -- Source 1: "Развернуть" / "Показать все" button data-attributes --
   const expSection = doc.querySelector('[data-qa="resume-list-card-experience"]');
   const searchRoot = expSection || doc;
   const allButtons = searchRoot.querySelectorAll('button, a[href], [data-url], [data-action-url], [data-fetch-url]');
@@ -69,7 +69,7 @@ export function findExpansionUrls(doc, html, resumeId) {
     }
   });
 
-  // ── Source 2: Magritte script state — look for expansion URLs ──
+  // -- Source 2: Magritte script state -- look for expansion URLs --
   const scripts = doc.querySelectorAll('script:not([src])');
   scripts.forEach(script => {
     const text = script.textContent || '';
@@ -98,7 +98,7 @@ export function findExpansionUrls(doc, html, resumeId) {
     }
   });
 
-  // ── Source 3: Known API patterns ──
+  // -- Source 3: Known API patterns --
   if (resumeId) {
     addUrl('https://hh.ru/applicant/resumes/view?resume=' + resumeId + '&expand=experience_items',
       'known-pattern-expand-items');

@@ -1,5 +1,5 @@
 /**
- * Resume list fetching — fetches and parses /applicant/resumes page.
+ * Resume list fetching -- fetches and parses /applicant/resumes page.
  */
 import { createLogger } from './anti-hallucination.js';
 import { fetchHtml, htmlToDoc, extractResumeLinks, extractFromScripts } from './resume-fetch-helpers.js';

@@ -1,5 +1,5 @@
 /**
- * VACANCY DIAGNOSTIC — Heuristic detectors
+ * VACANCY DIAGNOSTIC -- Heuristic detectors
  * ==========================================
  * Extracted from vacancy-diagnostic.js for anti-monolith compliance.
  * Individual field detection functions for vacancy page diagnostics.
@@ -31,7 +31,7 @@ export function detectSalary() {
     const parent = h1.parentElement;
     if (parent) {
       const salaryEl = Array.from(parent.children).find(c =>
-        /[\d\u00A0]+\s*₽|[\d\u00A0]+\s*руб/i.test(c.textContent)
+        /[\d\u00A0]+\s*\u20BD|[\d\u00A0]+\s*руб/i.test(c.textContent)
       );
       if (salaryEl) return { source: 'sibling-heuristic', value: salaryEl.textContent.trim() };
     }

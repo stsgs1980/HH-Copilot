@@ -1,11 +1,11 @@
 /**
- * QUALITY FLAGS — red flags, strengths.
+ * QUALITY FLAGS -- red flags, strengths.
  *
- * Red flags — what makes HR doubt:
+ * Red flags -- what makes HR doubt:
  *  - Gaps in employment, short jobs
  *  - Missing descriptions, vague wording
  *
- * Strengths — what makes the resume stand out:
+ * Strengths -- what makes the resume stand out:
  *  - Metrics, achievement verbs, confirmed skills
  *
  * Recommendations moved to quality-recommendations.js.
@@ -15,9 +15,9 @@ import { ACHIEVEMENT_VERBS, VAGUE_PHRASES, METRIC_PATTERNS } from './quality-pat
 import { detectProgression } from './quality-experience.js';
 import { findEmploymentGaps, parseDurationToMonths } from './quality-date-helpers.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // RED FLAGS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Detect red flags in a resume.
@@ -75,9 +75,9 @@ export function detectRedFlags(r) {
   return flags;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // STRENGTHS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Detect resume strengths.

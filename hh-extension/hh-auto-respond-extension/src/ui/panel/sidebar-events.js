@@ -1,5 +1,5 @@
 /**
- * UI: PANEL — Sidebar Click Handler
+ * UI: PANEL -- Sidebar Click Handler
  * ====================================
  * Click event delegation for the sidebar panel.
  * Extracted from events.js for anti-monolith compliance.
@@ -18,10 +18,10 @@ import { startTour, restartTour, isTourDone } from '../../lib/tour-engine.js';
 import { getWelcomeTourSteps, getTabTourSteps } from '../../lib/tour-steps.js';
 
 /**
- * Bind sidebar click delegation — single click handler for all panel actions.
+ * Bind sidebar click delegation -- single click handler for all panel actions.
  */
 export function bindSidebarClicks(container) {
-  /* ── Click delegation ── */
+  /* -- Click delegation -- */
   container.addEventListener('click', (e) => {
     const t = e.target;
 
@@ -46,7 +46,7 @@ export function bindSidebarClicks(container) {
     if (t.closest('[data-action="pause"]')) { window.dispatchEvent(new CustomEvent('hh-ar-toggle-status')); return; }
     if (t.closest('[data-action="refresh"]')) { window.dispatchEvent(new CustomEvent('hh-ar-refresh')); return; }
 
-    /* Navigate — close sidebar + full page navigation */
+    /* Navigate -- close sidebar + full page navigation */
     const navLink = t.closest('[data-action="navigate"]');
     if (navLink) {
       e.preventDefault();
@@ -58,7 +58,7 @@ export function bindSidebarClicks(container) {
       return;
     }
 
-    /* Auth — reset cache to force real async re-check */
+    /* Auth -- reset cache to force real async re-check */
     if (t.closest('[data-action="check-auth"]')) { resetAuthCache(); updateAuthStateAsync(); return; }
     if (t.closest('#har-retry-auth')) { resetAuthCache(); updateAuthStateAsync(); return; }
 
@@ -145,7 +145,7 @@ export function bindSidebarClicks(container) {
     if (convItem) { selectConversation(convItem.dataset.convId); return; }
   });
 
-  /* ── Keyboard delegation (WCAG: interactive elements must respond to Enter/Space) ── */
+  /* -- Keyboard delegation (WCAG: interactive elements must respond to Enter/Space) -- */
   container.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       /* Auth indicator */

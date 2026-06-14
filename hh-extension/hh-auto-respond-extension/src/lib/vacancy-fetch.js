@@ -1,19 +1,19 @@
 /**
- * LIB: VACANCY FETCH — Orchestrator
+ * LIB: VACANCY FETCH -- Orchestrator
  * ====================================
  * Fetches vacancy detail pages in the background to enrich shallow
  * SERP data with full skill lists, descriptions, and structured
  * salary/experience data for accurate match scoring.
  *
  * Flow:
- *   1. User lands on /search/vacancy → parseVacanciesFromPage() → shallow vacancies
- *   2. enrichFromCache() — merge previously stored detail data
- *   3. fetchVacancyDetails() — iframe/text fetch for missing details
+ *   1. User lands on /search/vacancy -> parseVacanciesFromPage() -> shallow vacancies
+ *   2. enrichFromCache() -- merge previously stored detail data
+ *   3. fetchVacancyDetails() -- iframe/text fetch for missing details
  *   4. Re-score with computeMatchScore() using enriched data
  *   5. Update UI with accurate scores
  *
  * Rate limiting:
- *   - gaussianDelay(1500, 3500) between fetches — not to DDoS hh.ru
+ *   - gaussianDelay(1500, 3500) between fetches -- not to DDoS hh.ru
  *   - Max 5 concurrent iframe elements
  *   - Priority: vacancies with higher initial score first
  *   - Stale cache check: skip if detail was parsed < 24h ago
@@ -54,16 +54,16 @@ let isFetching = false;
 /** Abort flag for the current batch */
 let abortFetch = false;
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PUBLIC API
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Enrich vacancies from cache only (no network requests).
  * Call this immediately after parsing SERP for instant partial enrichment.
  *
- * @param {Object[]} vacancies — Shallow vacancy objects from vacancy-list parser
- * @param {Object|null} resume — Active resume for re-scoring
+ * @param {Object[]} vacancies -- Shallow vacancy objects from vacancy-list parser
+ * @param {Object|null} resume -- Active resume for re-scoring
  * @returns {Promise<{ enriched: number, cached: number, skipped: number }>}
  */
 export async function enrichFromCache(vacancies, resume) {
@@ -85,9 +85,9 @@ export async function enrichFromCache(vacancies, resume) {
  * Uses iframe (primary) and text fetch (fallback) strategies.
  * Respects rate limits and cache freshness.
  *
- * @param {Object[]} vacancies — Shallow vacancy objects to enrich
- * @param {Object|null} resume — Active resume for re-scoring
- * @param {Object} [callbacks] — { onVacancyEnriched, onBatchComplete, onProgress }
+ * @param {Object[]} vacancies -- Shallow vacancy objects to enrich
+ * @param {Object|null} resume -- Active resume for re-scoring
+ * @param {Object} [callbacks] -- { onVacancyEnriched, onBatchComplete, onProgress }
  * @returns {Promise<{ fetched: number, failed: number, cached: number, total: number }>}
  */
 export async function fetchVacancyDetails(vacancies, resume, callbacks) {
@@ -119,9 +119,9 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
     }
 
     const toFetch = vacancies.filter(v => {
-      // Already have key skills from enrichment — skip
+      // Already have key skills from enrichment -- skip
       if (v.keySkills && v.keySkills.length > 0) return false;
-      // Have fresh cached detail — skip
+      // Have fresh cached detail -- skip
       const cached = detailMap.get(v.id);
       if (cached && isDetailFresh(cached)) return false;
       // Need to fetch
@@ -139,7 +139,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
       return { fetched: 0, failed: 0, cached: cacheResult.cached, total: vacancies.length };
     }
 
-    // Step 3: Sort by priority — higher initial scores first
+    // Step 3: Sort by priority -- higher initial scores first
     // (more likely to be relevant, so enrich them first)
     toFetch.sort((a, b) => {
       const sa = a.matchScore != null ? a.matchScore : -1;

@@ -1,13 +1,13 @@
 /**
- * LIB: RESUME FETCH PARSE — Education Parser
+ * LIB: RESUME FETCH PARSE -- Education Parser
  * =============================================
  * DOM-level education parser from fetched resume HTML.
  * Split from resume-fetch-parse.js for anti-monolith compliance.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // EDUCATION PARSER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 const EDU_UI_TEXTS = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
 

@@ -1,6 +1,6 @@
 /**
  * TESTS: parse-experience.js
- * Pure functions — no DOM needed
+ * Pure functions -- no DOM needed
  */
 
 import { describe, it, expect } from 'vitest';
@@ -37,14 +37,14 @@ describe('parseExperienceString', () => {
     expect(r.max).toBe(3);
   });
 
-  it('parses "1–3 года" (range with en-dash)', () => {
-    const r = parseExperienceString('1–3 года');
+  it('parses "1-3 года" (range with en-dash)', () => {
+    const r = parseExperienceString('1-3 года');
     expect(r.min).toBe(1);
     expect(r.max).toBe(3);
   });
 
-  it('parses "3—6 лет" (range with em-dash)', () => {
-    const r = parseExperienceString('3—6 лет');
+  it('parses "3--6 лет" (range with em-dash)', () => {
+    const r = parseExperienceString('3--6 лет');
     expect(r.min).toBe(3);
     expect(r.max).toBe(6);
   });

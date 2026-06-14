@@ -1,9 +1,9 @@
 /**
- * RESUME QUALITY ANALYZER — фасад.
+ * RESUME QUALITY ANALYZER -- фасад.
  * Собирает результаты из специализированных модулей:
- *   - quality-ats.js      → ATS-совместимость
- *   - quality-experience.js → качество опыта
- *   - quality-flags.js    → красные флаги, сильные стороны, рекомендации
+ *   - quality-ats.js      -> ATS-совместимость
+ *   - quality-experience.js -> качество опыта
+ *   - quality-flags.js    -> красные флаги, сильные стороны, рекомендации
  *
  * v1.9.21.0: Added vacancySkills parameter for vacancy-skill-gap recommendations.
  */
@@ -15,10 +15,10 @@ import { buildRecommendations } from './quality-recommendations.js';
 
 /**
  * Полный анализ качества резюме.
- * Общий балл: 40% ATS + 40% опыт + 20% базис − штраф за красные флаги.
+ * Общий балл: 40% ATS + 40% опыт + 20% базис - штраф за красные флаги.
  *
- * @param {Object} r — Resume object
- * @param {Set<string>} [vacancySkills] — Normalized vacancy skills (from vacancy-skills-collector)
+ * @param {Object} r -- Resume object
+ * @param {Set<string>} [vacancySkills] -- Normalized vacancy skills (from vacancy-skills-collector)
  */
 export function analyzeResumeQuality(r, vacancySkills) {
   if (!r || !r.id) return {

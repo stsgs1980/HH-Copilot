@@ -1,5 +1,5 @@
 /**
- * UI: TABS — RESUMES (compatibility shim)
+ * UI: TABS -- RESUMES (compatibility shim)
  * =========================================
  * Delegates to split modules under ./resumes/.
  * This file exists for backward compatibility with existing imports.

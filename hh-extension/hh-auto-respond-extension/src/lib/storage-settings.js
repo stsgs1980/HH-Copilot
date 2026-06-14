@@ -1,13 +1,13 @@
 /**
- * LIB: STORAGE — Settings & Stats
+ * LIB: STORAGE -- Settings & Stats
  * ================================
  * chrome.storage.local wrappers for settings and statistics.
  * Split from storage.js for anti-monolith compliance.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // DEFAULTS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export const DEFAULT_SETTINGS = {
   mode: 'manual', dailyLimit: 200, minMatchScore: 60,
@@ -20,9 +20,9 @@ export const DEFAULT_STATS = {
   responsesReceived: 0, skipsToday: 0, errorsToday: 0, lastActivity: null
 };
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SETTINGS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getAllSettings() {
   try {
@@ -31,9 +31,9 @@ export async function getAllSettings() {
   } catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // STATS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getStats() {
   try {
@@ -54,9 +54,9 @@ export async function incrementApplied() {
   return { allowed: true, remaining: settings.dailyLimit - stats.appliedToday };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // DAILY RESET
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function checkDailyReset() {
   try {

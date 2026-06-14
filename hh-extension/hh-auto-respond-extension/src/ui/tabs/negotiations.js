@@ -1,5 +1,5 @@
 /**
- * UI: TABS — NEGOTIATIONS
+ * UI: TABS -- NEGOTIATIONS
  * ==========================
  * Renders negotiations tab: conversation list, chat messages, AI hints.
  */

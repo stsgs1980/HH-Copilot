@@ -3,14 +3,14 @@
  *
  * hh.ru's resume page has a "Свернуть"/"Развернуть" button in the experience
  * section. In SSR, only 3 company-cards are rendered. The "Развернуть"
- * button does NOT use AJAX — React/Magritte loads all data during client-side
+ * button does NOT use AJAX -- React/Magritte loads all data during client-side
  * hydration and the button simply toggles component visibility in React state.
  * The full experience data is never in the SSR HTML or <script> tags.
  *
  * Sub-modules:
- *   resume-fetch-strategy6-iframe.js  — iframe approach (PRIMARY)
- *   resume-fetch-strategy6-urls.js    — URL discovery + fetch
- *   resume-fetch-strategy6-api.js     — applicant API + JSON/expanded-doc parsing
+ *   resume-fetch-strategy6-iframe.js  -- iframe approach (PRIMARY)
+ *   resume-fetch-strategy6-urls.js    -- URL discovery + fetch
+ *   resume-fetch-strategy6-api.js     -- applicant API + JSON/expanded-doc parsing
  */
 import { createLogger } from './anti-hallucination.js';
 import { fetchHtml, htmlToDoc } from './resume-fetch-helpers.js';
@@ -39,8 +39,8 @@ const fetchLog = createLogger('ResumeFetch');
 export async function fetchExpandedExperience(doc, html, resumeId, currentCount, resumeUrl) {
   fetchLog.info('Strategy 6: starting (currentCount=' + currentCount + ', resumeId=' + (resumeId || 'none') + ')');
 
-  // ── Step 0 [PRIMARY]: Load resume in hidden iframe, click "Развернуть", parse DOM ──
-  // Capture iframe visibility data — it MUST survive through ALL code paths below.
+  // -- Step 0 [PRIMARY]: Load resume in hidden iframe, click "Развернуть", parse DOM --
+  // Capture iframe visibility data -- it MUST survive through ALL code paths below.
   let iframeVis = null;
   let iframeVisTrace = null;
   let iframeDiag = null;
@@ -75,14 +75,14 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
     return result;
   };
 
-  // ── Step 1: Find "Развернуть" / "Показать все" button URLs ──
+  // -- Step 1: Find "Развернуть" / "Показать все" button URLs --
   const expansionUrls = findExpansionUrls(doc, html, resumeId);
   fetchLog.info('Strategy 6: found ' + expansionUrls.length + ' candidate expansion URLs');
   expansionUrls.forEach((u, i) => {
     fetchLog.info('  URL ' + i + ': ' + u.url + ' (source: ' + u.source + ')');
   });
 
-  // ── Step 2: Try each expansion URL ──
+  // -- Step 2: Try each expansion URL --
   for (const { url, source } of expansionUrls) {
     try {
       fetchLog.info('Strategy 6: fetching [' + source + '] ' + url);
@@ -96,13 +96,13 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
     }
   }
 
-  // ── Step 3: Try applicant internal API ──
+  // -- Step 3: Try applicant internal API --
   const apiEntries = await tryApplicantApi(resumeId, currentCount);
   if (apiEntries.length > currentCount) {
     return withVis({ entries: apiEntries });
   }
 
-  // ── Step 4: Try re-fetching with expansion query parameters ──
+  // -- Step 4: Try re-fetching with expansion query parameters --
   if (resumeUrl) {
     const expandVariants = [
       { url: resumeUrl + '&expand=experience_items', source: 'expand-experience-items' },

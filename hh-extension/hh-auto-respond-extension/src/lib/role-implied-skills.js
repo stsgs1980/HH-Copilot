@@ -15,17 +15,17 @@
 /**
  * Role-implied skill map.
  * Each entry: { triggers, exclude, implied }
- *   triggers — word stems/patterns in the position title (normalized lowercase)
- *   exclude  — if ANY of these found in title, skip this group
- *   implied  — skill names (normalized) that are self-evident for this role
+ *   triggers -- word stems/patterns in the position title (normalized lowercase)
+ *   exclude  -- if ANY of these found in title, skip this group
+ *   implied  -- skill names (normalized) that are self-evident for this role
  *
- * All strings are lowercase, ё→е, hyphens→spaces, trimmed.
+ * All strings are lowercase, ё->е, hyphens->spaces, trimmed.
  */
 const ROLE_SKILL_MAP = [
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // РУКОВОДИТЕЛЬ / ДИРЕКТОР / НАЧАЛЬНИК / HEAD
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['руководител', 'директор', 'начальник', 'head of', 'director', 'chief', 'vp', 'cто', 'cto', 'ceo', 'coo', 'cfo'],
     exclude: ['заместитель', 'зам ', 'зам.', 'помощник', 'assistant', 'deputy', 'стажер', 'стажёр'],
@@ -48,9 +48,9 @@ const ROLE_SKILL_MAP = [
     ],
   },
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // РУКОВОДИТЕЛЬ ОТДЕЛА ПРОДАЖ (комбинация)
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['руководитель отдел', 'руководитель продаж', 'head of sales', 'директор по продажам', 'директор продаж', 'коммерческий директор', 'начальник отдел продаж'],
     exclude: ['заместитель', 'зам ', 'зам.', 'помощник', 'deputy'],
@@ -86,9 +86,9 @@ const ROLE_SKILL_MAP = [
     ],
   },
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // МЕНЕДЖЕР ПО ПРОДАЖАМ
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['менеджер по продажам', 'менеджер продаж', 'sales manager', 'sales representative', 'торговый представитель', 'агент по продажам', 'специалист по продажам'],
     exclude: ['ассистент', 'помощник', 'стажер', 'стажёр', 'junior'],
@@ -106,9 +106,9 @@ const ROLE_SKILL_MAP = [
     ],
   },
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // МАРКЕТОЛОГ
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['маркетолог', 'marketing manager', 'маркетинг менеджер', 'менеджер по маркетингу', 'digital маркетолог', 'director of marketing', 'директор по маркетингу', 'руководитель маркетинг', 'cmo'],
     exclude: ['ассистент', 'помощник', 'стажер', 'стажёр'],
@@ -125,9 +125,9 @@ const ROLE_SKILL_MAP = [
     ],
   },
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // HR-СПЕЦИАЛИСТ
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['hr', 'кадров', 'рекрутер', 'recruiter', 'hr менеджер', 'hr специалист', 'специалист по персоналу', 'менеджер по персоналу', 'руководитель hr', 'директор по персоналу', 'hr director', 'hrbp'],
     exclude: ['ассистент', 'помощник', 'стажер', 'стажёр'],
@@ -144,9 +144,9 @@ const ROLE_SKILL_MAP = [
     ],
   },
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // ПРОЕКТНЫЙ МЕНЕДЖЕР
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['project manager', 'руководитель проект', 'менеджер проект', 'pm ', 'проджект менеджер'],
     exclude: ['ассистент', 'помощник', 'стажер', 'стажёр'],
@@ -162,9 +162,9 @@ const ROLE_SKILL_MAP = [
     ],
   },
 
-  // ═══════════════════════════════════════════
+  // ===========================================
   // ФИНАНСОВЫЙ СПЕЦИАЛИСТ
-  // ═══════════════════════════════════════════
+  // ===========================================
   {
     triggers: ['финансов', 'бухгалтер', 'accountant', 'cfo', 'financial', 'экономист', 'аудитор', 'auditor'],
     exclude: ['ассистент', 'помощник', 'стажер', 'стажёр'],
@@ -179,9 +179,9 @@ const ROLE_SKILL_MAP = [
   },
 ];
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // LOOKUP ENGINE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Normalize a string for comparison.
@@ -190,7 +190,7 @@ const ROLE_SKILL_MAP = [
 function normalize(str) {
   return (str || '')
     .toLowerCase().trim()
-    .replace(/[-–—]/g, ' ')
+    .replace(/[-\u2013\u2014]/g, ' ')
     .replace(/ё/g, 'е')
     .replace(/\s+/g, ' ');
 }
@@ -201,8 +201,8 @@ function normalize(str) {
  * Returns a Set of normalized skill names that are self-evident
  * from the position title and should NOT be shown as "missing".
  *
- * @param {string} title — Position title (e.g. "Руководитель отделов продаж")
- * @returns {Set<string>} — Set of normalized implied skill names
+ * @param {string} title -- Position title (e.g. "Руководитель отделов продаж")
+ * @returns {Set<string>} -- Set of normalized implied skill names
  */
 export function getRoleImpliedSkills(title) {
   const result = new Set();
@@ -232,15 +232,15 @@ export function getRoleImpliedSkills(title) {
  * Weight for role-implied skill matches.
  * Between synonym (50%) and missing (0%).
  * Implied = position self-evidently provides this skill,
- * but we can't be 100% certain → partial credit.
+ * but we can't be 100% certain -> partial credit.
  */
 export const IMPLIED_WEIGHT = 0.4;
 
 /**
  * Check if a skill is implied by the given position title.
  *
- * @param {string} skill — Normalized skill name
- * @param {string} title — Position title
+ * @param {string} skill -- Normalized skill name
+ * @param {string} title -- Position title
  * @returns {boolean}
  */
 export function isSkillImpliedByRole(skill, title) {

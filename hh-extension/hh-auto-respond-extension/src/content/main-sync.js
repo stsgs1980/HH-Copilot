@@ -1,7 +1,7 @@
 /**
  * CONTENT: SYNC HANDLER
  * ========================
- * Handles the hh-ar-sync-resumes event — fetch-based
+ * Handles the hh-ar-sync-resumes event -- fetch-based
  * resume sync that works from ANY hh.ru page.
  */
 

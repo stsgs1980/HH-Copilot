@@ -1,5 +1,5 @@
 /**
- * UI: RESUMES — My Resumes Panel
+ * UI: RESUMES -- My Resumes Panel
  * ================================
  * Renders the "My Resumes" sync section in the sidebar resume tab.
  * Shows list of synced resumes with visibility badges.
@@ -11,16 +11,16 @@ import { renderResumePanel } from './render-resume-panel.js';
 import { getResumePageType } from '../../../parsers/resume-detail.js';
 import { setActiveResume } from '../../../lib/storage.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // MY RESUMES PANEL
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Render the "My Resumes" sync section in the sidebar.
  * Shows list of synced resumes with:
- *   - Radio-style indicator (◉ active, ○ inactive)
+ *   - Radio-style indicator ((*) active, ( ) inactive)
  *   - Visibility badges (Видимо/Скрыто)
- *   - ↻ reparse button on active resume (amber for hidden)
+ *   - (r) reparse button on active resume (amber for hidden)
  *   - Visible/hidden counter badges
  *   - Contextual "Взять со страницы" CTA (only on resume detail pages when no active resume)
  */
@@ -82,7 +82,7 @@ export function renderMyResumesPanel() {
     const radio = isActive
       ? '<span style="width:16px;height:16px;border-radius:50%;border:2px solid #059669;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:8px;height:8px;border-radius:50%;background:#059669;"></span></span>'
       : '<span style="width:16px;height:16px;border-radius:50%;border:2px solid #d4d4d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></span>';
-    // Reparse icon (↻) only on active resume card — fetches fresh data from server
+    // Reparse icon ((r)) only on active resume card -- fetches fresh data from server
     const reparseIcon = isActive
       ? '<button class="btn btn-outline btn-sm" data-action="reparse-resume" title="' + (vis === 'hidden' ? 'Перепарсить скрытое' : 'Перепарсить') + '" ' +
         'style="padding:2px 6px;font-size:13px;line-height:1;' + (vis === 'hidden' ? 'color:#b45309;border-color:#fbbf24;' : '') + '">' +
@@ -108,7 +108,7 @@ export function renderMyResumesPanel() {
 
   listEl.querySelectorAll('.har-my-resume-item').forEach(item => {
     item.addEventListener('click', (e) => {
-      // If ↻ reparse button was clicked, don't switch active resume — let event delegation handle reparse-resume
+      // If (r) reparse button was clicked, don't switch active resume -- let event delegation handle reparse-resume
       if (e.target.closest('[data-action="reparse-resume"]')) return;
       const idx = parseInt(item.getAttribute('data-resume-idx'), 10);
       const resume = resumes[idx];
@@ -121,9 +121,9 @@ export function renderMyResumesPanel() {
   });
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // RESUME LIST PANEL (from page scan)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Render the resume list panel (from page scan on /applicant/resumes).

@@ -1,7 +1,7 @@
 /**
- * LIB: RESUME FETCH — Visibility Fallback
+ * LIB: RESUME FETCH -- Visibility Fallback
  * =========================================
- * Final visibility fallback logic: UNKNOWN → VISIBLE decision,
+ * Final visibility fallback logic: UNKNOWN -> VISIBLE decision,
  * diagnostic dump finalization, and global diagnostic exposure.
  * Split from resume-fetch.js for anti-monolith compliance.
  */
@@ -13,8 +13,8 @@ const fetchLog = createLogger('ResumeFetch');
 
 /**
  * Apply final visibility fallback for resumes still UNKNOWN after all detection.
- * - If iframe was NOT run → default to VISIBLE (assumed visible)
- * - If iframe ran but returned UNKNOWN → keep UNKNOWN (genuinely unknown)
+ * - If iframe was NOT run -> default to VISIBLE (assumed visible)
+ * - If iframe ran but returned UNKNOWN -> keep UNKNOWN (genuinely unknown)
  */
 export function applyVisibilityFallback(results, visDiag) {
   const stillUnknown = results.filter(r => r.visibility === VISIBILITY_UNKNOWN);

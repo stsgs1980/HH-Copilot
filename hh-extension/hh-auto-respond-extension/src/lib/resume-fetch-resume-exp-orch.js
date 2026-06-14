@@ -1,5 +1,5 @@
 /**
- * Resume experience orchestrator — Strategies 1-6 + iframe visibility override.
+ * Resume experience orchestrator -- Strategies 1-6 + iframe visibility override.
  *
  * Coordinates experience parsing strategies and applies iframe-based
  * visibility detection overrides (the most reliable source).
@@ -56,7 +56,7 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
   }
 
   // Strategy 6: Fetch expanded experience via AJAX/API endpoints
-  // ALSO returns iframe-based visibility detection (most reliable — from hydrated DOM)
+  // ALSO returns iframe-based visibility detection (most reliable -- from hydrated DOM)
   let iframeVis = null;
   let iframeVisTrace = null;
   let iframeDiag = null;
@@ -84,7 +84,7 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
   if (entries.length > 0) resume._debug.found.push('experience: ' + entries.length);
   else resume._debug.missing.push('experience (0 entries)');
 
-  // ═══ IFRAME VISIBILITY OVERRIDE ═══
+  // === IFRAME VISIBILITY OVERRIDE ===
   // The iframe loaded the fully-hydrated React DOM, which contains visibility
   // indicators that SSR HTML lacks. iframeVis is the MOST RELIABLE source.
   applyIframeVisibilityOverride(resume, iframeVis, iframeVisTrace, iframeDiag);

@@ -7,9 +7,9 @@
 
 import { safeGetText } from './resume-fetch-helpers.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // COMPANY CARD PARSER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseCompanyCardFromDoc(card) {
   const job = {};
@@ -58,23 +58,23 @@ export function parseCompanyCardFromDoc(card) {
   return (job.company || job.position) ? job : null;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PERSONAL DATA PARSER
-// ═══════════════════════════════════════════════
+// ===============================================
 
 const GENDER_PATTERNS = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
 const AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
 const AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // CONTACTS PARSER (phone, email, telegram)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 // Known hh.ru system accounts to exclude from telegram detection
 const HH_SYSTEM_ACCOUNTS = ['hh_ru_official', 'hhru', 'hh_ru', 'hhcareers', 'headhunter_ru'];
 
 export function parseContactsFromDoc(doc, dbg, resume) {
-  // ── Phone ──
+  // -- Phone --
   // Strategy 1: data-qa selectors (may include label text)
   const phoneSelectors = [
     '[data-qa="resume-contact-phone"] a',
@@ -85,7 +85,7 @@ export function parseContactsFromDoc(doc, dbg, resume) {
   for (const sel of phoneSelectors) {
     const el = doc.querySelector(sel);
     if (el) {
-      // Prefer href (tel:) — clean phone number without label
+      // Prefer href (tel:) -- clean phone number without label
       const href = el.getAttribute('href') || '';
       if (href.startsWith('tel:')) {
         resume.phone = dbg('phone (tel:)', href.replace('tel:', '').trim());
@@ -122,8 +122,8 @@ export function parseContactsFromDoc(doc, dbg, resume) {
     }
   }
 
-  // ── Email ──
-  // Strategy 1: mailto: link (cleanest — just the email, no label)
+  // -- Email --
+  // Strategy 1: mailto: link (cleanest -- just the email, no label)
   const mailtoLink = doc.querySelector('a[href^="mailto:"]');
   if (mailtoLink) {
     const href = mailtoLink.getAttribute('href') || '';
@@ -164,8 +164,8 @@ export function parseContactsFromDoc(doc, dbg, resume) {
     }
   }
 
-  // ── Telegram ──
-  // ONLY look within the contacts block — avoid hh.ru footer/nav links
+  // -- Telegram --
+  // ONLY look within the contacts block -- avoid hh.ru footer/nav links
   const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
   if (contactBlock) {
     // Strategy 1: t.me/ links in contact block

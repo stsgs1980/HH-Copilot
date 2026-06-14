@@ -1,5 +1,5 @@
 /**
- * LIB: RESUME CONSTANTS — Visibility detection utilities.
+ * LIB: RESUME CONSTANTS -- Visibility detection utilities.
  * Constants and functions for detecting whether a resume is visible or hidden.
  */
 import {

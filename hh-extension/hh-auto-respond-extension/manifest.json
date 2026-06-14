@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "HH Copilot",
-  "description": "HH Copilot — автоматизация откликов на hh.ru, FAB + 6-tab sidebar",
-  "version": "1.9.32.0",
+  "description": "HH Copilot -- автоматизация откликов на hh.ru, FAB + 6-tab sidebar",
+  "version": "1.9.33.0",
   "permissions": [
     "storage",
     "cookies",

@@ -1,10 +1,10 @@
 /**
- * Strategy 6 — applicant API approach + JSON/expanded-doc result parsing.
+ * Strategy 6 -- applicant API approach + JSON/expanded-doc result parsing.
  *
  * Contains:
- *   - tryApplicantApi() — fetch from internal hh.ru applicant API endpoints
- *   - parseExperienceFromJson() — parse JSON API responses
- *   - parseExperienceFromExpandedDoc() — parse expanded HTML documents
+ *   - tryApplicantApi() -- fetch from internal hh.ru applicant API endpoints
+ *   - parseExperienceFromJson() -- parse JSON API responses
+ *   - parseExperienceFromExpandedDoc() -- parse expanded HTML documents
  *
  * Shared by resume-fetch-strategy6-urls.js and resume-fetch-strategy6-expand.js.
  *

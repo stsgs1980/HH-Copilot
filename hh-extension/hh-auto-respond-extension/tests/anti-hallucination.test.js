@@ -1,14 +1,14 @@
 /**
  * TESTS: anti-hallucination.js
- * Pure functions — no DOM needed
+ * Pure functions -- no DOM needed
  */
 
 import { describe, it, expect } from 'vitest';
 import { extractVacancyId, validateVacancyData } from '../src/lib/anti-hallucination.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // extractVacancyId
-// ═══════════════════════════════════════════════
+// ===============================================
 
 describe('extractVacancyId', () => {
   it('extracts ID from full hh.ru URL', () => {
@@ -46,7 +46,7 @@ describe('extractVacancyId', () => {
     expect(extractVacancyId('/vacancy/1234567890123')).toBe('1234567890123');
   });
 
-  // VotD tracking URLs — vacancyId in query params
+  // VotD tracking URLs -- vacancyId in query params
   it('extracts ID from VotD content.hh.ru click URL', () => {
     expect(extractVacancyId('https://content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=132537734&contentId=21001')).toBe('132537734');
   });
@@ -69,9 +69,9 @@ describe('extractVacancyId', () => {
   });
 });
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // validateVacancyData
-// ═══════════════════════════════════════════════
+// ===============================================
 
 describe('validateVacancyData', () => {
   const validVacancy = () => ({

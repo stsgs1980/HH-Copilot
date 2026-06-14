@@ -1,5 +1,5 @@
 /**
- * SIDEBAR CSS — Core (raw string)
+ * SIDEBAR CSS -- Core (raw string)
  * =================================
  * Base styles: reset, panel shell, tabs, cards, animations, progress, toggles.
  * Part 1 of 2. Combined in sidebar-css.js.
@@ -102,7 +102,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
 /* sr-only text for spinner is added via HTML, not CSS ::after */
 @keyframes har-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
-/* ═══ Reduced motion (WCAG 2.3.3) ═══ */
+/* === Reduced motion (WCAG 2.3.3) === */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

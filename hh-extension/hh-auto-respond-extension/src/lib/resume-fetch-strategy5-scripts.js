@@ -7,7 +7,7 @@
  * may contain the FULL experience list for client-side "Развернуть" expansion.
  *
  * Looks in multiple script locations:
- * 1. <script type="application/json"> — Magritte component state
+ * 1. <script type="application/json"> -- Magritte component state
  * 2. <script> with window.__INITIAL_STATE__ or __PRELOADED_STATE__
  * 3. <script> with BEM blocks containing experience data
  * 4. Raw HTML search for JSON patterns with experience arrays
@@ -33,7 +33,7 @@ const fetchLog = createLogger('ResumeFetch');
 export function parseExperienceFromScripts(doc, html) {
   const entries = [];
 
-  // ── Pass 1: Look for structured JSON in script tags ──
+  // -- Pass 1: Look for structured JSON in script tags --
   const scripts = doc.querySelectorAll('script[type="application/json"], script:not([src])');
   for (const script of scripts) {
     const text = script.textContent || '';
@@ -60,7 +60,7 @@ export function parseExperienceFromScripts(doc, html) {
     }
   }
 
-  // ── Pass 2: Look for window.__INITIAL_STATE__ or __PRELOADED_STATE__ ──
+  // -- Pass 2: Look for window.__INITIAL_STATE__ or __PRELOADED_STATE__ --
   const statePatterns = [
     /window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]+?\});?\s*<\/script>/,
     /window\.__PRELOADED_STATE__\s*=\s*(\{[\s\S]+?\});?\s*<\/script>/,
@@ -83,7 +83,7 @@ export function parseExperienceFromScripts(doc, html) {
     }
   }
 
-  // ── Pass 3: Look for "resumeStore" or "resume" patterns in raw HTML ──
+  // -- Pass 3: Look for "resumeStore" or "resume" patterns in raw HTML --
   const storePatterns = [
     /"resumeStore"\s*:\s*(\{[\s\S]+?\})\s*[,}]/,
     /"resume"\s*:\s*(\{[\s\S]{0,50000}?"experience"\s*:\s*\[[\s\S]+?\])\s*[,}]/,
@@ -105,7 +105,7 @@ export function parseExperienceFromScripts(doc, html) {
     }
   }
 
-  // ── Pass 4: Deep scan — find ANY JSON array containing objects with date fields ──
+  // -- Pass 4: Deep scan -- find ANY JSON array containing objects with date fields --
   const deepScan = deepScanForExperience(html);
   if (deepScan.length > 0) {
     fetchLog.info('Strategy 5: found ' + deepScan.length + ' from deep scan');

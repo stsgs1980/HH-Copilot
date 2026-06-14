@@ -1,5 +1,5 @@
 /**
- * UI: RESUMES — Barrel Export
+ * UI: RESUMES -- Barrel Export
  * =============================
  * Re-exports from split modules for backward compatibility.
  */

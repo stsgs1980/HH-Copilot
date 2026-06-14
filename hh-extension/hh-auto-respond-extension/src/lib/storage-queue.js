@@ -1,13 +1,13 @@
 /**
- * LIB: STORAGE — Resumes & Queue
+ * LIB: STORAGE -- Resumes & Queue
  * ================================
  * chrome.storage.local wrappers for resume data, apply queue, and blacklist.
  * Split from storage.js for anti-monolith compliance.
  */
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // APPLIED VACANCIES TRACKING
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getAppliedVacancies() {
   try {
@@ -29,9 +29,9 @@ export async function markAsApplied(id) {
   } catch (e) {}
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // MY RESUMES (multiple)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getMyResumes() {
   try {
@@ -61,9 +61,9 @@ export async function clearMyResumes() {
   await chrome.storage.local.set({ myResumes: [] });
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // RESUME SYNC QUEUE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getSyncQueue() {
   try {
@@ -88,9 +88,9 @@ export async function clearSyncQueue() {
   await chrome.storage.local.remove('syncQueue');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ACTIVE RESUME (single)
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getActiveResume() {
   try {
@@ -107,9 +107,9 @@ export async function clearActiveResume() {
   await chrome.storage.local.remove('myResume');
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // APPLY QUEUE
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getApplyQueue() {
   try {
@@ -122,9 +122,9 @@ export async function setApplyQueue(queue) {
   await chrome.storage.local.set({ applyQueue: queue });
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // BLACKLISTED COMPANIES
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export async function getBlacklistedCompanies() {
   try {

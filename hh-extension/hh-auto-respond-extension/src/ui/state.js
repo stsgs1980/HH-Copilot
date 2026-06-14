@@ -61,9 +61,9 @@ export const refs = {
   shadowRoot: null
 };
 
-// ═══════════════════════════════════════════════
-// ACCESSOR FUNCTIONS — centralized state mutations
-// ═══════════════════════════════════════════════
+// ===============================================
+// ACCESSOR FUNCTIONS -- centralized state mutations
+// ===============================================
 
 /** Set the active resume and mark it as not cleared. */
 export function setActiveResumeState(resume) {

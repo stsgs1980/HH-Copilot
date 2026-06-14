@@ -37,9 +37,9 @@ describe('cover-letter-generator: fillTemplate', () => {
   });
 
   it('handles multiple occurrences of same placeholder', () => {
-    const template = '{position} — это {position}';
+    const template = '{position} -- это {position}';
     const values = { position: 'Dev' };
-    expect(fillTemplate(template, values)).toBe('Dev — это Dev');
+    expect(fillTemplate(template, values)).toBe('Dev -- это Dev');
   });
 
   it('returns empty string for null template', () => {
@@ -119,7 +119,7 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       experience: [
         { position: 'Frontend Dev', duration: '3 года 6 месяцев' },
       ],
-      salary: '150 000 ₽',
+      salary: '150 000 \u20BD',
     };
 
     const result = generateCoverLetter(vacancy, resume);

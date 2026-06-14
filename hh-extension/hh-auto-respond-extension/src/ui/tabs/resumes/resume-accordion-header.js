@@ -1,5 +1,5 @@
 /**
- * UI: RESUMES — Accordion Header
+ * UI: RESUMES -- Accordion Header
  * ================================
  * Updates the resume accordion header with title, subtitle, badge, avatar.
  * Split from render-resume-panel.js for anti-monolith compliance.

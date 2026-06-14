@@ -1,5 +1,5 @@
 /**
- * QUALITY RECOMMENDATIONS — prioritized improvement suggestions.
+ * QUALITY RECOMMENDATIONS -- prioritized improvement suggestions.
  *
  * Extracted from quality-flags.js for anti-monolith compliance.
  *
@@ -14,11 +14,11 @@ import { getRoleImpliedSkills } from './role-implied-skills.js';
 /**
  * Build prioritized recommendations for resume improvement.
  *
- * @param {Object} ats — ATS analysis result
- * @param {Object} exp — Experience analysis result
- * @param {string[]} flags — Red flags
- * @param {Object} r — Resume object
- * @param {Set<string>} [vacancySkills] — Normalized vacancy skills
+ * @param {Object} ats -- ATS analysis result
+ * @param {Object} exp -- Experience analysis result
+ * @param {string[]} flags -- Red flags
+ * @param {Object} r -- Resume object
+ * @param {Set<string>} [vacancySkills] -- Normalized vacancy skills
  * @returns {Array<{priority: string, text: string, tooltip?: string}>}
  */
 export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
@@ -47,9 +47,9 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     const resumeDerived = normalizeSkillSet(r.derivedSkills || []);
     const allResume = new Set([...resumeExplicit, ...resumeDerived]);
     const descText = (r.experience || []).map(e => e.description || '').join(' ').toLowerCase();
-    const descNorm = descText.replace(/[-–—]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
+    const descNorm = descText.replace(/[-\u2013\u2014]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
 
-    // v1.9.31.0: Role-implied skills — skills self-evident from position title
+    // v1.9.31.0: Role-implied skills -- skills self-evident from position title
     const roleImplied = getRoleImpliedSkills(r.title || '');
 
     const missing = [];
@@ -121,7 +121,7 @@ function normalizeSkillSet(skills) {
     if (name) {
       set.add(
         name.toLowerCase().trim()
-          .replace(/[-–—]/g, ' ')
+          .replace(/[-\u2013\u2014]/g, ' ')
           .replace(/ё/g, 'е')
           .replace(/\s+/g, ' ')
       );

@@ -22,7 +22,7 @@ import {
 
 const pageLog = createLogger('Main');
 
-/** Tracks which URL path was last handled — prevents duplicate SPA triggers */
+/** Tracks which URL path was last handled -- prevents duplicate SPA triggers */
 let lastHandledPath = '';
 
 /** Guard: prevent duplicate initPageLogic() calls (event + safety net) */
@@ -32,7 +32,7 @@ let pageLogicInitialized = false;
  * Initialize page-specific logic (parsers, observers).
  * Called when auth state changes from false/null to true.
  * Also sets up SPA navigation listener.
- * Idempotent — safe to call multiple times; only runs once.
+ * Idempotent -- safe to call multiple times; only runs once.
  */
 export async function initPageLogic() {
   if (pageLogicInitialized) {
@@ -59,9 +59,9 @@ export function resetPageInit() {
   pageLogicInitialized = false;
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SPA ROUTING
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Detect SPA navigation on hh.ru.
@@ -111,9 +111,9 @@ function onSPANavigate(newPath) {
   }, 300);
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ROUTING
-// ═══════════════════════════════════════════════
+// ===============================================
 
 async function routeToHandler(path) {
   pageLog.info('Routing: ' + path);
@@ -123,7 +123,7 @@ async function routeToHandler(path) {
   } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
     await handleResumeDetailPage(path);
   } else if (/\/applicant\/resumes\/view/.test(path)) {
-    // Applicant's own resume view page — treat as resume detail, not list
+    // Applicant's own resume view page -- treat as resume detail, not list
     await handleResumeDetailPage(path);
   } else if (path.startsWith('/applicant/resumes')) {
     await handleResumeListPage();

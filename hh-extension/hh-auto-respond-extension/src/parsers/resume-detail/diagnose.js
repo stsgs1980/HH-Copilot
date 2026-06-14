@@ -1,10 +1,10 @@
 /**
- * PARSER: RESUME DETAIL — DOM DIAGNOSTIC (orchestrator)
+ * PARSER: RESUME DETAIL -- DOM DIAGNOSTIC (orchestrator)
  * ======================================================
  * Thin orchestrator that delegates to focused sub-modules:
- *   - diagnose-elements.js  — data-qa scanning, resume blocks, tags
- *   - diagnose-structure.js — selector checks, headings, sections
- *   - diagnose-blocks.js    — experience/education block dumps
+ *   - diagnose-elements.js  -- data-qa scanning, resume blocks, tags
+ *   - diagnose-structure.js -- selector checks, headings, sections
+ *   - diagnose-blocks.js    -- experience/education block dumps
  */
 
 import { getResumePageType } from './index.js';

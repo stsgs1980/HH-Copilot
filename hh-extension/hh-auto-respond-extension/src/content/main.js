@@ -2,10 +2,10 @@
  * MAIN: BOOT SEQUENCE
  * =====================
  * Entry point for the bundled content script.
- * Thin orchestrator — delegates to focused modules:
- *   - main-page-handlers.js — URL-based page initialization
- *   - main-resume-loader.js — hh-ar-load-resume event handler
- *   - main-sync.js          — hh-ar-sync-resumes event handler
+ * Thin orchestrator -- delegates to focused modules:
+ *   - main-page-handlers.js -- URL-based page initialization
+ *   - main-resume-loader.js -- hh-ar-load-resume event handler
+ *   - main-sync.js          -- hh-ar-sync-resumes event handler
  *
  * Auth flow:
  *   init() -> createPanel() -> updateAuthState every 5s
@@ -37,7 +37,7 @@ export { initPageLogic };
 const mainLog = createLogger('Main');
 
 // Expose diagnostic functions globally for console access
-// NOTE: Content scripts run in an isolated world — window.X set here is NOT
+// NOTE: Content scripts run in an isolated world -- window.X set here is NOT
 // visible from the page's console. Console helpers (__hhVis, __hhVisTable)
 // are now provided by page-world.js (Manifest V3 "world": "MAIN" script).
 window.__hhDiagnose = diagnoseResumeDOM;
@@ -46,9 +46,9 @@ window.__hhDebugVisibility = debugVisibility;
 // Initialize visibility diagnostic dump (will be populated after sync)
 window.__hhVisDiag = null;
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // INIT
-// ═══════════════════════════════════════════════
+// ===============================================
 
 async function init() {
   mainLog.info('Loaded: ' + window.location.href);
@@ -72,7 +72,7 @@ async function init() {
   // Auth state is managed by createPanel's periodic updateAuthState (every 5s)
   // When auth changes to true, updateAuthState calls initPageLogic
 
-  // ── Event listeners ──
+  // -- Event listeners --
   window.addEventListener('hh-ar-apply', async (e) => {
     if (!panelState.isLoggedIn) return;
     const { applyToVacancy } = await import('../engine/index.js');
@@ -95,7 +95,7 @@ async function init() {
   window.addEventListener('hh-ar-reparse-resume', handleReparseResume);
   window.addEventListener('hh-ar-sync-resumes', handleSyncResumes);
 
-  // ── Vacancy diagnostic: listen for manual trigger from page-world.js ──
+  // -- Vacancy diagnostic: listen for manual trigger from page-world.js --
   // page-world __hhVacDiag() dispatches a DOM CustomEvent which crosses
   // the isolated-world boundary. Content script handles it and runs
   // diagnoseVacancyPage(), then sends data back via postMessage.
@@ -115,7 +115,7 @@ async function init() {
     }, 2000);
   }
 
-  // ── Listen for init-page-logic event from panel (replaces dynamic import) ──
+  // -- Listen for init-page-logic event from panel (replaces dynamic import) --
   // panel/index.js dispatches 'hh-ar-init-page-logic' when auth changes to true.
   // This avoids dynamic import() which doesn't work in esbuild IIFE bundles.
   window.addEventListener('hh-ar-init-page-logic', () => {
@@ -123,7 +123,7 @@ async function init() {
     initPageLogic();
   });
 
-  // ── Safety net: auto-init page logic on detail pages ──
+  // -- Safety net: auto-init page logic on detail pages --
   // If auth was already detected before the panel dispatched the event
   // (e.g. fast page loads), we also try after a delay.
   // Covers vacancy detail, resume detail, and applicant resume view pages.
@@ -132,12 +132,12 @@ async function init() {
     || /^\/applicant\/resumes\/view/.test(window.location.pathname);
   if (isDetailPage) {
     setTimeout(() => {
-      // initPageLogic is idempotent — it checks pageLogicInitialized to avoid duplicates
+      // initPageLogic is idempotent -- it checks pageLogicInitialized to avoid duplicates
       initPageLogic();
     }, 3000);
   }
 
-  // ── Re-score vacancy detail when resume becomes available ──
+  // -- Re-score vacancy detail when resume becomes available --
   // On vacancy detail pages, the first scoring may show skills=0 because
   // the resume hasn't been loaded from storage yet. When a resume loads
   // (either from storage at boot, or from a page parse), we re-score.
@@ -213,17 +213,17 @@ async function loadSavedResumes() {
   } catch (e) {}
 }
 
-// ═══════════════════════════════════════════════
-// Hot-Module Replacement (HMR) — dev-only
-// ═══════════════════════════════════════════════
+// ===============================================
+// Hot-Module Replacement (HMR) -- dev-only
+// ===============================================
 // In unpacked (dev) mode, connects to the WebSocket server started
-// by esbuild.config.mjs. When a file changes, esbuild rebuilds →
-// server sends "reload" → extension calls chrome.runtime.reload().
+// by esbuild.config.mjs. When a file changes, esbuild rebuilds ->
+// server sends "reload" -> extension calls chrome.runtime.reload().
 //
 // Activates ONLY when 'update_url' is absent from manifest
 // (i.e. unpacked dev extension, not Chrome Web Store).
 // Zero overhead in production.
-// ═══════════════════════════════════════════════
+// ===============================================
 
 if (!('update_url' in chrome.runtime.getManifest())) {
   try {
@@ -238,7 +238,7 @@ if (!('update_url' in chrome.runtime.getManifest())) {
     hmr.onerror = () => {}; // server not running -- that's fine
     hmr.onclose = () => mainLog.info('[hmr] Disconnected from dev server');
   } catch (e) {
-    // WebSocket not available — ignore
+    // WebSocket not available -- ignore
   }
 }
 

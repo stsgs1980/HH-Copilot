@@ -10,9 +10,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // vacancy-fetch-text: parseVacancyDetailFromDoc
-// ═══════════════════════════════════════════════
+// ===============================================
 
 describe('vacancy-fetch-text: parseVacancyDetailFromDoc', () => {
   let parseVacancyDetailFromDoc;
@@ -27,8 +27,8 @@ describe('vacancy-fetch-text: parseVacancyDetailFromDoc', () => {
     const doc = createVacancyDoc({
       title: 'Senior Frontend Developer',
       company: 'Яндекс',
-      salary: 'от 250 000 ₽ на руки',
-      experience: '3–6 лет',
+      salary: 'от 250 000 \u20BD на руки',
+      experience: '3-6 лет',
       description: '<p>Обязанности:</p><p>Разработка интерфейсов</p>',
       skills: ['React', 'TypeScript', 'CSS'],
     });
@@ -39,7 +39,7 @@ describe('vacancy-fetch-text: parseVacancyDetailFromDoc', () => {
     expect(result.id).toBe('12345');
     expect(result.title).toBe('Senior Frontend Developer');
     expect(result.company).toBe('Яндекс');
-    expect(result.salary.raw).toBe('от 250 000 ₽ на руки');
+    expect(result.salary.raw).toBe('от 250 000 \u20BD на руки');
     expect(result.salary.min).toBe(250000);
     expect(result.salary.net).toBe(true);
     expect(result.salary.currency).toBe('RUB');
@@ -80,7 +80,7 @@ describe('vacancy-fetch-text: parseVacancyDetailFromDoc', () => {
   it('parses structured salary range', () => {
     const doc = createVacancyDoc({
       title: 'Analyst',
-      salary: '150 000 – 200 000 ₽',
+      salary: '150 000 - 200 000 \u20BD',
     });
 
     const result = parseVacancyDetailFromDoc(doc, 'https://hh.ru/vacancy/54321');
@@ -130,9 +130,9 @@ describe('vacancy-fetch-text: parseVacancyDetailFromDoc', () => {
   });
 });
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // vacancy-fetch-enrichment: enrichVacancy
-// ═══════════════════════════════════════════════
+// ===============================================
 
 describe('vacancy-fetch-enrichment: enrichVacancy', () => {
   let enrichVacancy, isDetailFresh, enrichVacanciesFromCache;
@@ -147,16 +147,16 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
   it('enriches a shallow vacancy with keySkills and derivedSkills', () => {
     const vacancy = {
       id: '123', title: 'Dev', company: 'Co',
-      skills: ['tag1', 'tag2'], salary: '100 000 ₽',
-      experience: { raw: '3–6 лет', min: 3, max: 6 },
+      skills: ['tag1', 'tag2'], salary: '100 000 \u20BD',
+      experience: { raw: '3-6 лет', min: 3, max: 6 },
     };
     const detail = {
       id: '123',
       keySkills: ['Python', 'Django', 'PostgreSQL'],
       derivedSkills: ['REST API'],
       _skillsSource: 'dom+derived',
-      salary: { raw: '100 000 ₽', min: 100000, max: null, currency: 'RUB', period: 'month', net: true },
-      experience: { raw: '3–6 лет', min: 3, max: 6 },
+      salary: { raw: '100 000 \u20BD', min: 100000, max: null, currency: 'RUB', period: 'month', net: true },
+      experience: { raw: '3-6 лет', min: 3, max: 6 },
       description: { text: 'Full description here', html: '<p>Full</p>', headings: [], sections: {} },
       _fetchMethod: 'iframe',
       source: 'detail',
@@ -174,7 +174,7 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
   it('re-scores after enrichment when resume is provided', () => {
     const vacancy = {
       id: '123', title: 'Frontend Developer', company: 'Co',
-      skills: ['React'], salary: '100 000 ₽',
+      skills: ['React'], salary: '100 000 \u20BD',
       experience: { raw: '', min: null, max: null },
     };
     const resume = {
@@ -182,14 +182,14 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
       skills: ['React', 'TypeScript', 'CSS'],
       derivedSkills: [],
       experience: [],
-      salary: '120 000 ₽',
+      salary: '120 000 \u20BD',
     };
     const detail = {
       id: '123',
       keySkills: ['React', 'TypeScript', 'Webpack'],
       derivedSkills: [],
       _skillsSource: 'dom',
-      salary: { raw: '100 000 ₽', min: 100000, max: null, currency: 'RUB', period: 'month', net: true },
+      salary: { raw: '100 000 \u20BD', min: 100000, max: null, currency: 'RUB', period: 'month', net: true },
       experience: { raw: '', min: null, max: null },
       description: { text: '', html: '', headings: [], sections: {} },
       source: 'detail',
@@ -254,9 +254,9 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
   });
 });
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // vacancy-fetch: orchestrator API
-// ═══════════════════════════════════════════════
+// ===============================================
 
 describe('vacancy-fetch: orchestrator', () => {
   let enrichFromCache, isVacancyFetching, abortVacancyFetch;
@@ -289,9 +289,9 @@ describe('vacancy-fetch: orchestrator', () => {
   });
 });
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HELPER: Create a vacancy detail Document
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function createVacancyDoc({
   title = 'Test Vacancy',

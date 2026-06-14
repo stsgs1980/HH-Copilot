@@ -1,6 +1,6 @@
 # HH Copilot -- Chrome Extension
 
-**Version:** 1.9.32.0
+**Version:** 1.9.33.0
 **Type:** Chrome Extension (Manifest V3)
 **Target Platform:** hh.ru (Magritte design system)
 **License:** Private project. All rights reserved.
@@ -16,7 +16,7 @@ The project was originally developed as part of a large automation system (Next.
 
 The target audience is job seekers who send dozens of responses per day and want to speed up this process without losing quality. The extension doesn't replace the person entirely, but automates the mechanical part: searching, filtering, filling in fields, sending responses. The decision about which vacancies to respond to is made by the user (manual mode) or the scoring algorithm (semi-automatic and automatic modes).
 
-Current version (1.9.32.0) features a modular architecture based on esbuild. The content script is built from 140 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI (↻ for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions) -- all of this is working. AI cover letters and negotiations parser are stubs, planned for subsequent phases.
+Current version (1.9.33.0) features a modular architecture based on esbuild. The content script is built from 140 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI ((r) for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions) -- all of this is working. AI cover letters and negotiations parser are stubs, planned for subsequent phases.
 
 
 ## 2. Features
@@ -31,7 +31,7 @@ Current version (1.9.32.0) features a modular architecture based on esbuild. The
 
 **Resume parsing (13 fields).** When a specific resume page is opened (/resume/{hash}), the extension extracts: name, position, desired salary, gender, age, city, skills with proficiency levels (Advanced/Intermediate/Beginner), work experience (company, position, period, description), education (institution name, faculty, graduation year, degree), languages with levels, contacts, additional information. Each field has a fallback strategy: first data-qa selectors, then Bloko BEM classes, then textual content analysis. The built-in diagnostic tool diagnoseResumeDOM() outputs a complete DOM dump to the console for selector development. Resume parsing is decomposed into 14 files in src/parsers/resume-detail/. Common constants (title cleanup, visibility detection, whitespace normalization) are extracted to src/lib/resume-constants.js.
 
-**Resume list and synchronization.** On the /applicant/resumes page, the extension finds all user resumes and displays them in the sidebar. The "Sync all" button loads all resumes at once. Each resume displays its visibility status: "Visible" (green badge), "Hidden" (yellow badge). Visibility detection uses a two-level approach: (1) from the resume list page (less reliable, client-side rendering lacks indicators), (2) from the resume detail page (more reliable, SSR contains data-qa attributes and buttons). Six strategies for visibility detection from the resume page: data-qa attributes, button text, body text, raw HTML with &nbsp; normalization, script JSON, data-qa presence. Data from the resume page overrides list data. Active resume selection uses radio buttons in the "All resumes" list (click on card). The ↻ button on the active card triggers re-parsing. Migration of old data in chrome.storage automatically adds the visibility field on load.
+**Resume list and synchronization.** On the /applicant/resumes page, the extension finds all user resumes and displays them in the sidebar. The "Sync all" button loads all resumes at once. Each resume displays its visibility status: "Visible" (green badge), "Hidden" (yellow badge). Visibility detection uses a two-level approach: (1) from the resume list page (less reliable, client-side rendering lacks indicators), (2) from the resume detail page (more reliable, SSR contains data-qa attributes and buttons). Six strategies for visibility detection from the resume page: data-qa attributes, button text, body text, raw HTML with &nbsp; normalization, script JSON, data-qa presence. Data from the resume page overrides list data. Active resume selection uses radio buttons in the "All resumes" list (click on card). The (r) button on the active card triggers re-parsing. Migration of old data in chrome.storage automatically adds the visibility field on load.
 
 **Built-in panel (FAB + Sidebar).** The floating button (FAB) in the bottom-right corner of the screen has three states: gray (checking authorization), red (not authorized), green with pulsation (authorized). All FAB CSS properties are set via `style.setProperty(prop, value, 'important')` to protect against hh.ru styles. Clicking opens a sidebar panel 720px wide with 6 tabs: Overview, Resumes, Vacancies, Negotiations, Settings, Statistics. The panel is isolated via Shadow DOM (mode: closed), so hh.ru styles don't affect its rendering, and panel styles don't affect hh.ru.
 
@@ -155,9 +155,9 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
 ### Extension code (hh-extension/hh-auto-respond-extension/)
 
 ```
-manifest.json                  -- Manifest V3 configuration (v1.9.32.0, source of truth for version)
+manifest.json                  -- Manifest V3 configuration (v1.9.33.0, source of truth for version)
 package.json                   -- esbuild, build/watch scripts
-esbuild.config.mjs              -- build configuration (IIFE, bundle, output → dist/)
+esbuild.config.mjs              -- build configuration (IIFE, bundle, output -> dist/)
 dist/                          -- build directory (load in Chrome as unpacked extension)
   content.js                   -- built bundle (generated by npm run build from src/content/main.js)
   page-world.js                -- MAIN world script (copied from src/page-world.js)
@@ -349,7 +349,7 @@ The extension is built on Manifest V3 -- the current version of the Chrome Exten
 
 ### esbuild
 
-The esbuild bundler was chosen as the fastest and most minimal configuration option. Configuration in esbuild.config.mjs: entry point src/content/main.js, output file dist/content.js, IIFE format, bundle=true, minify=false (for debugging), sourcemap=false. Second entry point: src/page-world.js → dist/page-world.js (bundle=false). Static files (manifest.json, background/, popup/, icons/) are copied to dist/. Commands: `npm run build` (build to dist/), `npm run watch` (watch for changes + hot-reload). Load in Chrome by selecting the dist/ folder as an unpacked extension.
+The esbuild bundler was chosen as the fastest and most minimal configuration option. Configuration in esbuild.config.mjs: entry point src/content/main.js, output file dist/content.js, IIFE format, bundle=true, minify=false (for debugging), sourcemap=false. Second entry point: src/page-world.js -> dist/page-world.js (bundle=false). Static files (manifest.json, background/, popup/, icons/) are copied to dist/. Commands: `npm run build` (build to dist/), `npm run watch` (watch for changes + hot-reload). Load in Chrome by selecting the dist/ folder as an unpacked extension.
 
 **Hot-Module Replacement (HMR)** -- automatic extension reload during development. When running `npm run watch`, esbuild starts a WebSocket server on port 35729. When a source file changes, esbuild rebuilds the bundle and sends a "reload" signal via WebSocket. The extension receives the signal and calls `chrome.runtime.reload()` -- the extension reloads without manual clicks.
 
@@ -357,7 +357,7 @@ Requirement: `npm install ws` (devDependency, already added to package.json). If
 
 Workflow diagram:
 ```
-Save file → esbuild rebuilds → WebSocket "reload" → chrome.runtime.reload() → extension updated
+Save file -> esbuild rebuilds -> WebSocket "reload" -> chrome.runtime.reload() -> extension updated
 ```
 
 Activated ONLY in dev mode (absence of `update_url` in manifest.json -- indicator of an unpacked extension). In production builds, HMR code does not execute.
@@ -397,7 +397,7 @@ Each commit must start with a change type: feat:, fix:, refactor:, docs:, chore:
 
 ### Changelog
 
-Full version history is maintained in the CHANGELOG.md file in the extension root. Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.9.32.0.
+Full version history is maintained in the CHANGELOG.md file in the extension root. Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.9.33.0.
 
 ### Version timeline
 
@@ -416,9 +416,9 @@ Full version history is maintained in the CHANGELOG.md file in the extension roo
 - **v1.7.8**: Migration for old stored data (visibility backfill), nbsp normalization fix
 - **v1.7.9**: Magritte-aware multi-strategy visibility detection
 - **v1.8.0**: &nbsp; (U+00A0) normalization in visibility detection
-- **v1.8.1**: Fix "Load from current page" button (container ID mismatch har-resume-content→res-parsed-data)
+- **v1.8.1**: Fix "Load from current page" button (container ID mismatch har-resume-content->res-parsed-data)
 - **v1.8.2**: Repo restoration after destructive agent, wireframe files added to docs/wireframes/
-- **v1.8.3**: Resume UI wireframe compliance -- anti-monolith refactor (resumes.js → 5 files), subtitle fix, name field, structured education/languages
+- **v1.8.3**: Resume UI wireframe compliance -- anti-monolith refactor (resumes.js -> 5 files), subtitle fix, name field, structured education/languages
 - **v1.9.0-v1.9.10**: Match scoring engine (5 components), derived skills, SPA navigation, resume quality analysis, anti-monolith refactoring (all files <= 200 lines), collapsible accordion, contacts parsing
 - **v1.9.11-v1.9.15.9**: Contact fixes (email/phone/telegram), resume assessment block, detailed vacancy parser, derived skills from experience, HMR for development
 - **v1.9.16-v1.9.19**: SPA navigation (pushState/replaceState patch), skill parser fallbacks, experience scoring, synonym matching, vacancy skill derivation, 10 bug fixes from code review

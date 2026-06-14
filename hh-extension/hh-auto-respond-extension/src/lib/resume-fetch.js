@@ -1,21 +1,21 @@
 /**
- * LIB: RESUME FETCH — Thin orchestrator that re-exports from modular files.
+ * LIB: RESUME FETCH -- Thin orchestrator that re-exports from modular files.
  * Flow: fetchResumeList() -> fetchAndParseResume() -> syncAllResumes()
  *
  * All logic is split into focused modules:
- *   resume-fetch-list.js            — Resume list fetching
- *   resume-fetch-resume.js          — Single resume parsing + experience orchestrator
- *   resume-fetch-vis-fallback.js    — Final visibility fallback + diagnostic
- *   resume-fetch-experience.js      — Experience Strategies 1-3 (DOM-based)
- *   resume-fetch-strategy4-text.js  — Strategy 4 (text pattern parsing)
- *   resume-fetch-strategy5-scripts.js   — Strategy 5 orchestrator
- *   resume-fetch-strategy5-scanners.js  — Strategy 5 JSON scanners
- *   resume-fetch-strategy6-expand.js    — Strategy 6 orchestrator
- *   resume-fetch-strategy6-iframe.js    — Strategy 6 iframe sub-strategy
- *   resume-fetch-strategy6-urls.js      — Strategy 6 URL discovery + fetch
- *   resume-fetch-strategy6-api.js       — Strategy 6 applicant API + result parsing
- *   resume-fetch-json-utils.js      — JSON extraction utilities
- *   resume-fetch-education-languages.js — Education & languages parsing
+ *   resume-fetch-list.js            -- Resume list fetching
+ *   resume-fetch-resume.js          -- Single resume parsing + experience orchestrator
+ *   resume-fetch-vis-fallback.js    -- Final visibility fallback + diagnostic
+ *   resume-fetch-experience.js      -- Experience Strategies 1-3 (DOM-based)
+ *   resume-fetch-strategy4-text.js  -- Strategy 4 (text pattern parsing)
+ *   resume-fetch-strategy5-scripts.js   -- Strategy 5 orchestrator
+ *   resume-fetch-strategy5-scanners.js  -- Strategy 5 JSON scanners
+ *   resume-fetch-strategy6-expand.js    -- Strategy 6 orchestrator
+ *   resume-fetch-strategy6-iframe.js    -- Strategy 6 iframe sub-strategy
+ *   resume-fetch-strategy6-urls.js      -- Strategy 6 URL discovery + fetch
+ *   resume-fetch-strategy6-api.js       -- Strategy 6 applicant API + result parsing
+ *   resume-fetch-json-utils.js      -- JSON extraction utilities
+ *   resume-fetch-education-languages.js -- Education & languages parsing
  */
 
 import { createLogger } from './anti-hallucination.js';
@@ -31,7 +31,7 @@ const fetchLog = createLogger('ResumeFetch');
 export { fetchResumeList, fetchAndParseResume };
 
 /**
- * Sync all resumes: fetch list → parse each → return results.
+ * Sync all resumes: fetch list -> parse each -> return results.
  * @param {object} [callbacks] - { onProgress, onComplete, onError }
  * @returns {Array} Parsed resume objects
  */

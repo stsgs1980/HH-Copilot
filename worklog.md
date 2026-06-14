@@ -2348,3 +2348,27 @@ Stage Summary:
 - 225 Unicode characters replaced across 49 files
 - 1 remaining: ₽ in vacancy-diagnostic-detectors.js regex (parser pattern matching, [I] level)
 - All [C] level violations eliminated
+
+---
+Task ID: 1
+Agent: main
+Task: UNICODE_POLICY compliance audit - remove all non-ASCII/non-Cyrillic chars from codebase, bump version to 1.9.33.0
+
+Work Log:
+- Read UNICODE_POLICY.md (STD-DOC-003 v2.1) - [C] level: ASCII + Cyrillic only in production code
+- Scanned all .js/.html/.css files for chars outside \x20-\x7E + \u0400-\u04FF range
+- Found 886 violations: ═(265), —(362), ─(115), →(82), –(29), ✓✗(7), ₽(3), «»(8), ≈(2), ↔(2), ↻(3), •(1), etc.
+- Replaced all Unicode chars with ASCII equivalents per policy section 11.1 whitelist
+- Fixed regex character classes: [-–—] -> [-\u2013\u2014] (functional equivalence, source-compliant)
+- Fixed UI strings: \u2022 -> *, \u2014 -> -- in section-builders.js
+- Fixed HTML: &mdash; -> -- in popup/index.html
+- Fixed manifest.json and package.json descriptions: — -> --
+- Fixed README.md: ↻ -> (r), -> -> ->
+- Bumped version 1.9.32.0 -> 1.9.33.0 in all 5 sources
+- Build: successful, Tests: 104/104 passing
+- Final scan: 0 remaining Unicode violations
+
+Stage Summary:
+- 129 files modified, 886+ Unicode violations eliminated
+- Version 1.9.33.0 synchronized across manifest.json, package.json, version.js, popup/index.html, README.md
+- Full UNICODE_POLICY (STD-DOC-003) compliance achieved

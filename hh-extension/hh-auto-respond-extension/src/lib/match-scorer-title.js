@@ -1,13 +1,13 @@
 /**
- * MATCH SCORER: TITLE (0–30)
+ * MATCH SCORER: TITLE (0-30)
  * ============================
  * Title similarity between resume and vacancy.
  * Split from match-scorer.js for anti-monolith compliance.
  *
  * Strategies:
- *   1. Exact match → 30/30
- *   2. Keyword overlap (tokenized) → up to 25/30
- *   3. Abbreviation/synonym bonus → up to 5/30
+ *   1. Exact match -> 30/30
+ *   2. Keyword overlap (tokenized) -> up to 25/30
+ *   3. Abbreviation/synonym bonus -> up to 5/30
  *
  * v1.9.23.0: extracted from match-scorer.js
  */
@@ -55,14 +55,14 @@ export function scoreTitle(resume, vacancy) {
   return { score, similarity: Math.round(similarity * 100) / 100 };
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Bonus points for common title patterns:
- * e.g., "РОП" ↔ "Руководитель отдела продаж"
- *       "PHP" ↔ "php"
+ * e.g., "РОП" <-> "Руководитель отдела продаж"
+ *       "PHP" <-> "php"
  */
 function titleBonus(resumeTitle, vacancyTitle) {
   let bonus = 0;
@@ -101,7 +101,7 @@ function tokenize(text) {
     'to', 'for', 'of', 'with', 'and', 'or', 'from', 'by',
   ]);
   const words = new Set();
-  text.split(/[\s\-----/,|]+/).forEach(w => {
+  text.split(/[\s\u2013\u2014\-/,|]+/).forEach(w => {
     const clean = w.replace(/[^a-zа-яё0-9#+.]/g, '').trim();
     if (clean.length >= 2 && !stopWords.has(clean)) words.add(clean);
   });

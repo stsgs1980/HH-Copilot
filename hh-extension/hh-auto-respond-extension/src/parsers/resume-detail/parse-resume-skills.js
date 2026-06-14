@@ -1,5 +1,5 @@
 /**
- * PARSER: RESUME DETAIL — Skills extraction (5 strategies)
+ * PARSER: RESUME DETAIL -- Skills extraction (5 strategies)
  * ==========================================================
  * Extracted from parse-resume-sections.js for anti-monolith compliance.
  * Handles skill extraction from the live DOM (current page).
@@ -18,8 +18,8 @@ const resumeLog = createLogger('Resume');
 
 /**
  * Parse skills from the current page DOM.
- * @param {Function} dbg — debug logger (key, value) => value
- * @param {Object} resume — resume object to populate
+ * @param {Function} dbg -- debug logger (key, value) => value
+ * @param {Object} resume -- resume object to populate
  */
 export function parseSkills(dbg, resume) {
   // Strategy 1: data-qa="skills-card"

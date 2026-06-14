@@ -1,9 +1,9 @@
 /**
- * TESTS: vacancy-list.js — parseVacanciesFromPage + parseVacanciesOfTheDay
+ * TESTS: vacancy-list.js -- parseVacanciesFromPage + parseVacanciesOfTheDay
  * Uses jsdom to mock hh.ru DOM structure
  *
  * ANTI-MONOLITH exception (Rule 12): 295 lines.
- * Single cohesion block — 14 tests for one parser (vacancy-list.js).
+ * Single cohesion block -- 14 tests for one parser (vacancy-list.js).
  * Splitting would break test readability without reducing complexity.
  */
 
@@ -46,7 +46,7 @@ function createMainPageVacancyCard(opts = {}) {
   // Main page uses space-separated data-qa!
   card.setAttribute('data-qa', 'vacancy-serp__vacancy vacancy-serp-item_clickme');
   card.innerHTML = `
-    <a href="${opts.url || 'https://hh.ru/vacancy/98765432'}">${opts.title || 'РОП — IT для медбизнеса'}</a>
+    <a href="${opts.url || 'https://hh.ru/vacancy/98765432'}">${opts.title || 'РОП -- IT для медбизнеса'}</a>
     <span data-qa="vacancy-serp__vacancy-employer-text">${opts.company || 'Maicube'}</span>
     <span data-qa="vacancy-serp__vacancy-address">${opts.location || 'Москва'}</span>
     <span data-qa="vacancy-serp__vacancy-work-experience-between3And6">${opts.experience || 'Опыт 3-6 лет'}</span>
@@ -74,18 +74,18 @@ function createVotDBlock(opts = {}) {
       <a href="${clickUrl}">
         <div data-qa="vacancy_of_the_day_title">${opts.title || 'Курьер в Озон фреш'}</div>
       </a>
-      <div data-qa="vacancy_of_the_day_compensation">${opts.salary || 'от 120 000 до 250 000 ₽'}</div>
+      <div data-qa="vacancy_of_the_day_compensation">${opts.salary || 'от 120 000 до 250 000 \u20BD'}</div>
       <div data-qa="vacancy_of_the_day_company">${opts.company || 'Ozon'}</div>
     </div>
   `;
   return wrapper;
 }
 
-// ═══════════════════════════════════════════════
-// parseVacanciesFromPage — Search Page
-// ═══════════════════════════════════════════════
+// ===============================================
+// parseVacanciesFromPage -- Search Page
+// ===============================================
 
-describe('parseVacanciesFromPage — search page cards', () => {
+describe('parseVacanciesFromPage -- search page cards', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -135,11 +135,11 @@ describe('parseVacanciesFromPage — search page cards', () => {
   });
 });
 
-// ═══════════════════════════════════════════════
-// parseVacanciesFromPage — Main Page (space-separated data-qa)
-// ═══════════════════════════════════════════════
+// ===============================================
+// parseVacanciesFromPage -- Main Page (space-separated data-qa)
+// ===============================================
 
-describe('parseVacanciesFromPage — main page cards (space-separated data-qa)', () => {
+describe('parseVacanciesFromPage -- main page cards (space-separated data-qa)', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -149,7 +149,7 @@ describe('parseVacanciesFromPage — main page cards (space-separated data-qa)',
 
     const vacancies = await parseVacanciesFromPage(null);
     expect(vacancies.length).toBe(1);
-    expect(vacancies[0].title).toBe('РОП — IT для медбизнеса');
+    expect(vacancies[0].title).toBe('РОП -- IT для медбизнеса');
     expect(vacancies[0].id).toBe('98765432');
     expect(vacancies[0].company).toBe('Maicube');
   });
@@ -157,7 +157,7 @@ describe('parseVacanciesFromPage — main page cards (space-separated data-qa)',
   it('uses fallback href selector when no data-qa on title link', async () => {
     const card = document.createElement('div');
     card.setAttribute('data-qa', 'vacancy-serp__vacancy vacancy-serp-item_clickme');
-    // No data-qa on <a> — fallback must find it by href pattern
+    // No data-qa on <a> -- fallback must find it by href pattern
     card.innerHTML = `
       <a href="https://hh.ru/vacancy/111222333">Fallback Title</a>
       <span data-qa="vacancy-serp__vacancy-employer-text">Fallback Corp</span>
@@ -189,9 +189,9 @@ describe('parseVacanciesFromPage — main page cards (space-separated data-qa)',
   });
 });
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // parseVacanciesOfTheDay
-// ═══════════════════════════════════════════════
+// ===============================================
 
 describe('parseVacanciesOfTheDay', () => {
   beforeEach(() => {
@@ -217,7 +217,7 @@ describe('parseVacanciesOfTheDay', () => {
       vacancyId: '109478297',
       title: 'Senior Developer',
       company: 'Yandex',
-      salary: 'от 300 000 ₽',
+      salary: 'от 300 000 \u20BD',
     }));
 
     const vacancies = await parseVacanciesOfTheDay(null);
@@ -253,9 +253,9 @@ describe('parseVacanciesOfTheDay', () => {
     const block = document.createElement('div');
     block.innerHTML = `
       <div data-qa="vacancy_of_the_day_title">No ID Vacancy</div>
-      <div data-qa="vacancy_of_the_day_compensation">от 50 000 ₽</div>
+      <div data-qa="vacancy_of_the_day_compensation">от 50 000 \u20BD</div>
       <div data-qa="vacancy_of_the_day_company">Test</div>
-      <!-- No link with vacancy ID — no <a> parent, no vacancyId param -->
+      <!-- No link with vacancy ID -- no <a> parent, no vacancyId param -->
     `;
     document.body.appendChild(block);
 
@@ -274,7 +274,7 @@ describe('parseVacanciesOfTheDay', () => {
   });
 
   it('extracts ID from parent element id attribute (sponsored/adsrv VotD)', async () => {
-    // Sponsored VotD: adsrv.hh.ru/click?meta=... — NO vacancyId in URL
+    // Sponsored VotD: adsrv.hh.ru/click?meta=... -- NO vacancyId in URL
     // But parent <div id="131408939"> has the vacancy ID
     const wrapper = document.createElement('div');
     wrapper.id = '131408939';
@@ -284,7 +284,7 @@ describe('parseVacanciesOfTheDay', () => {
         <a href="https://adsrv.hh.ru/click?b=2091117&meta=pQNVxNN0As4hRaEh9OAXo1NOzBrasz1EJyRKTSE2OxtDc9TdIEjg">
           <div data-qa="vacancy_of_the_day_title">Спонсируемая вакансия</div>
         </a>
-        <div data-qa="vacancy_of_the_day_compensation">от 200 000 ₽</div>
+        <div data-qa="vacancy_of_the_day_compensation">от 200 000 \u20BD</div>
         <div data-qa="vacancy_of_the_day_company">Спонсор Corp</div>
       </div>
     `;

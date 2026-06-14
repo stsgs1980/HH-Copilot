@@ -5,9 +5,9 @@
  * Orchestrates queue management, page navigation, and DOM actions.
  *
  * STRATEGY:
- * 1. applyToVacancy(id) — saves to queue + navigates to vacancy page
- * 2. On vacancy page load → continueApply() → find "Откликнуться" button → click
- * 3. Wait for popup → click submit → mark applied → process next in queue
+ * 1. applyToVacancy(id) -- saves to queue + navigates to vacancy page
+ * 2. On vacancy page load -> continueApply() -> find "Откликнуться" button -> click
+ * 3. Wait for popup -> click submit -> mark applied -> process next in queue
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';

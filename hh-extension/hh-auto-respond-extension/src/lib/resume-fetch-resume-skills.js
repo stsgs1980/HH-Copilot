@@ -1,5 +1,5 @@
 /**
- * RESUME FETCH — Skills parsing (5 strategies)
+ * RESUME FETCH -- Skills parsing (5 strategies)
  * ==============================================
  * Extracted from resume-fetch-resume.js for anti-monolith compliance.
  * Handles skill extraction from a fetched resume HTML document.
@@ -16,9 +16,9 @@ import { safeGetText } from './resume-fetch-helpers.js';
 
 /**
  * Parse skills from a fetched HTML document.
- * @param {Document} doc — parsed HTML document
- * @param {Function} dbg — debug logger (key, value) => value
- * @param {Object} resume — resume object to populate
+ * @param {Document} doc -- parsed HTML document
+ * @param {Function} dbg -- debug logger (key, value) => value
+ * @param {Object} resume -- resume object to populate
  */
 export function parseSkillsFromDoc(doc, dbg, resume) {
   // Strategy 1: data-qa="skills-card"

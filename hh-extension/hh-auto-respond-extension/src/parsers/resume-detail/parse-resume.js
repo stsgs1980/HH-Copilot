@@ -1,5 +1,5 @@
 /**
- * PARSER: RESUME DETAIL — parseResume()
+ * PARSER: RESUME DETAIL -- parseResume()
  * =======================================
  * Parses a single resume page (/resume/{hash}).
  * Delegates section parsing to specialised sub-modules.
@@ -16,9 +16,9 @@ import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE, VISIBILITY_
 
 const resumeLog = createLogger('Resume');
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // PARSE SINGLE RESUME
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseResume() {
   const t0 = performance.now();
@@ -43,9 +43,9 @@ export function parseResume() {
     return val;
   };
 
-  // ═════════════════════════════════════════
+  // =========================================
   // ЗАГОЛОВОК И ЗАРПЛАТА
-  // ═════════════════════════════════════════
+  // =========================================
   const titleEl = document.querySelector('[data-qa="resume-block-title-position"]');
   if (titleEl) {
     resume.title = dbg('resumeTitle (data-qa)', safeGetText(titleEl));
@@ -66,9 +66,9 @@ export function parseResume() {
     resume.salary = dbg('resumeSalary (data-qa)', safeGetText(salaryEl));
   }
 
-  // ═════════════════════════════════════════
+  // =========================================
   // SECTION PARSERS
-  // ═════════════════════════════════════════
+  // =========================================
   parsePersonalData(titleEl, dbg, resume);
   parseSalaryConditions(dbg, resume);
   parseSkills(dbg, resume);
@@ -80,9 +80,9 @@ export function parseResume() {
   // Derive skills from experience descriptions (after parseExperience populated them)
   deriveSkillsFromExperience(resume);
 
-  // ═════════════════════════════════════════
-  // VISIBILITY — detect from DOM on the resume page itself
-  // ═════════════════════════════════════════
+  // =========================================
+  // VISIBILITY -- detect from DOM on the resume page itself
+  // =========================================
   // On a live resume page, React has already hydrated, so we can check
   // for visibility indicators directly in the DOM.
 
@@ -99,7 +99,7 @@ export function parseResume() {
       resume.visibility = VISIBILITY_VISIBLE;
       resume.hidden = false;
     } else {
-      // Unknown text in visibility card — fall through to other strategies
+      // Unknown text in visibility card -- fall through to other strategies
       resumeLog.info('Unknown visibility card text: "' + cardText.substring(0, 80) + '"');
     }
   }
@@ -153,9 +153,9 @@ export function parseResume() {
   }
   } // end if (resume.visibility === VISIBILITY_UNKNOWN)
 
-  // ═════════════════════════════════════════
+  // =========================================
   // ИТОГО
-  // ═════════════════════════════════════════
+  // =========================================
   const elapsed = (performance.now() - t0).toFixed(1);
   resumeLog.info('Resume parsed in ' + elapsed + 'ms');
   resumeLog.info('Found: ' + resume._debug.found.length + ' | Missing: ' + resume._debug.missing.length);

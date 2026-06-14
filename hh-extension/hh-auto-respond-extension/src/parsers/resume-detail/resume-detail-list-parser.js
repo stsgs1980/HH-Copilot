@@ -1,5 +1,5 @@
 /**
- * Resume list parser — parses /applicant/resumes page from live DOM.
+ * Resume list parser -- parses /applicant/resumes page from live DOM.
  * Split from resume-detail/index.js for anti-monolith compliance.
  */
 import { createLogger } from '../../lib/anti-hallucination.js';

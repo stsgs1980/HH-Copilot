@@ -1,5 +1,5 @@
 /**
- * List-level visibility — Strategy 2 & 3
+ * List-level visibility -- Strategy 2 & 3
  * =========================================
  * Script/hydration state extraction and proximity search strategies.
  * Split from resume-fetch-list-vis.js for anti-monolith compliance.
@@ -14,7 +14,7 @@ import {
 
 const visLog = createLogger('ResumeFetchH');
 
-// ── Strategy 2: Script/hydration state ──
+// -- Strategy 2: Script/hydration state --
 
 /**
  * Extract visibility from script/hydration state in HTML.
@@ -78,7 +78,7 @@ export function extractVisibilityFromScripts(doc, resumes, html) {
   return found;
 }
 
-// ── Strategy 3: Proximity search with script stripping ──
+// -- Strategy 3: Proximity search with script stripping --
 
 const SEARCH_RADIUS = 5000;
 
@@ -130,7 +130,7 @@ export function runProximitySearch(resumes, html) {
   });
 }
 
-// ── Utility ──
+// -- Utility --
 
 function findAllPositions(html, pattern) {
   const positions = [];

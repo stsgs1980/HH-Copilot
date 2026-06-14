@@ -10,13 +10,13 @@
  * - Extension install/update handling
  */
 
-// ─── Install / Update ──────────────────────────
+// --- Install / Update --------------------------
 
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('[HH-AR] Extension installed/updated', details);
 
   if (details.reason === 'install') {
-    // First launch — initialize defaults
+    // First launch -- initialize defaults
     chrome.storage.local.set({
       settings: {
         mode: 'manual',
@@ -53,7 +53,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   }
 });
 
-// ─── Daily Reset Alarm ─────────────────────────
+// --- Daily Reset Alarm -------------------------
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'dailyReset') {
@@ -75,7 +75,7 @@ function getNextMidnight() {
   return midnight.getTime();
 }
 
-// ─── Message Routing ───────────────────────────
+// --- Message Routing ---------------------------
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -122,7 +122,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// ─── Badge Updates ─────────────────────────────
+// --- Badge Updates -----------------------------
 
 /**
  * Updates the badge (number on extension icon) with today's apply count.

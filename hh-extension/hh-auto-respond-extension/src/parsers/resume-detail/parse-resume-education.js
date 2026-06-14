@@ -1,5 +1,5 @@
 /**
- * PARSER: RESUME DETAIL — Education Parser
+ * PARSER: RESUME DETAIL -- Education Parser
  * ==========================================
  * Parses education section with 3-level fallback strategy.
  * Extracted from parseResume() due to size.
@@ -9,13 +9,13 @@ import { createLogger } from '../../lib/anti-hallucination.js';
 
 const resumeLog = createLogger('Resume');
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // ОБРАЗОВАНИЕ (Education)
-// data-qa="resume-list-card-education" — контейнер
+// data-qa="resume-list-card-education" -- контейнер
 // Стратегия: перебираем ВСЕ data-qa внутри блока,
 // затем прямых детей, извлекаем текст + ссылки.
 // НЕ полагаемся на конкретный data-qa шаблон для записей.
-// ═══════════════════════════════════════════════
+// ===============================================
 
 export function parseEducation(dbg, resume) {
   const eduCard = document.querySelector('[data-qa="resume-list-card-education"]');
@@ -55,7 +55,7 @@ export function parseEducation(dbg, resume) {
     }
   });
 
-  // Способ 2: если cell-left-side не дали результатов — прямые дети eduCard
+  // Способ 2: если cell-left-side не дали результатов -- прямые дети eduCard
   if (eduEntries.length === 0) {
     resumeLog.info('Education: fallback to direct children of eduCard');
     Array.from(eduCard.children).forEach(child => {
@@ -89,7 +89,7 @@ export function parseEducation(dbg, resume) {
     });
   }
 
-  // Способ 3: если всё ещё пусто — берём весь текст eduCard и парсим
+  // Способ 3: если всё ещё пусто -- берём весь текст eduCard и парсим
   if (eduEntries.length === 0) {
     resumeLog.info('Education: fallback to full text scan');
     const fullText = (eduCard.textContent || '').trim();

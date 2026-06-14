@@ -1,10 +1,10 @@
 /**
- * UI: RESUMES — Skill Gap Analysis
+ * UI: RESUMES -- Skill Gap Analysis
  * ==================================
  * Skill gap visualization: ring chart, stacked bar, 4 categories, recommendation.
  * Split from resume-helpers.js for anti-monolith compliance.
  *
- * v1.9.22.0: Added synonym category — related skills that partially match.
+ * v1.9.22.0: Added synonym category -- related skills that partially match.
  *   Categories: match (exact), synonym (related), miss (absent), extra (resume-only)
  */
 
@@ -13,9 +13,9 @@ import { esc } from '../../html.js';
 import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 import { findSynonymMatch, SYNONYM_WEIGHT } from '../../../lib/skill-synonyms.js';
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // SKILL GAP ANALYSIS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 /**
  * Update the Skill Gap Analysis section.
@@ -33,12 +33,12 @@ export function updateSkillGapSection(r) {
   const resumeSkills = normalizeSkills(r.skills);
   const derivedSkills = normalizeSkills(r.derivedSkills || []);
   const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
-  // v1.9.32.0: Use detail-only skills — collecting from ALL search results
+  // v1.9.32.0: Use detail-only skills -- collecting from ALL search results
   // merged skills from unrelated vacancies (cashier, merchandiser, etc.)
   const vacancySkills = collectDetailVacancySkills();
 
   if (vacancySkills.size === 0) {
-    // No vacancies loaded — hide the gap section entirely (no point showing 0% ring)
+    // No vacancies loaded -- hide the gap section entirely (no point showing 0% ring)
     section.style.display = 'none';
     return;
   }
@@ -54,7 +54,7 @@ export function updateSkillGapSection(r) {
   }
   for (const skill of vacancySkills) {
     if (allResumeSkills.has(skill)) {
-      // already in match — skip
+      // already in match -- skip
     } else {
       // v1.9.22.0: check synonym before marking as missing
       const synMatch = findSynonymMatch(skill, allResumeSkills);
@@ -109,16 +109,16 @@ export function updateSkillGapSection(r) {
   }
 
   updateGapRow('res-gap-match-row', 'res-gap-match-count', 'res-gap-match-list', match, 'skill-match');
-  // v1.9.22.0: synonym row shows "vacancy ≈ resume" format
+  // v1.9.22.0: synonym row shows "vacancy ~ resume" format
   updateSynonymGapRow('res-gap-synonym-row', 'res-gap-synonym-count', 'res-gap-synonym-list', synonym);
   updateGapRow('res-gap-miss-row', 'res-gap-miss-count', 'res-gap-miss-list', miss, 'skill-miss');
   updateGapRow('res-gap-extra-row', 'res-gap-extra-count', 'res-gap-extra-list', extra, 'skill-extra');
   updateGapRecommendation(miss, matchPct);
 }
 
-// ═══════════════════════════════════════════════
+// ===============================================
 // GAP HELPERS
-// ═══════════════════════════════════════════════
+// ===============================================
 
 function updateGapRow(rowId, countId, listId, skills, cssClass) {
   const row = refs.shadowRoot?.getElementById(rowId);
@@ -140,7 +140,7 @@ function updateGapRow(rowId, countId, listId, skills, cssClass) {
 }
 
 /**
- * v1.9.22.0: Render synonym matches as "vacancy ≈ resume" skill tags.
+ * v1.9.22.0: Render synonym matches as "vacancy ~ resume" skill tags.
  */
 function updateSynonymGapRow(rowId, countId, listId, synonyms) {
   const row = refs.shadowRoot?.getElementById(rowId);
@@ -183,7 +183,7 @@ function normalizeSkills(skills) {
     if (name) {
       set.add(
         name.toLowerCase().trim()
-          .replace(/[-–—]/g, ' ')
+          .replace(/[-\u2013\u2014]/g, ' ')
           .replace(/ё/g, 'е')
           .replace(/\s+/g, ' ')
       );
