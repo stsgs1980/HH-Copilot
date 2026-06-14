@@ -107,6 +107,14 @@ v1.9.30.0 | 2026-06-13 | anti-hallucination-guard
 - npm commands: same on Win, no changes needed
 - When giving instructions: ONE copy-paste block, not step-by-step prose
 
+## Rule 9.1: Version bump is MANDATORY on every code change
+
+- EVERY bugfix, feature, or refactor that changes src/ or tests/ MUST bump the version
+- NEVER ask the user "should I bump the version?" -- just do it
+- Bump BEFORE commit, not after. The commit must already contain the new version
+- If you forgot to bump and already committed -- bump immediately in a new commit
+- Violation pattern: pushing 2 bugfix commits without version bump, then user discovers stale version
+
 ## Rule 9.2: Version sync — update ALL version references on EVERY version bump
 
 - When bumping version in manifest.json, ALSO update:
