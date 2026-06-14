@@ -28,7 +28,7 @@ The extension is built on a Manifest V3 architecture and uses content scripts fo
 
 ### 1.2 Current State
 
-Currently the extension is at version 1.9.30.02071. The monolithic content.js (1637 lines, v1.5.2) has been fully decomposed into a modular structure of 42 JS files in the src/ directory, with all files not exceeding 250 lines. The build is performed via esbuild (IIFE format, entry point src/content/main.js). The version is synchronized across manifest.json, package.json, popup/index.html, and html.js footer.
+Currently the extension is at version 1.9.31.02071. The monolithic content.js (1637 lines, v1.5.2) has been fully decomposed into a modular structure of 42 JS files in the src/ directory, with all files not exceeding 250 lines. The build is performed via esbuild (IIFE format, entry point src/content/main.js). The version is synchronized across manifest.json, package.json, popup/index.html, and html.js footer.
 
 **Current modular structure (42 JS files):**
 
