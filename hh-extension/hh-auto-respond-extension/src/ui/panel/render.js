@@ -100,6 +100,18 @@ export function renderInitialData() {
   renderNegotiationList();
   renderMyResumesPanel();
 
+  // v1.9.36.0: Initialize score range slider from settings minMatchScore
+  const scoreRange = refs.shadowRoot?.getElementById('vac-score-range');
+  const scoreLabel = refs.shadowRoot?.getElementById('vac-score-label');
+  const minMatch = panelState.settings?.minMatchScore || 60;
+  if (scoreRange) {
+    scoreRange.value = minMatch;
+    scoreRange.setAttribute('aria-valuenow', minMatch);
+  }
+  if (scoreLabel) {
+    scoreLabel.textContent = minMatch + '%';
+  }
+
   // Show match score card if we're on a vacancy detail page with parsed data
   tryShowVacancyMatch();
 

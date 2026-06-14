@@ -150,64 +150,93 @@ export function renderVacancyList() {
     return;
   }
 
-  list.innerHTML = panelState.vacancies.slice(0, 50).map((v, idx) => {
-    const score = v.matchScore != null ? v.matchScore : 0;
-    const sc = score > 0
-      ? `<div class="score-ring" style="--score:${score};" role="img" aria-label="Совпадение ${score}%"><span>${score}%</span></div>`
-      : '';
+  // v1.9.36.0: Use minMatchScore from settings to separate relevant vs irrelevant vacancies
+  const minMatch = panelState.settings?.minMatchScore || 60;
+  const allVacancies = panelState.vacancies.slice(0, 50);
+  const relevant = allVacancies.filter(v => (v.matchScore != null ? v.matchScore : 0) >= minMatch);
+  const irrelevant = allVacancies.filter(v => (v.matchScore != null ? v.matchScore : 0) < minMatch);
 
-    const applyBtn = (v.hasReply && v.status === 'new')
-      ? `<button class="btn btn-primary btn-sm" data-action="apply" data-id="${esc(v.id)}">Откликнуться</button>`
-      : '';
+  // Render relevant vacancies (full list)
+  let html = relevant.map((v, idx) => renderVacancyItem(v, idx, false)).join('');
 
-    const badge = v.status === 'applied'
-      ? '<span class="badge badge-green">Откликнута</span>'
-      : v.status === 'blacklisted'
-        ? '<span class="badge badge-red">BL</span>'
-        : '';
+  // Render irrelevant vacancies (collapsed, hidden by default)
+  if (irrelevant.length > 0) {
+    html += '<div style="margin-top:8px;padding:8px 10px;background:#F4F4F5;border-radius:8px;border:1px solid #E4E4E7;">';
+    html += '<button data-action="toggle-irrelevant" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;cursor:pointer;font-size:11px;color:#71717A;padding:0;">';
+    html += '<svg class="irrelevant-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.15s;"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '<span>Низкое совпадение (' + irrelevant.length + ')</span>';
+    html += '</button>';
+    html += '<div class="irrelevant-list" style="display:none;margin-top:6px;">';
+    html += irrelevant.map((v, idx) => renderVacancyItem(v, relevant.length + idx, true)).join('');
+    html += '</div></div>';
+  }
 
-    // Enrichment depth indicator
-    // detail = full analysis (iframe/fetch), cached = from storage, shallow = SERP tags only
-    const enrichBadge = v.keySkills && v.keySkills.length > 0
-      ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;" title="Полный анализ описания вакансии">полный</span>'
-      : v.enrichmentSource === 'cache'
-        ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;" title="Данные из кэша (ранее посещённая вакансия)">кэш</span>'
-        : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#F4F4F5;color:#71717A;border:1px solid #D4D4D8;" title="Только данные из карточки поиска -- полный анализ в процессе">предварительный</span>';
-
-    const skillCount = (v.keySkills && v.keySkills.length > 0)
-      ? `<span style="font-size:11px;color:#059669;" title="Навыки из описания вакансии">${v.keySkills.length} навыков</span>`
-      : (v.skills && v.skills.length > 0)
-        ? `<span style="font-size:11px;color:#71717A;" title="Только теги из карточки поиска">${v.skills.length} тегов</span>`
-        : '';
-
-    const shimmerClass = (score >= 70 && v.status === 'new') ? ' shimmer' : '';
-    const opacity = v.status === 'blacklisted' ? 'opacity:0.4;' : v.status === 'applied' ? 'opacity:0.5;' : '';
-
-    return `<div class="vacancy-item${shimmerClass}" data-title="${esc(v.title)}" data-status="${esc(v.status || 'new')}" data-score="${score}" style="${opacity}" tabindex="0" role="article" aria-label="${esc(v.title)}, ${esc(v.company)}, совпадение ${score}%">
-      <div style="flex-shrink:0;">${sc}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-          <a href="${esc(v.url)}" data-action="navigate" style="font-weight:600;color:#059669;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;"><span style="color:#71717a;font-weight:400;margin-right:3px;">${idx + 1}.</span>${esc(v.title)}</a>
-          <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">${enrichBadge}${badge}</div>
-        </div>
-        <div style="display:flex;gap:10px;font-size:12px;color:#64748b;margin-bottom:6px;">
-          <span>${esc(v.company)}</span>
-          ${v.salary && v.salary !== 'Не указана' ? `<span style="color:#18181b;font-weight:500;">${esc(typeof v.salary === 'object' ? v.salary.raw : v.salary)}</span>` : ''}
-          ${skillCount}
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:12px;color:#52525b;">${esc(v.location)}</span>
-          ${applyBtn}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  list.innerHTML = html;
 
   // Update skill gap analysis after vacancy list is rendered
   const r = panelState.resume;
   if (r && ((r.skills && r.skills.length > 0) || (r.derivedSkills && r.derivedSkills.length > 0))) {
     updateSkillGapSection(r);
   }
+}
+
+/**
+ * Render a single vacancy item card.
+ * @param {Object} v - vacancy object
+ * @param {number} idx - display index (1-based)
+ * @param {boolean} dimmed - if true, render with dimmed style (low match)
+ */
+function renderVacancyItem(v, idx, dimmed) {
+  const score = v.matchScore != null ? v.matchScore : 0;
+  const sc = score > 0
+    ? '<div class="score-ring" style="--score:' + score + ';" role="img" aria-label="Совпадение ' + score + '%"><span>' + score + '%</span></div>'
+    : '';
+
+  const applyBtn = (v.hasReply && v.status === 'new')
+    ? '<button class="btn btn-primary btn-sm" data-action="apply" data-id="' + esc(v.id) + '">Откликнуться</button>'
+    : '';
+
+  const badge = v.status === 'applied'
+    ? '<span class="badge badge-green">Откликнута</span>'
+    : v.status === 'blacklisted'
+      ? '<span class="badge badge-red">BL</span>'
+      : '';
+
+  // Enrichment depth indicator
+  const enrichBadge = v.keySkills && v.keySkills.length > 0
+    ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;" title="Полный анализ описания вакансии">полный</span>'
+    : v.enrichmentSource === 'cache'
+      ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;" title="Данные из кэша (ранее посещённая вакансия)">кэш</span>'
+      : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#F4F4F5;color:#71717A;border:1px solid #D4D4D8;" title="Только данные из карточки поиска -- полный анализ в процессе">предварительный</span>';
+
+  const skillCount = (v.keySkills && v.keySkills.length > 0)
+    ? '<span style="font-size:11px;color:#059669;" title="Навыки из описания вакансии">' + v.keySkills.length + ' навыков</span>'
+    : (v.skills && v.skills.length > 0)
+      ? '<span style="font-size:11px;color:#71717A;" title="Только теги из карточки поиска">' + v.skills.length + ' тегов</span>'
+      : '';
+
+  const shimmerClass = (score >= 70 && v.status === 'new') ? ' shimmer' : '';
+  // Dimmed: lower opacity for irrelevant vacancies
+  const opacity = dimmed ? 'opacity:0.45;' : v.status === 'blacklisted' ? 'opacity:0.4;' : v.status === 'applied' ? 'opacity:0.5;' : '';
+
+  return '<div class="vacancy-item' + shimmerClass + '" data-title="' + esc(v.title) + '" data-status="' + esc(v.status || 'new') + '" data-score="' + score + '" style="' + opacity + '" tabindex="0" role="article" aria-label="' + esc(v.title) + ', ' + esc(v.company) + ', совпадение ' + score + '%">' +
+    '<div style="flex-shrink:0;">' + sc + '</div>' +
+    '<div style="flex:1;min-width:0;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">' +
+        '<a href="' + esc(v.url) + '" data-action="navigate" style="font-weight:600;color:#059669;text-decoration:none;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;"><span style="color:#71717a;font-weight:400;margin-right:3px;">' + (idx + 1) + '.</span>' + esc(v.title) + '</a>' +
+        '<div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">' + enrichBadge + badge + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;font-size:12px;color:#64748b;margin-bottom:6px;">' +
+        '<span>' + esc(v.company) + '</span>' +
+        (v.salary && v.salary !== 'Не указана' ? '<span style="color:#18181b;font-weight:500;">' + esc(typeof v.salary === 'object' ? v.salary.raw : v.salary) + '</span>' : '') +
+        skillCount +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+        '<span style="font-size:12px;color:#52525b;">' + esc(v.location) + '</span>' +
+        applyBtn +
+      '</div>' +
+    '</div>' +
+  '</div>';
 }
 
 export function renderStatsValues() {

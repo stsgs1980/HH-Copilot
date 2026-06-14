@@ -39,6 +39,19 @@ export function bindSidebarClicks(container) {
       return;
     }
 
+    /* Toggle irrelevant vacancies section */
+    const toggleIrr = t.closest('[data-action="toggle-irrelevant"]');
+    if (toggleIrr) {
+      const irrList = toggleIrr.parentElement?.querySelector('.irrelevant-list');
+      const chevron = toggleIrr.querySelector('.irrelevant-chevron');
+      if (irrList) {
+        const isHidden = irrList.style.display === 'none';
+        irrList.style.display = isHidden ? '' : 'none';
+        if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+      }
+      return;
+    }
+
     /* Vacancy actions */
     const applyBtn = t.closest('[data-action="apply"]');
     if (applyBtn) { e.preventDefault(); window.dispatchEvent(new CustomEvent('hh-ar-apply', { detail: { vacancyId: applyBtn.dataset.id } })); return; }
