@@ -2428,3 +2428,19 @@ Work Log:
 
 Stage Summary:
 - UI badges now in Russian: полный (green), кэш (amber), предварительный (grey)
+
+---
+Task ID: 6
+Agent: main
+Task: Fix scoring for irrelevant vacancies (courier 51% for sales director resume)
+
+Work Log:
+- Root cause 1: title score 0 (different profession) but skills+salary+exp still give 50%+
+- Root cause 2: vacancy with 1 skill matching = 40/40 skills score (statistically unreliable)
+- Fix 1 (match-scorer.js): role mismatch penalty -- if title=0 and similarity=0, hard cap at 25%; if similarity < 0.15, soft cap at 40%
+- Fix 2 (match-scorer-skills.js): confidence factor based on skill count -- 1 skill=0.3x, 2 skills=0.5x, 3-4=0.7x, 5+=1.0x
+- Version bump 1.9.35.0 -> 1.9.36.0, build OK, 104/104 tests
+
+Stage Summary:
+- Courier/waiter/accountant vacancies now score max 25% instead of 51%
+- Sales director vacancies with 10+ matching skills unaffected (confidence=1.0)

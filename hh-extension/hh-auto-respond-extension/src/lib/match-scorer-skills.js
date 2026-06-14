@@ -89,8 +89,24 @@ export function scoreSkills(resume, vacancy) {
     derivedMatch.length * derivedWeight +
     synonymMatch.length * SYNONYM_WEIGHT +
     impliedMatch.length * IMPLIED_WEIGHT;
+
+  // v1.9.35.0: Confidence factor based on number of vacancy skills.
+  // With 1-2 skills, a match is statistically unreliable -- any generic skill
+  // (e.g. "работа с клиентами") would give 100% ratio. Scale down the score
+  // to avoid inflating irrelevant vacancies (courier with 1 matching skill -> 40/40).
+  const vacSkillCount = vacancySkills.size;
+  let confidenceFactor = 1.0;
+  if (vacSkillCount === 1) {
+    confidenceFactor = 0.3;  // 1 skill -> max 12/40 from skills
+  } else if (vacSkillCount === 2) {
+    confidenceFactor = 0.5;  // 2 skills -> max 20/40
+  } else if (vacSkillCount <= 4) {
+    confidenceFactor = 0.7;  // 3-4 skills -> max 28/40
+  }
+  // 5+ skills: full weight (1.0)
+
   const ratio = vacancySkills.size > 0 ? effectiveMatches / vacancySkills.size : 0;
-  const score = Math.min(40, Math.round(ratio * 40));
+  const score = Math.min(40, Math.round(ratio * 40 * confidenceFactor));
 
   skillLog.info('explicit=' + matching.length + ' derived=' + derivedMatch.length +
     ' synonym=' + synonymMatch.length + ' implied=' + impliedMatch.length +

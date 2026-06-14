@@ -54,7 +54,19 @@ export function computeMatchScore(resume, vacancy) {
     experience: expResult.score,
   };
 
-  const total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
+  let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience);
+
+  // v1.9.35.0: Role mismatch penalty
+  // If title similarity is 0 (completely different profession -- e.g. "курьер" vs "руководитель отдела продаж"),
+  // the vacancy is NOT a match regardless of skill/salary/experience overlap.
+  // Without this, a courier job with 1 matching generic skill could score 50%+.
+  if (titleResult.score === 0 && titleResult.similarity === 0) {
+    // Hard cap: different profession = max 25% total
+    total = Math.min(total, 25);
+  } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
+    // Soft cap: barely related role (1 common word like "руководитель" in different context)
+    total = Math.min(total, 40);
+  }
 
   const details = {
     matchingSkills: skillResult.matching,
