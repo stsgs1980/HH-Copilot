@@ -2016,3 +2016,18 @@ Stage Summary:
 - main-page-handlers-pages.js: handleResumeDetailPage now handles applicant view pages with query-param ID fallback
 - routing.test.js: +1 test for /applicant/resumes/view route
 - File split imports verified: all intact, esbuild bundles correctly
+
+---
+Task ID: accordion-auto-expand
+Agent: main
+Task: Fix "Sync all" button hidden in collapsed accordion
+
+Work Log:
+- Identified that "Sync all" button exists in HTML but is inside a collapsed accordion "Все резюме"
+- VLM analysis of user screenshot confirmed: accordion is collapsed, button invisible
+- Fixed renderInitialData() to call renderMyResumesPanel() and auto-expand accordion when no active resume
+- Build: passes, Tests: 68/68
+
+Stage Summary:
+- render.js: auto-expand res-sync-body accordion when panelState.resume is empty
+- render.js: added renderMyResumesPanel() call in renderInitialData()

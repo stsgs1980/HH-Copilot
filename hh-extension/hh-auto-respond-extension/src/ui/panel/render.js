@@ -13,6 +13,7 @@ import { renderOverviewKPI } from '../tabs/overview.js';
 import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList } from '../tabs/negotiations.js';
 import { renderBlacklist, renderSettingsValues } from '../tabs/settings.js';
+import { renderMyResumesPanel } from '../tabs/resumes.js';
 import { startTour, isTourDone } from '../../lib/tour-engine.js';
 import { getWelcomeTourSteps } from '../../lib/tour-steps.js';
 
@@ -97,9 +98,22 @@ export function renderInitialData() {
   renderBlacklist();
   renderSettingsValues();
   renderNegotiationList();
+  renderMyResumesPanel();
 
   // Show match score card if we're on a vacancy detail page with parsed data
   tryShowVacancyMatch();
+
+  // Auto-expand "All resumes" accordion when no resumes synced yet
+  if (!panelState.resume || !panelState.resume.id) {
+    const syncBody = refs.shadowRoot?.getElementById('res-sync-body');
+    const syncToggle = syncBody?.previousElementSibling;
+    if (syncBody && !syncBody.classList.contains('open')) {
+      syncBody.classList.add('open');
+      const chevron = syncToggle?.querySelector('.timeline-chevron');
+      if (chevron) chevron.classList.add('open');
+      if (syncToggle) syncToggle.setAttribute('aria-expanded', 'true');
+    }
+  }
 
   // Auto-start tour for first-time users (guard against duplicate calls)
   if (!isTourDone()) {
