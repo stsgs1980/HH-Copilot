@@ -22,7 +22,7 @@ const fetchLog = createLogger('ResumeFetch');
  * @param {number} currentCount - Number of experience entries already found
  * @returns {Promise<{entries: Array, iframeVis: string, iframeVisTrace: string[]}>}
  */
-export async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) {
+export async function fetchExpandedExperienceViaIframe(resumeUrl, _currentCount) {
   fetchLog.info('Strategy 6 iframe: loading ' + resumeUrl);
 
   const iframe = document.createElement('iframe');
@@ -91,7 +91,7 @@ function buildIframeDiag(iframeDoc, iframe) {
   const diag = {};
   try {
     diag.finalUrl = iframe.contentWindow?.location?.href || '(no access)';
-  } catch (_e) { diag.finalUrl = '(cross-origin blocked: ' + e.message + ')'; }
+  } catch (e) { diag.finalUrl = '(cross-origin blocked: ' + e.message + ')'; }
   diag.title = iframeDoc.title || '(no title)';
   diag.bodyTextLen = iframeDoc.body ? (iframeDoc.body.textContent || '').length : 0;
   diag.bodyTextSnippet = iframeDoc.body

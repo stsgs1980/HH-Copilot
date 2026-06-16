@@ -723,3 +723,19 @@ Stage Summary:
 - ESLint: 0 errors, 146 warnings (all informational)
 - lint:ci exit code 0 (passes)
 - Build OK, Tests 104/104 passing
+
+---
+Task ID: eslint-c-cleanup
+Agent: main
+Task: C -- Mechanical cleanup of 146 ESLint warnings
+
+Work Log:
+- Config: caughtErrorsIgnorePattern, process global, expanded no-console allow list
+- Fixed 6 real bugs: catch (_e) using e in body (ReferenceError)
+- Fixed 3 no-useless-escape, 2 no-useless-assignment
+- Removed 42 unused imports/vars
+- Removed dead code (visible counter in helpers.js)
+
+Stage Summary:
+- ESLint: 146 -> 14 problems (all 14 are informational max-file-lines)
+- Build OK, Tests 104/104 passing

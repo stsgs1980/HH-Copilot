@@ -12,7 +12,7 @@
 import { createLogger } from '../lib/anti-hallucination.js';
 import { findElement } from '../lib/selectors.js';
 import { randomDelay } from '../lib/timing.js';
-import { fillCoverLetter as _fillCoverLetter, setActiveResumeForCoverLetter } from './apply-actions-cover-letter.js';
+import { fillCoverLetter as _fillCoverLetter } from './apply-actions-cover-letter.js';
 
 // Re-export for callers that import from here
 export { setActiveResumeForCoverLetter } from './apply-actions-cover-letter.js';

@@ -36,7 +36,7 @@ export function extractExperienceFromStructuredJson(text) {
             });
             if (entries.length > 0) return entries;
           }
-        } catch (_e) {
+        } catch (e) {
           fetchLog.info('Strategy 5: structured JSON parse failed: ' + e.message);
         }
       }

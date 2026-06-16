@@ -8,7 +8,7 @@
  * Heuristic detectors are in vacancy-diagnostic-detectors.js.
  */
 
-import { findElement, findAllElements, HH_SELECTORS } from '../lib/selectors.js';
+import { findElement, HH_SELECTORS } from '../lib/selectors.js';
 import { safeGetText, safeGetAttr, createLogger } from '../lib/anti-hallucination.js';
 import {
   detectTitle, detectCompany, detectSalary, detectLocation,

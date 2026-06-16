@@ -21,7 +21,7 @@ import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
 import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
 import { computeMatchScore } from '../lib/match-scorer.js';
 import { saveVacancyScore, saveVacancyDetail } from '../lib/storage.js';
-import { panelState, updateAuthState, createPanel, updateVacancies } from '../ui/panel.js';
+import { panelState, createPanel, updateVacancies } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { VISIBILITY_UNKNOWN, TITLE_SUFFIX_NOISE } from '../lib/resume-constants.js';
 import { setActiveResumeState, setMyResumes, updateStats, updateSettings } from '../ui/state.js';

@@ -8,7 +8,6 @@
  */
 import { createLogger } from './anti-hallucination.js';
 import { htmlToDoc } from './resume-fetch-helpers.js';
-import { parseCompanyCardFromDoc } from './resume-fetch-parse.js';
 import { parseExperienceFromScripts } from './resume-fetch-strategy5-scripts.js';
 import { parseExperienceFromJson, parseExperienceFromExpandedDoc } from './resume-fetch-strategy6-api.js';
 

@@ -1,7 +1,6 @@
 /**
  * TAB 6: STATISTICS & LOGS
  */
-import { ICONS } from '../icons.js';
 
 export function getStatsSection() {
   return `<div class="tab-section" id="tab-stats" role="tabpanel" aria-labelledby="tabbtn-stats" tabindex="0">

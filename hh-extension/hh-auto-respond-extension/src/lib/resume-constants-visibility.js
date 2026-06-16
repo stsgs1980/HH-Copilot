@@ -3,10 +3,8 @@
  * Constants and functions for detecting whether a resume is visible or hidden.
  */
 import {
-  normalizeWs,
-  VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN,
-  HIDDEN_INDICATORS, VISIBLE_INDICATORS,
-  VISIBILITY_HIDDEN_DATA_QA,
+    VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN,
+    VISIBILITY_HIDDEN_DATA_QA,
   hasHiddenIndicator, hasVisibleIndicator
 } from './resume-constants-core.js';
 

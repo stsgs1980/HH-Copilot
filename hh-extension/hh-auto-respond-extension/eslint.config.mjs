@@ -38,6 +38,8 @@ export default [
         chrome: 'readonly',
         // Extension globals (injected by esbuild)
         __hhCopilotVersion: 'readonly',
+        // process.env.VERSION is replaced at build time by esbuild define
+        process: 'readonly',
       },
     },
     rules: {
@@ -49,6 +51,7 @@ export default [
       'no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
       }],
       'no-empty': ['error', { allowEmptyCatch: true }],
       'no-prototype-builtins': 'off', // Common in DOM parsing code
@@ -61,7 +64,7 @@ export default [
       'eqeqeq': ['warn', 'smart'],
       'no-var': 'warn',
       'prefer-const': 'warn',
-      'no-console': ['warn', { allow: ['warn', 'error', 'info', 'log'] }],
+      'no-console': ['warn', { allow: ['warn', 'error', 'info', 'log', 'debug', 'table', 'group', 'groupEnd', 'groupCollapsed'] }],
       'no-throw-literal': 'error',
       'no-return-await': 'warn',
       'no-self-compare': 'error',

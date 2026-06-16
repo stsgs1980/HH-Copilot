@@ -20,7 +20,6 @@ import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '.
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
 
-import { renderSidebarContent } from './render.js';
 import { bindTabClicks } from './events.js';
 import { bindTourEvents } from '../../lib/tour-engine.js';
 import { updateAuthState, loadNegotiationsInBackground } from './auth-and-bg.js';

@@ -4,7 +4,7 @@
  */
 import { createLogger } from './anti-hallucination.js';
 
-const fetchLog = createLogger('ResumeFetch');
+const _fetchLog = createLogger('ResumeFetch');
 
 /**
  * Extract a JSON array starting at startIdx from text.

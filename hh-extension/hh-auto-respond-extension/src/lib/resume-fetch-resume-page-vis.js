@@ -9,7 +9,7 @@
 import { createLogger } from './anti-hallucination.js';
 import {
   VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN,
-  HIDDEN_INDICATORS, VISIBILITY_HIDDEN_DATA_QA,
+  VISIBILITY_HIDDEN_DATA_QA,
   hasHiddenIndicator, hasVisibleIndicator, normalizeWs
 } from './resume-constants.js';
 

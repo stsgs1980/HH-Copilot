@@ -11,7 +11,7 @@ import {
   VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN,
   HIDDEN_INDICATORS, RESUME_CARD_SELECTORS,
   detectVisibilityFromCard,
-  hasHiddenIndicator, normalizeWs, stripScripts
+  hasHiddenIndicator, normalizeWs
 } from './resume-constants.js';
 import { extractVisibilityFromScripts, runProximitySearch } from './resume-fetch-list-vis-strategies.js';
 
@@ -124,7 +124,6 @@ export function extractVisibilityStatus(doc, resumes, html) {
   // === STRATEGY 3: Proximity search with script stripping ===
   if (!strategyUsed) {
     runProximitySearch(resumes, html);
-    strategyUsed = true;
   }
 
   // NO FINAL FALLBACK: Keep UNKNOWN as UNKNOWN -- detail page will resolve

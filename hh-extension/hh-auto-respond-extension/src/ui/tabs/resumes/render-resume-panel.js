@@ -9,7 +9,7 @@ import { panelState, refs, setActiveResumeState } from '../../state.js';
 import { esc } from '../../html.js';
 import { getResumePageType } from '../../../parsers/resume-detail.js';
 import {
-  getInitials, attachSubToggle, updateSkillsSection
+  attachSubToggle, updateSkillsSection
 } from './resume-helpers.js';
 import { renderMyResumesPanel, renderResumeListPanel } from './render-my-resumes.js';
 import {

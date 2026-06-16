@@ -11,10 +11,8 @@ import { resetAuthCache } from '../auth.js';
 import { clearResumeData, dumpResumeToConsole, testParseResume } from './panel-diagnostics.js';
 import { addBlacklistItem, removeBlacklistItem, selectConversation } from './helpers.js';
 import { diagnoseResumeDOM } from '../../parsers/resume-detail.js';
-import { renderStats, clearLog } from '../tabs/stats.js';
-import { renderNegotiationList } from '../tabs/negotiations.js';
-import { renderResumePanel } from '../tabs/resumes.js';
-import { startTour, restartTour, isTourDone } from '../../lib/tour-engine.js';
+import { clearLog } from '../tabs/stats.js';
+import { restartTour } from '../../lib/tour-engine.js';
 import { getWelcomeTourSteps, getTabTourSteps } from '../../lib/tour-steps.js';
 
 /**

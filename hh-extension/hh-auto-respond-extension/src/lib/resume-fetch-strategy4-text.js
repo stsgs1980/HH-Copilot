@@ -22,7 +22,7 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
   // Russian month names used by hh.ru in date ranges
   const MONTHS = 'январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья]';
   const DATE_RANGE_RE = new RegExp(
-    '(' + MONTHS + ')\\s*\\d{4}\\s*[\\u2013\\u2014\-]\\s*(?:(' + MONTHS + ')\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)',
+    '(' + MONTHS + ')\\s*\\d{4}\\s*[\\u2013\\u2014-]\\s*(?:(' + MONTHS + ')\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)',
     'gi'
   );
 

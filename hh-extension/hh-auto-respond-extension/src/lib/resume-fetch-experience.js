@@ -9,7 +9,7 @@
 import { createLogger } from './anti-hallucination.js';
 import { parseCompanyCardFromDoc } from './resume-fetch-parse.js';
 
-const fetchLog = createLogger('ResumeFetch');
+const _fetchLog = createLogger('ResumeFetch');
 
 /**
  * Parse experience entries from a DOM document using Strategies 1-3.

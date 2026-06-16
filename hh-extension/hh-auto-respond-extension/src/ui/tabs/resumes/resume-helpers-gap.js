@@ -8,7 +8,7 @@
  *   Categories: match (exact), synonym (related), miss (absent), extra (resume-only)
  */
 
-import { refs, panelState } from '../../state.js';
+import { refs } from '../../state.js';
 import { esc } from '../../html.js';
 import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 import { findSynonymMatch, SYNONYM_WEIGHT } from '../../../lib/skill-synonyms.js';

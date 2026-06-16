@@ -89,7 +89,7 @@ function parseResumeSalary(salaryStr) {
 function parseVacancySalaryString(salaryStr) {
   if (!salaryStr || typeof salaryStr !== 'string') return {};
   // Remove currency symbols and normalize spaces
-  const cleaned = salaryStr.replace(/[руб.$евроруб\.]/gi, '').replace(/\s+/g, ' ');
+  const cleaned = salaryStr.replace(/[руб.$евроруб.]/gi, '').replace(/\s+/g, ' ');
   // Find all number groups (e.g., "150 000" -> "150000")
   const nums = cleaned.match(/\d[\d\s]*\d/g);
   if (!nums || nums.length === 0) return {};

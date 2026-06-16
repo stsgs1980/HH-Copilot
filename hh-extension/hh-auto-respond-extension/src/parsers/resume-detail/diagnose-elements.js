@@ -7,7 +7,7 @@
 
 import { createLogger } from '../../lib/anti-hallucination.js';
 
-const diagLog = createLogger('DIAG');
+const _diagLog = createLogger('DIAG');
 
 /**
  * Scan and log all data-qa elements on the page.

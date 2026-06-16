@@ -32,7 +32,6 @@ import { getVacancyDetails, saveVacancyDetail, saveVacancyScore } from './storag
 import { fetchVacancyViaIframe } from './vacancy-fetch-iframe.js';
 import { fetchVacancyViaText } from './vacancy-fetch-text.js';
 import { enrichVacancy, enrichVacanciesFromCache, isDetailFresh } from './vacancy-fetch-enrichment.js';
-import { computeMatchScore } from './match-scorer.js';
 
 const fetchLog = createLogger('VacFetch');
 
@@ -46,7 +45,7 @@ const FETCH_DELAY_MIN = 1500;
 const FETCH_DELAY_MAX = 3500;
 
 /** Cache TTL for stored details (24 hours) */
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const _CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Whether a fetch batch is currently running */
 let isFetching = false;

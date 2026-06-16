@@ -13,7 +13,6 @@
  */
 
 import { createLogger, extractVacancyId } from '../lib/anti-hallucination.js';
-import { findAllElements, findElement } from '../lib/selectors.js';
 
 const negLog = createLogger('NegParse');
 

@@ -7,7 +7,7 @@
 
 import { refs, panelState } from '../state.js';
 import { getLoggedInHTML, esc } from '../html.js';
-import { checkAuth, getUserName } from '../auth.js';
+import { getUserName } from '../auth.js';
 import { renderVacancyList, renderStatsValues, tryShowVacancyMatch } from '../tabs/vacancies.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
 import { renderStats } from '../tabs/stats.js';

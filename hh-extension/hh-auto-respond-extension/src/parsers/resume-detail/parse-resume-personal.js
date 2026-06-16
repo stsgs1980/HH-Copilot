@@ -4,9 +4,9 @@
  * Contacts -> parse-resume-contacts.js
  */
 
-import { safeGetText, createLogger } from '../../lib/anti-hallucination.js';
+import { createLogger } from '../../lib/anti-hallucination.js';
 
-const resumeLog = createLogger('Resume');
+const _resumeLog = createLogger('Resume');
 
 // ===============================================
 // ПЕРСОНАЛЬНЫЕ ДАННЫЕ (name, gender, age, address)

@@ -18,7 +18,6 @@ import { saveMyResume, getMyResumes, setActiveResume, markAsApplied } from '../l
 import { parseNegotiations } from '../parsers/negotiations.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
-import { panelState } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { setActiveResumeState, setMyResumes, setResumeList, setNegotiations } from '../ui/state.js';
 

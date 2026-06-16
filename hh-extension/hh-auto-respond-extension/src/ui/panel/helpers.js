@@ -50,7 +50,6 @@ export function filterVacancies() {
   const minScore = parseInt(refs.shadowRoot?.getElementById('vac-score-range')?.value || '0', 10);
 
   const items = refs.shadowRoot?.querySelectorAll('#har-vlist .vacancy-item');
-  let visible = 0;
   items.forEach(item => {
     const title = (item.dataset.title || '').toLowerCase();
     const itemStatus = item.dataset.status || 'new';
@@ -59,6 +58,5 @@ export function filterVacancies() {
     const matchStatus = status === 'all' || itemStatus === status;
     const matchScore = itemScore >= minScore;
     item.style.display = (matchTitle && matchStatus && matchScore) ? '' : 'none';
-    if (matchTitle && matchStatus && matchScore) visible++;
   });
 }

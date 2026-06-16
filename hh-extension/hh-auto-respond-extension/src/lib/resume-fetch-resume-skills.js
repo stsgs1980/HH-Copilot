@@ -12,7 +12,6 @@
  *   5. Magritte-style skill tags
  */
 
-import { safeGetText } from './resume-fetch-helpers.js';
 
 /**
  * Parse skills from a fetched HTML document.

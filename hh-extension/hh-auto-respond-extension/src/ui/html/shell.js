@@ -108,7 +108,7 @@ function getTabBarHTML() {
     { id: 'settings', label: 'Настройки', icon: ICONS.gear },
     { id: 'stats', label: 'Статистика', icon: ICONS.chart },
   ];
-  return `<div class="har-tabbar" role="tablist" aria-label="Основные разделы">${tabs.map((t, i) =>
+  return `<div class="har-tabbar" role="tablist" aria-label="Основные разделы">${tabs.map((t, _i) =>
     `<button class="tab-btn ${t.id === 'overview' ? 'active' : ''}" data-tab="${t.id}" role="tab" aria-selected="${t.id === 'overview'}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === 'overview' ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`
   ).join('')}</div>`;
 }

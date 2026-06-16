@@ -9,7 +9,7 @@ import { createLogger } from './anti-hallucination.js';
 import {
   VISIBILITY_UNKNOWN, VISIBILITY_HIDDEN,
   HIDDEN_INDICATORS, VISIBILITY_HIDDEN_DATA_QA,
-  hasHiddenIndicator, normalizeWs, stripScripts
+  hasHiddenIndicator, stripScripts
 } from './resume-constants.js';
 
 const visLog = createLogger('ResumeFetchH');

@@ -88,7 +88,7 @@ export function waitForElement(selectors, timeout, root) {
   });
 }
 
-export function safeClick(el, label) {
+export function safeClick(el, _label) {
   if (!el || !(el instanceof Element) || el.disabled) return false;
   if (!document.body.contains(el)) return false;
   const style = window.getComputedStyle(el);
@@ -97,7 +97,7 @@ export function safeClick(el, label) {
   return true;
 }
 
-export function safeInput(el, text, label) {
+export function safeInput(el, text, _label) {
   if (!el || !(el instanceof HTMLElement) || el.disabled || el.readOnly) return false;
   if (typeof text !== 'string' || text.length === 0) return false;
   const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set

@@ -5,7 +5,6 @@
  * Education parser is in resume-fetch-parse-edu.js.
  */
 
-import { safeGetText } from './resume-fetch-helpers.js';
 
 // ===============================================
 // COMPANY CARD PARSER

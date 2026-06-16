@@ -70,7 +70,7 @@ export function renderMyResumesPanel() {
     const expCount = (r.experience || []).length;
     const vis = r.visibility || (r.hidden ? 'hidden' : 'unknown');
     const isActive = panelState.resume && panelState.resume.id === r.id;
-    let visBadge = '';
+    let visBadge;
     if (vis === 'hidden') {
       visBadge = '<span class="badge badge-amber" style="font-size:9px;margin-left:4px;">Скрыто</span>';
     } else if (vis === 'visible') {

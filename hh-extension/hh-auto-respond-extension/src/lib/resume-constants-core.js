@@ -5,7 +5,7 @@
  */
 import { createLogger } from './anti-hallucination.js';
 
-const coreLog = createLogger('ResumeConst');
+const _coreLog = createLogger('ResumeConst');
 
 /**
  * Minimum length of a hex hash to be considered a valid hh.ru resume ID.

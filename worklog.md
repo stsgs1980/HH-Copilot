@@ -2540,3 +2540,33 @@ Stage Summary:
 - Build v1.9.41.0 OK, Tests 104/104 passing
 - All files now under 250 lines (AHG Rule 12 hard limit)
 - Remaining 146 warnings are informational (200+ line files + code quality hints)
+
+---
+Task ID: eslint-c-cleanup
+Agent: main
+Task: C -- Mechanical cleanup of 146 ESLint warnings (config tuning + dead code removal)
+
+Work Log:
+- Config improvements (removed 79 warnings):
+  - no-unused-vars: added caughtErrorsIgnorePattern: '^_' (58 _e catch warnings)
+  - globals: added process: 'readonly' (esbuild define replaces process.env.VERSION)
+  - no-console: expanded allow list with debug, table, group, groupEnd, groupCollapsed
+- Fixed 6 real bugs: catch (_e) blocks referencing e.message in body (ReferenceError)
+  - resume-fetch-iframe-vis-adv.js, strategy5-scanners.js, strategy5-scripts.js (x2),
+    vis-fallback.js, strategy6-iframe.js
+- Fixed 3 no-useless-escape: \- \+ \. inside regex character classes
+- Fixed 2 no-useless-assignment:
+  - resume-fetch-list-vis.js: removed dead strategyUsed = true (last assignment never read)
+  - render-my-resumes.js: changed let visBadge = '' to let visBadge (all branches assign)
+- Removed 42 unused imports/vars via script (fix-unused-vars.py + fix-unused-vars-v2.py):
+  - 33 unused named imports removed
+  - 4 unused function args prefixed with _
+  - 5 unused const loggers/counters prefixed with _ or removed
+- Removed dead code: unused visible counter in panel/helpers.js
+
+Stage Summary:
+- ESLint: 146 -> 14 problems (errors 0 -> 0, warnings 146 -> 14)
+- All 14 remaining are ahg-rules/max-file-lines (informational, files 200-249 lines)
+- Build v1.9.41.0 OK, Tests 104/104 passing
+- lint:ci exit code 0 (passes -- no errors)
+- 6 real runtime bugs fixed (catch clause variable mismatch)

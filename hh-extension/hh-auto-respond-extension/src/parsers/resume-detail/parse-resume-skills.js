@@ -14,7 +14,7 @@
 
 import { createLogger } from '../../lib/anti-hallucination.js';
 
-const resumeLog = createLogger('Resume');
+const _resumeLog = createLogger('Resume');
 
 /**
  * Parse skills from the current page DOM.

@@ -22,7 +22,6 @@ import { createLogger } from './anti-hallucination.js';
 import { gaussianDelay } from './timing.js';
 import { fetchResumeList } from './resume-fetch-list.js';
 import { fetchAndParseResume } from './resume-fetch-resume.js';
-import { VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE, VISIBILITY_HIDDEN } from './resume-constants.js';
 import { applyVisibilityFallback, finalizeVisDiag } from './resume-fetch-vis-fallback.js';
 
 const fetchLog = createLogger('ResumeFetch');
