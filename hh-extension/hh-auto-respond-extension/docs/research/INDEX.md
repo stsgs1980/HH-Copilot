@@ -10,6 +10,7 @@ All research documents for HH-Copilot project. Each document contains: findings,
 | 02 | [02-kula-ai-ats.md](./02-kula-ai-ats.md) | Kula.ai AI-Native ATS — features, scoring, matching | 2026-06-15 | Research done, not yet applied | Future: semantic matching, career alignment |
 | 03 | [03-votd-irrelevant-vacancies.md](./03-votd-irrelevant-vacancies.md) | VOTD irrelevant vacancies — root cause, DOM analysis, code trace | 2026-06-15 | Research done, applied in v1.9.37.0 | `match-scorer-skills.js`, `vacancy-list.js`, `main-page-handlers-pages.js`, `vacancies.js` |
 | 04 | [04-negotiations-dom-analysis.md](./04-negotiations-dom-analysis.md) | Negotiations page DOM structure, selectors, data model | 2026-06-16 | Research done, NOT yet applied | `parsers/negotiations.js`, `selectors.js`, `ui/tabs/negotiations.js` |
+| 05 | [05-chatik-dom-analysis.md](./05-chatik-dom-analysis.md) | Chatik (/chat) DOM structure, selectors, vs Negotiations comparison | 2026-06-16 | Research in progress, NOT yet applied | Future: `parsers/chatik.js`, `selectors.js` |
 
 ## Key Conclusions Summary
 
@@ -51,3 +52,12 @@ All research documents for HH-Copilot project. Each document contains: findings,
 - **Vacancy ID** in link: `extractVacancyId()` already handles this URL format
 - **Key decision:** No chat parsing in Phase 1 — only list page. Chat requires separate conversation pages.
 - **MatchScore:** From cache only, no fetching from negotiations page
+
+### Chatik Page DOM (05)
+- **Two separate systems:** `/applicant/negotiations` (отклики) vs `/chat` (мессенджер) — разные data-qa prefixes
+- **Chatik selectors:** `chatik-layout`, `chatik-open-chat-{CHAT_ID}`, `chat-cell-creation-time`, `status-icon-delivered/read`
+- **Key challenge:** Нет vacancy ID в Chatik — только название вакансии в неструктурированном тексте ячейки
+- **Chat ID ≠ Vacancy ID:** Chatik использует 10-значные ID чатов, vacancy IDs — 9-значные
+- **Priority:** Negotiations Phase 1 > Chatik (P1+), т.к. Negotiations даёт статусы откликов напрямую
+
+## TODO (from research, not yet implemented)
