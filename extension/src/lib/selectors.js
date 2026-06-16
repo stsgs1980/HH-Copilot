@@ -93,12 +93,18 @@ export const HH_SELECTORS = {
     'a[href*="/resume/"]'
   ],
   // -- Negotiations (/applicant/negotiations) --
-  negotiationsList:        ['[data-qa="negotiations-list"]'],
-  negotiationsItem:        ['[data-qa="negotiations-item"]'],
-  negotiationsItemVacancy: ['[data-qa="negotiations-item-vacancy"]'],
-  negotiationsItemCompany: ['[data-qa="negotiations-item-company"]'],
-  negotiationsItemDate:    ['[data-qa="negotiations-item-date"]'],
-  negotiationsItemTag:     ['[data-qa^="negotiations-tag"]'],
+  // Research: docs/research/04-negotiations-dom-analysis.md
+  // Only data-qa is reliable (Magritte hashes break classes). Fallback chains:
+  //   primary data-qa -> relaxed data-qa (prefix or word-match) -> Bloko BEM class (no hashes)
+  negotiationsList:            ['[data-qa="negotiations-list"]', '[data-qa^="negotiations-list"]', '.bloko-columns-item'],
+  negotiationsItem:            ['[data-qa="negotiations-item"]', '[data-qa~="negotiations-item"]', '[class*="negotiations-item"]:not([class*="negotiations-item-"])'],
+  negotiationsItemCheckbox:    ['[data-qa="negotiations-item-checkbox"]', 'input[type="checkbox"][data-qa*="negotiations"]'],
+  negotiationsItemVacancy:     ['[data-qa="negotiations-item-vacancy"]', '[data-qa^="negotiations-item-vacancy"]', '[class*="negotiations-item-vacancy"]'],
+  negotiationsItemCompany:     ['[data-qa="negotiations-item-company"]', '[data-qa^="negotiations-item-company"]', '[class*="negotiations-item-company"]'],
+  negotiationsItemDate:        ['[data-qa="negotiations-item-date"]', '[data-qa^="negotiations-item-date"]', '[class*="negotiations-item-date"]'],
+  negotiationsItemTag:         ['[data-qa^="negotiations-tag"]', '[data-qa~="negotiations-tag"]', '.bloko-tag', '[class*="negotiations-tag"]'],
+  // -- Negotiations: employer-side statistics (optional, not always present) --
+  negotiationsEmployerStats:   ['[data-qa="negotiations-employer-statistics"]', '[data-qa^="negotiations-employer"]', '[class*="negotiations-employer"]'],
   // -- Chatik (/chat) --
   chatikLayout:              ['[data-qa="chatik-layout"]'],
   chatikChatItem:            ['[data-qa^="chatik-open-chat-"]'],

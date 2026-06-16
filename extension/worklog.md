@@ -782,3 +782,55 @@ Stage Summary:
 - F3.3 acceptance + anti-hallucination criteria met
 - Tests: 104 -> 117, all passing
 - Build OK, ESLint 0 errors
+
+---
+Task ID: cascade-f1.4
+Agent: main
+Task: F1.4 -- Negotiations selectors + diagnoseNegotiationsDOM()
+
+Work Log:
+- Extended HH_SELECTORS in src/lib/selectors.js (12 lines -> 14 lines):
+  - Added fallback chains to all 6 existing negotiations selectors (List, Item, ItemVacancy, ItemCompany, ItemDate, ItemTag)
+  - Each chain: primary data-qa -> relaxed data-qa (^= or ~=) -> Bloko BEM class (no hashes)
+  - Added 2 new selectors: negotiationsItemCheckbox, negotiationsEmployerStats
+- Refactored src/parsers/negotiations.js (161 -> 240 lines, still below 250 hard cap):
+  - Imported findElement/findAllElements/HH_SELECTORS from lib/selectors.js
+  - Replaced all inline querySelector('[data-qa="..."]') calls with selector-chain helpers
+  - Exported findListContainer, findNegotiationItems, parseSingleItem for reuse by diagnostic
+  - Fixed pre-existing regex bug: /negotiations-item-(\w+)/ -> /negotiations-item-([\w-]+)/ 
+    (was matching "not" from "not-viewed" because \w doesn't include hyphen)
+  - Added anti-hallucination guard: returns null for completely empty items (no ghost rows)
+- Created src/parsers/negotiations-diagnostic.js (194 lines):
+  - diagnoseNegotiationsDOM(opts) -- structured dump following diagnoseVacancyPage() pattern
+  - Probes all 8 selector keys (found, matchedSelector, chainLength, count, tag, dataQa, text)
+  - Reports listContainer details (tag, data-qa, className, childElementCount)
+  - Items breakdown: totalFound, parsedOk, empty, sample[] (first N items, configurable)
+  - Statuses distribution: unique[], counts{}
+  - Raw scan: all data-qa attributes containing "negotiation" (for discovering new variants)
+  - Posts result to page-world.js via postMessage (mirror diagnoseVacancyPage)
+  - Injectable findListContainer/findItems/parseItem for testability (avoids circular import)
+- Created tests/negotiations.test.js (580 lines, 34 tests):
+  - Selectors: 3 tests (all 8 keys present, chains >= 2 selectors, primary is data-qa)
+  - findElement/findAllElements: 4 tests
+  - parseSingleItem: 7 tests (all fields, all 4 statuses, missing tag, empty item, null item, fallback ID)
+  - findListContainer/findNegotiationItems: 3 tests
+  - parseNegotiations: 2 tests
+  - LONG LISTS (50+ items, anti-hallucination criterion): 5 tests (50 items, 100 items, item #75, mixed statuses x100, unique IDs x50)
+  - diagnoseNegotiationsDOM: 9 tests (structure, listContainer found/absent, 8 selectors probed, items totals, sample size, statuses, rawScan, 100 items, empty items count)
+- Fixed 2 real bugs caught by tests:
+  1. regex /negotiations-item-(\w+)/ didn't capture hyphens in "not-viewed"
+  2. fallback [data-qa*="negotiations-item-"] in negotiationsItemTag was too broad -- matched vacancy/company/date elements. Replaced with [data-qa~="negotiations-tag"] + .bloko-tag
+
+Stage Summary:
+- F1.4 acceptance criteria met:
+  [x] Selectors find elements (8 selector keys, each with 2-4 fallback steps)
+  [x] diagnoseNegotiationsDOM structured dump (probes selectors, items, statuses, raw scan)
+  [x] Fallback chains (primary data-qa -> relaxed -> class, 2-4 steps per selector)
+- Anti-hallucination checks passed:
+  [x] No dependency on hashed classes (primary selectors use data-qa only)
+  [x] data-qa stable (all primary selectors use exact or prefix/word-match on data-qa)
+  [x] Correct with long lists (5 tests with 50-100 items, all pass)
+  [x] Empty items rejected (no ghost rows in parsed output)
+- Tests: 117 -> 151 (34 new), all passing
+- Build v1.9.41.0 OK, ESLint 0 errors, 15 warnings (all WARN file-length, none in new files)
+- cascade/state.json: F1.4 marked completed, F1.3 newly ready
