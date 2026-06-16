@@ -26,7 +26,7 @@ export function updateSkillGapSection(r) {
   if (!section) return;
 
   if (!r || ((!r.skills || r.skills.length === 0) && (!r.derivedSkills || r.derivedSkills.length === 0))) {
-    section.style.display = 'none';
+    showGapEmpty(section, 'Загрузите резюме с навыками для анализа');
     return;
   }
 
@@ -38,8 +38,8 @@ export function updateSkillGapSection(r) {
   const vacancySkills = collectDetailVacancySkills();
 
   if (vacancySkills.size === 0) {
-    // No vacancies loaded -- hide the gap section entirely (no point showing 0% ring)
-    section.style.display = 'none';
+    // No vacancies loaded -- show hint instead of silent hiding
+    showGapEmpty(section, 'Откройте вакансии на hh.ru для загрузки навыков');
     return;
   }
 
@@ -75,6 +75,12 @@ export function updateSkillGapSection(r) {
   const matchPct = total > 0 ? Math.round((effectiveMatch / total) * 100) : 0;
 
   section.style.display = '';
+
+  // v1.9.39.0: Clear empty hint and restore inner content when data is available
+  const hint = section.querySelector('.gap-empty-hint');
+  if (hint) hint.style.display = 'none';
+  const inner = section.querySelector('.gap-inner');
+  if (inner) inner.style.display = '';
 
   // Ring chart
   const ring = refs.shadowRoot?.getElementById('res-gap-ring');
@@ -190,4 +196,31 @@ function normalizeSkills(skills) {
     }
   }
   return set;
+}
+
+/**
+ * Show an empty-state message in the gap section instead of hiding it.
+ * v1.9.39.0: replaces silent `display:none` with visible hint.
+ */
+function showGapEmpty(section, message) {
+  section.style.display = '';
+  // Hide inner content, show only the empty message
+  const inner = section.querySelector('.gap-inner');
+  if (inner) inner.style.display = 'none';
+  // Create or update empty hint
+  let hint = section.querySelector('.gap-empty-hint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.className = 'gap-empty-hint';
+    hint.style.cssText = 'padding:16px;text-align:center;font-size:12px;color:#71717A;background:#F9FAFB;border-radius:8px;border:1px dashed #D4D4D8;';
+    // Insert after header, before inner
+    const header = section.querySelector('.gap-header') || section.firstElementChild;
+    if (header && header.nextElementSibling) {
+      header.after(hint);
+    } else {
+      section.prepend(hint);
+    }
+  }
+  hint.innerHTML = '<div style="font-size:20px;margin-bottom:6px;">&#128270;</div>' + esc(message);
+  hint.style.display = '';
 }
