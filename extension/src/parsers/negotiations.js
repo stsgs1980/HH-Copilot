@@ -164,7 +164,7 @@ export function parseSingleItem(item, idx) {
  * @param {Document|Element} root - DOM root to search in
  * @returns {Array<Object>} Parsed negotiation objects
  */
-function parseNegotiationItems(root) {
+export function parseNegotiationItems(root) {
   root = root || document;
 
   const listEl = findListContainer(root);

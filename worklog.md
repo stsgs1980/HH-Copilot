@@ -2813,3 +2813,61 @@ Stage Summary:
 - Single-line CSS change in createFab(), no API/selector logic touched
 - Build: v1.9.41.0, 151 tests still pass (no test changes needed -- UI positioning only)
 - Not yet committed/pushed -- will commit after this worklog update
+
+---
+Task ID: F1.8
+Agent: main
+Task: Negotiations cross-tab aggregator -- fetch all tabs, merge, dedup, cache
+
+Work Log:
+- User reported negotiations page showed only "Все" (11 items) but "Ожидание" tab
+  had 5 separate items not visible in current view. User requested cross-tab
+  aggregator feature.
+- Created new cascade task F1.8 in cascade/state.json (P1, size M, depends F1.4)
+- Designed API: fetchAllNegotiations({ forceRefresh, tabs, fetchImpl,
+  domParserImpl, parseItemsImpl, sleepImpl }) returns { items, perTab, errors,
+  fromCache, fetchedAt, totalCount, rawCount }
+- Implemented extension/src/parsers/negotiations-aggregator.js (210 lines):
+  - NEGOTIATION_TABS config: 8 tabs (all/invite/consider/offer/wait/discard/
+    deleted/archive) with URL ?status=<id>
+  - fetchTab() -- single tab fetch + parse, returns { items, error }
+  - deduplicateByTopic() -- by vacancyId, fallback title+company, skips null
+    (anti-ghost), collects alsoIn[] for dups
+  - fetchAllNegotiations() -- main entry, rate-limited 1 req/sec, partial
+    failure tolerant, 30s cache in chrome.storage.local
+  - invalidateNegotiationsCache() -- manual cache invalidation
+  - All deps injectable for testing (no network in tests)
+- Exported parseNegotiationItems() from negotiations.js (was internal)
+- Created extension/tests/negotiations-aggregator.test.js (396 lines, 20 tests):
+  - NEGOTIATION_TABS config (2 tests)
+  - fetchTab: success, empty (anti-ghost), HTTP error, network error (4)
+  - deduplicateByTopic: by id, by title+company, ghost skip, no-key skip,
+    empty/null input (5)
+  - fetchAllNegotiations: cache hit, cache expire, forceRefresh, partial
+    failure (1 tab 500 doesn't break others), tabs subset, invalidate cache,
+    rate limit timing (7)
+  - Constants: CACHE_KEY, CACHE_TTL_MS (2)
+- Fixed two test failures during dev:
+  1. deduplicateByTopic didn't skip items where key was just "|" (both title
+     and company empty) -- added check for key === '|'
+  2. deduplicateByTopic crashed on null input -- added iterable check
+
+Stage Summary:
+- All acceptance criteria met:
+  [x] fetchAllNegotiations() returns array covering all 8 tabs
+  [x] Each item has .tabOrigin field (stamped in fetchAllNegotiations loop)
+  [x] Deduplicated by topic_id (vacancyId) with title+company fallback
+  [x] Cache 30s in chrome.storage.local (CACHE_KEY='negotiations:all')
+- Anti-hallucination checks passed:
+  [x] Failed tab -> { items: [], error } doesn't crash others (test verifies
+      1 tab HTTP 500, 7 others still succeed)
+  [x] Empty tabs return [] not [null] (fetchTab empty-items test)
+  [x] No ghost rows -- deduplicateByTopic skips null/undefined
+  [x] Rate-limited 1 req/sec (sleepImpl called 7 times for 8 tabs)
+  [x] Cache served only if fresh (forceRefresh test, invalidate test)
+- Tests: 171/171 pass (was 151, +20 new)
+- Lint: 0 errors, 16 warnings (all pre-existing, none in new files)
+- Build: v1.9.41.0 OK, dist/content.js rebuilt
+- cascade/state.json: F1.8 marked completed
+- NOT yet wired into UI pipeline (page handler, panel rendering) -- that is
+  a follow-up task; aggregator is a standalone library ready for integration
