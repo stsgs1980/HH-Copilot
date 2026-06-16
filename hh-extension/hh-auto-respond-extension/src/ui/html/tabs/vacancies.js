@@ -41,6 +41,17 @@ export function getVacanciesSection() {
         <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="flex:1;">
         <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#52525b;min-width:32px;text-align:right;">0%</span>
       </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:#52525b;">График:</span>
+        <button class="btn btn-primary btn-sm vac-schedule-btn" data-schedule="all" style="padding:3px 8px;font-size:10px;border-radius:4px;">Все</button>
+        <button class="btn btn-outline btn-sm vac-schedule-btn" data-schedule="remote" style="padding:3px 8px;font-size:10px;border-radius:4px;">Удалёнка</button>
+        <button class="btn btn-outline btn-sm vac-schedule-btn" data-schedule="hybrid" style="padding:3px 8px;font-size:10px;border-radius:4px;">Гибрид</button>
+        <button class="btn btn-outline btn-sm vac-schedule-btn" data-schedule="office" style="padding:3px 8px;font-size:10px;border-radius:4px;">Офис</button>
+        <label style="display:flex;align-items:center;gap:4px;margin-left:auto;font-size:11px;color:#52525b;cursor:pointer;">
+          <input type="checkbox" id="vac-hide-ads" style="margin:0;">
+          Скрыть рекламу
+        </label>
+      </div>
     </div>
     <div class="card fade-in" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">

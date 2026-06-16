@@ -72,9 +72,12 @@ export async function parseVacanciesFromPage(resume) {
     const replyBtn = findElement('replyButton', card);
     const hasReply = replyBtn !== null;
 
+    // v1.9.38.0: Detect schedule from location text
+    const schedule = detectSchedule(location);
+
     const vacancy = {
       id, title: title.trim(), company: (company || '').trim(),
-      salary: salary || 'Не указана', location: (location || '').trim(),
+      salary: salary || 'Не указана', location: (location || '').trim(), schedule,
       experience: parseExperienceString((experience || '').trim()), skills,
       url: url.startsWith('/') ? 'https://hh.ru' + url : url,
       hasReply, status: 'new', parsedAt: new Date().toISOString(),
@@ -208,7 +211,7 @@ export async function parseVacanciesOfTheDay(resume) {
 
     const vacancy = {
       id: vacancyId, title, company,
-      salary: salary || 'Не указана', location: '',
+      salary: salary || 'Не указана', location: '', schedule: 'unknown',
       experience: parseExperienceString(''), skills: [],
       url: canonicalUrl,
       hasReply: !!replyEl, status: 'new', source: 'votd', isAd: true,
@@ -230,4 +233,32 @@ export async function parseVacanciesOfTheDay(resume) {
 
   parserLog.info('Parsed ' + vacancies.length + '/' + titleEls.length + ' "Vacancy of the Day" items');
   return vacancies;
+}
+
+// ===============================================
+// HELPERS
+// ===============================================
+
+/**
+ * Detect work schedule from location/address text.
+ * v1.9.38.0: Extracted for schedule filter in sidebar.
+ *
+ * hh.ru location patterns:
+ *   "Москва" -> office
+ *   "Москва, удаленно" -> hybrid
+ *   "Удаленно" -> remote
+ *   "Можно удаленно" -> remote
+ *
+ * @param {string} locationText -- raw location string from vacancy card
+ * @returns {'remote'|'hybrid'|'office'|'unknown'}
+ */
+export function detectSchedule(locationText) {
+  if (!locationText) return 'unknown';
+  const lower = locationText.toLowerCase();
+  const hasRemote = /удал[её]нн|remote|дистанцион/.test(lower);
+  const hasCity = /[а-яё]{3,}/.test(lower.replace(/удал[её]нн|remote|дистанцион/g, '').trim());
+  if (hasRemote && hasCity) return 'hybrid';
+  if (hasRemote) return 'remote';
+  if (hasCity) return 'office';
+  return 'unknown';
 }

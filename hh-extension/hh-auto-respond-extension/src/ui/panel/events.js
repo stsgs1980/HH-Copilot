@@ -205,22 +205,58 @@ function bindInputChanges(container) {
   if (statusFilter) {
     statusFilter.addEventListener('change', () => filterVacancies());
   }
+
+  /* v1.9.38.0: Schedule filter pills */
+  container.addEventListener('click', (e) => {
+    const scheduleBtn = e.target.closest('.vac-schedule-btn');
+    if (scheduleBtn) {
+      // Toggle active state: only one pill active at a time
+      const sr = refs.shadowRoot;
+      if (!sr) return;
+      sr.querySelectorAll('.vac-schedule-btn').forEach(btn => {
+        const isActive = btn === scheduleBtn;
+        btn.classList.toggle('btn-primary', isActive);
+        btn.classList.toggle('btn-outline', !isActive);
+      });
+      filterVacancies();
+    }
+  });
+
+  /* v1.9.38.0: Hide ads checkbox */
+  const hideAdsCheckbox = container.querySelector('#vac-hide-ads');
+  if (hideAdsCheckbox) {
+    hideAdsCheckbox.addEventListener('change', () => filterVacancies());
+  }
 }
 
-/** Filter vacancies by search, status, and score. */
+/** Filter vacancies by search, status, score, schedule, and ad flag. */
 function filterVacancies() {
   const search = (refs.shadowRoot?.getElementById('vac-search')?.value || '').toLowerCase();
   const status = refs.shadowRoot?.getElementById('vac-status-filter')?.value || 'all';
   const minScore = parseInt(refs.shadowRoot?.getElementById('vac-score-range')?.value || '0', 10);
 
-  const items = refs.shadowRoot?.querySelectorAll('#har-vlist .vacancy-item');
+  // v1.9.38.0: Schedule filter -- find active pill
+  const sr = refs.shadowRoot;
+  const activeScheduleBtn = sr?.querySelector('.vac-schedule-btn.btn-primary');
+  const schedule = activeScheduleBtn?.dataset.schedule || 'all';
+
+  // v1.9.38.0: Hide ads checkbox
+  const hideAds = sr?.getElementById('vac-hide-ads')?.checked || false;
+
+  const items = sr?.querySelectorAll('#har-vlist .vacancy-item');
   items?.forEach(item => {
     const title = (item.dataset.title || '').toLowerCase();
     const itemStatus = item.dataset.status || 'new';
     const itemScore = parseInt(item.dataset.score || '0', 10);
+    const itemSchedule = item.dataset.schedule || 'unknown';
+    const itemIsAd = item.dataset.isad === '1';
+
     const matchTitle = !search || title.includes(search);
     const matchStatus = status === 'all' || itemStatus === status;
     const matchScore = itemScore >= minScore;
-    item.style.display = (matchTitle && matchStatus && matchScore) ? '' : 'none';
+    const matchSchedule = schedule === 'all' || itemSchedule === schedule;
+    const matchAd = !hideAds || !itemIsAd;
+
+    item.style.display = (matchTitle && matchStatus && matchScore && matchSchedule && matchAd) ? '' : 'none';
   });
 }

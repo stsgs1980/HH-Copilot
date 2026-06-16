@@ -221,7 +221,7 @@ function renderVacancyItem(v, idx, dimmed) {
   // Dimmed: lower opacity for irrelevant vacancies
   const opacity = dimmed ? 'opacity:0.45;' : v.status === 'blacklisted' ? 'opacity:0.4;' : v.status === 'applied' ? 'opacity:0.5;' : '';
 
-  return '<div class="vacancy-item' + shimmerClass + '" data-title="' + esc(v.title) + '" data-status="' + esc(v.status || 'new') + '" data-score="' + score + '" style="' + opacity + '" tabindex="0" role="article" aria-label="' + esc(v.title) + ', ' + esc(v.company) + ', совпадение ' + score + '%">' +
+  return '<div class="vacancy-item' + shimmerClass + '" data-title="' + esc(v.title) + '" data-status="' + esc(v.status || 'new') + '" data-score="' + score + '" data-schedule="' + (v.schedule || 'unknown') + '" data-isad="' + (v.isAd ? '1' : '0') + '" style="' + opacity + '" tabindex="0" role="article" aria-label="' + esc(v.title) + ', ' + esc(v.company) + ', совпадение ' + score + '%">' +
     '<div style="flex-shrink:0;">' + sc + '</div>' +
     '<div style="flex:1;min-width:0;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">' +
