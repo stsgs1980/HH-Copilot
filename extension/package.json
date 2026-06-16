@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "lint": "eslint src/ background/ tests/",
     "lint:fix": "eslint --fix src/ background/ tests/",
-    "lint:ci": "eslint src/ background/ tests/"
+    "lint:ci": "eslint src/ background/ tests/",
+    "cascade": "node ../scripts/cascade-task.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

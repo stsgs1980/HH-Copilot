@@ -577,7 +577,7 @@ HH-Copilot-repo/
 │   ├── wireframes/         -- UI wireframes
 │   └── worklog.md          -- Root docs worklog
 │
-└── hh-extension/hh-auto-respond-extension/
+└── extension/
     ├── docs/
     │   ├── ARCHITECTURE.md         -- This file (extension architecture)
     │   ├── TASK-CASCADE.md         -- Task breakdown and status

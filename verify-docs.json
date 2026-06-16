@@ -1,10 +1,10 @@
 {
   "readme": "README.md",
-  "sourceOfTruth": "hh-extension/hh-auto-respond-extension/package.json",
+  "sourceOfTruth": "extension/package.json",
   "checks": [
     {
       "name": "Extension source files",
-      "source": "glob:hh-extension/hh-auto-respond-extension/src/**/*.js",
+      "source": "glob:extension/src/**/*.js",
       "exclude": [
         "test",
         "spec",
@@ -20,7 +20,7 @@
     }
   ],
   "versionSync": {
-    "source": "file:hh-extension/hh-auto-respond-extension/package.json",
+    "source": "file:extension/package.json",
     "extractPattern": "\"version\":\\s*\"([\\d.]+)\"",
     "targets": [
       {
@@ -39,8 +39,8 @@
     "docs/worklog-temp.md",
     "cascade/",
     ".ahg/",
-    "hh-extension/hh-auto-respond-extension/worklog.md",
-    "hh-extension/hh-auto-respond-extension/docs/UNICODE_POLICY.md",
-    "hh-extension/hh-auto-respond-extension/package-lock.json"
+    "extension/worklog.md",
+    "extension/docs/UNICODE_POLICY.md",
+    "extension/package-lock.json"
   ]
 }

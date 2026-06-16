@@ -739,3 +739,32 @@ Work Log:
 Stage Summary:
 - ESLint: 146 -> 14 problems (all 14 are informational max-file-lines)
 - Build OK, Tests 104/104 passing
+
+---
+Task ID: path-simplification
+Agent: main
+Task: Reduce path nesting: hh-extension/hh-auto-respond-extension/ -> extension/
+
+Work Log:
+- git mv to extension/ at repo root (192 files moved)
+- Updated 8 files with path references (verify-docs.json, README, AGENT_RULES, etc.)
+- Pre-commit hook ESLint path updated
+
+Stage Summary:
+- New path: extension/ (was hh-extension/hh-auto-respond-extension/)
+- Build OK, Tests 104/104, ESLint 0 errors
+
+---
+Task ID: cascade-task-js
+Agent: main
+Task: Create cascade-task.js + npm cascade script
+
+Work Log:
+- Created scripts/cascade-task.js (430 lines, pure Node.js)
+- 13 commands: next-task, ready-tasks, status, phases, task, deps, start, complete, block, pending, blocked, functions, validate
+- Added npm script: "cascade": "node ../scripts/cascade-task.js"
+- Old cascade-cli.sh now thin wrapper (484 -> 35 lines)
+
+Stage Summary:
+- Cross-platform cascade CLI (no jq dependency)
+- Validates state integrity (circular deps, duplicates)

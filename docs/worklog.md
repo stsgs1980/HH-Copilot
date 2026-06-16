@@ -306,7 +306,7 @@ Task: Restore repo structure + add wireframe files
 Work Log:
 - Analyzed git history to find the destructive commit 9842902 that deleted all extension files
 - Restored .gitignore, .gitmodules, README.md, AGENT_RULES.md, cascade-cli.sh, cascade-init.sh, cascade-state.json from commit 9853ce1
-- Restored hh-extension/hh-auto-respond-extension/ source files from gitlink commit 1a9b93c (includes v1.8.1 nbsp fix + resume load button fix)
+- Restored extension/ source files from gitlink commit 1a9b93c (includes v1.8.1 nbsp fix + resume load button fix)
 - Restored anti-hallucination-guard and cascade-guard as proper submodules
 - Removed broken HH-Copilot gitlink (was circular self-reference)
 - Added wireframe files to docs/wireframes/ (documentation, FAB panel, landing page)
@@ -314,7 +314,7 @@ Work Log:
 Stage Summary:
 - Repo fully restored with all extension source files, submodules, and docs
 - Wireframe files stored in docs/wireframes/ permanently
-- Extension can now be built: hh-extension/hh-auto-respond-extension/npm run build
+- Extension can now be built: extension/npm run build
 
 ---
 Task ID: R0.1-R0.5
@@ -1681,7 +1681,7 @@ Work Log:
 - Обновлён pre-commit hook — добавлены Phase 4 и Phase 5:
   - Phase 4: запускает version-sync.sh — блокирует коммит при рассинхронизации версий
   - Phase 5: запускает doc-consistency.sh — блокирует коммит при отсутствии CHANGELOG записи или других документационных ошибках
-  - Скрипты ищутся в hh-extension/hh-auto-respond-extension/scripts/ и scripts/
+  - Скрипты ищутся в extension/scripts/ и scripts/
 - Добавлено Rule 9.3 в AGENT_RULES.md:
   - Pre-commit documentation checklist (5 пунктов)
   - История gap'ов с конкретными примерами (5 пунктов)

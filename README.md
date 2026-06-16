@@ -80,7 +80,7 @@ The extension is built using esbuild. Source modules are located in src/, the bu
 git clone https://github.com/stsgs1980/HH-Copilot.git
 cd HH-Copilot
 git submodule update --init   # initialize submodule (anti-hallucination-guard)
-cd hh-extension/hh-auto-respond-extension
+cd extension
 npm install          # install esbuild + ws (devDependencies)
 npm run build        # build content.js from src/content/main.js
 npm test             # run 67 unit tests (Vitest + jsdom)
@@ -128,7 +128,7 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
 
 ```
 /
-  hh-extension/hh-auto-respond-extension/   -- extension code
+  extension/   -- extension code
   docs/wireframes/                            -- UI prototypes (FAB panel + landing)
     hh-copilot-documentation.md               -- wireframe documentation (399 lines)
     hh-copilot-fab-panel.html                 -- interactive FAB panel wireframe
@@ -152,7 +152,7 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
   README.md                                    -- this file
 ```
 
-### Extension code (hh-extension/hh-auto-respond-extension/)
+### Extension code (extension/)
 
 ```
 manifest.json                  -- Manifest V3 configuration (v1.9.36.0, source of truth for version)

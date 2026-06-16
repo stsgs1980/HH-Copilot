@@ -306,7 +306,7 @@ Task: Restore repo structure + add wireframe files
 Work Log:
 - Analyzed git history to find the destructive commit 9842902 that deleted all extension files
 - Restored .gitignore, .gitmodules, README.md, AGENT_RULES.md, cascade-cli.sh, cascade-init.sh, cascade-state.json from commit 9853ce1
-- Restored hh-extension/hh-auto-respond-extension/ source files from gitlink commit 1a9b93c (includes v1.8.1 nbsp fix + resume load button fix)
+- Restored extension/ source files from gitlink commit 1a9b93c (includes v1.8.1 nbsp fix + resume load button fix)
 - Restored anti-hallucination-guard and cascade-guard as proper submodules
 - Removed broken HH-Copilot gitlink (was circular self-reference)
 - Added wireframe files to docs/wireframes/ (documentation, FAB panel, landing page)
@@ -314,7 +314,7 @@ Work Log:
 Stage Summary:
 - Repo fully restored with all extension source files, submodules, and docs
 - Wireframe files stored in docs/wireframes/ permanently
-- Extension can now be built: hh-extension/hh-auto-respond-extension/npm run build
+- Extension can now be built: extension/npm run build
 
 ---
 Task ID: R0.1-R0.5
@@ -1681,7 +1681,7 @@ Work Log:
 - Обновлён pre-commit hook — добавлены Phase 4 и Phase 5:
   - Phase 4: запускает version-sync.sh — блокирует коммит при рассинхронизации версий
   - Phase 5: запускает doc-consistency.sh — блокирует коммит при отсутствии CHANGELOG записи или других документационных ошибках
-  - Скрипты ищутся в hh-extension/hh-auto-respond-extension/scripts/ и scripts/
+  - Скрипты ищутся в extension/scripts/ и scripts/
 - Добавлено Rule 9.3 в AGENT_RULES.md:
   - Pre-commit documentation checklist (5 пунктов)
   - История gap'ов с конкретными примерами (5 пунктов)
@@ -2587,3 +2587,65 @@ Stage Summary:
 - ESLint is now enforced at commit time (blocks on errors only, warnings pass)
 - All commits to hh-extension must pass ESLint with 0 errors
 - Current state: 0 errors, 14 informational warnings (all max-file-lines 200+)
+
+---
+Task ID: path-simplification
+Agent: main
+Task: Reduce path nesting: hh-extension/hh-auto-respond-extension/ -> extension/
+
+Work Log:
+- git mv hh-extension/hh-auto-respond-extension extension (192 files moved)
+- Removed empty hh-extension/ directory
+- Updated path references in 8 files:
+  - verify-docs.json (6 replacements: sourceOfTruth, source globs, exclude list)
+  - .ahg/verify-docs.json (5 replacements)
+  - README.md (3 replacements)
+  - AGENT_RULES.md (1 replacement: Windows path example)
+  - worklog.md (3 replacements in active sections, historical entries left as-is)
+  - docs/worklog.md (3 replacements)
+  - extension/CHANGELOG.md (1 replacement)
+  - extension/docs/ARCHITECTURE.md (1 replacement)
+  - .git/hooks/pre-commit (3 replacements: ESLint path lookup + error messages)
+- Historical references in worklog.md (describing past work) left unchanged
+- Path depth reduced: 2 levels -> 0 levels (extension/ at repo root)
+
+Stage Summary:
+- New path: /home/z/my-project/HH-Copilot-repo/extension/
+- Old path: /home/z/my-project/HH-Copilot-repo/hh-extension/hh-auto-respond-extension/
+- Build OK v1.9.41.0, Tests 104/104 passing, ESLint 0 errors
+- Pre-commit hook ESLint check works from new path
+
+---
+Task ID: cascade-task-js
+Agent: main
+Task: Create cascade-task.js (Node.js replacement for cascade-cli.sh)
+
+Work Log:
+- Created scripts/cascade-task.js (430 lines, pure Node.js, no external deps)
+- Reads cascade/state.json (the actual task cascade: 40 tasks, 8 phases)
+- Old cascade-cli.sh read cascade-state.json (AHG items file) -- wrong file, never worked
+- Commands implemented:
+  - next-task: shows highest-priority ready task (sorts by priority then size)
+  - ready-tasks: lists all tasks with completed deps
+  - status: overall progress with phase breakdown and progress bar
+  - phases: detailed phase info with gates
+  - task <id>: full task detail (acceptance, anti-hallucination check)
+  - deps <id>: dependency tree with completion status
+  - start <id>: mark in_progress (blocks if deps incomplete)
+  - complete <id>: mark completed (shows newly ready tasks)
+  - block <id> <reason>: mark blocked with reason
+  - pending / blocked: list tasks by status
+  - functions / func <id>: function inventory browser
+  - validate: integrity check (duplicates, missing fields, circular deps)
+- ANSI color output (auto-disabled when not TTY)
+- Added npm script: "cascade": "node ../scripts/cascade-task.js"
+- Replaced scripts/cascade-cli.sh (484 lines bash+jq) with 35-line thin wrapper
+  - Maps old command names (complete-task -> complete, start-task -> start, etc.)
+  - Backward compatible with any existing docs/aliases
+
+Stage Summary:
+- cascade-task.js fully replaces cascade-cli.sh
+- Cross-platform (no jq dependency, works on Windows)
+- Reads correct state file (cascade/state.json)
+- Validates state integrity (catches duplicates, missing fields, circular deps)
+- Old cascade-cli.sh preserved as thin wrapper for backward compat

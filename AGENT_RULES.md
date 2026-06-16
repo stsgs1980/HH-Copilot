@@ -103,7 +103,7 @@ v1.9.37.0 | 2026-06-13 | anti-hallucination-guard
 - Git pull MUST include stash: `git stash && git pull && git stash pop`
 - After code push from server → user needs: `git stash && git pull && git stash pop && npm run build`
 - NEVER assume user can pull clean — local changes are normal, stash is mandatory
-- Path format: `C:\Users\stsgr\Desktop\HH-Copilot\hh-extension\hh-auto-respond-extension`
+- Path format: `C:\Users\stsgr\Desktop\HH-Copilot\extension`
 - npm commands: same on Win, no changes needed
 - When giving instructions: ONE copy-paste block, not step-by-step prose
 

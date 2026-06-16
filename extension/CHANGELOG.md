@@ -622,7 +622,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 - Mass cleanup of dead code: 311 files, -41361 lines
   - hh-bot/, Next.js app/, mini-services/, skills/, download/, upload/
-  - Only the extension left in hh-extension/hh-auto-respond-extension/
+  - Only the extension left in extension/
 
 ---
 
