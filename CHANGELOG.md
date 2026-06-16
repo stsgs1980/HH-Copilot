@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.47.0] — 2026-06-17
+
+### Added
+- **F4.4 — CAPTCHA detection + auto-pause** — `src/lib/captcha-detector.js` (180 lines). 7 detection selectors (`img[src*=captcha]`, `.g-recaptcha`, `[data-qa*=captcha]`, `iframe[src*=recaptcha]`, `#captcha`, `.captcha`, `textarea#g-recaptcha-response`). `detectCaptcha(root)` returns `{found, type, source}`. State persists in `chrome.storage.local`. `checkAndPause(root, settings)` respects `captchaAutoPause` flag. Badge integration: `chrome.action.setBadgeText({text: '!'})` with amber `#D97706`.
+
+### Changed
+- `main.js` boot integration: `loadCaptchaState()` + `checkAndPause()` after `createPanel()`.
+- [ANTI-MONOLITH] extracted `loadSavedResumes()` into new `src/content/main-resume-boot.js` (61 lines).
+
+### Tests
+- 32 new tests in `tests/captcha-detector.test.js`. Total: **312 tests** (was 280), all passing.
+
 ## [1.9.46.0] — 2026-06-17
 
 ### Added

@@ -14,7 +14,7 @@
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
-import { checkDailyReset, getStats, getAllSettings, getMyResumes, getActiveResume, setActiveResume, saveMyResumes } from '../lib/storage.js';
+import { checkDailyReset, getStats, getAllSettings } from '../lib/storage.js';
 import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
 import { diagnoseResumeDOM, debugVisibility } from '../parsers/resume-detail.js';
 import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
@@ -22,14 +22,14 @@ import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
 import { computeMatchScore } from '../lib/match-scorer.js';
 import { saveVacancyScore, saveVacancyDetail } from '../lib/storage.js';
 import { panelState, createPanel, updateVacancies } from '../ui/panel.js';
-import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
-import { VISIBILITY_UNKNOWN, TITLE_SUFFIX_NOISE } from '../lib/resume-constants.js';
-import { setActiveResumeState, setMyResumes, updateStats, updateSettings } from '../ui/state.js';
+import { updateStats, updateSettings } from '../ui/state.js';
 
 // Split modules
 import { initPageLogic } from './main-page-handlers.js';
 import { handleLoadResume, handleReparseResume } from './main-resume-loader.js';
 import { handleSyncResumes } from './main-sync.js';
+import { loadSavedResumes } from './main-resume-boot.js';
+import { loadCaptchaState, checkAndPause } from '../lib/captcha-detector.js';
 
 // Re-export for dynamic import from panel (ui/panel/index.js)
 export { initPageLogic };
@@ -64,7 +64,24 @@ async function init() {
     mainLog.warn('Boot: failed to load stats/settings: ' + e.message);
   }
 
+  // F4.4: load persisted CAPTCHA pause state (survives page reloads)
+  await loadCaptchaState();
+
   createPanel();
+
+  // F4.4: check current page for CAPTCHA (auto-pause if found)
+  try {
+    const settings = panelState.settings || {};
+    const captchaRes = await checkAndPause(document, settings);
+    if (captchaRes.found) {
+      mainLog.warn('CAPTCHA detected on page load: ' + captchaRes.type);
+      // Update extension badge to signal pause
+      if (chrome.action && chrome.action.setBadgeText) {
+        chrome.action.setBadgeText({ text: '!' });
+        chrome.action.setBadgeBackgroundColor({ color: '#D97706' });
+      }
+    }
+  } catch (_e) { /* ignore */ }
 
   // Load saved resumes from storage + migrate old data
   await loadSavedResumes();
@@ -163,54 +180,6 @@ async function init() {
       mainLog.warn('Re-score failed: ' + err.message);
     }
   });
-}
-
-/**
- * Load saved resumes from chrome.storage and migrate old data formats.
- */
-async function loadSavedResumes() {
-  try {
-    const savedResume = await getActiveResume();
-    if (savedResume && savedResume.id) {
-      // Migrate old data: backfill visibility, clean title
-      if (savedResume.visibility === undefined) {
-        savedResume.visibility = savedResume.hidden ? 'hidden' : VISIBILITY_UNKNOWN;
-        await setActiveResume(savedResume);
-      }
-      if (savedResume.title && TITLE_SUFFIX_NOISE.test(savedResume.title)) {
-        savedResume.title = savedResume.title.replace(TITLE_SUFFIX_NOISE, '').trim();
-        await setActiveResume(savedResume);
-      }
-      setActiveResumeState(savedResume);
-      mainLog.info('Loaded saved resume: ' + savedResume.title);
-      // Notify listeners (e.g. vacancy detail re-score) that resume is available
-      window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: savedResume } }));
-    }
-  } catch (_e) {}
-
-  try {
-    setMyResumes(await getMyResumes());
-    if (panelState.myResumes.length > 0) {
-      mainLog.info('Loaded ' + panelState.myResumes.length + ' saved resumes');
-      // Migrate old data: backfill visibility field, clean title noise
-      let needsSave = false;
-      panelState.myResumes.forEach(r => {
-        if (r.visibility === undefined) {
-          r.visibility = r.hidden ? 'hidden' : VISIBILITY_UNKNOWN;
-          needsSave = true;
-        }
-        if (r.title && TITLE_SUFFIX_NOISE.test(r.title)) {
-          r.title = r.title.replace(TITLE_SUFFIX_NOISE, '').trim();
-          needsSave = true;
-        }
-      });
-      if (needsSave) {
-        await saveMyResumes(panelState.myResumes);
-        mainLog.info('Migrated resume data: added visibility, cleaned titles');
-      }
-      renderMyResumesPanel();
-    }
-  } catch (_e) {}
 }
 
 // ===============================================

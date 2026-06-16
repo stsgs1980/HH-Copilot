@@ -9,6 +9,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.47.0] — 2026-06-17
+
+### Added
+- **F4.4 — CAPTCHA detection + auto-pause** — new `src/lib/captcha-detector.js` (180 lines):
+  - **7 detection selectors**: `img[src*=captcha]`, `.g-recaptcha`, `[data-qa*=captcha]`, `iframe[src*=recaptcha]`, `#captcha`, `.captcha`, `textarea#g-recaptcha-response`.
+  - **`detectCaptcha(root)`** — returns `{found, type, source}`. Anti-ghost: skips `display:none` / `visibility:hidden` via `getComputedStyle()`.
+  - **State management**: `getCaptchaState()`, `isAutoPaused()`, `pauseForCaptcha(type, reason)`, `resumeFromCaptcha()`, `loadCaptchaState()`. State persists in `chrome.storage.local` under key `captchaState`, survives page reloads.
+  - **`checkAndPause(root, settings)`** — combined detect + pause; respects `settings.captchaAutoPause` flag (when false, only logs).
+  - **Badge integration**: when CAPTCHA detected on page load, `chrome.action.setBadgeText({text: '!'})` with amber color `#D97706`.
+- **main.js boot integration** — `init()` now calls `loadCaptchaState()` before `createPanel()` (restore persisted pause) and `checkAndPause(document, panelState.settings)` after (detect CAPTCHA on current page).
+
+### Changed
+- **`src/content/main.js`** — added imports of `loadCaptchaState`, `checkAndPause`; added CAPTCHA check block after `createPanel()`. Removed inline `loadSavedResumes()` (extracted for AHG Rule 12).
+- **[ANTI-MONOLITH]** main.js exceeded 250 lines after additions → extracted `loadSavedResumes()` + resume-related imports into new `src/content/main-resume-boot.js` (61 lines).
+
+### Tests
+- **`tests/captcha-detector.test.js`** (290 lines, 32 tests): `detectCaptcha` (10), state accessors (4), `pauseForCaptcha` (4), `resumeFromCaptcha` (3), `loadCaptchaState` (2), `checkAndPause` (5), internal sanity (3). All use `chrome.storage.local` stub.
+- Total tests: **312** (was 280, +32 new). All passing.
+
+### Fixed
+- Anti-ghost hidden-element check originally used `offsetParent === null` + `getClientRects().length === 0`, but jsdom has no layout engine so these are always empty. Switched to `getComputedStyle()` checking `display` / `visibility` only.
+
+---
+
 ## [1.9.46.0] — 2026-06-17
 
 ### Added
