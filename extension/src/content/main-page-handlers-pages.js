@@ -10,7 +10,7 @@
  * This file contains: resume detail, resume list, and negotiations handlers.
  *
  * Split from original 362-line file (AHG Rule 12).
- * v1.9.41.0
+ * v1.9.42.0
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';

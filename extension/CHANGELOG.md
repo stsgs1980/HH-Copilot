@@ -9,6 +9,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.42.0] — 2026-06-17
+
+### Added
+- **F1.4 — Negotiations selectors + diagnostic** — `extension/src/lib/selectors.js` extended with 8 negotiations selector groups (each with 2-4 step fallback chain: primary `data-qa` → relaxed `^=`/`~=` → Bloko BEM class). New `extension/src/parsers/negotiations-diagnostic.js` exposes `diagnoseNegotiationsDOM()` for structured DOM dump (mirrors `diagnoseVacancyPage()` pattern). Regex fix: `negotiations-item-(\w+)` → `negotiations-item-([\w-]+)` to capture hyphenated statuses like `not-viewed`. (commit `6a76acf`)
+- **F1.8 — Negotiations cross-tab aggregator** — `extension/src/parsers/negotiations-aggregator.js` (210 lines): `fetchAllNegotiations()` fetches all 8 hh.ru tabs (Все / Приглашение / Собеседование / Ожидание / Отказ / Удалённые / Архив), merges, deduplicates by `vacancyId` (fallback to title+company), caches 30s in `chrome.storage.local` (key `negotiations:all`). Rate-limited 1 req/sec between tab fetches. Partial failure tolerant: failed tab returns `[]` + error, doesn't break others. Each item stamped with `.tabOrigin` field. All dependencies (fetch, DOMParser, parseItems, sleep) injectable for testing. 20 new tests, 171/171 total pass. (commit `2418a6f`)
+- **F6.2 — Full documentation rewrite** — `README.md` (45 KB, full project description with v1.9.42.0 features, 112 modules, 171 tests, cascade CLI, negotiations parser), `ARCHITECTURE.md` (modular structure with layer sizes table, B1+B2+B3 splits, ESLint integration, cascade CLI, path simplification history), `CHANGELOG.md` (root + extension, all versions 1.9.15.5 through 1.9.42.0). All 25 file links verified to exist on disk. Version sync verified across 5 sources: manifest.json = package.json = README = ARCHITECTURE = both CHANGELOGs = 1.9.42.0. (commit `11e49e4`)
+
+### Fixed
+- **FAB vertical position** — FAB moved from `bottom: 24px` to `bottom: 80px` to avoid overlap with hh.ru bottom navigation bar. (commit `a8f6d43`)
+
+---
+
 ## [1.9.41.0] — 2026-06-16
 
 ### Added

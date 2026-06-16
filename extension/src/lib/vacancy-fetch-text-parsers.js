@@ -5,7 +5,7 @@
  * and skill derivation from description text.
  *
  * Split from vacancy-fetch-text.js (AHG Rule 12).
- * v1.9.41.0
+ * v1.9.42.0
  */
 
 import { SKILL_PATTERNS } from './skill-dictionary.js';

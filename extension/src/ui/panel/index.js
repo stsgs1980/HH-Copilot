@@ -7,7 +7,7 @@
  * Auth state + background negotiations are in ./auth-and-bg.js.
  * Event binding is in ./events.js.
  * Split from original 294-line file (AHG Rule 12).
- * v1.9.41.0
+ * v1.9.42.0
  */
 
 import { createLogger } from '../../lib/anti-hallucination.js';

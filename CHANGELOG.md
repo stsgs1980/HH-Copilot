@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.42.0] — 2026-06-17
+
+### Added
+- **F1.4 — Negotiations selectors + diagnostic** — 8 negotiations selector groups with fallback chains, plus `diagnoseNegotiationsDOM()` for structured DOM inspection. Regex fix to capture hyphenated statuses (`not-viewed`).
+- **F1.8 — Negotiations cross-tab aggregator** — `fetchAllNegotiations()` fetches all 8 hh.ru tabs (Все / Приглашение / Собеседование / Ожидание / Отказ / Удалённые / Архив), merges, deduplicates by vacancyId, caches 30s. Rate-limited, partial-failure tolerant, fully injectable for tests.
+- **F6.2 — Full documentation rewrite** — README, ARCHITECTURE, and CHANGELOG rewritten to reflect v1.9.42.0 state (112 modules, 171 tests, cascade CLI, negotiations module).
+
+### Fixed
+- **FAB vertical position** — moved from `bottom: 24px` to `bottom: 80px` to clear hh.ru's bottom nav.
+
+---
+
 ## [1.9.41.0] — 2026-06-16
 
 ### Added

@@ -6,7 +6,7 @@
  *
  * Match score rendering is in vacancies-match.js.
  * Split from original 260-line file (AHG Rule 12).
- * v1.9.41.0
+ * v1.9.42.0
  */
 
 import { panelState, refs } from '../state.js';

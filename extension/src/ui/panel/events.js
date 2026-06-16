@@ -6,7 +6,7 @@
  * Keyboard navigation + filterVacancies are in ./events-a11y.js.
  *
  * Split from original 271-line file (AHG Rule 12).
- * v1.9.41.0
+ * v1.9.42.0
  */
 
 import { refs, setActiveTab } from '../state.js';

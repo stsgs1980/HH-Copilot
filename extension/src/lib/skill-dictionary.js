@@ -13,7 +13,7 @@
  *   - skill-dictionary-product-hr-soft.js
  *
  * Used by derive-skills.js to infer skills from experience descriptions.
- * v1.9.41.0
+ * v1.9.42.0
  */
 
 import { MANAGEMENT_SKILLS, SALES_SKILLS } from './skill-dictionary-management-sales.js';

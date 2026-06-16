@@ -2871,3 +2871,31 @@ Stage Summary:
 - cascade/state.json: F1.8 marked completed
 - NOT yet wired into UI pipeline (page handler, panel rendering) -- that is
   a follow-up task; aggregator is a standalone library ready for integration
+
+---
+Task ID: version-bump-1.9.42.0
+Agent: main
+Task: Bump version 1.9.41.0 -> 1.9.42.0 (catch-up after F1.4/F6.2/FAB/F1.8)
+
+Work Log:
+- Realized F1.8 commit (2418a6f) went out without version bump, violating
+  AGENT_RULES Rule 9.2 (bump BEFORE commit). Catching up now.
+- Updated version sources (single source of truth chain):
+  - extension/manifest.json: 1.9.41.0 -> 1.9.42.0
+  - extension/package.json: same
+  - extension/src/lib/version.js: same
+  - README.md: 4 references updated (header, body, manifest ref, footer)
+  - extension/CHANGELOG.md: new [1.9.42.0] entry with F1.4/F6.2/F1.8 + FAB fix
+  - CHANGELOG.md (root): new [1.9.42.0] summary entry
+- Bulk-updated JSDoc version comments via sed across 24 src files
+  (each file had `v1.9.41.0` in header comment)
+- Updated test count: README had "151 unit tests" -> "171 unit tests"
+  (added 20 new tests in F1.8)
+- Verified: 171/171 tests pass, 0 lint errors, build v1.9.42.0 OK
+- esbuild config reads version from manifest.json at build time, so
+  process.env.VERSION in all modules is now '1.9.42.0'
+
+Stage Summary:
+- All 5 version sources in sync at 1.9.42.0
+- 1.9.42.0 release window covers: F1.4, F6.2, FAB fix, F1.8
+- Next time: bump BEFORE feat commit, not after
