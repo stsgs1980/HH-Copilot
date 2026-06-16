@@ -768,3 +768,17 @@ Work Log:
 Stage Summary:
 - Cross-platform cascade CLI (no jq dependency)
 - Validates state integrity (circular deps, duplicates)
+
+---
+Task ID: cascade-f3.3
+Agent: main
+Task: F3.3 — Typing simulation: char-by-char input via setter + dispatchEvent
+
+Work Log:
+- Upgraded simulateTyping() in src/lib/timing.js: native setter, punctuation pauses, readonly check
+- Created tests/timing.test.js (13 tests)
+
+Stage Summary:
+- F3.3 acceptance + anti-hallucination criteria met
+- Tests: 104 -> 117, all passing
+- Build OK, ESLint 0 errors

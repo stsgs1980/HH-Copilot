@@ -2649,3 +2649,44 @@ Stage Summary:
 - Reads correct state file (cascade/state.json)
 - Validates state integrity (catches duplicates, missing fields, circular deps)
 - Old cascade-cli.sh preserved as thin wrapper for backward compat
+
+---
+Task ID: cascade-f3.3
+Agent: main
+Task: F3.3 — Typing simulation in cover letter: char-by-char input via setter + dispatchEvent
+
+Work Log:
+- Upgraded simulateTyping() in src/lib/timing.js (was 8 lines, now 70 lines):
+  - Uses native setter from HTMLTextAreaElement.prototype.value (React/Magritte detection)
+  - Falls back to HTMLInputElement.prototype for input elements
+  - Pauses longer on punctuation (. , ! ? ; : em-dash en-dash): 300ms vs 30ms base
+  - Returns false for readonly elements (graceful abort, no crash)
+  - Returns false for null/undefined element or non-string text
+  - Dispatches input event per char (bubbles: true)
+  - Dispatches final change event after completion (bubbles: true)
+  - Accepts options: { baseDelay, jitter, punctDelay } for customization
+  - Em-dash/en-dash stored as \u2014/\u2013 escapes (AHG Rule 15 compliance)
+- Created tests/timing.test.js (13 tests):
+  - Types text char-by-char, verifies textarea.value
+  - Dispatches input event per char with bubbles: true
+  - Dispatches final change event
+  - Verifies native setter is called (not direct el.value =)
+  - Returns false for readonly textarea (no crash)
+  - Returns false for null/undefined element and non-string text
+  - Handles empty string, preserves existing content
+  - Verifies punctuation delay difference (300ms vs 30ms)
+  - Works with HTMLInputElement
+  - Accepts custom delay options
+
+Stage Summary:
+- F3.3 acceptance criteria met:
+  [x] Each char appears with delay (30-120ms normal, 300-400ms punctuation)
+  [x] Pauses on punctuation (. , ! ? ; : — –)
+  [x] Input events fire (bubbles: true)
+  [x] textarea.value contains full text after completion
+- Anti-hallucination checks passed:
+  [x] Uses setter from HTMLTextAreaElement.prototype.value
+  [x] readonly doesn't crash (returns false)
+  [x] All events bubbles: true
+- Tests: 104 -> 117 (13 new), all passing
+- Build v1.9.41.0 OK, ESLint 0 errors
