@@ -3127,3 +3127,75 @@ Stage Summary:
 - Build: v1.9.45.0 OK -- dist/content.js + page-world.js + background/index.js
 - cascade/state.json: F4.3 marked completed
 - Next: F3.2 (cover-letter tone param + template save/load from storage)
+
+---
+Task ID: F3.2
+Agent: main
+Task: cover-letter tone param (formal/friendly/concise/enthusiastic) + template save/load from storage
+
+Work Log:
+- User asked to continue with F3.2 after F4.2 + F4.3. F3.2 depends on F0.4
+  (storage). Existing cover-letter-generator.js had no tone support and no
+  template persistence.
+- Bumped version 1.9.45.0 -> 1.9.46.0 BEFORE feat commit (Rule 9.2).
+- Marked F3.2 as in_progress in cascade/state.json.
+- Created extension/src/lib/cover-letter-tone.js (132 lines):
+  - TONES: [{id, label}] for formal/friendly/concise/enthusiastic
+  - validateTone(tone) -- returns 'formal' for invalid input
+  - getTemplateForTone(tone) -- returns tone-specific DEFAULT_TEMPLATE
+  - applyTone(text, tone) -- swaps greeting + closing per tone
+    (Здравствуйте! <-> Добрый день! <-> empty for concise, etc.)
+  - Internal: GREETINGS, CLOSINGS, TEMPLATES maps exported for tests
+  - Anti-hallucination: empty text -> '', unknown tone -> 'formal',
+    {placeholder} syntax never broken
+- Created extension/src/lib/cover-letter-storage.js (87 lines):
+  - getCoverLetterTemplate() -- reads settings.coverLetterTemplate from
+    chrome.storage.local, falls back to formal default if empty/whitespace
+  - setCoverLetterTemplate(text) -- validates string type, saves to settings
+  - getLetterTone() -- reads settings.letterTone, validates via validateTone
+  - setLetterTone(tone) -- validates + saves (invalid tone -> 'formal')
+  - getCoverLetterConfig() -- one-call read of {template, tone} for efficiency
+  - All async, never throw, return defaults on error
+- Updated extension/src/lib/cover-letter-generator.js (122 -> 142 lines):
+  - Added import of validateTone, applyTone, getTemplateForTone
+  - DEFAULT_TEMPLATE now comes from getTemplateForTone('formal') (single
+    source of truth with tone.js)
+  - generateCoverLetter accepts options.tone, validates via validateTone
+  - If no options.template provided, uses getTemplateForTone(tone) -- so
+    tone drives the template choice automatically
+  - After fillTemplate, applies applyTone(text, tone) to swap greeting/closing
+  - Return value now includes tone field
+- Updated extension/src/engine/apply-actions-cover-letter.js:
+  - Added import of getCoverLetterConfig
+  - fillCoverLetter now reads stored template + tone via getCoverLetterConfig()
+  - Priority: sidebar textarea template > stored template > tone-default
+  - Tone from storage passed to generateCoverLetter
+- Created extension/tests/cover-letter-tone.test.js (243 lines, 32 tests):
+  - TONES config (2 tests)
+  - validateTone (3 tests)
+  - getTemplateForTone (5 tests)
+  - applyTone (7 tests)
+  - storage: getCoverLetterTemplate (3), setCoverLetterTemplate (2),
+    getLetterTone (3), setLetterTone (2), getCoverLetterConfig (2)
+  - internal sanity (3)
+  - All tests use chrome.storage.local stub
+
+Stage Summary:
+- All acceptance criteria met:
+  [x] All variables replaced (existing fillTemplate logic preserved)
+  [x] Tone changes text style (applyTone swaps greeting + closing,
+      getTemplateForTone returns tone-specific default template)
+  [x] Template saves/loads from storage (getCoverLetterTemplate /
+      setCoverLetterTemplate / getCoverLetterConfig)
+- Anti-hallucination checks passed:
+  [x] {position} not left unreplaced (existing extractPlaceholders preserved)
+  [x] Empty fields give fallback (existing fallback paths preserved)
+  [x] Tone doesn't break formatting (applyTone test verifies {placeholder}
+      syntax preserved)
+  [x] Unknown tone -> 'formal' (never crashes)
+  [x] Empty text -> '' (applyTone returns empty for empty input)
+- Tests: 280/280 pass (was 248, +32 new in cover-letter-tone.test.js)
+- Lint: 0 errors, 22 warnings (all pre-existing line-length, none in new files)
+- Build: v1.9.46.0 OK
+- cascade/state.json: F3.2 marked completed
+- Next: F4.4 (CAPTCHA detection)

@@ -7,22 +7,22 @@
  *   - cover-letter-placeholders.js  -- placeholder extraction
  *   - cover-letter-rich.js          -- rich letter generation
  *   - cover-letter-format.js        -- formatting helpers
+ *   - cover-letter-tone.js          -- tone adjustments (F3.2)
+ *   - cover-letter-storage.js       -- template + tone persistence (F3.2)
  *
  * Split from original 539-line file (AHG Rule 12).
- * v1.9.43.0
+ * v1.9.46.0
  */
 
 import { createLogger } from './anti-hallucination.js';
 import { extractPlaceholders } from './cover-letter-placeholders.js';
 import { hasRichData, generateRichLetter } from './cover-letter-rich.js';
+import { validateTone, applyTone, getTemplateForTone } from './cover-letter-tone.js';
 
 const clLog = createLogger('CoverLetter');
 
-/** Default template when no custom template is set */
-const DEFAULT_TEMPLATE =
-  'Здравствуйте! Меня заинтересовала вакансия {position} в {company}. ' +
-  'Имею {experience} опыта в {skills}. {matching_sentence}' +
-  'Буду рад обсудить детали на интервью.';
+/** Default template when no custom template is set (formal tone). */
+const DEFAULT_TEMPLATE = getTemplateForTone('formal');
 
 /** Maximum cover letter length (hh.ru limit) */
 const MAX_LETTER_LENGTH = 5000;
@@ -36,17 +36,19 @@ const MAX_LETTER_LENGTH = 5000;
  *
  * @param {Object} vacancy -- Parsed vacancy object (shallow or enriched)
  * @param {Object} resume -- Parsed resume object
- * @param {Object} [options] -- { template, maxLength, includeRequirements }
- * @returns {{ text: string, placeholders: Object, method: string }}
+ * @param {Object} [options] -- { template, tone, maxLength, includeRequirements }
+ * @returns {{ text: string, placeholders: Object, method: string, tone: string }}
  */
 export function generateCoverLetter(vacancy, resume, options) {
   if (!vacancy) {
     clLog.warn('No vacancy provided -- returning empty letter');
-    return { text: '', placeholders: {}, method: 'none' };
+    return { text: '', placeholders: {}, method: 'none', tone: 'formal' };
   }
 
-  const template = (options && options.template) || DEFAULT_TEMPLATE;
-  const maxLength = (options && options.maxLength) || MAX_LETTER_LENGTH;
+  const opts = options || {};
+  const tone = validateTone(opts.tone);
+  const template = opts.template || getTemplateForTone(tone);
+  const maxLength = opts.maxLength || MAX_LETTER_LENGTH;
 
   // Step 1: Extract all placeholder values
   const placeholders = extractPlaceholders(vacancy, resume);
@@ -54,9 +56,9 @@ export function generateCoverLetter(vacancy, resume, options) {
   // Step 2: Fill template
   let text = fillTemplate(template, placeholders);
 
-  // Step 3: If template is the default one, try generating a richer letter
+  // Step 3: If using a default tone-template, try generating a richer letter
   // when we have enriched vacancy data (description sections, keySkills)
-  if (template === DEFAULT_TEMPLATE && hasRichData(vacancy, resume)) {
+  if (!opts.template && hasRichData(vacancy, resume)) {
     const richLetter = generateRichLetter(vacancy, resume, placeholders);
     if (richLetter) {
       text = richLetter;
@@ -64,7 +66,12 @@ export function generateCoverLetter(vacancy, resume, options) {
     }
   }
 
-  // Step 4: Truncate if needed
+  // Step 4: Apply tone adjustments (greeting + closing swap)
+  if (tone !== 'formal' || !opts.template) {
+    text = applyTone(text, tone);
+  }
+
+  // Step 5: Truncate if needed
   if (text.length > maxLength) {
     text = text.substring(0, maxLength - 3) + '...';
     clLog.info('Truncated cover letter to ' + maxLength + ' chars');
@@ -74,6 +81,7 @@ export function generateCoverLetter(vacancy, resume, options) {
     text,
     placeholders,
     method: hasRichData(vacancy, resume) ? 'rich' : 'template',
+    tone,
   };
 }
 

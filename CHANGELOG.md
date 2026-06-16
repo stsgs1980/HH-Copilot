@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.46.0] — 2026-06-17
+
+### Added
+- **F3.2 — Cover letter tone + template persistence** — `src/lib/cover-letter-tone.js` (132 lines) + `src/lib/cover-letter-storage.js` (87 lines). 4 tones (formal/friendly/concise/enthusiastic) each with distinct default template + greeting/closing swap rules. `applyTone(text, tone)` post-processes generated letter. Storage wrappers: `getCoverLetterTemplate/setCoverLetterTemplate`, `getLetterTone/setLetterTone`, `getCoverLetterConfig`. `generateCoverLetter` now accepts `tone` option.
+
+### Tests
+- 32 new tests in `tests/cover-letter-tone.test.js`. Total: **280 tests** (was 248), all passing.
+
 ## [1.9.45.0] — 2026-06-17
 
 ### Added

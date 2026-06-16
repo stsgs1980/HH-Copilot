@@ -9,6 +9,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.46.0] — 2026-06-17
+
+### Added
+- **F3.2 — Cover letter tone + template persistence** — new `src/lib/cover-letter-tone.js` (132 lines) and `src/lib/cover-letter-storage.js` (87 lines):
+  - **4 tones**: formal / friendly / concise / enthusiastic, each with distinct default template and greeting/closing swap rules.
+  - **`validateTone(tone)`** — returns `'formal'` for unknown/invalid input (never throws).
+  - **`getTemplateForTone(tone)`** — returns tone-specific default template containing `{position}`, `{company}`, `{experience}`, `{skills}`, `{matching_sentence}` placeholders.
+  - **`applyTone(text, tone)`** — post-processes generated letter: swaps `Здравствуйте!` ↔ `Добрый день!` ↔ empty (concise) ↔ `Здравствуйте! Очень рад возможности откликнуться!` (enthusiastic); similarly for closings.
+  - **`getCoverLetterTemplate()` / `setCoverLetterTemplate(text)`** — read/write user-saved template from `chrome.storage.local.settings.coverLetterTemplate`. Falls back to formal default if empty/whitespace.
+  - **`getLetterTone()` / `setLetterTone(tone)`** — read/write tone (validated before saving).
+  - **`getCoverLetterConfig()`** — one-call read of `{template, tone}` for efficiency.
+- **Cover letter generator tone integration** — `generateCoverLetter(vacancy, resume, { template, tone })` now accepts a `tone` option. When no explicit template is provided, the tone drives the default template choice. After `fillTemplate`, `applyTone(text, tone)` swaps greeting/closing per tone.
+
+### Changed
+- **`src/lib/cover-letter-generator.js`** — added imports of `validateTone`, `applyTone`, `getTemplateForTone`. `DEFAULT_TEMPLATE` now sourced from `getTemplateForTone('formal')` (single source of truth). `generateCoverLetter` accepts `options.tone`, applies tone adjustments in step 4. Return value now includes `tone` field.
+- **`src/engine/apply-actions-cover-letter.js`** — `fillCoverLetter()` now reads stored template + tone via `getCoverLetterConfig()`. Priority: sidebar textarea > stored template > tone-default.
+
+### Tests
+- **`tests/cover-letter-tone.test.js`** (243 lines, 32 tests): `TONES` config (2), `validateTone` (3), `getTemplateForTone` (5), `applyTone` (7), storage `getCoverLetterTemplate` (3), `setCoverLetterTemplate` (2), `getLetterTone` (3), `setLetterTone` (2), `getCoverLetterConfig` (2), internal sanity (3). All use `chrome.storage.local` stub.
+- Total tests: **280** (was 248, +32 new). All passing.
+
+---
+
 ## [1.9.45.0] — 2026-06-17
 
 ### Added

@@ -11,6 +11,7 @@
 import { createLogger } from '../lib/anti-hallucination.js';
 import { generateCoverLetter } from '../lib/cover-letter-generator.js';
 import { getVacancyDetail } from '../lib/storage-vacancies.js';
+import { getCoverLetterConfig } from '../lib/cover-letter-storage.js';
 
 const coverLog = createLogger('AutoRespond');
 
@@ -70,10 +71,17 @@ export async function fillCoverLetter(inputEl) {
     const resume = _activeResume;
 
     // Read custom template from sidebar (if panel is open)
-    const template = readCustomTemplateFromSidebar();
+    const sidebarTemplate = readCustomTemplateFromSidebar();
+
+    // F3.2: load stored template + tone as fallback
+    const stored = await getCoverLetterConfig();
+
+    // Custom template from sidebar takes priority; then stored, then tone-default
+    const template = sidebarTemplate || stored.template;
+    const tone = stored.tone;
 
     // Generate cover letter
-    const result = generateCoverLetter(vacancy, resume, { template });
+    const result = generateCoverLetter(vacancy, resume, { template, tone });
 
     if (!result.text || result.text.length < 10) {
       coverLog.info('Cover letter generation returned empty text (method: ' + result.method + ')');

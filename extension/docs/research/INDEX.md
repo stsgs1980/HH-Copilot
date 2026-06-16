@@ -8,7 +8,7 @@ All research documents for HH-Copilot project. Each document contains: findings,
 |---|------|-------|------|--------|-----------------|
 | 01 | [01-role-implied-skills.md](./01-role-implied-skills.md) | ESCO essential/optional skills → role-implied skills concept | 2026-06-15 | Research done, implementation partial | `role-implied-skills.js`, `quality-recommendations.js` |
 | 02 | [02-kula-ai-ats.md](./02-kula-ai-ats.md) | Kula.ai AI-Native ATS — features, scoring, matching | 2026-06-15 | Research done, not yet applied | Future: semantic matching, career alignment |
-| 03 | [03-votd-irrelevant-vacancies.md](./03-votd-irrelevant-vacancies.md) | VOTD irrelevant vacancies — root cause, DOM analysis, code trace | 2026-06-15 | Research done, applied in v1.9.45.0 | `match-scorer-skills.js`, `vacancy-list.js`, `main-page-handlers-pages.js`, `vacancies.js` |
+| 03 | [03-votd-irrelevant-vacancies.md](./03-votd-irrelevant-vacancies.md) | VOTD irrelevant vacancies — root cause, DOM analysis, code trace | 2026-06-15 | Research done, applied in v1.9.46.0 | `match-scorer-skills.js`, `vacancy-list.js`, `main-page-handlers-pages.js`, `vacancies.js` |
 | 04 | [04-negotiations-dom-analysis.md](./04-negotiations-dom-analysis.md) | Negotiations page DOM structure, selectors, data model | 2026-06-16 | Research done, NOT yet applied | `parsers/negotiations.js`, `selectors.js`, `ui/tabs/negotiations.js` |
 | 05 | [05-chatik-dom-analysis.md](./05-chatik-dom-analysis.md) | Chatik (/chat) DOM structure, selectors, vs Negotiations comparison | 2026-06-16 | Research in progress, NOT yet applied | Future: `parsers/chatik.js`, `selectors.js` |
 
