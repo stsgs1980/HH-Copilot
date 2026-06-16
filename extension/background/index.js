@@ -6,9 +6,19 @@
  * Responsibilities:
  * - chrome.alarms for periodic tasks (daily limit reset at midnight)
  * - Message routing between popup and content scripts
+ * - AI chat completions via z-ai API (F4.2)
  * - Logging and analytics
  * - Extension install/update handling
  */
+
+import {
+  sendMessage as aiSendMessage,
+  generateCoverLetterAI,
+  generateChatReply,
+  getAiConfig,
+  setAiConfig,
+  isAiAvailable,
+} from '../src/services/ai-service.js';
 
 // --- Install / Update --------------------------
 
@@ -119,6 +129,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ hasAuthCookie: !!cookie });
       });
       return true; // async response
+
+    case 'ai-send-message':
+      aiSendMessage(message.payload || {})
+        .then(sendResponse)
+        .catch((e) => sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' }));
+      return true;
+
+    case 'ai-cover-letter':
+      generateCoverLetterAI(message.vacancy, message.resume, message.opts || {})
+        .then(sendResponse)
+        .catch((e) => sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' }));
+      return true;
+
+    case 'ai-chat-reply':
+      generateChatReply(message.history, message.opts || {})
+        .then(sendResponse)
+        .catch((e) => sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' }));
+      return true;
+
+    case 'ai-get-config':
+      getAiConfig().then(sendResponse);
+      return true;
+
+    case 'ai-set-config':
+      setAiConfig(message.config || {}).then(sendResponse);
+      return true;
+
+    case 'ai-available':
+      isAiAvailable().then(sendResponse);
+      return true;
   }
 });
 

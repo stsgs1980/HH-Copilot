@@ -2958,3 +2958,85 @@ Stage Summary:
 - Lint: 0 errors, 17 warnings (all pre-existing)
 - Build: v1.9.43.0 OK
 - cascade/state.json: F1.9 marked completed
+
+---
+Task ID: F4.2
+Agent: main
+Task: services/ai-service.js -- sendMessage via z-ai-web-dev-sdk through background script
+
+Work Log:
+- User asked to continue with F4.2 (AI service) as next priority after F1.9.
+- Investigated z-ai-web-dev-sdk package: Node-only (uses fs/os/path for config
+  loading from ~/.z-ai-config). Cannot be bundled into Chrome MV3 service worker.
+  Reverse-engineered SDK HTTP shape: POST {baseUrl}/chat/completions with
+  Bearer auth, OpenAI-compatible body { messages, model, temperature, thinking,
+  stream }. Discovered API endpoint: https://internal-api.z.ai/v1.
+- Designed F4.2 as thin fetch-based client (no SDK dep). All deps injectable
+  for testing (fetchImpl, chrome.storage.local stub).
+- Bumped version 1.9.43.0 -> 1.9.44.0 BEFORE feat commit (Rule 9.2 -- learned
+  from F1.8 mistake). Used `bash scripts/ahg.sh bump 1.9.44.0` (42 files updated
+  atomically including all version-sync targets).
+- Marked F4.2 as in_progress in cascade/state.json.
+- Created extension/src/services/ai-service.js (234 lines):
+  - DEFAULT_BASE_URL = 'https://internal-api.z.ai/v1'
+  - DEFAULT_TIMEOUT_MS = 30000 (per acceptance criteria)
+  - DEFAULT_MODEL = 'glm-4.5'
+  - getAiConfig() / setAiConfig(partial) -- chrome.storage.local key 'aiConfig'
+  - isAiAvailable() -- checks apiKey presence
+  - sendMessage({ messages, model, temperature, timeoutMs, fetchImpl }) --
+    AbortController-based 30s timeout, returns { ok, text, usage } | { ok: false,
+    error, code }. NEVER throws.
+  - generateCoverLetterAI(vacancy, resume, { tone, fetchImpl }) -- 4 tones
+    (formal/friendly/concise/enthusiastic), 2500 char cap, Russian output.
+  - generateChatReply(history, { tone, variants, fetchImpl }) -- 1-3 variants
+    split by ---VARIANT--- separator, fallback to whole text if AI ignores
+    separator.
+  - Error codes: EMPTY / NETWORK / TIMEOUT / HTTP_<status> / RATE_LIMIT /
+    NO_API_KEY / BAD_JSON / BAD_INPUT
+- Updated extension/background/index.js (141 -> 181 lines):
+  - Added import of ai-service public API.
+  - Added 6 new message handlers: ai-send-message, ai-cover-letter,
+    ai-chat-reply, ai-get-config, ai-set-config, ai-available.
+  - All handlers .then(sendResponse).catch(uncaught -> { ok:false, code:'UNCAUGHT' }).
+- Updated extension/esbuild.config.mjs: added backgroundOptions (bundle:true,
+  format:'esm') so background/index.js imports from src/services/ are inlined
+  into dist/background/index.js. Added backgroundCtx to watch mode + build mode.
+- Created extension/tests/ai-service.test.js (330 lines, 22 tests):
+  - config: getAiConfig defaults, setAiConfig merge, isAiAvailable (3 tests)
+  - sendMessage success: returns text, correct URL+headers+body, trims (3)
+  - sendMessage errors: BAD_INPUT, NO_API_KEY, EMPTY, HTTP_500, RATE_LIMIT,
+    TIMEOUT (AbortError), NETWORK, BAD_JSON (8)
+  - generateCoverLetterAI: success, BAD_INPUT, tone forwarded (3)
+  - generateChatReply: split by separator, fallback to whole, clamp 1..3,
+    BAD_INPUT, HTTP error propagation (5)
+  - All use injected fetchImpl (no real network)
+- Fixed 2 bugs during dev:
+  1. generateCoverLetterAI/generateChatReply didn't forward fetchImpl to
+     sendMessage -> tests hit real ZAI API (HTTP 403). Fixed by passing
+     fetchImpl: opts && opts.fetchImpl in both callers.
+  2. generateChatReply variant split: if AI returned fewer parts than requested,
+     code returned [result.text] (1 variant) instead of the actual parts.
+     Fixed condition: parts.length > 0 ? parts.slice(0, variants) : [result.text].
+
+Stage Summary:
+- All acceptance criteria met:
+  [x] AI returns text (sendMessage success test, content extraction works)
+  [x] Cover letter generated from template + context (generateCoverLetterAI
+      builds system+user prompt with vacancy/resume fields)
+  [x] Chat response based on history (generateChatReply accepts history array)
+- Anti-hallucination checks passed:
+  [x] AI timeout (30 sec) handled -- AbortController + AbortError -> code TIMEOUT
+  [x] Empty response doesn't crash -- code EMPTY, test verifies
+  [x] Rate limit on AI requests -- 429 -> code RATE_LIMIT (no retry yet,
+      follow-up if needed)
+  [x] Fallback when AI unavailable -- NO_API_KEY code, isAiAvailable() check
+  [x] Network errors -> code NETWORK, never throws
+- Tests: 218/218 pass (was 196, +22 new in ai-service.test.js)
+- Lint: 0 errors, 18 warnings (1 new in ai-service.js at 234 lines -- WARN
+  threshold 200, HARD limit 250, within tolerance)
+- Build: v1.9.44.0 OK -- dist/background/index.js now bundled (10.3kb) with
+  ai-service.js inlined. Was previously just copied (would have failed at
+  runtime due to unresolved imports).
+- cascade/state.json: F4.2 marked completed
+- Next: F4.3 (AI chat responses UI integration -- read history from
+  negotiations page, generate 3 variants, typing simulation)

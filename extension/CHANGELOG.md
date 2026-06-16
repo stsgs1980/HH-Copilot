@@ -9,6 +9,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.44.0] — 2026-06-17
+
+### Added
+- **F4.2 — AI service (z-ai-web-dev-sdk compatible)** — new `src/services/ai-service.js` (234 lines) provides a thin fetch-based client for the ZAI chat completions API. Used by the background service worker to handle AI requests from content scripts.
+  - **Why fetch and not the SDK**: `z-ai-web-dev-sdk` is Node-only (uses `fs`, `os`, `path` for config loading from `~/.z-ai-config`). Chrome MV3 service workers cannot use Node built-ins, so the SDK cannot be bundled. Instead, the same HTTP call is re-implemented: `POST {baseUrl}/chat/completions` with Bearer auth and an OpenAI-compatible body.
+  - **Public API**: `sendMessage({ messages, model, temperature, timeoutMs, fetchImpl })`, `generateCoverLetterAI(vacancy, resume, { tone })`, `generateChatReply(history, { tone, variants })`, `getAiConfig()`, `setAiConfig(partial)`, `isAiAvailable()`.
+  - **Tone support**: 4 cover-letter tones — `formal` / `friendly` / `concise` / `enthusiastic` — mapped to descriptive system prompts.
+  - **Chat reply variants**: `generateChatReply()` produces 1–3 distinct reply variants, split by `---VARIANT---` separator; falls back to a single variant if the AI ignores the separator.
+  - **Configurable endpoint**: API base URL and key live in `chrome.storage.local` under key `aiConfig`. Default base URL: `https://internal-api.z.ai/v1`. Default model: `glm-4.5`.
+  - **Anti-hallucination**: `sendMessage` NEVER throws — every failure path returns `{ ok: false, error, code }` with one of: `EMPTY`, `NETWORK`, `TIMEOUT`, `HTTP_<status>`, `RATE_LIMIT`, `NO_API_KEY`, `BAD_JSON`, `BAD_INPUT`. 30-second timeout via `AbortController`.
+- **Background script AI message routing** — `background/index.js` now handles 6 new message types from content scripts: `ai-send-message`, `ai-cover-letter`, `ai-chat-reply`, `ai-get-config`, `ai-set-config`, `ai-available`. All return a Promise-based response with `ok: boolean`.
+- **esbuild: background bundling** — `esbuild.config.mjs` now bundles `background/index.js` as an ESM module (`dist/background/index.js`, ~10 KB) with all `src/services/` imports inlined. Previously the background was copied as-is, which would have failed at runtime once imports were added.
+
+### Changed
+- **`background/index.js`** — added `import` of ai-service public API at the top of the file; added 6 new `case` branches to the `chrome.runtime.onMessage` router.
+- **`esbuild.config.mjs`** — added `backgroundOptions` (bundle:true, format:'esm'), added `backgroundCtx` to watch mode, added `esbuild.build(backgroundOptions)` to single-shot build.
+
+### Tests
+- **`tests/ai-service.test.js`** (330 lines, 22 tests): config (3), sendMessage success (3), sendMessage errors (8), generateCoverLetterAI (3), generateChatReply (5). All use injected `fetchImpl` (no real network). Tests cover: success path, empty response, HTTP 500, HTTP 429 (rate limit), AbortError (timeout), generic network error, malformed JSON, missing API key, bad input, tone forwarding, variant splitting, variant clamping, HTTP error propagation.
+- Total tests: **218** (was 196, +22 new). All passing.
+
+### Fixed
+- Fixed `generateCoverLetterAI` and `generateChatReply` not forwarding `fetchImpl` to `sendMessage`, which would have caused production code to bypass the test stub and hit the real ZAI API.
+- Fixed `generateChatReply` variant splitting: previously if the AI returned fewer parts than `variants` requested, the function discarded the actual parts and returned `[result.text]` (1 variant). Now uses `parts.length > 0 ? parts.slice(0, variants) : [result.text]`.
+
+---
+
 ## [1.9.43.0] — 2026-06-17
 
 ### Added

@@ -36,6 +36,21 @@ const pageWorldOptions = {
   logLevel: 'info',
 };
 
+// Background service worker (MV3). Bundled as ESM so imports from src/
+// are resolved and inlined. Manifest references dist/background/index.js
+// with type:"module".
+const backgroundOptions = {
+  entryPoints: ['background/index.js'],
+  bundle: true,
+  outfile: `${DIST}/background/index.js`,
+  format: 'esm',
+  minify: isProd,
+  sourcemap: false,
+  target: 'chrome110',
+  logLevel: 'info',
+  define: { 'process.env.VERSION': JSON.stringify(VERSION) },
+};
+
 function copyStatic() {
   mkdirSync(DIST, { recursive: true });
 
@@ -149,13 +164,19 @@ if (isWatch) {
     plugins: [hmrPlugin],
   });
 
-  await Promise.all([contentCtx.watch(), pageWorldCtx.watch()]);
+  const backgroundCtx = await esbuild.context({
+    ...backgroundOptions,
+    plugins: [hmrPlugin],
+  });
+
+  await Promise.all([contentCtx.watch(), pageWorldCtx.watch(), backgroundCtx.watch()]);
   console.log(`[esbuild] Watching for changes... (hot-reload on ws://localhost:${HMR_PORT})`);
 } else {
   rmSync(DIST, { recursive: true, force: true });
   copyStatic();
   await esbuild.build(contentOptions);
   await esbuild.build(pageWorldOptions);
-  console.log(`[esbuild] v${VERSION} build complete -- dist/content.js + page-world.js (${isProd ? 'production' : 'development'})`);
+  await esbuild.build(backgroundOptions);
+  console.log(`[esbuild] v${VERSION} build complete -- dist/content.js + page-world.js + background/index.js (${isProd ? 'production' : 'development'})`);
   console.log(`[dist] Load ${DIST}/ as unpacked extension in Chrome`);
 }

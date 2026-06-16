@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.44.0] — 2026-06-17
+
+### Added
+- **F4.2 — AI service** — `src/services/ai-service.js` (234 lines): thin fetch-based client for ZAI chat completions API (`https://internal-api.z.ai/v1/chat/completions`). Why fetch and not `z-ai-web-dev-sdk`: the SDK is Node-only (uses `fs`/`os`/`path` for `~/.z-ai-config` loading) and cannot run in Chrome MV3 service workers. Public API: `sendMessage`, `generateCoverLetterAI(vacancy, resume, { tone })`, `generateChatReply(history, { tone, variants })`, `getAiConfig/setAiConfig`, `isAiAvailable`. 4 tones (formal/friendly/concise/enthusiastic). 30s timeout via AbortController. Never throws — returns `{ ok: false, error, code }` with codes `EMPTY`/`NETWORK`/`TIMEOUT`/`HTTP_<status>`/`RATE_LIMIT`/`NO_API_KEY`/`BAD_JSON`/`BAD_INPUT`.
+- **Background AI message routing** — `background/index.js` handles 6 new message types: `ai-send-message`, `ai-cover-letter`, `ai-chat-reply`, `ai-get-config`, `ai-set-config`, `ai-available`.
+- **esbuild: background bundling** — `background/index.js` is now bundled as ESM with all `src/services/` imports inlined (was just copied, would have failed at runtime).
+
+### Tests
+- 22 new tests in `tests/ai-service.test.js` (config 3, sendMessage success 3, sendMessage errors 8, generateCoverLetterAI 3, generateChatReply 5). All use injected `fetchImpl`, no real network.
+- Total: **218 tests** (was 196), all passing.
+
 ## [1.9.43.0] — 2026-06-17
 
 ### Added
