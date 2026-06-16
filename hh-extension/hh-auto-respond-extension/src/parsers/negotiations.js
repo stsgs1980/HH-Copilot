@@ -4,8 +4,12 @@
  * Parses the /applicant/negotiations page on hh.ru.
  * Extracts: vacancy title, company, date, status, vacancy ID (from link).
  *
+ * Two modes:
+ *   - parseNegotiations() — from current page DOM (when user is on /applicant/negotiations)
+ *   - fetchAndParseNegotiations() — background fetch + parse (from any page)
+ *
  * Research: docs/research/04-negotiations-dom-analysis.md
- * v1.9.39.0
+ * v1.9.40.0: Added fetchAndParseNegotiations() for background loading
  */
 
 import { createLogger, extractVacancyId } from '../lib/anti-hallucination.js';
@@ -36,20 +40,18 @@ function extractStatus(tagEl) {
 }
 
 /**
- * Parse all negotiation items from the current page.
- * Must be called when the page is /applicant/negotiations.
- *
+ * Parse negotiation items from a DOM root (document or element).
+ * @param {Document|Element} root - DOM root to search in
  * @returns {Array<Object>} Parsed negotiation objects
  */
-export async function parseNegotiations() {
-  // Verify we're on the right page
-  const listEl = findElement('negotiationsList');
+function parseNegotiationItems(root) {
+  const listEl = root.querySelector('[data-qa="negotiations-list"]');
   if (!listEl) {
-    negLog.info('No negotiations-list container found on this page');
+    negLog.info('No negotiations-list container found');
     return [];
   }
 
-  const items = findAllElements('negotiationsItem', listEl);
+  const items = listEl.querySelectorAll('[data-qa="negotiations-item"]');
   if (!items || items.length === 0) {
     negLog.info('No negotiation items found');
     return [];
@@ -71,7 +73,15 @@ export async function parseNegotiations() {
       // The vacancy link can be the vacancy element itself (if it's an <a>)
       // or a child <a> element
       const linkEl = vacancyEl?.tagName === 'A' ? vacancyEl : vacancyEl?.querySelector('a');
-      const vacancyUrl = linkEl?.href || '';
+      // For fetched HTML, href may be relative — build full URL
+      let vacancyUrl = linkEl?.getAttribute('href') || '';
+      if (vacancyUrl && !vacancyUrl.startsWith('http')) {
+        vacancyUrl = 'https://hh.ru' + vacancyUrl;
+      }
+      // For current page DOM, use .href (already absolute)
+      if (!vacancyUrl && linkEl?.href) {
+        vacancyUrl = linkEl.href;
+      }
       const vacancyId = vacancyUrl ? extractVacancyId(vacancyUrl) : '';
 
       // Company name
@@ -106,4 +116,47 @@ export async function parseNegotiations() {
 
   negLog.info('Parsed ' + negotiations.length + ' negotiations');
   return negotiations;
+}
+
+/**
+ * Parse all negotiation items from the current page.
+ * Must be called when the page is /applicant/negotiations.
+ *
+ * @returns {Array<Object>} Parsed negotiation objects
+ */
+export async function parseNegotiations() {
+  return parseNegotiationItems(document);
+}
+
+/**
+ * Fetch /applicant/negotiations in the background and parse it.
+ * Works from any page — uses fetch() + DOMParser.
+ * v1.9.40.0
+ *
+ * @returns {Array<Object>} Parsed negotiation objects
+ */
+export async function fetchAndParseNegotiations() {
+  const url = 'https://hh.ru/applicant/negotiations';
+  negLog.info('Background fetch: ' + url);
+
+  try {
+    const resp = await fetch(url, {
+      credentials: 'include',
+      headers: { 'Accept': 'text/html' }
+    });
+    if (!resp.ok) {
+      negLog.warn('Fetch failed: ' + resp.status);
+      return [];
+    }
+    const html = await resp.text();
+    negLog.info('Fetched ' + html.length + ' chars');
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    return parseNegotiationItems(doc);
+  } catch (err) {
+    negLog.warn('Background fetch error: ' + err.message);
+    return [];
+  }
 }

@@ -188,6 +188,9 @@ export function toggleSidebar() {
   if (panelState.isOpen) {
     const firstFocusable = refs.shadowRoot?.querySelector('button:not([disabled]), [tabindex="0"]');
     if (firstFocusable) setTimeout(() => firstFocusable.focus(), 350);
+
+    // v1.9.40.0: Auto-load negotiations in background when sidebar opens
+    loadNegotiationsInBackground();
   } else {
     /* Return focus to FAB button when sidebar closes */
     if (refs.fabEl) setTimeout(() => refs.fabEl.focus(), 350);
@@ -240,4 +243,52 @@ function updateVacancyCounts() {
   set('vac-total', vacs.length);
   set('vac-high-match', vacs.filter(v => (v.matchScore || 0) >= 70).length);
   set('vac-blacklisted', vacs.filter(v => v.status === 'blacklisted').length);
+}
+
+/**
+ * v1.9.40.0: Auto-load negotiations from /applicant/negotiations via background fetch.
+ * Only runs if: logged in + negotiations list is empty + not already fetching.
+ * Debounced: won't re-fetch within 5 minutes.
+ */
+let _negLastFetch = 0;
+let _negFetching = false;
+
+async function loadNegotiationsInBackground() {
+  // Skip if not logged in
+  if (!panelState.isLoggedIn) return;
+  // Skip if already loaded (non-empty) and fetched recently
+  if (panelState.negotiations.length > 0 && Date.now() - _negLastFetch < 5 * 60 * 1000) return;
+  // Skip if already fetching
+  if (_negFetching) return;
+
+  _negFetching = true;
+  try {
+    const { fetchAndParseNegotiations } = await import('../../parsers/negotiations.js');
+    const { setNegotiations } = await import('../state.js');
+    const { markAsApplied } = await import('../../lib/storage.js');
+
+    const negotiations = await fetchAndParseNegotiations();
+    if (negotiations.length > 0) {
+      setNegotiations(negotiations);
+      _negLastFetch = Date.now();
+
+      // Mark as applied in storage
+      const appliedIds = negotiations.filter(n => n.vacancyId).map(n => n.vacancyId);
+      if (appliedIds.length > 0) {
+        Promise.all(appliedIds.map(id => markAsApplied(id))).catch(() => {});
+      }
+
+      // Re-render if negotiations tab is active
+      try {
+        const { renderNegotiationList } = await import('../tabs/negotiations.js');
+        renderNegotiationList();
+      } catch (e) {}
+
+      panelLog.info('Background negotiations loaded: ' + negotiations.length + ' items');
+    }
+  } catch (err) {
+    panelLog.warn('Background negotiations fetch failed: ' + err.message);
+  } finally {
+    _negFetching = false;
+  }
 }
