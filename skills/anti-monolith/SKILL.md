@@ -1,6 +1,6 @@
 ---
 name: anti-monolith
-version: 1.9.44.026
+version: 1.9.45.026
 compatibility: both
 description: "Modular architecture enforcement. Automatically activates when files exceed size limits, components have too many hooks, or code structure violates FSD/layer boundaries. Refactors monoliths into composable, testable modules using a 7-step decomposition strategy. Triggers: file > 250 lines, component > 200 lines, 3+ useState in one component, upward layer imports, mixed concerns in a single file. This skill MUST auto-activate whenever the agent encounters these patterns during ANY task — the agent does not need to be explicitly asked to refactor."
 id: ZAI-ARCH-002

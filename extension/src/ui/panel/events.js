@@ -13,6 +13,7 @@ import { refs, setActiveTab } from '../state.js';
 import { renderResumePanel } from '../tabs/resumes.js';
 import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList, setNegotiationStatusFilter, setNegotiationTabFilter, refreshNegotiations } from '../tabs/negotiations.js';
+import { handleAiReplyClick, setAiTone } from '../tabs/negotiations-ai-reply.js';
 import { bindSidebarClicks } from './sidebar-events.js';
 import {
   bindTabKeyboardNav,
@@ -159,6 +160,26 @@ function bindInputChanges(container) {
     const refreshBtn = e.target.closest('#neg-refresh-btn');
     if (refreshBtn) {
       refreshNegotiations();
+      return;
+    }
+    // F4.3: AI reply area (generate button + variant cards + tone select)
+    const aiGenBtn = e.target.closest('#neg-ai-generate');
+    if (aiGenBtn) {
+      handleAiReplyClick(e);
+      return;
+    }
+    const aiVariantCard = e.target.closest('.ai-variant-card');
+    if (aiVariantCard) {
+      handleAiReplyClick(e);
+      return;
     }
   });
+
+  /* F4.3: AI tone selector change */
+  const aiToneSelect = container.querySelector('#neg-ai-tone');
+  if (aiToneSelect) {
+    aiToneSelect.addEventListener('change', () => {
+      setAiTone(aiToneSelect.value);
+    });
+  }
 }

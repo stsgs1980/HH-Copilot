@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.45.0] — 2026-06-17
+
+### Added
+- **F4.3 — AI chat reply UI** — `src/parsers/negotiations-thread.js` (219 lines) + `src/ui/tabs/negotiations-ai-reply.js` (237 lines). Reads chat history from DOM, sends to background via `ai-chat-reply` message, displays 3 variant cards with click-to-insert via `simulateTyping()` (F3.3). 4 tones (formal/friendly/concise/enthusiastic). Anti-hallucination: `EMPTY_VARIANTS` filter, `NO_BG`/`BG_ERR`/`BG_THROW` codes.
+- **Chat thread parser**: `parseChatThread(root)` extracts `{from, text, time}` per message using `chat-cell-*` data-qa selectors. `extractThreadForAI()` maps to OpenAI format. `buildStarterPrompt()` fallback when no history.
+
+### Tests
+- 30 new tests across `tests/negotiations-thread.test.js` (17) and `tests/negotiations-ai-reply.test.js` (13). All use stubbed `chrome.runtime.sendMessage`, no real network.
+- Total: **248 tests** (was 218), all passing.
+
 ## [1.9.44.0] — 2026-06-17
 
 ### Added

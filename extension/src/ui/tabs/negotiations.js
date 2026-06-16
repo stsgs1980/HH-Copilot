@@ -29,6 +29,7 @@ import {
   invalidateNegotiationsCache,
   NEGOTIATION_TABS,
 } from '../../parsers/negotiations-aggregator.js';
+import { renderAiReplyArea } from './negotiations-ai-reply.js';
 
 let activeStatusFilter = 'all';
 let activeTabFilter = 'all';
@@ -230,4 +231,7 @@ export function renderChatMessages() {
       </div>
     </div>`;
   }).join('');
+
+  // F4.3: render AI reply area (tone select + generate button + variants)
+  renderAiReplyArea();
 }

@@ -3040,3 +3040,90 @@ Stage Summary:
 - cascade/state.json: F4.2 marked completed
 - Next: F4.3 (AI chat responses UI integration -- read history from
   negotiations page, generate 3 variants, typing simulation)
+
+---
+Task ID: F4.3
+Agent: main
+Task: AI chat responses -- read history, generate 3 variants, adapt tone, typing simulation
+
+Work Log:
+- User asked to continue with F4.3 after F4.2 completed. F4.3 depends on F4.2
+  (AI service), F3.3 (typing simulation -- done), F1.3 (negotiations parser).
+- Bumped version 1.9.44.0 -> 1.9.45.0 BEFORE feat commit (Rule 9.2).
+- Marked F4.3 as in_progress in cascade/state.json.
+- Created extension/src/parsers/negotiations-thread.js (219 lines):
+  - parseChatThread(root) -> [{ from, text, time }] with user/employer detection
+  - extractThreadForAI(messages) -> [{ role, content }] (OpenAI format)
+  - buildStarterPrompt(conv) -> fallback when no history
+  - isSubElement(el) filter to skip text/time children of cells (chat-cell-text
+    also matches the [data-qa^="chat-cell-"] prefix selector)
+  - queryFirstMatch() queries multiple selector fallbacks + filters sub-elements
+  - Anti-ghost: skip null cells, skip empty text, return [] on error
+- Created extension/src/ui/tabs/negotiations-ai-reply.js (237 lines):
+  - TONES: formal/friendly/concise/enthusiastic
+  - requestAiReply(conv, tone, impls) -- reads chat thread from DOM via
+    parseChatThread, falls back to buildStarterPrompt, sends to background via
+    chrome.runtime.sendMessage({type:'ai-chat-reply', history, opts})
+  - insertVariant(text, opts) -- uses simulateTyping() from F3.3 when
+    useSimulation=true; honors neg-type-emulation checkbox + neg-type-speed
+    from existing UI
+  - renderAiReplyArea() -- tone select + "AI: 3 варианта" button + 3 variant
+    cards (click to insert) + error block + loading state
+  - handleAiReplyClick(e) -- delegated click handler for gen button + cards
+  - setAiTone(tone) -- validated setter
+  - sendBg() wrapper with full error handling: NO_BG / BG_ERR / BG_THROW /
+    EMPTY_RESP codes
+  - Anti-hallucination: variants filtered to non-empty trimmed strings,
+    EMPTY_VARIANTS code if all filtered out
+- Updated extension/src/ui/html/tabs/negotiations.js: added
+  <div id="neg-ai-reply-area" style="display:none;"></div> below chat input
+- Updated extension/src/ui/tabs/negotiations.js:
+  - Added import of renderAiReplyArea
+  - renderChatMessages() now calls renderAiReplyArea() at the end so AI panel
+    appears whenever a conversation is opened
+- Updated extension/src/ui/panel/events.js:
+  - Added import of handleAiReplyClick, setAiTone
+  - Extended delegated click handler: #neg-ai-generate + .ai-variant-card
+  - Added change listener for #neg-ai-tone select
+- Created extension/tests/negotiations-thread.test.js (165 lines, 17 tests):
+  - parseChatThread: user+employer mix, empty text skip, no cells, null root,
+    cell without text element (fallback), class-based user detection,
+    data-qa suffix detection, <time> element fallback (8 tests)
+  - extractThreadForAI: role mapping, empty filter, non-array, empty (4)
+  - buildStarterPrompt: full input, missing fields, null (3)
+  - internal helpers: isUserMessage via selector + plain cell (2)
+- Created extension/tests/negotiations-ai-reply.test.js (220 lines, 13 tests):
+  - requestAiReply: success, starter prompt fallback, EMPTY_VARIANTS filter,
+    BG error propagation, NO_BG when chrome missing, BG_THROW, reads DOM
+    thread (7 tests)
+  - setAiTone: valid + invalid (2)
+  - insertVariant: empty text, missing input (2)
+  - state: _setAiState merge, _getAiState copy (2)
+- Fixed 2 bugs during dev:
+  1. parseChatThread over-counted: [data-qa^="chat-cell-"] matched BOTH the
+     cell AND its child chat-cell-text element. Added isSubElement() filter
+     that excludes elements matching TEXT_SELECTORS or TIME_SELECTORS.
+  2. Variant filter accepted "   " (whitespace-only) as valid. Added .trim()
+     before length check.
+
+Stage Summary:
+- All acceptance criteria met:
+  [x] 3 response variants displayed (renderAiReplyArea renders up to 3 cards)
+  [x] Tone adapted (4 tones: formal/friendly/concise/enthusiastic, forwarded
+      to AI service via opts.tone)
+  [x] Typing simulation on insert (insertVariant calls simulateTyping from F3.3
+      when useSimulation=true; honors existing neg-type-emulation checkbox +
+      neg-type-speed input)
+- Anti-hallucination checks passed:
+  [x] Chat history correctly extracted (parseChatThread + extractThreadForAI)
+  [x] Empty history gives fallback prompt (buildStarterPrompt)
+  [x] 3 variants always string array (filter + EMPTY_VARIANTS code)
+  [x] BG errors handled (NO_BG / BG_ERR / BG_THROW / EMPTY_RESP)
+  [x] Loading state visible (button shows "Генерация...", disabled)
+  [x] Error state visible (red [ERR] block under button)
+- Tests: 248/248 pass (was 218, +30 new: 17 thread + 13 ai-reply)
+- Lint: 0 errors, 21 warnings (all pre-existing line-length, none in new files
+  except ai-reply.js at 237 lines -- WARN threshold 200, HARD 250, within cap)
+- Build: v1.9.45.0 OK -- dist/content.js + page-world.js + background/index.js
+- cascade/state.json: F4.3 marked completed
+- Next: F3.2 (cover-letter tone param + template save/load from storage)

@@ -6,7 +6,7 @@
   "updatedAt": "2026-06-14T12:12:12Z",
   "changedFiles": "skills/anti-hallucination-guard/SKILL.md tools/verify-docs/package.json ",
   "items": [
-    {"id": "PROC-COCHANGE", "version": "1.9.44.0", "level": "critical", "status": "active"},
+    {"id": "PROC-COCHANGE", "version": "1.9.45.0", "level": "critical", "status": "active"},
     {"id": "PROC-LINECOUNT", "version": "1.0", "level": "critical", "status": "active"},
     {"id": "PROC-SETUP", "version": "2.0", "level": "critical", "status": "active"},
     {"id": "PROC-UPDATE", "version": "2.1", "level": "critical", "status": "active"},

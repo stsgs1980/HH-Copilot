@@ -25,6 +25,7 @@ export function getNegotiationsSection() {
           <input type="text" id="neg-chat-input" placeholder="Сообщение..." aria-label="Введите сообщение" style="flex:1;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
           <button class="btn btn-primary" style="padding:8px 12px;" aria-label="Отправить сообщение">${ICONS.send}</button>
         </div>
+        <div id="neg-ai-reply-area" style="display:none;"></div>
       </div>
     </div>
     <div class="card fade-in">

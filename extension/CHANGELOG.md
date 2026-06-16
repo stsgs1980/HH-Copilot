@@ -9,6 +9,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.45.0] — 2026-06-17
+
+### Added
+- **F4.3 — AI chat reply UI** — new `src/parsers/negotiations-thread.js` (219 lines) parses the chat thread inside an open negotiation, and new `src/ui/tabs/negotiations-ai-reply.js` (237 lines) renders the AI reply panel:
+  - **Tone selector**: 4 tones (formal/friendly/concise/enthusiastic).
+  - **"AI: 3 варианта" button** — reads chat history from the DOM via `parseChatThread()`, falls back to `buildStarterPrompt()` when no history, sends `{type:'ai-chat-reply', history, opts}` to background script, displays 3 variant cards.
+  - **Click-to-insert variant** — calls `simulateTyping()` from F3.3 (with native input setter + punctuation pauses), honors existing `neg-type-emulation` checkbox and `neg-type-speed` input from the cover-letter section.
+  - **Loading + error states** — button shows "Генерация..." and disables during fetch; red `[ERR]` block appears on failure.
+  - **Anti-hallucination**: variants filtered to non-empty trimmed strings (`EMPTY_VARIANTS` code if all filtered out); background errors mapped to `NO_BG`/`BG_ERR`/`BG_THROW`/`EMPTY_RESP`.
+- **Chat thread parser** (`parseChatThread`) — extracts `{from, text, time}` per message using `chat-cell-*` data-qa selectors. Detects user vs employer via `data-qa*="-out"` suffix, `msg-out*` class, or alignment class heuristics. Anti-ghost: skips cells with empty text, filters out sub-elements (chat-cell-text, chat-cell-creation-time) that match the same prefix selector.
+- **`extractThreadForAI(messages)`** — maps internal format to OpenAI/ZAI chat format (`user`/`assistant` roles).
+- **`buildStarterPrompt(conv)`** — fallback when no chat history (initiates conversation with polite vacancy inquiry).
+
+### Changed
+- **`src/ui/html/tabs/negotiations.js`** — added `<div id="neg-ai-reply-area">` container below chat input.
+- **`src/ui/tabs/negotiations.js`** — `renderChatMessages()` now calls `renderAiReplyArea()` at the end so the AI panel appears whenever a conversation is opened.
+- **`src/ui/panel/events.js`** — extended delegated click handler with `#neg-ai-generate` and `.ai-variant-card`; added change listener for `#neg-ai-tone` select.
+
+### Tests
+- **`tests/negotiations-thread.test.js`** (165 lines, 17 tests): `parseChatThread` (8), `extractThreadForAI` (4), `buildStarterPrompt` (3), internal helpers (2).
+- **`tests/negotiations-ai-reply.test.js`** (220 lines, 13 tests): `requestAiReply` (7), `setAiTone` (2), `insertVariant` (2), state management (2). All use stubbed `chrome.runtime.sendMessage`.
+- Total tests: **248** (was 218, +30 new). All passing.
+
+### Fixed
+- `parseChatThread` was over-counting cells: `[data-qa^="chat-cell-"]` matched both the cell AND its child `chat-cell-text` element. Added `isSubElement()` filter that excludes elements matching `TEXT_SELECTORS` or `TIME_SELECTORS`.
+- Variant filter accepted whitespace-only strings as valid. Added `.trim()` before length check.
+
+---
+
 ## [1.9.44.0] — 2026-06-17
 
 ### Added
