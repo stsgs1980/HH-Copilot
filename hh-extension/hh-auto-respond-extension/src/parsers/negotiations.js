@@ -105,7 +105,7 @@ function parseNegotiationItems(root) {
         // UI compatibility: map to existing conversation model
         name: vacancyTitle || company || 'Без названия',
         time: date,
-        preview: statusText ? (statusText + ' — ' + company) : company,
+        preview: statusText ? (statusText + ' -- ' + company) : company,
         unread: status === 'not-viewed' || status === 'invite',
         parsedAt: new Date().toISOString()
       });

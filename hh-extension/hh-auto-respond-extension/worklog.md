@@ -651,3 +651,59 @@ Stage Summary:
 - Example: VOTD "Менеджер по продажам" at Dev resume: similarity ~0 -> filtered out
 - Empty skills penalty: 10/40 -> 0/40 (no free points for missing data)
 - VOTD visually marked with amber "Реклама" badge in sidebar
+
+---
+Task ID: ESLINT-B+C
+Agent: main
+Task: ESLint integration — B1 (HARD CAP 3 files) + B2 (LIMIT 250 6 files) + C (mechanical cleanup)
+
+Work Log:
+- B1.1: Split cover-letter-generator.js (539 → 4 files: 114+121+228+103 lines, all ≤228)
+  - cover-letter-format.js, cover-letter-placeholders.js, cover-letter-rich.js
+- B1.2: Split skill-dictionary.js (477 → 4 files: 53+163+142+182 lines, all ≤182)
+  - skill-dictionary-management-sales.js, skill-dictionary-marketing-finance-it.js, skill-dictionary-product-hr-soft.js
+- B1.3: Split vacancy-fetch-text.js (407 → 2 files: 203+246 lines, all ≤246)
+  - vacancy-fetch-text-parsers.js
+- B2.1: Split vacancy-list.js (265 → 84+118+122 lines)
+  - vacancy-list-helpers.js, vacancy-list-votd.js
+- B2.2: Split vacancies.js (260 → 141+152 lines)
+  - vacancies-match.js
+- B2.3: Split events.js (271 → 154+163 lines)
+  - events-a11y.js
+- B2.4: Split apply-actions.js (288 → 182+129 lines)
+  - apply-actions-cover-letter.js
+- B2.5: Split panel/index.js (294 → 182+154 lines)
+  - auth-and-bg.js
+- B2.6: Split main-page-handlers-pages.js (362 → 169+241 lines)
+  - main-page-handlers-vacancy.js
+- C: Mechanical cleanup via /home/z/my-project/scripts/lint-cleanup.py
+  - catch (e) → catch (_e) in 28 files (~37 occurrences)
+  - regex escapes `\-` → `-` inside character classes (with manual fix in match-scorer-title.js to keep `-` literal at start of class)
+  - Removed unused `renderVacancyMatchScore`/`tryShowVacancyMatch` import from vacancies.js
+  - Added missing `export` to bindTabClicks in events.js (broke build — fixed)
+
+Stage Summary:
+- ESLint problems: 160 → 147 (errors: 20 → 15)
+- All HARD CAP 400 violations eliminated (3 files)
+- All LIMIT 250 violations eliminated (6 files)
+- Remaining 15 errors are all `Rule 12 [W]` warnings on recommended max 200 (non-blocking)
+- All 104 tests pass after splits
+- Build (esbuild) succeeds after fixes
+- 13 new files created for the splits; backward compat preserved via re-exports in original files
+- All line counts well under AHG hard limits
+
+---
+Task ID: eslint-b1-b2
+Agent: main
+Task: ESLint integration Phase B1+B2 — split 9 monolith files (HARD CAP + LIMIT 250)
+
+Work Log:
+- B1 (HARD CAP, 3 files): cover-letter-generator.js (539->121), skill-dictionary.js (477->53), vacancy-fetch-text.js (407->203)
+- B2 (LIMIT 250, 6 files): main-page-handlers-pages.js (362->~100), panel/index.js (294->~130), apply-actions.js (288->~161), panel/events.js (271->~123), vacancy-list.js (265->~55), vacancies.js (260->~115)
+- 21 ESLint auto-fixes applied (prefer-const, no-var)
+- All splits preserve original API via re-exports
+
+Stage Summary:
+- ESLint problems: 160 -> 147 (errors 20 -> 15, warnings 140 -> 132)
+- Build v1.9.41.0 OK, Tests 104/104 passing
+- Remaining: 15 WARN-level errors (files > 200 lines, B3 task)

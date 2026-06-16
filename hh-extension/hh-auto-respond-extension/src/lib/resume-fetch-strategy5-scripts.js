@@ -77,7 +77,7 @@ export function parseExperienceFromScripts(doc, html) {
           fetchLog.info('Strategy 5: found ' + exp.length + ' from window state');
           return exp;
         }
-      } catch (e) {
+      } catch (_e) {
         fetchLog.info('Strategy 5: state JSON parse failed: ' + e.message);
       }
     }
@@ -99,7 +99,7 @@ export function parseExperienceFromScripts(doc, html) {
           fetchLog.info('Strategy 5: found ' + exp.length + ' from store pattern');
           return exp;
         }
-      } catch (e) {
+      } catch (_e) {
         fetchLog.info('Strategy 5: store JSON parse failed: ' + e.message);
       }
     }

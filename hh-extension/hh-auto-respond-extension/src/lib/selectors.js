@@ -138,7 +138,7 @@ export function findElement(name, root) {
       }
       const style = window.getComputedStyle(el);
       if (style.display !== 'none' && style.visibility !== 'hidden') return el;
-    } catch (e) {}
+    } catch (_e) {}
   }
   return null;
 }
@@ -150,7 +150,7 @@ export function findAllElements(name, root) {
     try {
       const els = root.querySelectorAll(sel);
       if (els && els.length > 0) return Array.from(els);
-    } catch (e) {}
+    } catch (_e) {}
   }
   return [];
 }

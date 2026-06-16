@@ -47,7 +47,7 @@ export function parseExperience(dbg, resume) {
 
     stepperItems.forEach(step => {
       if (usedStepperElements.has(step)) return;
-      let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
+      const parentCard = step.closest('[data-qa="profile-experience-company-card"]');
       if (parentCard && cardSet.has(parentCard)) return;
 
       const cellLeft = step.querySelector('[data-qa="cell-left-side"]');

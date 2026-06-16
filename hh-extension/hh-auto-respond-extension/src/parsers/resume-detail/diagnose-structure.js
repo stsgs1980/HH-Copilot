@@ -23,7 +23,7 @@ export function checkSelectors() {
           found = true;
           break;
         }
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (!found) {
       console.log('%c  x ' + key + ' -> none matched', 'color:#ef4444', 'tried:', sels);

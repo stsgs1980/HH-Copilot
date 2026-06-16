@@ -37,7 +37,7 @@ export function isLoggedOut() {
           return true;
         }
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // 3. Check for visible login form inputs
@@ -58,7 +58,7 @@ export function isLoggedOut() {
           return true;
         }
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // 4. TEXT SCAN -- look for "Войти" ONLY in the HEADER area (top 120px).
@@ -73,7 +73,7 @@ export function isLoggedOut() {
     try {
       const rect = el.getBoundingClientRect();
       if (rect.top > 120 || rect.bottom < 0) continue;
-    } catch (e) { continue; }
+    } catch (_e) { continue; }
 
     const text = (el.textContent || '').trim();
     // Match "Войти" as standalone text (not "Войти и создать", etc.)
@@ -127,7 +127,7 @@ export function isLoggedIn() {
       if (style.display !== 'none' && style.visibility !== 'hidden') {
         return true;
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // Additional check: any link to /applicant/ in the top 120px (header nav)
@@ -141,7 +141,7 @@ export function isLoggedIn() {
       if (rect.top > 120 || rect.bottom < 0) continue;
       return true;
     }
-  } catch (e) {}
+  } catch (_e) {}
 
   return false;
 }

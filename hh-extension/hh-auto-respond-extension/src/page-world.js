@@ -25,7 +25,7 @@ window.addEventListener('message', function(event) {
  * Usage: __hhVis() -- after running "Синхронизировать все" in the panel.
  */
 window.__hhVis = function() {
-  var d = window.__hhVisDiag;
+  const d = window.__hhVisDiag;
   if (!d) {
     console.log('%c[HH-AR][VIS-DIAG] No sync data yet. Run "Синхронизировать все" first.', 'color:#f59e0b;font-weight:bold');
     return;
@@ -43,7 +43,7 @@ window.__hhVis = function() {
 
   console.group('%cPer-resume details:', 'color:#2964FF;font-weight:bold');
   (d.resumes || []).forEach(function(r) {
-    var color = r.finalVisibility === 'visible' ? '#22c55e' : r.finalVisibility === 'hidden' ? '#ef4444' : '#f59e0b';
+    const color = r.finalVisibility === 'visible' ? '#22c55e' : r.finalVisibility === 'hidden' ? '#ef4444' : '#f59e0b';
     console.log('%c  ' + (r.id ? r.id.substring(0, 8) : '?') + ' "' + (r.title || '').substring(0, 40) + '" -> %c' + r.finalVisibility, 'font-weight:bold', 'color:' + color + ';font-weight:bold');
     console.log('    list: ' + r.listVis + ' | page: ' + r.pageVis + ' | iframe: ' + (r.iframeVis || '-') + ' | reason: ' + r.decisionReason);
     if (r.pageTrace && r.pageTrace.length > 0) {
@@ -74,7 +74,7 @@ window.__hhVis = function() {
  * Console helper: print a compact table of all resume visibility.
  */
 window.__hhVisTable = function() {
-  var d = window.__hhVisDiag;
+  const d = window.__hhVisDiag;
   if (!d) {
     console.log('%c[HH-AR][VIS-DIAG] No sync data yet. Run "Синхронизировать все" first.', 'color:#f59e0b;font-weight:bold');
     return;
@@ -119,7 +119,7 @@ window.__hhVacDiag = function() {
     return null;
   }
 
-  var d = window.__hhVacDiagData;
+  const d = window.__hhVacDiagData;
 
   console.log('%c[HH-AR][VAC-DIAG] === VACANCY PAGE DIAGNOSTIC ===', 'color:#3b82f6;font-weight:bold;font-size:14px');
   console.log('URL:', d.url);
@@ -129,9 +129,9 @@ window.__hhVacDiag = function() {
   // -- Known selectors --
   console.group('%c1. Known Selectors', 'color:#3b82f6;font-weight:bold');
   Object.keys(d.selectors || {}).forEach(function(key) {
-    var s = d.selectors[key];
-    var icon = s.found ? '%c+' : '%cx';
-    var color = s.found ? 'color:#22c55e' : 'color:#ef4444';
+    const s = d.selectors[key];
+    const icon = s.found ? '%c+' : '%cx';
+    const color = s.found ? 'color:#22c55e' : 'color:#ef4444';
     console.log(icon + ' ' + key + '%c  ' + (s.matchedSelector || '(none matched)'), color, 'color:#71717a');
     if (s.found) {
       console.log('   tag=%s  data-qa=%s  text=%s', s.tag, s.dataQa, (s.text || '').substring(0, 80));
@@ -143,12 +143,12 @@ window.__hhVacDiag = function() {
 
   // -- Auto-detected fields --
   console.group('%c2. Auto-Detected Fields', 'color:#3b82f6;font-weight:bold');
-  var auto = d.autoDetect || {};
+  const auto = d.autoDetect || {};
   ['title', 'company', 'salary', 'location', 'experience', 'employment', 'schedule'].forEach(function(field) {
-    var f = auto[field];
+    const f = auto[field];
     if (!f) return;
-    var icon = f.value ? '%c+' : '%cx';
-    var color = f.value ? 'color:#22c55e' : 'color:#ef4444';
+    const icon = f.value ? '%c+' : '%cx';
+    const color = f.value ? 'color:#22c55e' : 'color:#ef4444';
     console.log(icon + ' ' + field + '%c  src=' + (f.source || '-') + '  value=' + (f.value || '(null)'), color, 'color:#71717a');
   });
   if (auto.keySkills && auto.keySkills.value) {
@@ -169,7 +169,7 @@ window.__hhVacDiag = function() {
   console.group('%c3. All data-qa Groups (' + (auto.dataQaCount || 0) + ' prefixes)', 'color:#3b82f6;font-weight:bold');
   if (auto.dataQaGroups) {
     Object.keys(auto.dataQaGroups).sort().forEach(function(prefix) {
-      var items = auto.dataQaGroups[prefix];
+      const items = auto.dataQaGroups[prefix];
       console.log('  ' + prefix + ' (' + items.length + '):', items.map(function(i) { return i.qa; }).join(', '));
     });
   }
@@ -206,7 +206,7 @@ console.log('%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable
 
 (function setupSPANavigation() {
   // -- 1. Patch pushState & replaceState --
-  var origPush = history.pushState;
+  const origPush = history.pushState;
   history.pushState = function() {
     origPush.apply(this, arguments);
     document.dispatchEvent(new CustomEvent('hh-ar-spa-navigate', {
@@ -214,7 +214,7 @@ console.log('%c[HH-AR][VIS-DIAG] Console helpers ready: __hhVis() / __hhVisTable
     }));
   };
 
-  var origReplace = history.replaceState;
+  const origReplace = history.replaceState;
   history.replaceState = function() {
     origReplace.apply(this, arguments);
     document.dispatchEvent(new CustomEvent('hh-ar-spa-navigate', {

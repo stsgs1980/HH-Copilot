@@ -58,7 +58,7 @@ export function checkScriptPatterns(iframeDoc) {
         return { visibility: VISIBILITY_VISIBLE, trace: 'iframe-S6:script-has-visible-pattern -> VISIBLE' };
       }
     }
-  } catch (e) {
+  } catch (_e) {
     return { visibility: null, trace: 'iframe-S6:script-check-error(' + e.message.substring(0, 30) + ')' };
   }
   return { visibility: null, trace: 'iframe-S6:no-script-patterns' };

@@ -29,7 +29,7 @@ export async function expandHiddenSections() {
     const text = (btn.textContent || '').trim().toLowerCase();
     if (text.includes('посмотреть всё') || text.includes('показать все') || text.includes('показать ещё') ||
         text.includes('посмотреть все') || text.includes('развернуть') || text.includes('expand')) {
-      try { btn.click(); clicked.push(text); } catch (e) {}
+      try { btn.click(); clicked.push(text); } catch (_e) {}
     }
   });
   if (clicked.length > 0) {

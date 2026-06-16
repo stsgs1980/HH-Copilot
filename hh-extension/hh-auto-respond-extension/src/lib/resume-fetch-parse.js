@@ -93,7 +93,7 @@ export function parseContactsFromDoc(doc, dbg, resume) {
       }
       // Extract phone from text via regex (avoids label glue like "Мобильный телефон+7...")
       const text = (el.textContent || '').trim();
-      const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+      const phoneMatch = text.match(/(?:\+7|8)[\s-()]?\d{3}[\s-()]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/);
       if (phoneMatch) {
         resume.phone = dbg('phone (data-qa regex)', phoneMatch[0]);
         break;
@@ -117,7 +117,7 @@ export function parseContactsFromDoc(doc, dbg, resume) {
     const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
     if (contactBlock) {
       const text = contactBlock.textContent || '';
-      const phoneMatch = text.match(/(?:\+7|8)[\s\-()]?\d{3}[\s\-()]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/);
+      const phoneMatch = text.match(/(?:\+7|8)[\s-()]?\d{3}[\s-()]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/);
       if (phoneMatch) resume.phone = dbg('phone (regex)', phoneMatch[0]);
     }
   }
@@ -148,7 +148,7 @@ export function parseContactsFromDoc(doc, dbg, resume) {
         }
         // Extract email from text via regex (avoids label glue like "Электронная почтаfoo@bar.com")
         const text = (el.textContent || '').trim();
-        const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+        const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
         if (emailMatch) { resume.email = dbg('email (regex from data-qa)', emailMatch[0]); break; }
       }
     }
@@ -159,7 +159,7 @@ export function parseContactsFromDoc(doc, dbg, resume) {
     const contactBlock = doc.querySelector('[data-qa="resume-contacts-block"], [data-qa="resume-block-contacts"]');
     if (contactBlock) {
       const text = contactBlock.textContent || '';
-      const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+      const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       if (emailMatch) resume.email = dbg('email (regex)', emailMatch[0]);
     }
   }

@@ -81,7 +81,7 @@ export async function fetchExpandedExperienceViaIframe(resumeUrl, currentCount) 
   } finally {
     try {
       if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-    } catch (e) { /* ignore */ }
+    } catch (_e) { /* ignore */ }
   }
 }
 
@@ -91,7 +91,7 @@ function buildIframeDiag(iframeDoc, iframe) {
   const diag = {};
   try {
     diag.finalUrl = iframe.contentWindow?.location?.href || '(no access)';
-  } catch (e) { diag.finalUrl = '(cross-origin blocked: ' + e.message + ')'; }
+  } catch (_e) { diag.finalUrl = '(cross-origin blocked: ' + e.message + ')'; }
   diag.title = iframeDoc.title || '(no title)';
   diag.bodyTextLen = iframeDoc.body ? (iframeDoc.body.textContent || '').length : 0;
   diag.bodyTextSnippet = iframeDoc.body
@@ -128,7 +128,7 @@ function clickExpandButtons(iframeDoc) {
     if (text.includes('развернуть') || text.includes('показать все') ||
         text.includes('показать ещё') || text.includes('посмотреть всё') ||
         text.includes('посмотреть все') || text.includes('expand')) {
-      try { btn.click(); clicked++; } catch (e) { /* ignore */ }
+      try { btn.click(); clicked++; } catch (_e) { /* ignore */ }
     }
   });
   return clicked;
@@ -162,7 +162,7 @@ function parseExperienceFromIframeDoc(iframeDoc) {
     const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
     stepperItems.forEach(step => {
       if (usedStepperElements.has(step)) return;
-      let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
+      const parentCard = step.closest('[data-qa="profile-experience-company-card"]');
       if (parentCard && uniqueCards.includes(parentCard)) return;
 
       const cellLeft = step.querySelector('[data-qa="cell-left-side"]');

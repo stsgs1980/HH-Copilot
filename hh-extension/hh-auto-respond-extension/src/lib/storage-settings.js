@@ -28,7 +28,7 @@ export async function getAllSettings() {
   try {
     const d = await chrome.storage.local.get('settings');
     return Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
-  } catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
+  } catch (_e) { return Object.assign({}, DEFAULT_SETTINGS); }
 }
 
 // ===============================================
@@ -40,7 +40,7 @@ export async function getStats() {
     await checkDailyReset();
     const d = await chrome.storage.local.get('stats');
     return Object.assign({}, DEFAULT_STATS, d.stats || {});
-  } catch (e) { return Object.assign({}, DEFAULT_STATS); }
+  } catch (_e) { return Object.assign({}, DEFAULT_STATS); }
 }
 
 export async function incrementApplied() {
@@ -68,5 +68,5 @@ export async function checkDailyReset() {
       s.appliedToday = 0; s.skipsToday = 0; s.errorsToday = 0;
       await chrome.storage.local.set({ stats: s, dailyResetDate: today });
     }
-  } catch (e) {}
+  } catch (_e) {}
 }

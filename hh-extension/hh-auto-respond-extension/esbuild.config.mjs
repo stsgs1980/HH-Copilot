@@ -103,7 +103,7 @@ async function startHMR() {
       }
     });
     console.log(`[hmr] WebSocket server on ws://localhost:${HMR_PORT}`);
-  } catch (e) {
+  } catch (_e) {
     console.log('[hmr] "ws" not installed — hot-reload disabled. Run: npm install ws');
     hmrWss = null;
   }

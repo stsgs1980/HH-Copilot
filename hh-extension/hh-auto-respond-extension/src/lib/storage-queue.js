@@ -13,7 +13,7 @@ export async function getAppliedVacancies() {
   try {
     const d = await chrome.storage.local.get('appliedVacancies');
     return d.appliedVacancies || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 export async function isAlreadyApplied(id) {
@@ -26,7 +26,7 @@ export async function markAsApplied(id) {
     const d = await chrome.storage.local.get('appliedVacancies');
     const arr = d.appliedVacancies || [];
     if (!arr.includes(id)) { arr.push(id); await chrome.storage.local.set({ appliedVacancies: arr }); }
-  } catch (e) {}
+  } catch (_e) {}
 }
 
 // ===============================================
@@ -37,7 +37,7 @@ export async function getMyResumes() {
   try {
     const d = await chrome.storage.local.get('myResumes');
     return d.myResumes || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 export async function saveMyResume(resume) {
@@ -69,7 +69,7 @@ export async function getSyncQueue() {
   try {
     const d = await chrome.storage.local.get('syncQueue');
     return d.syncQueue || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 export async function setSyncQueue(queue) {
@@ -96,7 +96,7 @@ export async function getActiveResume() {
   try {
     const d = await chrome.storage.local.get('myResume');
     return d.myResume || null;
-  } catch (e) { return null; }
+  } catch (_e) { return null; }
 }
 
 export async function setActiveResume(resume) {
@@ -115,7 +115,7 @@ export async function getApplyQueue() {
   try {
     const d = await chrome.storage.local.get('applyQueue');
     return d.applyQueue || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 export async function setApplyQueue(queue) {
@@ -130,7 +130,7 @@ export async function getBlacklistedCompanies() {
   try {
     const d = await chrome.storage.local.get('blacklistedCompanies');
     return d.blacklistedCompanies || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 export async function setBlacklistedCompanies(list) {

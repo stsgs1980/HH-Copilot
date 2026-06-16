@@ -21,7 +21,7 @@ export async function getVacancyDetails() {
   try {
     const d = await chrome.storage.local.get('vacancyDetails');
     return d.vacancyDetails || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 /**
@@ -86,7 +86,7 @@ export async function getVacancyScores() {
   try {
     const d = await chrome.storage.local.get('vacancyScores');
     return d.vacancyScores || [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 }
 
 /**

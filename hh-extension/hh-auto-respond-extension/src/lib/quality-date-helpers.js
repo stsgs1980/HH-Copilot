@@ -40,7 +40,7 @@ export function parsePeriodDates(period) {
   const result = { start: null, end: null };
 
   const m = period.match(
-    /([а-яА-ЯёЁ]+\s+\d{4})\s*[\u2013\u2014\-]\s*([а-яА-ЯёЁ]+\s+\d{4}|Настоящее\s+время|настоящее\s+время|по\s+настоящее)/i
+    /([а-яА-ЯёЁ]+\s+\d{4})\s*[\u2013\u2014-]\s*([а-яА-ЯёЁ]+\s+\d{4}|Настоящее\s+время|настоящее\s+время|по\s+настоящее)/i
   );
   if (m) {
     result.start = parseRuDate(m[1]);
@@ -50,7 +50,7 @@ export function parsePeriodDates(period) {
     return result;
   }
 
-  const m2 = period.match(/(\d{4})\s*[\u2013\u2014\-]\s*(\d{4})/);
+  const m2 = period.match(/(\d{4})\s*[\u2013\u2014-]\s*(\d{4})/);
   if (m2) {
     result.start = new Date(parseInt(m2[1]), 0);
     result.end = new Date(parseInt(m2[2]), 11);

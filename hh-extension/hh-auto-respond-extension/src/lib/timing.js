@@ -7,7 +7,7 @@
 
 export function gaussianRandom(mean, stddev) {
   mean = mean || 10.0; stddev = stddev || 4.0;
-  let u1 = Math.max(1e-10, Math.min(1 - 1e-10, Math.random()));
+  const u1 = Math.max(1e-10, Math.min(1 - 1e-10, Math.random()));
   const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * Math.random());
   return z * stddev + mean;
 }

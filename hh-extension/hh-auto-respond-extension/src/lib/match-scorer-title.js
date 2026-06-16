@@ -101,7 +101,7 @@ function tokenize(text) {
     'to', 'for', 'of', 'with', 'and', 'or', 'from', 'by',
   ]);
   const words = new Set();
-  text.split(/[\s\u2013\u2014\-/,|]+/).forEach(w => {
+  text.split(/[-\s\u2013\u2014/,|]+/).forEach(w => {
     const clean = w.replace(/[^a-zа-яё0-9#+.]/g, '').trim();
     if (clean.length >= 2 && !stopWords.has(clean)) words.add(clean);
   });

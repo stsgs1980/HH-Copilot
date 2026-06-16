@@ -4,68 +4,41 @@
  * Individual page handler functions extracted from main-page-handlers.js
  * for anti-monolith compliance.
  *
- * Each handler runs the appropriate parser and updates the panel.
+ * Vacancy search + vacancy detail + main page handlers are in
+ *   ./main-page-handlers-vacancy.js
+ *
+ * This file contains: resume detail, resume list, and negotiations handlers.
+ *
+ * Split from original 362-line file (AHG Rule 12).
+ * v1.9.41.0
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
-import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue, saveVacancyDetail, saveVacancyScore, markAsApplied } from '../lib/storage.js';
-import { parseVacanciesFromPage, parseVacanciesOfTheDay } from '../parsers/vacancy-list.js';
+import { saveMyResume, getMyResumes, setActiveResume, markAsApplied } from '../lib/storage.js';
 import { parseNegotiations } from '../parsers/negotiations.js';
-import { scoreTitle } from '../lib/match-scorer-title.js';
-import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
-import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
-import { enrichFromCache, fetchVacancyDetails, abortVacancyFetch, isVacancyFetching } from '../lib/vacancy-fetch.js';
-import { continueApply } from '../engine/index.js';
-import { computeMatchScore } from '../lib/match-scorer.js';
-import { panelState, updateVacancies, updateStats } from '../ui/panel.js';
+import { panelState } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
-import { renderVacancyList } from '../ui/tabs/vacancies.js';
 import { setActiveResumeState, setMyResumes, setResumeList, setNegotiations } from '../ui/state.js';
+
+// Re-export vacancy + main page handlers for callers that import from here
+export {
+  handleVacancySearchPage,
+  handleVacancyDetailPage,
+  handleMainPage,
+} from './main-page-handlers-vacancy.js';
 
 const pageLog = createLogger('Main');
 
-// -- Vacancy search page --
-
-let searchObserverActive = false;
-
-export async function handleVacancySearchPage() {
-  const vacancies = await parseVacanciesFromPage(panelState.resume);
-
-  // Step 1: Enrich from cache (instant -- no network)
-  await enrichFromCache(vacancies, panelState.resume);
-  updateVacancies(vacancies);
-
-  const stats = getStats();
-  updateStats(stats);
-
-  // Step 2: Background deep fetch for vacancies without keySkills
-  // Runs asynchronously -- UI updates as each vacancy is enriched
-  startBackgroundEnrichment(vacancies);
-
-  // Set up SPA MutationObserver only once
-  if (!searchObserverActive) {
-    searchObserverActive = true;
-    let timer = null;
-    new MutationObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        if (!window.location.pathname.startsWith('/search/vacancy')) return;
-        // Abort any previous enrichment batch
-        abortVacancyFetch();
-        const fresh = await parseVacanciesFromPage(panelState.resume);
-        await enrichFromCache(fresh, panelState.resume);
-        updateVacancies(fresh);
-        startBackgroundEnrichment(fresh);
-      }, 1500);
-    }).observe(document.body, { childList: true, subtree: true });
-    pageLog.info('SPA observer active');
-  }
-}
-
 // -- Resume detail page --
 
+/**
+ * Handle /resume/{hex}, /resume/edit/{hex}, and
+ * /applicant/resumes/view?resume={hex} pages.
+ *
+ * @param {string} path -- current pathname
+ */
 export async function handleResumeDetailPage(path) {
   if (/\/resume\/edit\//.test(path)) {
     // Edit page: DOM differs from view, fetch the view URL instead
@@ -86,11 +59,9 @@ export async function handleResumeDetailPage(path) {
     }
   } else if (/\/applicant\/resumes\/view/.test(path)) {
     // Applicant's own resume view: parse the current page directly
-    // (URL like /applicant/resumes/view?resume=XXX -- DOM is similar to /resume/{hex})
     pageLog.info('Applicant resume view page detected');
     await expandHiddenSections();
     const resume = parseResume();
-    // Fallback: if parseResume couldn't extract ID from pathname, get it from query param
     if (!resume.id) {
       const qMatch = window.location.search.match(/[?&]resume=([a-f0-9]+)/);
       if (qMatch) resume.id = qMatch[1];
@@ -112,6 +83,9 @@ export async function handleResumeDetailPage(path) {
 
 // -- Resume list page --
 
+/**
+ * Handle /applicant/resumes (resume list) page.
+ */
 export async function handleResumeListPage() {
   const resumeList = parseResumeList();
   setResumeList(resumeList);
@@ -121,75 +95,15 @@ export async function handleResumeListPage() {
   pageLog.info('Resume list page: ' + resumeList.length + ' resumes');
 }
 
-// -- Vacancy detail page --
-
-export async function handleVacancyDetailPage(path) {
-  pageLog.info('Vacancy detail page detected');
-
-  // Run vacancy page diagnostic
-  try {
-    const diag = diagnoseVacancyPage();
-    const fieldCount = Object.keys(diag.autoDetect || {})
-      .filter(k => diag.autoDetect[k] && (diag.autoDetect[k].value || diag.autoDetect[k].found))
-      .length;
-    pageLog.info('Vacancy diagnostic: ' + fieldCount + ' fields detected');
-  } catch (e) {
-    pageLog.warn('Vacancy diagnostic failed: ' + e.message);
-  }
-
-  // Parse vacancy detail
-  try {
-    const detail = parseVacancyDetail();
-    if (detail) {
-      const resume = panelState.resume;
-      if (resume) {
-        const score = computeMatchScore(resume, detail);
-        detail.matchScore = score.total;
-        detail.matchBreakdown = score.breakdown;
-        pageLog.info('Match score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');
-        saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
-        window.dispatchEvent(new CustomEvent('hh-ar-match-updated', { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
-      } else {
-        pageLog.info('No active resume -- skip match scoring');
-      }
-      pageLog.info('Vacancy parsed: ' + detail.title + ' | skills=' + detail.keySkills.length + ' | salary=' + detail.salary.raw);
-      window.__hhVacDetail = detail;
-      saveVacancyDetail(detail).catch(() => {});
-    } else {
-      pageLog.warn('Vacancy detail parse returned null');
-    }
-  } catch (e) {
-    pageLog.error('Vacancy detail parse failed: ' + e.message);
-  }
-
-  // Process apply queue
-  try {
-    const queue = await getApplyQueue();
-    if (queue.length > 0) {
-      const vacancyId = path.replace('/vacancy/', '').split('?')[0].split('#')[0];
-      const pending = queue.find(q => q.vacancyId === vacancyId);
-      if (pending) {
-        const updatedQueue = queue.filter(q => q.vacancyId !== vacancyId);
-        await setApplyQueue(updatedQueue);
-        pageLog.info('Processing apply for vacancy ' + vacancyId);
-        setTimeout(async () => {
-          await continueApply(pending);
-        }, 2000);
-      } else {
-        pageLog.info('Queue has items but none for current vacancy (' + vacancyId + ')');
-      }
-    } else {
-      pageLog.info('No apply queue');
-    }
-  } catch (e) {
-    pageLog.error('Error processing apply queue: ' + e.message);
-  }
-}
-
 // -- Negotiations page -- v1.9.39.0
 
 let negotiationsObserverActive = false;
 
+/**
+ * Handle /applicant/negotiations page: parse negotiation items, mark
+ * vacancy IDs as 'applied' in storage, render the list, and observe
+ * SPA mutations for live updates.
+ */
 export async function handleNegotiationsPage() {
   pageLog.info('Negotiations page detected -- parsing negotiation items');
 
@@ -197,7 +111,6 @@ export async function handleNegotiationsPage() {
   setNegotiations(negotiations);
 
   // v1.9.39.0: Mark vacancy IDs from negotiations as 'applied' in storage.
-  // This makes the "Откликнуто" filter in vacancy list actually work.
   const appliedIds = negotiations.filter(n => n.vacancyId).map(n => n.vacancyId);
   if (appliedIds.length > 0) {
     pageLog.info('Marking ' + appliedIds.length + ' vacancies as applied from negotiations');
@@ -208,8 +121,8 @@ export async function handleNegotiationsPage() {
   try {
     const { renderNegotiationList } = await import('../ui/tabs/negotiations.js');
     renderNegotiationList();
-  } catch (e) {
-    pageLog.warn('Failed to render negotiation list: ' + e.message);
+  } catch (_e) {
+    pageLog.warn('Failed to render negotiation list');
   }
 
   pageLog.info('Negotiations parsed: ' + negotiations.length + ' items');
@@ -227,126 +140,21 @@ export async function handleNegotiationsPage() {
         try {
           const { renderNegotiationList } = await import('../ui/tabs/negotiations.js');
           renderNegotiationList();
-        } catch (e) {}
+        } catch (_e) {}
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
     pageLog.info('Negotiations SPA observer active');
   }
 }
 
-// -- Main page (/) --
-
-let mainPageObserverActive = false;
-
-// v1.9.37.0: Title similarity threshold for VOTD pre-filter.
-// VOTD below this threshold are excluded; VOTD above threshold are
-// kept and enriched by the background enrichment mechanism.
-const VOTD_TITLE_SIMILARITY_THRESHOLD = 0.3;
-
-/**
- * Filter VOTD vacancies by title similarity to resume.
- * VOTD is paid advertising -- only show if potentially relevant.
- * VOTD that pass the threshold will be enriched by startBackgroundEnrichment().
- *
- * v1.9.37.0
- */
-function filterVotdByRelevance(votd, resume) {
-  if (!resume || !resume.title) return votd;
-  return votd.filter(v => {
-    const titleResult = scoreTitle(resume, v);
-    const isRelevant = titleResult.similarity >= VOTD_TITLE_SIMILARITY_THRESHOLD;
-    if (!isRelevant) {
-      pageLog.info('VOTD filtered out: "' + v.title + '" similarity=' +
-        titleResult.similarity.toFixed(2) + ' < ' + VOTD_TITLE_SIMILARITY_THRESHOLD);
-    }
-    return isRelevant;
-  });
-}
-
-export async function handleMainPage() {
-  pageLog.info('Main page detected -- parsing recommended vacancies + "Vacancy of the Day"');
-
-  const recommended = await parseVacanciesFromPage(panelState.resume);
-  const rawVotd = await parseVacanciesOfTheDay(panelState.resume);
-
-  // v1.9.37.0: Filter VOTD by title similarity to resume.
-  // Only VOTD with title overlap >= 0.3 are shown; the rest are excluded.
-  // Filtered VOTD will be enriched by background enrichment (skills fetch).
-  const votd = filterVotdByRelevance(rawVotd, panelState.resume);
-  const allVacancies = [...recommended, ...votd];
-
-  // Enrich from cache (instant)
-  await enrichFromCache(allVacancies, panelState.resume);
-  updateVacancies(allVacancies);
-  const stats = getStats();
-  updateStats(stats);
-
-  pageLog.info('Main page: ' + recommended.length + ' recommended + ' + votd.length + '/' + rawVotd.length + ' VotD (filtered) = ' + allVacancies.length + ' total');
-
-  // Background deep fetch -- enriches vacancies (including VOTD) with full skills
-  startBackgroundEnrichment(allVacancies);
-
-  if (!mainPageObserverActive) {
-    mainPageObserverActive = true;
-    let timer = null;
-    new MutationObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        if (window.location.pathname !== '/' && window.location.pathname !== '') return;
-        abortVacancyFetch();
-        const rec = await parseVacanciesFromPage(panelState.resume);
-        const rawVd = await parseVacanciesOfTheDay(panelState.resume);
-        const vd = filterVotdByRelevance(rawVd, panelState.resume);
-        const fresh = [...rec, ...vd];
-        await enrichFromCache(fresh, panelState.resume);
-        updateVacancies(fresh);
-        startBackgroundEnrichment(fresh);
-      }, 1500);
-    }).observe(document.body, { childList: true, subtree: true });
-    pageLog.info('Main page SPA observer active');
-  }
-}
-
 // -- Helper --
 
 /**
- * Start background enrichment of vacancies via iframe/text fetch.
- * Each enriched vacancy triggers a UI re-render with updated score.
- * Runs as fire-and-forget -- errors are logged but not thrown.
+ * Save a parsed resume to state, storage, and trigger UI re-render.
+ * Dispatches 'hh-ar-resume-loaded' event for listeners in main.js.
  *
- * @param {Object[]} vacancies -- Shallow vacancy objects to enrich
+ * @param {Object} resume -- parsed resume object
  */
-function startBackgroundEnrichment(vacancies) {
-  if (!vacancies || vacancies.length === 0) return;
-
-  // Don't start if already fetching (previous batch still running)
-  if (isVacancyFetching()) {
-    pageLog.info('Background enrichment already in progress -- skipping');
-    return;
-  }
-
-  // Fire-and-forget: run in background, update UI as each vacancy is enriched
-  fetchVacancyDetails(vacancies, panelState.resume, {
-    onVacancyEnriched(vacancy) {
-      // Re-render the vacancy list with updated scores
-      try {
-        renderVacancyList();
-        pageLog.info('UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" -> ' + vacancy.matchScore + '%');
-      } catch (e) {
-        pageLog.warn('UI update after enrichment failed: ' + e.message);
-      }
-    },
-    onBatchComplete() {
-      pageLog.info('Background enrichment batch complete');
-    },
-    onProgress(current, total, title) {
-      pageLog.info('Enriching ' + current + '/' + total + ': ' + title.substring(0, 40));
-    }
-  }).catch(err => {
-    pageLog.error('Background enrichment error: ' + err.message);
-  });
-}
-
 export async function saveResumeToState(resume) {
   setActiveResumeState(resume);
   await setActiveResume(resume);

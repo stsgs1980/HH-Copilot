@@ -58,7 +58,7 @@ function checkCookiesViaBackground() {
           }
         }
       );
-    } catch (e) {
+    } catch (_e) {
       if (!settled) { settled = true; resolve(null); }
     }
     // Safety timeout

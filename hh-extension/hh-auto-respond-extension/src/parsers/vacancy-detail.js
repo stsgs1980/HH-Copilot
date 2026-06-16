@@ -43,7 +43,7 @@ export function parseVacancyDetail() {
       '[data-qa="vacancy-response-apply"], [data-qa="vacancy-response-link-top"]'
     );
     vacancy.hasApplyButton = !!applyBtn && document.body.contains(applyBtn);
-  } catch (e) {
+  } catch (_e) {
     vacancy.hasApplyButton = false;
   }
 

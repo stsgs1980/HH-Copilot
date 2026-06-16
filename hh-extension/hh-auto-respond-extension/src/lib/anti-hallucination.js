@@ -72,7 +72,7 @@ export function waitForElement(selectors, timeout, root) {
       try {
         const el = root.querySelector(sel);
         if (checkVisible(el)) { resolve(el); return; }
-      } catch (e) {}
+      } catch (_e) {}
     }
     const startTime = Date.now();
     const observer = new MutationObserver(() => {
@@ -81,7 +81,7 @@ export function waitForElement(selectors, timeout, root) {
         try {
           const el = root.querySelector(sel);
           if (checkVisible(el)) { observer.disconnect(); resolve(el); return; }
-        } catch (e) {}
+        } catch (_e) {}
       }
     });
     observer.observe(root.body || root, { childList: true, subtree: true });

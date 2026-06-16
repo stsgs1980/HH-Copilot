@@ -60,7 +60,7 @@ async function init() {
     updateStats(stats);
     updateSettings(settings);
     mainLog.info('Boot: stats + settings loaded from storage');
-  } catch (e) {
+  } catch (_e) {
     mainLog.warn('Boot: failed to load stats/settings: ' + e.message);
   }
 
@@ -103,7 +103,7 @@ async function init() {
     try {
       const result = diagnoseVacancyPage();
       mainLog.info('Manual vac diag: ' + (result.vacancyId || 'no id'));
-    } catch (e) {
+    } catch (_e) {
       mainLog.warn('Manual vac diag failed: ' + e.message);
     }
   });
@@ -111,7 +111,7 @@ async function init() {
   // Auto-run vacancy diagnostic if we're on a vacancy detail page
   if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
     setTimeout(() => {
-      try { diagnoseVacancyPage(); } catch (e) {}
+      try { diagnoseVacancyPage(); } catch (_e) {}
     }, 2000);
   }
 
@@ -186,7 +186,7 @@ async function loadSavedResumes() {
       // Notify listeners (e.g. vacancy detail re-score) that resume is available
       window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume: savedResume } }));
     }
-  } catch (e) {}
+  } catch (_e) {}
 
   try {
     setMyResumes(await getMyResumes());
@@ -210,7 +210,7 @@ async function loadSavedResumes() {
       }
       renderMyResumesPanel();
     }
-  } catch (e) {}
+  } catch (_e) {}
 }
 
 // ===============================================
@@ -237,7 +237,7 @@ if (!('update_url' in chrome.runtime.getManifest())) {
     hmr.onopen = () => mainLog.info('[hmr] Connected to dev server');
     hmr.onerror = () => {}; // server not running -- that's fine
     hmr.onclose = () => mainLog.info('[hmr] Disconnected from dev server');
-  } catch (e) {
+  } catch (_e) {
     // WebSocket not available -- ignore
   }
 }

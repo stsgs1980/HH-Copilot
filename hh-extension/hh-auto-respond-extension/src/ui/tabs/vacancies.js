@@ -3,144 +3,22 @@
  * =======================
  * Renders vacancy list and stats in the sidebar vacancies tab.
  * Uses new design system: vacancy-item cards with match score ring.
+ *
+ * Match score rendering is in vacancies-match.js.
+ * Split from original 260-line file (AHG Rule 12).
+ * v1.9.41.0
  */
 
 import { panelState, refs } from '../state.js';
-import { esc, scoreClass } from '../html.js';
+import { esc } from '../html.js';
 import { updateSkillGapSection } from './resumes/resume-helpers.js';
-import { computeMatchScore } from '../../lib/match-scorer.js';
 
-export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
-  const section = refs.shadowRoot?.getElementById('vac-match-section');
-  if (!section) return;
+// Re-export match-score functions for backwards compatibility
+export { renderVacancyMatchScore, tryShowVacancyMatch } from './vacancies-match.js';
 
-  if (!score && score !== 0) {
-    section.style.display = 'none';
-    return;
-  }
-
-  section.style.display = '';
-
-  // Ring chart
-  const ring = refs.shadowRoot?.getElementById('vac-match-ring');
-  if (ring) {
-    const deg = Math.round(score * 3.6);
-    const color = score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#DC2626';
-    ring.style.background = 'conic-gradient(' + color + ' 0deg ' + deg + 'deg, #e4e4e7 ' + deg + 'deg 360deg)';
-    const inner = ring.querySelector('div');
-    if (inner) {
-      inner.textContent = score + '%';
-      inner.style.color = color;
-    }
-  }
-
-  // Subtitle
-  const subtitle = refs.shadowRoot?.getElementById('vac-match-subtitle');
-  if (subtitle) {
-    if (score >= 70) {
-      subtitle.textContent = 'Отличное совпадение -- рекомендуем откликнуться';
-    } else if (score >= 40) {
-      subtitle.textContent = 'Частичное совпадение -- стоит рассмотреть';
-    } else {
-      subtitle.textContent = 'Низкое совпадение -- навыки не подходят';
-    }
-  }
-
-  // Breakdown numbers
-  const el = (id) => refs.shadowRoot?.getElementById(id);
-  const b = breakdown || { skills: 0, title: 0, salary: 0, experience: 0 };
-  const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
-  set('vac-match-skills', b.skills + '/40');
-  set('vac-match-title', b.title + '/30');
-  set('vac-match-salary', b.salary + '/15');
-  set('vac-match-exp', b.experience + '/15');
-
-  // Stacked bar -- fill 100% width proportionally
-  const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
-  const barSkills = el('vac-match-bar-skills');
-  const barTitle = el('vac-match-bar-title');
-  const barSalary = el('vac-match-bar-salary');
-  const barExp = el('vac-match-bar-exp');
-  if (barSkills) barSkills.style.width = ((b.skills / total) * 100).toFixed(1) + '%';
-  if (barTitle) barTitle.style.width = ((b.title / total) * 100).toFixed(1) + '%';
-  if (barSalary) barSalary.style.width = ((b.salary / total) * 100).toFixed(1) + '%';
-  if (barExp) barExp.style.width = ((b.experience / total) * 100).toFixed(1) + '%';
-
-  // Matching/missing skills details
-  const detailsSection = el('vac-match-details');
-  if (detailsSection && details) {
-    const matching = details.matchingSkills || [];
-    const derived = details.derivedMatchSkills || [];
-    const missing = details.missingSkills || [];
-
-    if (matching.length > 0 || derived.length > 0 || missing.length > 0) {
-      detailsSection.style.display = '';
-
-      // Explicit matching skills (green)
-      const matchingRow = el('vac-match-matching-skills');
-      const matchingList = el('vac-match-matching-list');
-      if (matchingRow && matchingList) {
-        if (matching.length > 0) {
-          matchingRow.style.display = '';
-          const visible = matching.slice(0, 6);
-          const remainder = matching.length - visible.length;
-          matchingList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;">' + esc(s) + '</span>').join('') +
-            (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
-        } else {
-          matchingRow.style.display = 'none';
-        }
-      }
-
-      // Derived matching skills (amber -- inferred from experience)
-      const derivedRow = el('vac-match-derived-skills');
-      const derivedList = el('vac-match-derived-list');
-      if (derivedRow && derivedList) {
-        if (derived.length > 0) {
-          derivedRow.style.display = '';
-          const visible = derived.slice(0, 6);
-          const remainder = derived.length - visible.length;
-          derivedList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + '</span>').join('') +
-            (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
-        } else {
-          derivedRow.style.display = 'none';
-        }
-      }
-
-      // Missing skills (red)
-      const missingRow = el('vac-match-missing-skills');
-      const missingList = el('vac-match-missing-list');
-      if (missingRow && missingList) {
-        if (missing.length > 0) {
-          missingRow.style.display = '';
-          const visible = missing.slice(0, 6);
-          const remainder = missing.length - visible.length;
-          missingList.innerHTML = visible.map(s => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">' + esc(s) + '</span>').join('') +
-            (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
-        } else {
-          missingRow.style.display = 'none';
-        }
-      }
-    } else {
-      detailsSection.style.display = 'none';
-    }
-  }
-}
-
-/** Try to show match score from stored vacancy detail data */
-export function tryShowVacancyMatch() {
-  const detail = window.__hhVacDetail;
-  if (!detail || detail.matchScore === undefined) return;
-  // Re-compute with current resume to get full details (matching/missing skills)
-  const resume = panelState.resume;
-  if (resume) {
-    const score = computeMatchScore(resume, detail);
-    renderVacancyMatchScore(detail.id, score.total, score.breakdown, score.details);
-  } else {
-    // No resume -- show score without skill details
-    renderVacancyMatchScore(detail.id, detail.matchScore, detail.matchBreakdown, null);
-  }
-}
-
+/**
+ * Render the vacancy list with relevant + irrelevant sections.
+ */
 export function renderVacancyList() {
   const list = refs.shadowRoot?.getElementById('har-vlist');
   if (!list) return;
@@ -241,6 +119,9 @@ function renderVacancyItem(v, idx, dimmed) {
   '</div>';
 }
 
+/**
+ * Render stats values (applied today, remaining, errors, progress bar).
+ */
 export function renderStatsValues() {
   const s = panelState.stats;
   const el = (id) => refs.shadowRoot?.getElementById(id);

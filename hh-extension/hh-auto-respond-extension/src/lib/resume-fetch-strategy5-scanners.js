@@ -36,7 +36,7 @@ export function extractExperienceFromStructuredJson(text) {
             });
             if (entries.length > 0) return entries;
           }
-        } catch (e) {
+        } catch (_e) {
           fetchLog.info('Strategy 5: structured JSON parse failed: ' + e.message);
         }
       }
@@ -87,7 +87,7 @@ export function extractExperienceFromArray(text) {
           if (entries.length > 0) return entries;
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // Not valid JSON, continue
     }
 
@@ -139,7 +139,7 @@ export function deepScanForExperience(html) {
         if (job.position || job.company) entries.push(job);
       });
       if (entries.length > 0) return entries;
-    } catch (e) {
+    } catch (_e) {
       // Not valid JSON, continue
     }
   }

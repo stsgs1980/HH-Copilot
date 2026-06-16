@@ -97,6 +97,6 @@ export async function fetchVacancyViaIframe(vacancyUrl) {
   } finally {
     try {
       if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-    } catch (e) { /* ignore cleanup errors */ }
+    } catch (_e) { /* ignore cleanup errors */ }
   }
 }

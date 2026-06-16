@@ -20,7 +20,7 @@ export function getUserName() {
           return name;
         }
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // Fallback: try to find applicant link with text in header
@@ -34,7 +34,7 @@ export function getUserName() {
         return name;
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
 
   return 'Пользователь';
 }

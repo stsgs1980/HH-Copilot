@@ -66,7 +66,7 @@ export function detectVisibilityFromResumePage(doc, html) {
 
   // === Strategy 2: Check for "Сделать видимым" / "Скрыть резюме" buttons ===
   const allButtons = doc.querySelectorAll('button, a');
-  let btnDetails = [];
+  const btnDetails = [];
   for (const btn of allButtons) {
     const text = normalizeWs((btn.textContent || '')).toLowerCase();
     const qa = (btn.getAttribute('data-qa') || '').toLowerCase();
@@ -133,7 +133,7 @@ export function detectVisibilityFromResumePage(doc, html) {
 
   // === Strategy 5: Check script/hydration JSON for hidden status ===
   const scriptEls = doc.querySelectorAll('script:not([src])');
-  let scriptPatterns = [];
+  const scriptPatterns = [];
   for (const script of scriptEls) {
     const t = script.textContent || '';
     if (t.length < 50) continue;

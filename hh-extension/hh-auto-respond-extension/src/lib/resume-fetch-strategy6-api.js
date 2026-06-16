@@ -132,7 +132,7 @@ export function parseExperienceFromExpandedDoc(expandedDoc, expandedHtml, curren
     const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
     stepperItems.forEach(step => {
       if (usedStepperElements.has(step)) return;
-      let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
+      const parentCard = step.closest('[data-qa="profile-experience-company-card"]');
       if (parentCard && uniqueCards.includes(parentCard)) return;
 
       const cellLeft = step.querySelector('[data-qa="cell-left-side"]');

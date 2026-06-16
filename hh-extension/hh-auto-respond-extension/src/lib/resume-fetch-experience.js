@@ -44,7 +44,7 @@ export function parseExperienceFromDocStrategies1to3(doc, resume) {
 
     stepperItems.forEach(step => {
       if (usedStepperElements.has(step)) return;
-      let parentCard = step.closest('[data-qa="profile-experience-company-card"]');
+      const parentCard = step.closest('[data-qa="profile-experience-company-card"]');
       if (parentCard && uniqueCards.includes(parentCard)) return;
 
       const cellLeft = step.querySelector('[data-qa="cell-left-side"]');

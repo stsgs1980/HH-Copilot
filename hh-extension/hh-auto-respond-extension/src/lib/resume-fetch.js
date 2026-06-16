@@ -145,7 +145,7 @@ export async function syncAllResumes({ onProgress, onComplete, onError } = {}) {
     window.__hhVisDiag = visDiag;
     try {
       window.postMessage({ type: 'HH-AR-VISDIAG', payload: visDiag }, '*');
-    } catch (e) {}
+    } catch (_e) {}
     if (onError) onError(null, err);
     throw err;
   }

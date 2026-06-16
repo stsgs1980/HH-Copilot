@@ -85,7 +85,7 @@ export function finalizeVisDiag(results, visDiag) {
   window.__hhVisDiag = visDiag;
   try {
     window.postMessage({ type: 'HH-AR-VISDIAG', payload: visDiag }, '*');
-  } catch (e) {
+  } catch (_e) {
     fetchLog.warn('[VIS-DIAG] Could not send to page world: ' + e.message);
   }
   fetchLog.info('[VIS-DIAG] Diagnostic dump available: __hhVis() / __hhVisTable() / window.__hhVisDiag');

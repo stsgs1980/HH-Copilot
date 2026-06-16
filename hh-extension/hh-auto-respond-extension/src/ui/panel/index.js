@@ -1,106 +1,34 @@
 /**
  * UI: PANEL (Sidebar + FAB orchestration)
  * ==========================================
- * Creates and manages the sidebar, handles auth state updates,
- * sidebar creation/toggle, and the public API.
+ * Creates and manages the sidebar, handles sidebar creation/toggle,
+ * and the public API.
+ *
+ * Auth state + background negotiations are in ./auth-and-bg.js.
  * Event binding is in ./events.js.
+ * Split from original 294-line file (AHG Rule 12).
+ * v1.9.41.0
  */
 
 import { createLogger } from '../../lib/anti-hallucination.js';
-import { panelState, refs, setAuthState, togglePanelOpen, setVacancies, setStatus as setStatusInternal, updateStats as mergeStatsState, updateSettings as mergeSettingsState } from '../state.js';
+import { panelState, refs, togglePanelOpen, setVacancies, setStatus as setStatusInternal, updateStats as mergeStatsState } from '../state.js';
 export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
-import { checkAuth, checkAuthAsync } from '../auth.js';
 import { createFab, updateFabIcon } from '../fab.js';
 import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
-import { renderOverviewKPI, addTimelineEvent } from '../tabs/overview.js';
-import { renderBlacklist } from '../tabs/settings.js';
+import { renderOverviewKPI } from '../tabs/overview.js';
 
-import { renderSidebarContent, renderInitialData } from './render.js';
-import { bindAllEvents, bindTabClicks } from './events.js';
-import { bindTourEvents, isTourActive } from '../../lib/tour-engine.js';
+import { renderSidebarContent } from './render.js';
+import { bindTabClicks } from './events.js';
+import { bindTourEvents } from '../../lib/tour-engine.js';
+import { updateAuthState, loadNegotiationsInBackground } from './auth-and-bg.js';
+
+// Re-export auth functions for callers that import from here
+export { updateAuthState, updateAuthStateAsync } from './auth-and-bg.js';
 
 const panelLog = createLogger('Panel');
-
-// ===============================================
-// AUTH STATE
-// ===============================================
-
-export function updateAuthState(forceUI = false) {
-  const was = panelState.isLoggedIn;
-  const now = checkAuth();
-  if (was !== now || forceUI) {
-    setAuthState(now);
-    panelLog.info('Auth: ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
-    // Skip DOM rebuild while tour is active -- it would destroy tour elements
-    if (!isTourActive()) renderSidebarContent();
-    if (panelState.isLoggedIn) {
-      const container = refs.shadowRoot?.querySelector('.fab-panel');
-      if (container) {
-        bindAllEvents(container);
-        renderInitialData();
-      }
-      // Start page parsers when user logs in
-      // NOTE: We use a custom event instead of dynamic import() because
-      // esbuild's IIFE bundle doesn't support dynamic imports at runtime.
-      // main.js listens for this event and calls initPageLogic() directly.
-      if (was !== true) {
-        window.dispatchEvent(new CustomEvent('hh-ar-init-page-logic'));
-        panelLog.info('Dispatched hh-ar-init-page-logic event');
-      }
-    }
-    updateFabIcon();
-    if (forceUI) showAuthFeedback(now);
-  }
-}
-
-/** Enhanced async auth check -- used for manual re-checks via cookie API */
-export async function updateAuthStateAsync() {
-  const was = panelState.isLoggedIn;
-  const now = await checkAuthAsync();
-  if (was !== now) {
-    setAuthState(now);
-    panelLog.info('Auth (async): ' + (now ? 'LOGGED IN' : 'NOT LOGGED IN'));
-    if (!isTourActive()) renderSidebarContent();
-    if (panelState.isLoggedIn) {
-      const container = refs.shadowRoot?.querySelector('.fab-panel');
-      if (container) {
-        bindAllEvents(container);
-        renderInitialData();
-      }
-      if (was !== true) {
-        window.dispatchEvent(new CustomEvent('hh-ar-init-page-logic'));
-        panelLog.info('Dispatched hh-ar-init-page-logic event (async)');
-      }
-    }
-    updateFabIcon();
-  }
-  showAuthFeedback(now);
-}
-
-/** Show visual feedback after manual auth check */
-function showAuthFeedback(isLoggedIn) {
-  if (isLoggedIn) {
-    const badge = refs.shadowRoot?.getElementById('authBadge');
-    if (badge) {
-      badge.style.transition = 'transform 0.15s';
-      badge.style.transform = 'scale(1.15)';
-      setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
-    }
-    const card = refs.shadowRoot?.querySelector('#tab-overview .card');
-    if (card) {
-      const desc = card.querySelector('div[style*="color:#52525b;"]');
-      if (desc) {
-        const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const orig = desc.textContent;
-        desc.textContent = 'Проверено: ' + time;
-        setTimeout(() => { desc.textContent = orig; }, 3000);
-      }
-    }
-  }
-}
 
 // ===============================================
 // SIDEBAR CREATION
@@ -147,6 +75,17 @@ export function createSidebar() {
   });
 
   /* Focus trap: keep Tab cycling within the sidebar while open */
+  bindFocusTrap();
+
+  document.body.appendChild(refs.backdropEl);
+  document.body.appendChild(refs.sidebarEl);
+}
+
+/**
+ * Set up Tab focus trap so keyboard navigation stays inside the sidebar
+ * while it is open.
+ */
+function bindFocusTrap() {
   refs.sidebarEl.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab' || !panelState.isOpen) return;
     const sr = refs.shadowRoot;
@@ -167,9 +106,6 @@ export function createSidebar() {
       }
     }
   });
-
-  document.body.appendChild(refs.backdropEl);
-  document.body.appendChild(refs.sidebarEl);
 }
 
 export function toggleSidebar() {
@@ -243,52 +179,4 @@ function updateVacancyCounts() {
   set('vac-total', vacs.length);
   set('vac-high-match', vacs.filter(v => (v.matchScore || 0) >= 70).length);
   set('vac-blacklisted', vacs.filter(v => v.status === 'blacklisted').length);
-}
-
-/**
- * v1.9.40.0: Auto-load negotiations from /applicant/negotiations via background fetch.
- * Only runs if: logged in + negotiations list is empty + not already fetching.
- * Debounced: won't re-fetch within 5 minutes.
- */
-let _negLastFetch = 0;
-let _negFetching = false;
-
-async function loadNegotiationsInBackground() {
-  // Skip if not logged in
-  if (!panelState.isLoggedIn) return;
-  // Skip if already loaded (non-empty) and fetched recently
-  if (panelState.negotiations.length > 0 && Date.now() - _negLastFetch < 5 * 60 * 1000) return;
-  // Skip if already fetching
-  if (_negFetching) return;
-
-  _negFetching = true;
-  try {
-    const { fetchAndParseNegotiations } = await import('../../parsers/negotiations.js');
-    const { setNegotiations } = await import('../state.js');
-    const { markAsApplied } = await import('../../lib/storage.js');
-
-    const negotiations = await fetchAndParseNegotiations();
-    if (negotiations.length > 0) {
-      setNegotiations(negotiations);
-      _negLastFetch = Date.now();
-
-      // Mark as applied in storage
-      const appliedIds = negotiations.filter(n => n.vacancyId).map(n => n.vacancyId);
-      if (appliedIds.length > 0) {
-        Promise.all(appliedIds.map(id => markAsApplied(id))).catch(() => {});
-      }
-
-      // Re-render if negotiations tab is active
-      try {
-        const { renderNegotiationList } = await import('../tabs/negotiations.js');
-        renderNegotiationList();
-      } catch (e) {}
-
-      panelLog.info('Background negotiations loaded: ' + negotiations.length + ' items');
-    }
-  } catch (err) {
-    panelLog.warn('Background negotiations fetch failed: ' + err.message);
-  } finally {
-    _negFetching = false;
-  }
 }
