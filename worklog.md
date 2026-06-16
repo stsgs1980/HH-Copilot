@@ -2514,3 +2514,29 @@ Stage Summary:
 - All 9 monolith files now under their respective caps
 - Remaining 15 errors are WARN-level (files > 200 lines, B3 task)
 - Build v1.9.41.0 OK, Tests 104/104 passing
+
+---
+Task ID: eslint-b3-config
+Agent: main
+Task: B3 -- Align ESLint config with AHG Rule 12 (split WARN/ERROR tiers) + decompose skill-synonyms.js
+
+Work Log:
+- Split max-file-lines.js into two rules:
+  - max-file-lines.js (WARN tier): 200+ lines, 'warn' severity (informational)
+  - max-file-lines-hard.js (ERROR tier): 250+ without exception / 400+ always, 'error' severity (blocks)
+- Updated eslint.config.mjs: both rules registered, test/esbuild overrides updated
+- Removed --max-warnings 0 from lint:ci (warnings no longer block CI; only errors block)
+- Decomposed skill-synonyms.js (334 -> 122):
+  - Extracted 3 data files by category:
+    - skill-synonyms-data-sales.js (109 lines: sales + management groups)
+    - skill-synonyms-data-marketing-finance.js (51 lines: marketing + finance)
+    - skill-synonyms-data-product-hr-it.js (92 lines: product + HR + logistics + IT)
+  - skill-synonyms.js now thin orchestrator (imports + lookup engine only)
+  - Removed ANTI-MONOLITH exception comment (no longer needed)
+
+Stage Summary:
+- ESLint: 147 problems -> 146 problems (errors 15 -> 0, warnings 132 -> 146)
+- lint:ci now passes (exit code 0) -- only true errors block
+- Build v1.9.41.0 OK, Tests 104/104 passing
+- All files now under 250 lines (AHG Rule 12 hard limit)
+- Remaining 146 warnings are informational (200+ line files + code quality hints)

@@ -707,3 +707,19 @@ Stage Summary:
 - ESLint problems: 160 -> 147 (errors 20 -> 15, warnings 140 -> 132)
 - Build v1.9.41.0 OK, Tests 104/104 passing
 - Remaining: 15 WARN-level errors (files > 200 lines, B3 task)
+
+---
+Task ID: eslint-b3-config
+Agent: main
+Task: B3 -- Align ESLint config with AHG Rule 12 + decompose skill-synonyms.js
+
+Work Log:
+- Split max-file-lines rule into WARN tier (200+, informational) and ERROR tier (250+/400+, blocking)
+- Removed --max-warnings 0 from lint:ci (warnings don't block, only errors do)
+- Decomposed skill-synonyms.js (334 -> 122) into 3 category data files + orchestrator
+- All files now under 250 lines (AHG Rule 12 hard limit)
+
+Stage Summary:
+- ESLint: 0 errors, 146 warnings (all informational)
+- lint:ci exit code 0 (passes)
+- Build OK, Tests 104/104 passing

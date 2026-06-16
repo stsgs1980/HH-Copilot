@@ -4,6 +4,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import noUnicodeGraphics from './eslint-rules/no-unicode-graphics.js';
 import maxFileLines from './eslint-rules/max-file-lines.js';
+import maxFileLinesHard from './eslint-rules/max-file-lines-hard.js';
 
 export default [
   // -- Base: all JS files in the extension -----------------------------------
@@ -23,6 +24,7 @@ export default [
         rules: {
           'no-unicode-graphics': noUnicodeGraphics,
           'max-file-lines': maxFileLines,
+          'max-file-lines-hard': maxFileLinesHard,
         },
       },
     },
@@ -73,8 +75,10 @@ export default [
 
       // -- AHG custom rules --------------------------------------------------
       'ahg-rules/no-unicode-graphics': 'error',
-      'ahg-rules/max-file-lines': ['error', {
-        warnLimit: 200,
+      // WARN tier: 200+ lines (informational, does NOT block lint:ci)
+      'ahg-rules/max-file-lines': ['warn', { warnLimit: 200 }],
+      // ERROR tier: 250+ without exception, 400+ always (BLOCKS lint:ci)
+      'ahg-rules/max-file-lines-hard': ['error', {
         errorLimit: 250,
         hardCap: 400,
       }],
@@ -89,6 +93,7 @@ export default [
       'no-unused-vars': 'off',
       'ahg-rules/no-unicode-graphics': 'warn',
       'ahg-rules/max-file-lines': 'off',
+      'ahg-rules/max-file-lines-hard': 'off',
     },
   },
 
@@ -121,6 +126,7 @@ export default [
     rules: {
       'ahg-rules/no-unicode-graphics': 'off',
       'ahg-rules/max-file-lines': 'off',
+      'ahg-rules/max-file-lines-hard': 'off',
     },
   },
 ];
