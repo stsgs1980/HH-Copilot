@@ -33,7 +33,7 @@ export function createFab(onClick) {
   /* Use setProperty for all visual props to resist hh.ru CSS overrides */
   const s = refs.fabEl.style;
   fabStyle(s, 'position', 'fixed');
-  fabStyle(s, 'bottom', '24px');
+  fabStyle(s, 'bottom', '80px');
   fabStyle(s, 'right', '24px');
   fabStyle(s, 'width', '56px');
   fabStyle(s, 'height', '56px');

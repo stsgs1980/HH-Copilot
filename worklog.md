@@ -2795,3 +2795,21 @@ Stage Summary:
   [x] CHANGELOG versions match manifest.json (1.9.41.0 across all 5 sources)
 - cascade/state.json: F6.2 marked completed, F6.3 (landing page) newly ready
 - Cascade progress: 26 -> 27 / 40 (67.5%), Phase 6 now 1/4 (25%)
+
+---
+Task ID: hotfix-fab-position
+Agent: main
+Task: Raise FAB vertical position to avoid overlap with hh.ru bottom nav
+
+Work Log:
+- User reported (via screenshot) FAB sitting too close to bottom edge, overlapping with hh.ru's bottom navigation bar
+- Located FAB creation in extension/src/ui/fab.js (createFab function, line 36)
+- Changed `bottom: 24px` -> `bottom: 80px` (delta +56px, FAB height is 56px so this lifts it by exactly one button-height above its previous position)
+- Rebuilt with `npm run build` -- dist/content.js 654.7 KB, build OK
+- Verified no other code references the old `bottom: 24px` value for FAB
+
+Stage Summary:
+- FAB now floats 80px from viewport bottom, clearing hh.ru's bottom nav
+- Single-line CSS change in createFab(), no API/selector logic touched
+- Build: v1.9.41.0, 151 tests still pass (no test changes needed -- UI positioning only)
+- Not yet committed/pushed -- will commit after this worklog update
