@@ -90,3 +90,9 @@ cascade-state.json.bak
 
 # Cascade runtime state
 cascade/state.json
+
+# Tool results / debug output
+tool-results/
+
+# HH.ru scraped data files (research artifacts, not source)
+hh_*.json
