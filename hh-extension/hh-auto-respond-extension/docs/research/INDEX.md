@@ -8,7 +8,8 @@ All research documents for HH-Copilot project. Each document contains: findings,
 |---|------|-------|------|--------|-----------------|
 | 01 | [01-role-implied-skills.md](./01-role-implied-skills.md) | ESCO essential/optional skills → role-implied skills concept | 2026-06-15 | Research done, implementation partial | `role-implied-skills.js`, `quality-recommendations.js` |
 | 02 | [02-kula-ai-ats.md](./02-kula-ai-ats.md) | Kula.ai AI-Native ATS — features, scoring, matching | 2026-06-15 | Research done, not yet applied | Future: semantic matching, career alignment |
-| 03 | [03-votd-irrelevant-vacancies.md](./03-votd-irrelevant-vacancies.md) | VOTD irrelevant vacancies — root cause, DOM analysis, code trace | 2026-06-15 | Research done, NOT yet applied | `vacancy-fetch.js` filter, `main-page-handlers-pages.js` |
+| 03 | [03-votd-irrelevant-vacancies.md](./03-votd-irrelevant-vacancies.md) | VOTD irrelevant vacancies — root cause, DOM analysis, code trace | 2026-06-15 | Research done, applied in v1.9.37.0 | `match-scorer-skills.js`, `vacancy-list.js`, `main-page-handlers-pages.js`, `vacancies.js` |
+| 04 | [04-negotiations-dom-analysis.md](./04-negotiations-dom-analysis.md) | Negotiations page DOM structure, selectors, data model | 2026-06-16 | Research done, NOT yet applied | `parsers/negotiations.js`, `selectors.js`, `ui/tabs/negotiations.js` |
 
 ## Key Conclusions Summary
 
@@ -42,3 +43,11 @@ All research documents for HH-Copilot project. Each document contains: findings,
 - [ ] Add source='votd' filter to skip fetch for VOTD vacancies
 - [ ] Optionally: separate VOTD in UI with clear labeling
 - [ ] Optionally: add setting to exclude VOTD entirely
+
+### Negotiations Page DOM (04)
+- **Problem:** Negotiations tab is stub — `parseNegotiations()` returns `[]`, no page handler
+- **DOM structure:** `negotiations-list` > `negotiations-item` rows with vacancy link, company, date, status tag
+- **3 statuses found:** `not-viewed` (amber), `viewed` (blue), `discard` (red); possibly also `invite` (green)
+- **Vacancy ID** in link: `extractVacancyId()` already handles this URL format
+- **Key decision:** No chat parsing in Phase 1 — only list page. Chat requires separate conversation pages.
+- **MatchScore:** From cache only, no fetching from negotiations page
