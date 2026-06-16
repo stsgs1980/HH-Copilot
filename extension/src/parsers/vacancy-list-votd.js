@@ -14,7 +14,7 @@
  * NOT in /vacancy/XXX path. extractVacancyId() handles both formats.
  *
  * Split from vacancy-list.js (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 import { findAllElements } from '../lib/selectors.js';

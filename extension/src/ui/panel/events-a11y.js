@@ -5,7 +5,7 @@
  * and aria synchronization for switch/radio controls.
  *
  * Split from src/ui/panel/events.js (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 import { refs } from '../state.js';

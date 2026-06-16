@@ -6,7 +6,7 @@
  * guarantees (e.g. correct parsing of long lists with 50+ items).
  *
  * Pattern follows diagnoseVacancyPage() from src/parsers/vacancy-diagnostic.js.
- * Split from parsers/negotiations.js in v1.9.42.0 (F1.4) for AHG Rule 12.
+ * Split from parsers/negotiations.js in v1.9.43.0 (F1.4) for AHG Rule 12.
  *
  * Console usage (after page-world bridge): window.__hhNegDiag && window.__hhNegDiag()
  */

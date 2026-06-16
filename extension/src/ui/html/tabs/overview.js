@@ -8,6 +8,7 @@ export function getOverviewSection() {
     ${overviewAuthCard()}
     ${overviewKPIHero()}
     ${overviewRateLimits()}
+    <div id="overview-negotiations" class="card fade-in" style="margin-bottom:12px;"></div>
     ${overviewQuickActions()}
     ${overviewTimeline()}
   </div>`;

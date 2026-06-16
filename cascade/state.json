@@ -3,7 +3,7 @@
     "version": "1.9.37.0",
     "project": "HH Copilot Chrome Extension",
     "repo": "https://github.com/stsgs1980/HH-Copilot.git",
-    "lastUpdated": "2026-06-16T18:11:24.452Z",
+    "lastUpdated": "2026-06-16T19:57:12.583Z",
     "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work. Wireframe reference: docs/wireframes/hh-copilot-documentation.md + hh-copilot-fab-panel.html"
   },
   "phases": [
@@ -335,6 +335,19 @@
           "implements": [],
           "acceptance": "fetchAllNegotiations() returns array covering all tabs. Each item has .tabOrigin field. Deduplicated by topic_id. Total count matches sum of tab counters (Все + Ожидание + Удалённые + Архив where applicable). Cache 30s in chrome.storage.local.",
           "anti_hallucination": "Failed tab fetch doesn't break others (returns partial result + error list). No ghost rows -- empty tabs return []. Rate-limited 1 req/sec between tab fetches. Cached response served if fresh."
+        },
+        {
+          "id": "F1.9",
+          "title": "Wire F1.8 aggregator into UI: page handler, negotiations tab with status chips, refresh button, overview widget",
+          "priority": "P1",
+          "size": "L",
+          "status": "completed",
+          "depends_on": [
+            "F1.8"
+          ],
+          "implements": [],
+          "acceptance": "Negotiations tab shows aggregated items from all 8 hh.ru tabs with tabOrigin badges. Status chips at top filter list. Refresh button invalidates cache + refetches. Overview tab shows summary counts (total/viewed/not-viewed/invite/discard). Auto-fetch on FAB panel open.",
+          "anti_hallucination": "Empty aggregator result -> show 'No negotiations' empty state (not blank). Fetch errors -> show toast with error count, not silent failure. Loading state visible during fetch (spinner). Cache served instantly, background refresh transparent."
         }
       ]
     },

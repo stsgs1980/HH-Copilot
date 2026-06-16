@@ -5,7 +5,7 @@
  * personalized letter based on vacancy + resume data.
  *
  * Split from src/engine/apply-actions.js (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';

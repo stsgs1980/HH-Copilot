@@ -10,12 +10,13 @@
  * This file contains: resume detail, resume list, and negotiations handlers.
  *
  * Split from original 362-line file (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
 import { saveMyResume, getMyResumes, setActiveResume, markAsApplied } from '../lib/storage.js';
 import { parseNegotiations } from '../parsers/negotiations.js';
+import { fetchAllNegotiations } from '../parsers/negotiations-aggregator.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
 import { fetchAndParseResume } from '../lib/resume-fetch.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
@@ -106,6 +107,7 @@ let negotiationsObserverActive = false;
 export async function handleNegotiationsPage() {
   pageLog.info('Negotiations page detected -- parsing negotiation items');
 
+  // Quick parse from current DOM (instant feedback)
   const negotiations = await parseNegotiations();
   setNegotiations(negotiations);
 
@@ -125,6 +127,28 @@ export async function handleNegotiationsPage() {
   }
 
   pageLog.info('Negotiations parsed: ' + negotiations.length + ' items');
+
+  // v1.9.43.0 F1.9: Background-fetch aggregated cross-tab list
+  // (cache 30s -> if fresh, instant; otherwise fetches 8 tabs at 1 req/sec)
+  fetchAllNegotiations().then(result => {
+    if (result && result.items && result.items.length > 0) {
+      pageLog.info('Aggregated: ' + result.items.length + ' items, errors=' + result.errors.length);
+      setNegotiations(result.items);
+      import('../ui/state.js').then(({ panelState }) => {
+        panelState.negotiationsMeta = {
+          perTab: result.perTab,
+          errors: result.errors,
+          fetchedAt: result.fetchedAt,
+          fromCache: result.fromCache,
+        };
+      });
+      import('../ui/tabs/negotiations.js').then(({ renderNegotiationList }) => {
+        renderNegotiationList();
+      }).catch(() => {});
+    }
+  }).catch(err => {
+    pageLog.warn('Aggregator fetch failed: ' + err.message);
+  });
 
   // SPA MutationObserver -- re-parse when DOM changes on negotiations page
   if (!negotiationsObserverActive) {

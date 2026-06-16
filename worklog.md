@@ -2899,3 +2899,62 @@ Stage Summary:
 - All 5 version sources in sync at 1.9.42.0
 - 1.9.42.0 release window covers: F1.4, F6.2, FAB fix, F1.8
 - Next time: bump BEFORE feat commit, not after
+
+---
+Task ID: F1.9
+Agent: main
+Task: Wire F1.8 aggregator into UI -- page handler, negotiations tab with status+tab chips, refresh button, overview widget
+
+Work Log:
+- Read existing files: src/ui/tabs/negotiations.js (134 lines), src/ui/tabs/overview.js (87 lines), src/content/main-page-handlers-pages.js (168 lines), src/ui/html/tabs/overview.js, src/ui/panel/events.js
+- Created new helper module src/ui/tabs/negotiations-summary.js (137 lines):
+  - STATUS_CONFIG (5 statuses with bg/fg/border/label colors)
+  - TAB_ORIGIN_CONFIG (8 tabs with subtle colors)
+  - TAB_ORIGIN_LABELS map (Russian labels for all/invite/consider/offer/wait/discard/deleted/archive)
+  - computeStatusCounts(items) -- per-status breakdown, anti-ghost (null/undefined skipped)
+  - computeTabOriginCounts(items) -- per-tab origin counts
+  - formatSummaryText(counts) -- Russian declension (1 отклик / 2 отклика / 5 откликов)
+  - renderStatusChip(status, count, isActive) -- HTML button
+  - renderTabOriginChip(tabId, count, isActive) -- HTML button
+- Refactored src/ui/tabs/negotiations.js (134 -> 233 lines):
+  - Added activeTabFilter state + setNegotiationTabFilter()
+  - Added isFetching state + refreshNegotiations() (invalidate cache + forceRefresh)
+  - Added setRefreshButtonState(loading), showErrorToast(msg)
+  - renderNegotiationList() now: status chips row + refresh button + tab-origin chips row + error toast + items (each with tabOrigin badge + alsoIn indicator)
+  - Filter logic: status AND tabOrigin combined
+- Updated src/content/main-page-handlers-pages.js (168 -> 192 lines):
+  - Imported fetchAllNegotiations from aggregator
+  - handleNegotiationsPage() now: quick parse DOM (instant) -> render -> background-fetch aggregator -> update state + re-render
+  - Sets panelState.negotiationsMeta = { perTab, errors, fetchedAt, fromCache }
+- Updated src/ui/tabs/overview.js (87 -> 136 lines):
+  - Imported computeStatusCounts, formatSummaryText
+  - Added renderNegotiationsSummary() called from renderOverviewKPI()
+  - Renders "Отклики" card: total + per-status breakdown (Приглашения/Не просмотрены/Просмотрены/Отказы) + error badge + "из кэша" hint
+- Updated src/ui/html/tabs/overview.js: added <div id="overview-negotiations"> container between rate-limits and quick-actions
+- Updated src/ui/panel/events.js: single delegated click handler now covers .neg-status-btn + .neg-tab-btn + #neg-refresh-btn
+- Created tests/negotiations-summary.test.js (25 tests):
+  - STATUS_CONFIG (2), TAB_ORIGIN_LABELS (2), computeStatusCounts (5), computeTabOriginCounts (4), formatSummaryText incl. declension (6), renderStatusChip (4), renderTabOriginChip (3)
+- Fixed 4 ESLint errors (AHG Rule 15: no Unicode graphics):
+  - Replaced U+21BB (↻) with [R] / [also in: ...] / ...
+  - Replaced U+26A0 (⚠) with [!N]
+- Bumped version 1.9.42.0 -> 1.9.43.0 across 5 sources (manifest, package.json, README, both CHANGELOGs, src/lib/version.js) + 24 JSDoc comments via sed
+- Updated README test count 171 -> 196
+
+Stage Summary:
+- All acceptance criteria met:
+  [x] Negotiations tab shows aggregated items from all 8 hh.ru tabs with tabOrigin badges
+  [x] Status chips at top filter list (existing behavior preserved)
+  [x] Tab-origin chips row filters by source tab (NEW)
+  [x] Refresh button [R] invalidates cache + refetches
+  [x] Overview tab shows summary counts (total/viewed/not-viewed/invite/discard)
+  [x] Auto-fetch on page handler (background, non-blocking)
+- Anti-hallucination checks passed:
+  [x] Empty aggregator result -> "Откликов пока нет" (not blank)
+  [x] Fetch errors -> red toast with error count (not silent)
+  [x] Loading state visible during refresh (button shows "...")
+  [x] Cache served instantly, background refresh transparent
+  [x] null/undefined items skipped in count computation (anti-ghost)
+- Tests: 196/196 pass (was 171, +25 new)
+- Lint: 0 errors, 17 warnings (all pre-existing)
+- Build: v1.9.43.0 OK
+- cascade/state.json: F1.9 marked completed

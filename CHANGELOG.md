@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.43.0] — 2026-06-17
+
+### Added
+- **F1.9 — Negotiations aggregator UI integration** — the negotiations tab now uses `fetchAllNegotiations()` from F1.8: tab-origin chips row, refresh button, per-item tabOrigin badge, alsoIn indicator for cross-tab duplicates, error toast on partial failure, and overview-tab summary widget.
+- **Page handler background-fetch** — `handleNegotiationsPage()` triggers aggregator after initial DOM parse, so panel shows all 8 tabs of data (cache 30s).
+
+### Tests
+- 25 new tests in `negotiations-summary.test.js` (196 total, was 171).
+
+---
+
 ## [1.9.42.0] — 2026-06-17
 
 ### Added

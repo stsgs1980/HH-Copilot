@@ -5,7 +5,7 @@
  * Used by derive-skills.js to infer skills from experience text.
  *
  * Split from skill-dictionary.js (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 // ===========================================

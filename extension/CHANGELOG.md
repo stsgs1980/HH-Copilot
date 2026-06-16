@@ -9,6 +9,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.43.0] — 2026-06-17
+
+### Added
+- **F1.9 — Negotiations aggregator UI integration** — the negotiations tab now consumes `fetchAllNegotiations()` from F1.8:
+  - **Tab-origin chips row** under the status chips: filter by source tab (Все / Приглашение / Ожидание / Отказ / Удалённые / Архив) with live counts.
+  - **Refresh button** `[R]` in the chips row: invalidates cache, refetches all 8 tabs, re-renders. Shows `...` during fetch.
+  - **Per-item tabOrigin badge**: small grey pill on each item showing which hh.ru tab it came from.
+  - **`alsoIn` indicator**: if a vacancy appears in multiple tabs, shows `[also in: wait]` link.
+  - **Error toast**: if some tabs fail, shows red toast with error count + details on hover (auto-hide 5s).
+  - **Empty state improvements**: shows distinct message when errors vs. genuinely empty.
+  - **Overview tab widget**: new "Отклики" card in overview showing total + breakdown (Приглашения / Не просмотрены / Просмотрены / Отказы) + "из кэша" hint when cache served.
+- **Page handler background-fetch**: `handleNegotiationsPage()` now triggers `fetchAllNegotiations()` after the initial DOM parse, so the panel ends up with all 8 tabs worth of data (cache 30s → instant on subsequent loads).
+- **Event handlers** wired: `.neg-tab-btn` clicks → `setNegotiationTabFilter()`, `#neg-refresh-btn` clicks → `refreshNegotiations()`.
+
+### Changed
+- **`src/ui/tabs/negotiations.js`** — refactored to consume aggregated items + meta; preserves existing status filter behavior.
+- **`src/ui/tabs/overview.js`** — added `renderNegotiationsSummary()` called from `renderOverviewKPI()`.
+- **`src/ui/html/tabs/overview.js`** — added `<div id="overview-negotiations">` container between rate-limits and quick-actions.
+- **`src/ui/panel/events.js`** — single delegated click handler now covers `.neg-status-btn`, `.neg-tab-btn`, `#neg-refresh-btn`.
+
+### Anti-hallucination
+- Empty aggregator result → "Откликов пока нет" (not blank).
+- Fetch errors → red error toast with count (not silent failure).
+- `null`/`undefined` items in arrays skipped in count computation (anti-ghost).
+
+### Tests
+- New `tests/negotiations-summary.test.js` (25 tests): STATUS_CONFIG, TAB_ORIGIN_LABELS, computeStatusCounts (incl. null/undefined items), computeTabOriginCounts, formatSummaryText (declension), renderStatusChip, renderTabOriginChip.
+- Total: 196/196 pass (was 171, +25).
+- Lint: 0 errors. Build: v1.9.43.0 OK.
+
+---
+
 ## [1.9.42.0] — 2026-06-17
 
 ### Added

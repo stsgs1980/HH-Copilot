@@ -6,13 +6,13 @@
  * Keyboard navigation + filterVacancies are in ./events-a11y.js.
  *
  * Split from original 271-line file (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 import { refs, setActiveTab } from '../state.js';
 import { renderResumePanel } from '../tabs/resumes.js';
 import { renderStats } from '../tabs/stats.js';
-import { renderNegotiationList, setNegotiationStatusFilter } from '../tabs/negotiations.js';
+import { renderNegotiationList, setNegotiationStatusFilter, setNegotiationTabFilter, refreshNegotiations } from '../tabs/negotiations.js';
 import { bindSidebarClicks } from './sidebar-events.js';
 import {
   bindTabKeyboardNav,
@@ -144,11 +144,21 @@ function bindInputChanges(container) {
     hideAdsCheckbox.addEventListener('change', () => filterVacancies());
   }
 
-  /* v1.9.39.0: Negotiation status filter pills */
+  /* v1.9.39.0: Negotiation status filter pills + F1.9 tab filter + refresh */
   container.addEventListener('click', (e) => {
     const negStatusBtn = e.target.closest('.neg-status-btn');
     if (negStatusBtn) {
       setNegotiationStatusFilter(negStatusBtn.dataset.status);
+      return;
+    }
+    const negTabBtn = e.target.closest('.neg-tab-btn');
+    if (negTabBtn) {
+      setNegotiationTabFilter(negTabBtn.dataset.tabOrigin);
+      return;
+    }
+    const refreshBtn = e.target.closest('#neg-refresh-btn');
+    if (refreshBtn) {
+      refreshNegotiations();
     }
   });
 }

@@ -9,7 +9,7 @@
  * Shared helpers are in vacancy-list-helpers.js.
  *
  * Split from original 265-line file (AHG Rule 12).
- * v1.9.42.0
+ * v1.9.43.0
  */
 
 import { findAllElements, findElement } from '../lib/selectors.js';

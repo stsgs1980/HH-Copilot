@@ -1,29 +1,103 @@
 /**
- * UI: TABS -- NEGOTIATIONS
- * ==========================
- * Renders negotiations tab: conversation list with status badges.
- * v1.9.39.0: Real data from /applicant/negotiations parser.
+ * UI: TABS -- NEGOTIATIONS (F1.9 refactor)
+ * =========================================
+ * Renders negotiations tab with:
+ *   - Status chips row (filter by status)
+ *   - Tab-origin chips row (filter by hh.ru tab)
+ *   - Refresh button (invalidates cache + refetches)
+ *   - Per-item tabOrigin badge
+ *   - Empty state when no items
+ *   - Loading state during fetch
+ *   - Error toast when partial failure
+ *
+ * v1.9.39.0: original
+ * v1.9.43.0: F1.9 -- aggregator integration
  */
 
 import { panelState, refs } from '../state.js';
 import { esc } from '../html.js';
+import {
+  STATUS_CONFIG,
+  computeStatusCounts,
+  computeTabOriginCounts,
+  formatSummaryText,
+  renderStatusChip,
+  renderTabOriginChip,
+} from './negotiations-summary.js';
+import {
+  fetchAllNegotiations,
+  invalidateNegotiationsCache,
+  NEGOTIATION_TABS,
+} from '../../parsers/negotiations-aggregator.js';
 
-/** Status badge config: color + label */
-const STATUS_CONFIG = {
-  'invite':     { bg: '#ECFDF5', fg: '#059669', border: '#A7F3D0', label: 'Приглашение' },
-  'not-viewed': { bg: '#FFFBEB', fg: '#D97706', border: '#FDE68A', label: 'Не просмотрен' },
-  'viewed':     { bg: '#EFF6FF', fg: '#2563EB', border: '#BFDBFE', label: 'Просмотрен' },
-  'discard':    { bg: '#FEF2F2', fg: '#DC2626', border: '#FECACA', label: 'Отказ' },
-  'unknown':    { bg: '#F4F4F5', fg: '#71717A', border: '#E4E4E7', label: 'Неизвестно' },
-};
-
-/** Active status filter — default 'all' */
 let activeStatusFilter = 'all';
+let activeTabFilter = 'all';
+let isFetching = false;
 
 /** Set status filter and re-render. */
 export function setNegotiationStatusFilter(status) {
   activeStatusFilter = status;
   renderNegotiationList();
+}
+
+/** Set tab origin filter and re-render. */
+export function setNegotiationTabFilter(tab) {
+  activeTabFilter = tab;
+  renderNegotiationList();
+}
+
+/**
+ * Refresh: invalidate cache, refetch all tabs, re-render.
+ * Shows spinner during fetch, shows toast on error.
+ */
+export async function refreshNegotiations() {
+  if (isFetching) return;
+  isFetching = true;
+  setRefreshButtonState(true);
+  try {
+    await invalidateNegotiationsCache();
+    const result = await fetchAllNegotiations({ forceRefresh: true });
+    panelState.negotiations = result.items || [];
+    panelState.negotiationsMeta = {
+      perTab: result.perTab,
+      errors: result.errors,
+      fetchedAt: result.fetchedAt,
+      fromCache: result.fromCache,
+    };
+    renderNegotiationList();
+    if (result.errors && result.errors.length > 0) {
+      showErrorToast(result.errors.length + ' tab(s) failed: ' + result.errors.join('; '));
+    }
+  } catch (err) {
+    showErrorToast('Refresh failed: ' + (err.message || String(err)));
+  } finally {
+    isFetching = false;
+    setRefreshButtonState(false);
+  }
+}
+
+function setRefreshButtonState(loading) {
+  const btn = refs.shadowRoot?.getElementById('neg-refresh-btn');
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? '...' : '[R]';
+  btn.style.opacity = loading ? '0.5' : '1';
+}
+
+function showErrorToast(msg) {
+  const toast = refs.shadowRoot?.getElementById('neg-error-toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  toast.style.background = '#FEF2F2';
+  toast.style.color = '#DC2626';
+  toast.style.border = '1px solid #FECACA';
+  toast.style.padding = '6px 10px';
+  toast.style.borderRadius = '6px';
+  toast.style.fontSize = '11px';
+  toast.style.marginBottom = '8px';
+  clearTimeout(showErrorToast._t);
+  showErrorToast._t = setTimeout(() => { toast.style.display = 'none'; }, 5000);
 }
 
 export function renderNegotiationList() {
@@ -33,41 +107,64 @@ export function renderNegotiationList() {
   if (!list) return;
 
   const convs = panelState.negotiations || [];
+  const meta = panelState.negotiationsMeta || {};
 
-  // Update badge with count by status
-  const counts = { all: convs.length, invite: 0, 'not-viewed': 0, viewed: 0, discard: 0 };
-  convs.forEach(c => { if (counts[c.status] !== undefined) counts[c.status]++; });
-  if (badge) badge.textContent = convs.length + ' ' + (convs.length === 1 ? 'отклик' : convs.length < 5 ? 'отклика' : 'откликов');
+  const statusCounts = computeStatusCounts(convs);
+  const tabCounts = computeTabOriginCounts(convs);
+
+  if (badge) badge.textContent = formatSummaryText(statusCounts);
 
   if (convs.length === 0) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">Переговоры пока не загружены</div>';
+    const emptyMsg = (meta.errors && meta.errors.length > 0)
+      ? 'Не удалось загрузить отклики (' + meta.errors.length + ' ошибок)'
+      : 'Откликов пока нет';
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">'
+      + esc(emptyMsg) + '</div>';
     return;
   }
 
-  // Filter by active status
-  const filtered = activeStatusFilter === 'all'
-    ? convs
-    : convs.filter(c => c.status === activeStatusFilter);
+  // Filter by both status and tab origin
+  const filtered = convs.filter(c => {
+    if (!c) return false;
+    if (activeStatusFilter !== 'all' && c.status !== activeStatusFilter) return false;
+    if (activeTabFilter !== 'all' && c.tabOrigin !== activeTabFilter) return false;
+    return true;
+  });
 
-  // Build status filter pills
-  const pills = ['all', 'invite', 'not-viewed', 'viewed', 'discard'].map(s => {
-    const isActive = activeStatusFilter === s;
-    const count = s === 'all' ? counts.all : (counts[s] || 0);
-    const cfg = STATUS_CONFIG[s] || STATUS_CONFIG.unknown;
-    const label = s === 'all' ? 'Все' : cfg.label;
-    // Skip pills with 0 count (except 'all')
-    if (s !== 'all' && count === 0) return '';
-    return `<button class="btn ${isActive ? 'btn-primary' : 'btn-outline'} btn-sm neg-status-btn" data-status="${s}" style="font-size:10px;padding:2px 8px;">${esc(label)} ${count}</button>`;
-  }).join('');
+  // Status chips row
+  const statusChips = ['all', 'invite', 'not-viewed', 'viewed', 'discard']
+    .map(s => {
+      const count = s === 'all' ? statusCounts.all : (statusCounts[s] || 0);
+      if (s !== 'all' && count === 0) return '';
+      return renderStatusChip(s, count, activeStatusFilter === s);
+    })
+    .join('');
 
-  const filterRow = `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">${pills}</div>`;
+  // Tab-origin chips row (only show tabs with >0 items, or all if none)
+  const tabChips = NEGOTIATION_TABS
+    .filter(t => t.id === 'all' || (tabCounts[t.id] || 0) > 0)
+    .map(t => renderTabOriginChip(t.id, tabCounts[t.id] || 0, activeTabFilter === t.id))
+    .join('');
 
-  // Build items
+  const refreshBtn = '<button id="neg-refresh-btn" class="btn btn-outline btn-sm" '
+    + 'style="font-size:11px;padding:2px 8px;cursor:pointer;" title="Обновить">[R]</button>';
+  const errorToast = '<div id="neg-error-toast" style="display:none;"></div>';
+
+  const filterRow = `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center;">${statusChips}${refreshBtn}</div>`
+    + (tabChips ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">${tabChips}</div>` : '')
+    + errorToast;
+
+  // Items
   const items = filtered.map(c => {
     const cfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.unknown;
     const statusBadge = `<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;background:${cfg.bg};color:${cfg.fg};border:1px solid ${cfg.border};">${esc(cfg.label)}</span>`;
+    const tabBadge = c.tabOrigin && c.tabOrigin !== 'all'
+      ? `<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;background:#F1F5F9;color:#64748B;" title="Источник: ${esc(c.tabOrigin)}">${esc(c.tabOrigin)}</span>`
+      : '';
+    const alsoIn = c.alsoIn && c.alsoIn.length > 0
+      ? `<span style="font-size:9px;color:#94A3B8;" title="Также в: ${esc(c.alsoIn.join(', '))}">[also in: ${esc(c.alsoIn.join(','))}]</span>`
+      : '';
 
-    // Vacancy link (opens on hh.ru)
     const vacLink = c.vacancyUrl
       ? `<a href="${esc(c.vacancyUrl)}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:#050;font-family:Inter,system-ui,sans-serif;text-decoration:none;" data-action="navigate">${esc(c.vacancyTitle || c.name)}</a>`
       : `<span style="font-size:12px;font-weight:600;">${esc(c.vacancyTitle || c.name)}</span>`;
@@ -78,6 +175,8 @@ export function renderNegotiationList() {
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           ${vacLink}
           ${statusBadge}
+          ${tabBadge}
+          ${alsoIn}
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:3px;font-size:11px;color:#52525b;">
           <span>${esc(c.company || '')}</span>
@@ -88,7 +187,7 @@ export function renderNegotiationList() {
   }).join('');
 
   const emptyFilter = filtered.length === 0
-    ? '<div style="padding:16px;text-align:center;font-size:11px;color:#52525b;">Нет откликов с таким статусом</div>'
+    ? '<div style="padding:16px;text-align:center;font-size:11px;color:#52525b;">Нет откликов с такими фильтрами</div>'
     : '';
 
   list.innerHTML = filterRow + items + emptyFilter;

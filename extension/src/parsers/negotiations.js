@@ -8,11 +8,11 @@
  *   - parseNegotiations() — from current page DOM (when user is on /applicant/negotiations)
  *   - fetchAndParseNegotiations() — background fetch + parse (from any page)
  *
- * Diagnostics live in ./negotiations-diagnostic.js (split in v1.9.42.0 for AHG Rule 12).
+ * Diagnostics live in ./negotiations-diagnostic.js (split in v1.9.43.0 for AHG Rule 12).
  *
  * Research: docs/research/04-negotiations-dom-analysis.md
  * v1.9.40.0: Added fetchAndParseNegotiations() for background loading
- * v1.9.42.0: F1.4 — fallback selector chains, scoped helpers, 50+ items tested
+ * v1.9.43.0: F1.4 — fallback selector chains, scoped helpers, 50+ items tested
  */
 
 import { findElement, findAllElements, HH_SELECTORS } from '../lib/selectors.js';

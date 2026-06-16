@@ -1,11 +1,13 @@
 /**
  * UI: TABS -- OVERVIEW
  * =====================
- * Renders overview tab content: KPI values, rate limits, activity timeline.
+ * Renders overview tab content: KPI values, rate limits, activity timeline,
+ * and (F1.9) negotiations summary widget.
  */
 
 import { panelState, refs } from '../state.js';
 import { esc } from '../html.js';
+import { computeStatusCounts, formatSummaryText } from './negotiations-summary.js';
 
 export function renderOverviewKPI() {
   const s = panelState.stats;
@@ -30,6 +32,53 @@ export function renderOverviewKPI() {
 
   const hourlyBar = el('kpi-hourly-bar')?.querySelector('.fill');
   if (hourlyBar) hourlyBar.style.width = Math.min(100, (hourly / hourlyLimit) * 100) + '%';
+
+  // v1.9.43.0 F1.9: Negotiations summary widget
+  renderNegotiationsSummary();
+}
+
+/**
+ * F1.9: Render negotiations summary card in overview tab.
+ * Shows total + per-status breakdown, links to negotiations tab.
+ */
+function renderNegotiationsSummary() {
+  const container = refs.shadowRoot?.getElementById('overview-negotiations');
+  if (!container) return;
+  const convs = panelState.negotiations || [];
+  const counts = computeStatusCounts(convs);
+  const meta = panelState.negotiationsMeta || {};
+
+  const summaryText = formatSummaryText(counts);
+  const errorBadge = (meta.errors && meta.errors.length > 0)
+    ? `<span style="font-size:9px;color:#DC2626;margin-left:6px;" title="${esc(meta.errors.join('; '))}">[!${meta.errors.length}]</span>`
+    : '';
+
+  const breakdown = ['invite', 'not-viewed', 'viewed', 'discard']
+    .map(s => {
+      const cnt = counts[s] || 0;
+      if (cnt === 0) return '';
+      const labels = {
+        invite: 'Приглашения', 'not-viewed': 'Не просмотрены',
+        viewed: 'Просмотрены', discard: 'Отказы',
+      };
+      const colors = {
+        invite: '#059669', 'not-viewed': '#D97706',
+        viewed: '#2563EB', discard: '#DC2626',
+      };
+      return `<span style="font-size:11px;color:${colors[s]};">${labels[s]}: ${cnt}</span>`;
+    })
+    .filter(Boolean)
+    .join(' · ');
+
+  container.innerHTML = `
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:600;color:#0F172A;">Отклики</span>
+        <span style="font-size:13px;font-weight:700;color:#0F172A;">${esc(summaryText)}${errorBadge}</span>
+      </div>
+      ${breakdown ? `<div style="font-size:10px;display:flex;gap:6px;flex-wrap:wrap;">${breakdown}</div>` : ''}
+      ${meta.fromCache ? '<div style="font-size:9px;color:#94A3B8;margin-top:4px;">из кэша</div>' : ''}
+    </div>`;
 }
 
 export function addTimelineEvent(type, text, detail) {

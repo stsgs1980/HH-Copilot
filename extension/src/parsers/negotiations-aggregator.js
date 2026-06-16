@@ -13,7 +13,7 @@
  * { items: [], error } doesn't crash others. Dedup by topic_id (vacancyId),
  * fallback to vacancyTitle+company. Cache served only if fresh.
  *
- * v1.9.42.0 -- F1.8
+ * v1.9.43.0 -- F1.8
  */
 
 import { parseNegotiationItems } from './negotiations.js';
