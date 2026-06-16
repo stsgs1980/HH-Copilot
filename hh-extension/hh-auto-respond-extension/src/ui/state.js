@@ -118,6 +118,11 @@ export function setActiveConversation(convId) {
   panelState.activeConversation = convId;
 }
 
+/** Set negotiations list. v1.9.39.0 */
+export function setNegotiations(list) {
+  panelState.negotiations = list || [];
+}
+
 /** Remove a company from the blacklist by name. */
 export function removeFromBlacklist(name) {
   panelState.blacklist = panelState.blacklist.filter(n => n !== name);

@@ -8,7 +8,7 @@
 import { panelState, refs, setActiveTab } from '../state.js';
 import { renderResumePanel } from '../tabs/resumes.js';
 import { renderStats } from '../tabs/stats.js';
-import { renderNegotiationList } from '../tabs/negotiations.js';
+import { renderNegotiationList, setNegotiationStatusFilter } from '../tabs/negotiations.js';
 import { bindSidebarClicks } from './sidebar-events.js';
 
 // ===============================================
@@ -227,6 +227,14 @@ function bindInputChanges(container) {
   if (hideAdsCheckbox) {
     hideAdsCheckbox.addEventListener('change', () => filterVacancies());
   }
+
+  /* v1.9.39.0: Negotiation status filter pills */
+  container.addEventListener('click', (e) => {
+    const negStatusBtn = e.target.closest('.neg-status-btn');
+    if (negStatusBtn) {
+      setNegotiationStatusFilter(negStatusBtn.dataset.status);
+    }
+  });
 }
 
 /** Filter vacancies by search, status, score, schedule, and ad flag. */

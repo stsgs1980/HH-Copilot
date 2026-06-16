@@ -18,6 +18,7 @@ import {
   handleResumeListPage,
   handleVacancyDetailPage,
   handleMainPage,
+  handleNegotiationsPage,
 } from './main-page-handlers-pages.js';
 
 const pageLog = createLogger('Main');
@@ -129,6 +130,8 @@ async function routeToHandler(path) {
     await handleResumeListPage();
   } else if (/^\/vacancy\/\d+/.test(path)) {
     await handleVacancyDetailPage(path);
+  } else if (path.startsWith('/applicant/negotiations')) {
+    await handleNegotiationsPage();
   } else if (path === '/' || path === '') {
     await handleMainPage();
   }

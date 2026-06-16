@@ -92,9 +92,21 @@ export const HH_SELECTORS = {
   resumeListLink: [
     'a[href*="/resume/"]'
   ],
-  // -- Negotiations --
-  negotiationsChatItem: ['[data-qa="negotiations-chat-item"]', '[class*="negotiations-chat"]'],
-  negotiationsChatUnread: ['[data-qa="negotiations-chat-unread"]', '[class*="unread"]'],
+  // -- Negotiations (/applicant/negotiations) --
+  negotiationsList:        ['[data-qa="negotiations-list"]'],
+  negotiationsItem:        ['[data-qa="negotiations-item"]'],
+  negotiationsItemVacancy: ['[data-qa="negotiations-item-vacancy"]'],
+  negotiationsItemCompany: ['[data-qa="negotiations-item-company"]'],
+  negotiationsItemDate:    ['[data-qa="negotiations-item-date"]'],
+  negotiationsItemTag:     ['[data-qa^="negotiations-tag"]'],
+  // -- Chatik (/chat) --
+  chatikLayout:              ['[data-qa="chatik-layout"]'],
+  chatikChatItem:            ['[data-qa^="chatik-open-chat-"]'],
+  chatikCheckboxOnlyUnread:  ['[data-qa="chatik-checkbox-only-unread"]'],
+  chatCellCreationTime:      ['[data-qa="chat-cell-creation-time"]'],
+  chatCellMeta:              ['[data-qa="chat-cell-meta"]'],
+  statusIconDelivered:       ['[data-qa="status-icon-delivered"]'],
+  statusIconRead:            ['[data-qa="status-icon-read"]'],
   // -- Auth --
   loginEmailInput: ['input[name="username"]', 'input[type="email"]', 'input[data-qa="login-input-username"]'],
   loginPasswordInput: ['input[name="password"]', 'input[type="password"]', 'input[data-qa="login-input-password"]'],

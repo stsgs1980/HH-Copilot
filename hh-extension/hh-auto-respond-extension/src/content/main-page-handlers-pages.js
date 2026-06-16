@@ -10,6 +10,7 @@
 import { createLogger } from '../lib/anti-hallucination.js';
 import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue, saveVacancyDetail, saveVacancyScore } from '../lib/storage.js';
 import { parseVacanciesFromPage, parseVacanciesOfTheDay } from '../parsers/vacancy-list.js';
+import { parseNegotiations } from '../parsers/negotiations.js';
 import { scoreTitle } from '../lib/match-scorer-title.js';
 import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
 import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
@@ -21,7 +22,7 @@ import { computeMatchScore } from '../lib/match-scorer.js';
 import { panelState, updateVacancies, updateStats } from '../ui/panel.js';
 import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
 import { renderVacancyList } from '../ui/tabs/vacancies.js';
-import { setActiveResumeState, setMyResumes, setResumeList } from '../ui/state.js';
+import { setActiveResumeState, setMyResumes, setResumeList, setNegotiations } from '../ui/state.js';
 
 const pageLog = createLogger('Main');
 
@@ -182,6 +183,46 @@ export async function handleVacancyDetailPage(path) {
     }
   } catch (e) {
     pageLog.error('Error processing apply queue: ' + e.message);
+  }
+}
+
+// -- Negotiations page -- v1.9.39.0
+
+let negotiationsObserverActive = false;
+
+export async function handleNegotiationsPage() {
+  pageLog.info('Negotiations page detected -- parsing negotiation items');
+
+  const negotiations = await parseNegotiations();
+  setNegotiations(negotiations);
+
+  // Import renderNegotiationList lazily to avoid circular deps at module load
+  try {
+    const { renderNegotiationList } = await import('../ui/tabs/negotiations.js');
+    renderNegotiationList();
+  } catch (e) {
+    pageLog.warn('Failed to render negotiation list: ' + e.message);
+  }
+
+  pageLog.info('Negotiations parsed: ' + negotiations.length + ' items');
+
+  // SPA MutationObserver -- re-parse when DOM changes on negotiations page
+  if (!negotiationsObserverActive) {
+    negotiationsObserverActive = true;
+    let timer = null;
+    new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        if (!window.location.pathname.startsWith('/applicant/negotiations')) return;
+        const fresh = await parseNegotiations();
+        setNegotiations(fresh);
+        try {
+          const { renderNegotiationList } = await import('../ui/tabs/negotiations.js');
+          renderNegotiationList();
+        } catch (e) {}
+      }, 1500);
+    }).observe(document.body, { childList: true, subtree: true });
+    pageLog.info('Negotiations SPA observer active');
   }
 }
 
