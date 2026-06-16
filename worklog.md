@@ -2570,3 +2570,20 @@ Stage Summary:
 - Build v1.9.41.0 OK, Tests 104/104 passing
 - lint:ci exit code 0 (passes -- no errors)
 - 6 real runtime bugs fixed (catch clause variable mismatch)
+
+---
+Task ID: eslint-pre-commit-blocking
+Agent: main
+Task: Enable ESLint as blocking in pre-commit hook (Phase 5.5)
+
+Work Log:
+- Changed pre-commit hook Phase 5.5 from non-blocking warning to blocking exit 1
+- Replaced "[WARN] ESLint found errors (non-blocking for now)" with "[ERROR] ESLint found errors -- commit BLOCKED"
+- Removed TODO comment (was: "Enable blocking once existing violations are fixed")
+- Verified: commit with 0 ESLint errors passes; commit with errors would be blocked
+- Bypass still available: [no-lint] in commit message or ESLINT_BYPASS=1 env var
+
+Stage Summary:
+- ESLint is now enforced at commit time (blocks on errors only, warnings pass)
+- All commits to hh-extension must pass ESLint with 0 errors
+- Current state: 0 errors, 14 informational warnings (all max-file-lines 200+)
