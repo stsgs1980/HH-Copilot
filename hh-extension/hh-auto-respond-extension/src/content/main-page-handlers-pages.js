@@ -8,7 +8,7 @@
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
-import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue, saveVacancyDetail, saveVacancyScore } from '../lib/storage.js';
+import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue, saveVacancyDetail, saveVacancyScore, markAsApplied } from '../lib/storage.js';
 import { parseVacanciesFromPage, parseVacanciesOfTheDay } from '../parsers/vacancy-list.js';
 import { parseNegotiations } from '../parsers/negotiations.js';
 import { scoreTitle } from '../lib/match-scorer-title.js';
@@ -195,6 +195,14 @@ export async function handleNegotiationsPage() {
 
   const negotiations = await parseNegotiations();
   setNegotiations(negotiations);
+
+  // v1.9.39.0: Mark vacancy IDs from negotiations as 'applied' in storage.
+  // This makes the "Откликнуто" filter in vacancy list actually work.
+  const appliedIds = negotiations.filter(n => n.vacancyId).map(n => n.vacancyId);
+  if (appliedIds.length > 0) {
+    pageLog.info('Marking ' + appliedIds.length + ' vacancies as applied from negotiations');
+    Promise.all(appliedIds.map(id => markAsApplied(id))).catch(() => {});
+  }
 
   // Import renderNegotiationList lazily to avoid circular deps at module load
   try {
