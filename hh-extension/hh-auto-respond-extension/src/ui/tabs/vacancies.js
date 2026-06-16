@@ -200,7 +200,9 @@ function renderVacancyItem(v, idx, dimmed) {
     ? '<span class="badge badge-green">Откликнута</span>'
     : v.status === 'blacklisted'
       ? '<span class="badge badge-red">BL</span>'
-      : '';
+      : v.isAd
+        ? '<span class="badge badge-amber">Реклама</span>'
+        : '';
 
   // Enrichment depth indicator
   const enrichBadge = v.keySkills && v.keySkills.length > 0

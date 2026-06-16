@@ -66,7 +66,7 @@ Files changed:
 - src/ui/state.js: added _resumeCleared: false to panelState
 - src/ui/tabs/resumes/render-resume-panel.js: respect _resumeCleared flag
 - src/ui/tabs/resumes/render-my-resumes.js: reset _resumeCleared on resume click
-- manifest.json: version 1.9.30.04122 → 1.8.7
+- manifest.json: version 1.9.37.04122 → 1.8.7
 - initPageLogic() made async for fetchAndParseResume support
 
 Stage Summary:
@@ -626,3 +626,28 @@ Work Log:
 
 Stage Summary:
 - Committing for push
+
+---
+Task ID: 9
+Agent: Main
+Task: VOTD irrelevant vacancies fix -- SERP-matchScore pre-filter + zero skills fallback + ad badge
+
+Work Log:
+- Analyzed VOTD (Vacancy of the Day) problem: paid ads with skills:[] getting 10/40 neutral fallback
+- Remote v1.9.36.0 had background enrichment but no VOTD filtering
+- Applied changes on top of v1.9.36.0:
+  - match-scorer-skills.js: score: 10 -> 0 for empty skills (VOTD with no data no longer get free 10/40)
+  - vacancy-list.js: added isAd: true to VOTD vacancy objects
+  - main-page-handlers-pages.js: added VOTD_TITLE_SIMILARITY_THRESHOLD = 0.3 + filterVotdByRelevance()
+    - VOTD with title similarity >= 0.3: kept, enriched by background enrichment
+    - VOTD with title similarity < 0.3: filtered out entirely
+  - vacancies.js: added "Реклама" badge for isAd vacancies
+- Bumped version to 1.9.37.0 via ahg bump
+- Build successful
+
+Stage Summary:
+- VOTD flow: similarity < 0.3 -> filtered out; similarity >= 0.3 -> kept + enriched via background fetch
+- Example: VOTD "Senior Frontend Developer" at Dev resume: passes filter, gets skills fetched -> accurate score
+- Example: VOTD "Менеджер по продажам" at Dev resume: similarity ~0 -> filtered out
+- Empty skills penalty: 10/40 -> 0/40 (no free points for missing data)
+- VOTD visually marked with amber "Реклама" badge in sidebar

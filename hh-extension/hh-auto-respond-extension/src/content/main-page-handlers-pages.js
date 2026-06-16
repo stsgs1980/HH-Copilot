@@ -10,6 +10,7 @@
 import { createLogger } from '../lib/anti-hallucination.js';
 import { getStats, saveMyResume, getMyResumes, setActiveResume, getApplyQueue, setApplyQueue, saveVacancyDetail, saveVacancyScore } from '../lib/storage.js';
 import { parseVacanciesFromPage, parseVacanciesOfTheDay } from '../parsers/vacancy-list.js';
+import { scoreTitle } from '../lib/match-scorer-title.js';
 import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
 import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
 import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
@@ -188,11 +189,41 @@ export async function handleVacancyDetailPage(path) {
 
 let mainPageObserverActive = false;
 
+// v1.9.37.0: Title similarity threshold for VOTD pre-filter.
+// VOTD below this threshold are excluded; VOTD above threshold are
+// kept and enriched by the background enrichment mechanism.
+const VOTD_TITLE_SIMILARITY_THRESHOLD = 0.3;
+
+/**
+ * Filter VOTD vacancies by title similarity to resume.
+ * VOTD is paid advertising -- only show if potentially relevant.
+ * VOTD that pass the threshold will be enriched by startBackgroundEnrichment().
+ *
+ * v1.9.37.0
+ */
+function filterVotdByRelevance(votd, resume) {
+  if (!resume || !resume.title) return votd;
+  return votd.filter(v => {
+    const titleResult = scoreTitle(resume, v);
+    const isRelevant = titleResult.similarity >= VOTD_TITLE_SIMILARITY_THRESHOLD;
+    if (!isRelevant) {
+      pageLog.info('VOTD filtered out: "' + v.title + '" similarity=' +
+        titleResult.similarity.toFixed(2) + ' < ' + VOTD_TITLE_SIMILARITY_THRESHOLD);
+    }
+    return isRelevant;
+  });
+}
+
 export async function handleMainPage() {
   pageLog.info('Main page detected -- parsing recommended vacancies + "Vacancy of the Day"');
 
   const recommended = await parseVacanciesFromPage(panelState.resume);
-  const votd = await parseVacanciesOfTheDay(panelState.resume);
+  const rawVotd = await parseVacanciesOfTheDay(panelState.resume);
+
+  // v1.9.37.0: Filter VOTD by title similarity to resume.
+  // Only VOTD with title overlap >= 0.3 are shown; the rest are excluded.
+  // Filtered VOTD will be enriched by background enrichment (skills fetch).
+  const votd = filterVotdByRelevance(rawVotd, panelState.resume);
   const allVacancies = [...recommended, ...votd];
 
   // Enrich from cache (instant)
@@ -201,9 +232,9 @@ export async function handleMainPage() {
   const stats = getStats();
   updateStats(stats);
 
-  pageLog.info('Main page: ' + recommended.length + ' recommended + ' + votd.length + ' VotD = ' + allVacancies.length + ' total');
+  pageLog.info('Main page: ' + recommended.length + ' recommended + ' + votd.length + '/' + rawVotd.length + ' VotD (filtered) = ' + allVacancies.length + ' total');
 
-  // Background deep fetch
+  // Background deep fetch -- enriches vacancies (including VOTD) with full skills
   startBackgroundEnrichment(allVacancies);
 
   if (!mainPageObserverActive) {
@@ -215,7 +246,8 @@ export async function handleMainPage() {
         if (window.location.pathname !== '/' && window.location.pathname !== '') return;
         abortVacancyFetch();
         const rec = await parseVacanciesFromPage(panelState.resume);
-        const vd = await parseVacanciesOfTheDay(panelState.resume);
+        const rawVd = await parseVacanciesOfTheDay(panelState.resume);
+        const vd = filterVotdByRelevance(rawVd, panelState.resume);
         const fresh = [...rec, ...vd];
         await enrichFromCache(fresh, panelState.resume);
         updateVacancies(fresh);

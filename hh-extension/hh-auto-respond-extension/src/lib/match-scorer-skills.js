@@ -42,8 +42,12 @@ export function scoreSkills(resume, vacancy) {
   const allResumeSkills = new Set([...resumeSkills, ...derivedSkills]);
 
   if (vacancySkills.size === 0) {
-    // v1.9.19.0: Reduced neutral fallback from 20->10 (20 was too generous for "no data")
-    return { score: 10, matching: [], missing: [], extra: [], derivedMatch: [], synonymMatch: [], impliedMatch: [] };
+    // v1.9.37.0: Reduced from 10->0. Empty skills = no evidence of match.
+    // VOTD vacancies with no skills were getting 10/40 as a bonus for having NO data,
+    // which pushed irrelevant ads above the minMatchScore threshold.
+    // The existing background enrichment mechanism will fetch skills for promising
+    // vacancies and re-score them with accurate data.
+    return { score: 0, matching: [], missing: [], extra: [], derivedMatch: [], synonymMatch: [], impliedMatch: [] };
   }
 
   const matching = [];      // explicit skill match

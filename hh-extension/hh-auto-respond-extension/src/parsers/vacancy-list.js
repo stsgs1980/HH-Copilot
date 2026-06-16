@@ -211,7 +211,7 @@ export async function parseVacanciesOfTheDay(resume) {
       salary: salary || 'Не указана', location: '',
       experience: parseExperienceString(''), skills: [],
       url: canonicalUrl,
-      hasReply: !!replyEl, status: 'new', source: 'votd',
+      hasReply: !!replyEl, status: 'new', source: 'votd', isAd: true,
       parsedAt: new Date().toISOString(), matchScore: null
     };
 
