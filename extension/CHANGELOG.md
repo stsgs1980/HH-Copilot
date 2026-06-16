@@ -9,6 +9,109 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.41.0] — 2026-06-16
+
+### Added
+- **Negotiations auto-load in background** — when the sidebar opens, `/applicant/negotiations` is fetched in the background and parsed without requiring the user to navigate there. `fetchAndParseNegotiations()` uses `fetch()` + `DOMParser` and reuses the same parsing pipeline as the on-page path. (commit `71b5fa2`)
+- **Negotiations page parser with status badges** — `/applicant/negotiations` is now parsed: vacancy title, company, date, status (`not-viewed` / `viewed` / `discard` / `invite`), vacancy ID extracted from link. Status badges color-coded. (commit `aede43e`)
+- **Auto-mark vacancies as applied from negotiations page** — when a status `discard` or `viewed` negotiation is found for a vacancy, that vacancy is automatically added to the "applied" set so it no longer shows as "new" in search. (commit `9535cf4`)
+
+### Changed
+- **Path simplification** — `hh-extension/hh-auto-respond-extension/` is now `extension/` at the repo root. 192 files moved, path depth reduced from 2 levels to 0. README, AGENT_RULES, verify-docs.json, pre-commit hook all updated. (commit `c70d47f`)
+- **Cascade CLI rewritten in Node.js** — `scripts/cascade-task.js` (430 lines, pure Node.js, no external deps) replaces the old `cascade-cli.sh` (484 lines bash + jq). Cross-platform. Old shell script preserved as a 35-line thin wrapper for backward compatibility. The old script also read the wrong state file (`cascade-state.json` instead of `cascade/state.json`) — that bug is now fixed. (commit `c70d47f`)
+
+### Fixed
+- **Skill gap analysis hint** — instead of silently hiding skill-gap rows when no data is available, the UI now shows a visible hint explaining why no analysis is shown. (commit `d9ca153`)
+
+---
+
+## [1.9.40.0] — 2026-06-16
+
+### Changed
+- Version bump release after `1.9.39.0` negotiations features. (commit `e95d9e3`)
+
+---
+
+## [1.9.39.0] — 2026-06-16
+
+### Added
+- **Negotiations page parser + UI** — first working version of the negotiations tab. Page handler registered for `/applicant/negotiations`, parser extracts vacancy/company/date/status, UI shows status badges (amber = not-viewed, blue = viewed, red = discard, green = invite). (commit `aede43e`)
+- **Research: Negotiations DOM analysis** — `docs/research/04-negotiations-dom-analysis.md` documents the page structure, selector strategy (only `data-qa` is stable, Magritte hashed classes break), data model, and 3-phase implementation plan. (commit `6472846`)
+- **Research: Chatik (/chat) DOM analysis** — `docs/research/05-chatik-dom-analysis.md` analyzes the chat page structure for future chat-reply automation. (commit `385f300`)
+
+---
+
+## [1.9.38.0] — 2026-06-16
+
+### Added
+- **Schedule filter** — filter vacancies by work schedule: remote / hybrid / office. Checkbox group in the vacancy panel. (commit `ba68c4c`)
+- **Hide ads checkbox** — toggle in vacancy panel to hide sponsored/ad vacancies from the list. (commit `ba68c4c`)
+
+---
+
+## [1.9.37.0] — 2026-06-16
+
+### Added
+- **VOTD filter by title similarity** — "Vacancy of the Day" items are now filtered by title similarity threshold >= 0.3 against the active resume position, reducing irrelevant VOTD suggestions. (commit `dbeb86b`)
+- **Zero skills fallback** — when a vacancy has zero extractable skills, the scorer no longer penalizes it to 0% but applies a confidence factor. (commit `dbeb86b`)
+- **Ad badge** — sponsored VotD items show an "Ad" badge so the user can distinguish them from organic recommendations. (commit `dbeb86b`)
+
+### Fixed
+- **Popup HTML duplication** — `popup/index.html` had duplicated HTML content; cleaned up, version pinned to `1.9.37.0`. (commit `1370ec3`)
+
+---
+
+## [1.9.36.0] — 2026-06-14
+
+### Added
+- **Irrelevant vacancies filter** — vacancies below a configurable `minMatchScore` threshold are now moved to a separate "Irrelevant vacancies" section in the sidebar. (commit `41007c1`)
+- **Irrelevant vacancies section open by default** — the irrelevant section is now expanded by default for visibility. (commit `bbee136`)
+
+### Changed
+- **Scoring improvements** — role mismatch penalty added; skill confidence factor introduced for low-skill-count vacancies to avoid over-penalizing sparse-skill jobs. (commit `f4f7243`)
+
+---
+
+## [1.9.35.0] — 2026-06-14
+
+### Changed
+- **Enrichment badges translated to Russian** — sidebar vacancy cards now show `полный` / `кэш` / `предварительный` instead of English `full` / `cache` / `preliminary`. (commit `0b8d40a`)
+
+---
+
+## [1.9.34.0] — 2026-06-14
+
+### Changed
+- Version bump release. (commit `3c3d96f`)
+
+### Fixed
+- **Resume experience description parsing** — glued sentences in the experience description are now split into separate lines instead of running together. (commit `90b9983`)
+
+---
+
+## [1.9.33.0] — 2026-06-14
+
+### Changed
+- **UNICODE_POLICY compliance audit** — all non-ASCII / non-Cyrillic characters in UI code replaced with ASCII equivalents (`≈` → `~`, etc.). (commit `f29054d`)
+- **Skill scoring deep clean** — scoring now uses only employer `keySkills` from the vacancy detail page, never search-result tags (which can be noisy). (commit `1479197`)
+- **Vacancy numbering** — sidebar vacancy list now shows `1. 2. 3. ...` numbering for easier reference. (commit `d6acf53`)
+
+### Fixed
+- **Skill scoring source** — detail-only vacancy skills are now used instead of merging all search results, which previously caused inflated skill match scores. (commit `067446e`)
+- **Skill synonym display** — `≈` (U+2248) replaced with `~` in skill synonym UI per UNICODE_POLICY. (commit `7c6d98a`)
+
+---
+
+## [1.9.32.0] — 2026-06-14
+
+### Changed
+- Version bump release. (commit `4153a16`)
+
+### Fixed
+- **Skill scoring deep clean** — only employer `keySkills` are now used; never search-result tags. (commit `1479197`)
+
+---
+
 ## [1.9.31.0] — 2026-06-15
 
 ### Added

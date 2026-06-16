@@ -1,6 +1,6 @@
 # HH Copilot -- Chrome Extension
 
-**Version:** 1.9.36.0
+**Version:** 1.9.41.0
 **Type:** Chrome Extension (Manifest V3)
 **Target Platform:** hh.ru (Magritte design system)
 **License:** Private project. All rights reserved.
@@ -16,14 +16,14 @@ The project was originally developed as part of a large automation system (Next.
 
 The target audience is job seekers who send dozens of responses per day and want to speed up this process without losing quality. The extension doesn't replace the person entirely, but automates the mechanical part: searching, filtering, filling in fields, sending responses. The decision about which vacancies to respond to is made by the user (manual mode) or the scoring algorithm (semi-automatic and automatic modes).
 
-Current version (1.9.36.0) features a modular architecture based on esbuild. The content script is built from 140 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI ((r) for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions) -- all of this is working. AI cover letters and negotiations parser are stubs, planned for subsequent phases.
+Current version (1.9.41.0) features a modular architecture based on esbuild. The content script is built from 112 JS modules in the src/ directory. Resume parsing (13+ fields: name, position, salary, gender, age, city, skills with levels, experience, education, languages, contacts, employment conditions, additional info), vacancy parsing from the search page + hh.ru main page (recommended + "Vacancy of the Day") + detailed vacancy parser, FAB button with green pulsation, Shadow DOM sidebar (720px, 6 tabs), authorization, SPA navigation with pushState patch, two-level resume visibility detection (list + detail page, 6 strategies), radio buttons for selecting the active resume, consolidated UI ((r) for re-parsing, contextual CTA "Take from page"), multi-strategy experience parsing (6 strategies), five-component scoring engine (skills 40%, salary 15%, experience 15%, position 15%, location 15%) with derived skills from work experience, skill synonyms, and position synonyms, resume quality analysis (ATS compatibility, red flags, improvement recommendations), guided tour for new users, auto-apply (orchestrator + queue + actions), negotiations page parser with status badges and background auto-load -- all of this is working. AI cover letters and chat replies are stubs, planned for subsequent phases.
 
 
 ## 2. Features
 
 ### What the extension can do now
 
-**Modular build (esbuild).** The source code is located in the src/ directory and consists of 140 ES modules organized by layers: lib/ (libraries, 60 files), parsers/ (parsers, 24 files), engine/ (business logic, 4 files), services/ (services, 1 file), ui/ (interface, 44 files), content/ (6 files). The esbuild bundler combines modules into a single IIFE bundle content.js (Manifest V3 does not support ES modules in content_scripts). Additionally, page-world.js is injected into the MAIN world for SPA navigation. Commands: `npm run build` (build), `npm run watch` (development with auto-rebuild).
+**Modular build (esbuild).** The source code is located in the extension/src/ directory and consists of 112 ES modules organized by layers: lib/ (libraries, 75 files), parsers/ (parsers, 10 files), engine/ (business logic, 5 files), ui/ (interface, 15 files), content/ (7 files), plus page-world.js (MAIN world script). The esbuild bundler combines modules into a single IIFE bundle content.js (Manifest V3 does not support ES modules in content_scripts). Additionally, page-world.js is injected into the MAIN world for SPA navigation. Commands: `npm run build` (build), `npm run watch` (development with auto-rebuild), `npm run lint` (ESLint with AHG rules), `npm test` (151 unit tests).
 
 **Vacancy parsing from the search page.** The extension finds all vacancy cards on the hh.ru/search/vacancy page and extracts from each: position title, company name, salary, location, required experience, skill tags, URL, and identifier. Data is validated (title, company, URL, id checks), filtered by company blacklist and list of already-applied vacancies.
 
@@ -53,15 +53,21 @@ Current version (1.9.36.0) features a modular architecture based on esbuild. The
 
 **Version sync.** Version is synchronized between manifest.json, package.json, popup/index.html, and src/lib/version.js. The single source of truth is manifest.json (esbuild reads it and injects process.env.VERSION). Module src/lib/version.js contains the constant for reference but is not imported by any module.
 
-**Tests.** 68 unit tests based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), parse-experience (13 -- all experience string formats), selectors (9 -- ~= word-match, VotD selectors), vacancy-list (14 -- search page, main page, VotD, sponsored VotD, canonical URL), routing (10 -- all routes including main page). Run: `npm test`, watch mode: `npm run test:watch`.
+**Tests.** 151 unit tests across 9 files based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), cover-letter (17 tests), negotiations (34 tests -- selectors, parser, diagnostic, 50+ items anti-hallucination), parse-experience (13 -- all experience string formats), routing (11 -- all routes including main page), selectors (9 -- ~= word-match, VotD selectors), timing (13 -- simulateTyping with native setter), vacancy-fetch, vacancy-list. Run: `npm test`, watch mode: `npm run test:watch`. All 151 tests passing as of v1.9.41.0.
 
 **Hot-reload for development.** WebSocket server (ws://localhost:35729) is started by `npm run watch`. On rebuild, the extension automatically reloads via chrome.runtime.reload(). Eliminates manual refresh in chrome://extensions.
 
+**Negotiations page parser.** When the user is on /applicant/negotiations (or when the sidebar opens from any page), the extension parses the negotiations list: vacancy title, company, date, status (`not-viewed` / `viewed` / `discard` / `invite`), and vacancy ID. Status badges color-coded (amber / blue / red / green). The background auto-load path (`fetchAndParseNegotiations`) uses fetch + DOMParser so it works from any page. Module: src/parsers/negotiations.js + src/parsers/negotiations-diagnostic.js (split for AHG Rule 12 compliance).
+
+**ESLint integration with AHG rules.** The project enforces two custom ESLint rules: `ahg-rules/max-file-lines` (WARN at 200 lines) and `ahg-rules/max-file-lines-hard` (ERROR at 250 lines, HARD CAP 400). The pre-commit hook blocks commits on any ERROR. Rule 15 (`no-unicode-graphics`) warns on em-dash and other Unicode graphics. Run: `npm run lint` (or `npm run lint:fix`).
+
+**Cascade CLI (Node.js).** `scripts/cascade-task.js` is a cross-platform Node.js CLI (430 lines, no external deps) for managing the task cascade in `cascade/state.json`. 13 commands: `next-task`, `ready-tasks`, `status`, `phases`, `task`, `deps`, `start`, `complete`, `block`, `pending`, `blocked`, `functions`, `validate`. Replaces the old bash+jq `cascade-cli.sh`. Run from extension/: `npm run cascade -- next-task`.
+
 ### What does NOT work (stubs, planned for subsequent phases)
 
-**AI cover letters.** Service module is a stub (src/services/index.js, 3 lines). Prompts are prepared in docs/reference-prompts.py. Planned for Phase 4.
+**AI cover letters.** Service module is a stub (src/services/index.js, 3 lines). Prompts are prepared in docs/reference-prompts.py. Planned for Phase 4 (F3.2 + F4.2).
 
-**Auto-replies in negotiations.** Not implemented. Planned for Phase 4.
+**Auto-replies in negotiations chat.** Not implemented. Chat page parsing is researched (docs/research/05-chatik-dom-analysis.md) but no reply generation. Planned for Phase 4.
 
 **Dark theme.** Not implemented. Planned for Phase 6.
 
@@ -83,7 +89,8 @@ git submodule update --init   # initialize submodule (anti-hallucination-guard)
 cd extension
 npm install          # install esbuild + ws (devDependencies)
 npm run build        # build content.js from src/content/main.js
-npm test             # run 67 unit tests (Vitest + jsdom)
+npm test             # run 151 unit tests (Vitest + jsdom)
+npm run lint         # ESLint with AHG rules (0 errors expected)
 ```
 
 For development with auto-rebuild and hot-reload (extension reloads automatically):
@@ -103,7 +110,7 @@ Step 2. In the top-right corner, toggle "Developer mode" ON.
 
 Step 3. Click the "Load unpacked" button.
 
-Step 4. In the dialog, select the hh-auto-respond-extension/dist folder (the one containing the built manifest.json).
+Step 4. In the dialog, select the extension/dist folder (the one containing the built manifest.json).
 
 Step 5. The extension will appear in the list with the name "HH Copilot". Make sure the toggle is enabled.
 
@@ -155,7 +162,7 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
 ### Extension code (extension/)
 
 ```
-manifest.json                  -- Manifest V3 configuration (v1.9.36.0, source of truth for version)
+manifest.json                  -- Manifest V3 configuration (v1.9.41.0, source of truth for version)
 package.json                   -- esbuild, build/watch scripts
 esbuild.config.mjs              -- build configuration (IIFE, bundle, output -> dist/)
 dist/                          -- build directory (load in Chrome as unpacked extension)
@@ -397,7 +404,7 @@ Each commit must start with a change type: feat:, fix:, refactor:, docs:, chore:
 
 ### Changelog
 
-Full version history is maintained in the CHANGELOG.md file in the extension root. Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.9.36.0.
+Full version history is maintained in extension/CHANGELOG.md (detailed) and CHANGELOG.md at repo root (high-level summary). Format -- Keep a Changelog. Each release contains "Added", "Changed", "Fixed", "Removed" sections. Current version -- 1.9.41.0.
 
 ### Version timeline
 
@@ -467,7 +474,7 @@ Rule 10. Each commit must be accompanied by an entry in worklog.md. The pre-comm
 
 ### Phase 0 (completed): Modular refactoring
 
-The monolithic content.js (1637 lines) was decomposed into 140 ES modules. esbuild was configured (IIFE, bundle, sourcemap). Modular structure created: lib/ (60 files), parsers/ (24 files), engine/ (4 files), services/ (1 file), ui/ (44 files), content/ (6 files) with barrel files. All files stay under 250 lines (except skill-dictionary.js and skill-synonyms.js which are Russian-language data dictionaries). All Phase 0 tasks are completed.
+The monolithic content.js (1637 lines) was decomposed into 112 ES modules. esbuild was configured (IIFE, bundle, sourcemap). Modular structure created: lib/ (75 files), parsers/ (10 files), engine/ (5 files), ui/ (15 files), content/ (7 files) with barrel files. All files stay under the 250-line hard cap (AHG Rule 12), with a 200-line WARN threshold. ESLint integrated with custom AHG rules (Rule 12 anti-monolith, Rule 15 no-unicode-graphics) and enforced via pre-commit hook. All Phase 0 tasks are completed; the cascade is at 65% (26/40 tasks across 8 phases).
 
 Additional work (Phase 0.5): FAB CSS isolation with !important, Auth UX (passive authorization, username), 6-tab wireframe panel, client-side vacancy filtering, blacklist management UI, version sync, CustomEvent bridge.
 

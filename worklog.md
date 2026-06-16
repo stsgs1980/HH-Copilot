@@ -2731,3 +2731,67 @@ Stage Summary:
 - Tests: 117 -> 151 (+34), all passing
 - Build v1.9.41.0 OK, ESLint 0 errors, 15 warnings (all pre-existing WARN)
 - cascade/state.json: F1.4 marked completed, F1.3 newly ready
+
+---
+Task ID: cascade-f6.2
+Agent: main
+Task: F6.2 -- Full documentation rewrite: README.md, ARCHITECTURE.md, CHANGELOG.md
+
+Work Log:
+- Split L-sized task into 3 sequential sub-commits for safer review:
+  1. CHANGELOG.md (extension + root)
+  2. ARCHITECTURE.md (extension/docs/)
+  3. README.md (repo root)
+- CHANGELOG.md:
+  - extension/CHANGELOG.md: added 10 missing version entries (1.9.32.0 through 1.9.41.0)
+    with details from git log. Each entry has Added/Changed/Fixed sections + commit hash.
+    File grew from 799 to 901 lines.
+  - CHANGELOG.md (repo root): replaced the 180-line stub (only 2 broken entries) with
+    a 71-line high-level summary referencing extension/CHANGELOG.md for full history.
+- ARCHITECTURE.md:
+  - Updated version 1.9.31.0 -> 1.9.41.0 in header.
+  - Added build/test/lint metadata to header.
+  - Updated Section 10 (Documentation Structure) to reflect new extension/ path
+    (was hh-extension/hh-auto-respond-extension/), added cascade/ directory,
+    added scripts/ with cascade-task.js, removed obsolete cascade-state.json.
+  - Added Section 10.1 (Path Simplification v1.9.41.0).
+  - Added Section 10.2 (ESLint Integration: Rule 12 WARN 200, hard 250; Rule 15).
+  - Added Section 10.3 (Cascade CLI: cascade-task.js replaces cascade-cli.sh).
+  - Added Section 11 (Module Decomposition) with layer sizes table
+    (lib 75, parsers 10, engine 5, ui 15, content 7 = 112 modules total),
+    key B1+B2+B3 splits, negotiations module description, test coverage table.
+  - File grew from 603 to 740 lines.
+- README.md:
+  - Updated version 1.9.36.0 -> 1.9.41.0 (5 occurrences).
+  - Updated module count 140 -> 112, layer counts (lib 60->75, parsers 24->10,
+    engine 4->5, ui 44->15, content 6->7, removed obsolete services 1).
+  - Updated test count 68 -> 151 (across 9 files, with per-file breakdown).
+  - Moved "Negotiations page parser" from "NOT working" stubs to "Working" section.
+  - Added "ESLint integration with AHG rules" feature description.
+  - Added "Cascade CLI (Node.js)" feature description.
+  - Updated install instructions: npm test now runs 151 tests (was 67),
+    added npm run lint step.
+  - Updated Chrome load path: extension/dist (was hh-auto-respond-extension/dist).
+  - Updated version timeline Phase 0 description with current module counts +
+    ESLint + cascade progress (65%, 26/40).
+  - Updated changelog reference: extension/CHANGELOG.md (detailed) +
+    CHANGELOG.md at root (high-level summary).
+- Verified no dead links: all 25 file paths referenced in ARCHITECTURE.md exist.
+- Verified version sync: manifest.json = package.json = README = ARCHITECTURE =
+  both CHANGELOGs = 1.9.41.0.
+
+Stage Summary:
+- F6.2 acceptance criteria met:
+  [x] README describes current functionality (v1.9.41.0, 112 modules, 151 tests,
+      ESLint, cascade CLI, negotiations parser -- all current features listed)
+  [x] ARCHITECTURE describes modular structure (layer sizes table, B1+B2+B3
+      splits, negotiations module, ESLint integration, cascade CLI, path
+      simplification history)
+  [x] CHANGELOG contains all versions (1.9.15.5 through 1.9.41.0 in
+      extension/CHANGELOG.md, plus high-level summary in root CHANGELOG.md)
+- Anti-hallucination checks passed:
+  [x] File names match links (25/25 referenced files exist on disk)
+  [x] No dead links (all markdown links point to existing files or external URLs)
+  [x] CHANGELOG versions match manifest.json (1.9.41.0 across all 5 sources)
+- cascade/state.json: F6.2 marked completed, F6.3 (landing page) newly ready
+- Cascade progress: 26 -> 27 / 40 (67.5%), Phase 6 now 1/4 (25%)
