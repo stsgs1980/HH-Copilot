@@ -11,6 +11,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.48.0] — 2026-06-23
+
+### Added
+- **F5.6 — AI settings UI + cover-letter persistence wiring** — closes the gap between F4.2/F4.3/F3.2 (backend logic) and the end-user UI. Without this release, the AI service was unreachable from the panel and the cover-letter template textarea did not persist.
+- New `src/ui/panel/ai-settings.js` (183 lines): loads AI config from background via `ai-get-config` message, populates the 3 fields in Settings tab (`s-ai-base-url`, `s-ai-api-key`, `s-ai-model`), binds debounced (500ms) save handlers that send `ai-set-config` partial updates. Handles 3 BG response shapes (`{ok,config}`, direct config, `{ok:false}`) + `NO_BG`/`BG_ERR`/`BG_THROW`/`EMPTY_RESP` error codes.
+- New `src/ui/panel/cover-letter-events.js` (147 lines): populates `#cover-letter-text` textarea + `#s-letter-tone` select from `getCoverLetterConfig()` when Negotiations tab opens. Debounced (500ms) template save on `input`, immediate tone save on `change`. Tolerates storage failures (never throws).
+- New "AI-настройки" card in Settings tab HTML (`src/ui/html/tabs/settings.js`): Base URL + API Key (password) + Model fields, with hint about debounce and storage key.
+- New tone selector (`<select id="s-letter-tone">`) next to cover-letter textarea in `src/ui/html/tabs/negotiations.js` — 4 options: formal/friendly/concise/enthusiastic.
+- Wired new handlers into `src/ui/panel/events.js`: `bindAiSettingsHandlers` + `bindCoverLetterEvents` called from `bindAllEvents()`. `populateAiFields()` and `populateCoverLetterFields()` triggered on tab switch to settings/negotiations respectively.
+
+### Changed
+- `cascade/state.json`: **F1.3 marked completed** — `parseNegotiationItems()` already fulfills all F1.3 acceptance criteria (extracts list, status from predefined values, unread as boolean). Was incorrectly left `pending` while F1.4/F1.8/F1.9 built on top of it.
+
+### Tests
+- 37 new tests across `tests/ai-settings.test.js` (22) and `tests/cover-letter-events.test.js` (15). Total: **349 tests** (was 312), all passing.
+- New tests cover: loadAiConfig (3 BG response shapes, defaults, error codes), saveAiConfig (success, BAD_INPUT, BG error), populateAiFields (3 fields, defaults on error, no shadowRoot), readAiFields, bindAiSettingsHandlers (debounce, partial save), internal helpers. Cover-letter tests: populate (template + tone, empty template, no shadowRoot, storage throw tolerance), debounced save + cancel, tone change handler (valid + invalid + missing elements), convenience wrapper.
+
+### Fixed
+- Rollback of mode-bit drift in working tree (56 files with `100644 -> 100755` mode change, 0 content changes) via `chmod -x`. Working tree now clean before commit.
+
+---
+
 ## [1.9.47.0] — 2026-06-17
 
 ### Added

@@ -15,6 +15,8 @@ import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList, setNegotiationStatusFilter, setNegotiationTabFilter, refreshNegotiations } from '../tabs/negotiations.js';
 import { handleAiReplyClick, setAiTone } from '../tabs/negotiations-ai-reply.js';
 import { bindSidebarClicks } from './sidebar-events.js';
+import { bindAiSettingsHandlers, populateAiFields } from './ai-settings.js';
+import { bindCoverLetterEvents, populateCoverLetterFields } from './cover-letter-events.js';
 import {
   bindTabKeyboardNav,
   bindAccessibilityHandlers,
@@ -46,7 +48,15 @@ function switchTab(tabId) {
   /* Lazy render on tab activation */
   if (tabId === 'resume') renderResumePanel();
   if (tabId === 'stats') renderStats();
-  if (tabId === 'negotiations') renderNegotiationList();
+  if (tabId === 'negotiations') {
+    renderNegotiationList();
+    // F5.6: populate cover-letter template + tone from storage when tab opens
+    populateCoverLetterFields().catch(() => {});
+  }
+  if (tabId === 'settings') {
+    // F5.6: populate AI fields from storage when Settings tab opens
+    populateAiFields().catch(() => {});
+  }
 
   /* Focus the activated tab panel for screen readers */
   const activePanel = sr.querySelector('#tab-' + tabId);
@@ -87,6 +97,9 @@ export function bindAllEvents(container) {
   bindSidebarClicks(container);
   bindAccessibilityHandlers(container, toggleTimeline, toggleSub);
   bindInputChanges(container);
+  // F5.6: AI settings (3 fields in Settings tab) + cover-letter persistence
+  bindAiSettingsHandlers(container);
+  bindCoverLetterEvents(container);
 }
 
 export function bindTabClicks(container) {

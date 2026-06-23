@@ -53,12 +53,20 @@ export function getNegotiationsSection() {
             </div>
           </div>
           <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;flex-wrap:wrap;">
               <label for="cover-letter-text" style="font-size:11px;font-weight:500;">Шаблон сопроводительного</label>
-              <span style="font-size:11px;color:#52525b;">{position} {company} {experience} {skills} {matching}</span>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="font-size:11px;color:#52525b;">Тон:</span>
+                <select id="s-letter-tone" aria-label="Тон сопроводительного письма" style="font-size:11px;padding:3px 6px;border:1px solid #e4e4e7;border-radius:6px;background:#fff;">
+                  <option value="formal">Формальный</option>
+                  <option value="friendly">Дружелюбный</option>
+                  <option value="concise">Краткий</option>
+                  <option value="enthusiastic">Энтузиаст</option>
+                </select>
+              </div>
             </div>
             <textarea id="cover-letter-text" style="width:100%;height:80px;padding:8px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;resize:none;line-height:1.5;">Здравствуйте! Меня заинтересовала вакансия {position} в {company}. Имею {experience} опыта в {skills}. {matching_sentence}Буду рад обсудить детали на интервью.</textarea>
-            <div style="font-size:10px;color:#71717A;margin-top:4px;line-height:1.4;">Автозаполнение: {position} -- должность, {company} -- компания, {experience} -- стаж, {skills} -- навыки, {matching} -- совпадения, {matching_sentence} -- предложение о совпадениях, {requirements} -- требования</div>
+            <div style="font-size:10px;color:#71717A;margin-top:4px;line-height:1.4;">Автозаполнение: {position} -- должность, {company} -- компания, {experience} -- стаж, {skills} -- навыки, {matching} -- совпадения, {matching_sentence} -- предложение о совпадениях, {requirements} -- требования. Шаблон сохраняется в storage автоматически.</div>
           </div>
         </div>
       </div>

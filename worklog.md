@@ -3277,3 +3277,117 @@ Stage Summary:
 - Build: v1.9.47.0 OK
 - cascade/state.json: F4.4 marked completed
 - All 4 priority tasks completed (F4.2, F4.3, F3.2, F4.4)
+
+---
+Task ID: F5.6
+Agent: main
+Task: AI Settings UI + cover-letter persistence wiring (close gap between F4.2/F4.3/F3.2 backend and panel UI)
+
+Work Log:
+- User asked to skip cosmetic features (F5.4/F5.5) and focus on functional gaps.
+- Identified 2 critical gaps:
+  1. AI Settings UI missing -- F4.2 ai-service.js was unreachable from panel
+     (no UI to input API key / base URL / model). Whole AI stack was dead code.
+  2. Cover-letter template persistence missing -- F3.2 cover-letter-storage.js
+     had load/save functions but no DOM wiring. Textarea content was hardcoded
+     in HTML, not loaded from storage, not saved on input. Tone selector
+     did not exist.
+- Also identified F1.3 was already implemented (parseNegotiationItems covers
+  all acceptance criteria) but never marked completed in cascade/state.json.
+- Bumped version 1.9.47.0 -> 1.9.48.0 BEFORE feat commit (Rule 9.2).
+- Created extension/src/ui/panel/ai-settings.js (183 lines):
+  - loadAiConfig(msgImpl) -- sends {type:'ai-get-config'} to bg, handles 3
+    response shapes ({ok,config}, direct config, {ok:false}). Defaults:
+    baseUrl='https://internal-api.z.ai/v1', apiKey='', model='glm-4.5'.
+  - saveAiConfig(partial, msgImpl) -- sends {type:'ai-set-config', config:partial}.
+    Validates partial is object (BAD_INPUT otherwise).
+  - populateAiFields(msgImpl) -- reads config from bg, populates #s-ai-base-url,
+    #s-ai-api-key, #s-ai-model in shadowRoot. On BG error, falls back to
+    defaults (so fields are not empty).
+  - readAiFields() -- reads 3 field values from DOM into config object.
+  - bindAiSettingsHandlers(container, opts) -- binds debounced (500ms) save
+    on input. Each field saves only its own value (partial update).
+  - Error codes: NO_BG / BG_ERR / BG_THROW / EMPTY_RESP / BAD_INPUT.
+  - Anti-hallucination: never throws, missing chrome.runtime handled, missing
+    elements silently skipped.
+- Created extension/src/ui/panel/cover-letter-events.js (147 lines):
+  - populateCoverLetterFields(opts) -- reads config via getCoverLetterConfig(),
+    populates #cover-letter-text textarea (only if storage has non-empty
+    template, otherwise leaves HTML default intact) and #s-letter-tone select.
+  - bindCoverLetterTemplateSave(opts) -- debounced (500ms) save of textarea
+    content via setCoverLetterTemplate(). Returns cancel function for unmount.
+  - bindLetterToneHandler(container, opts) -- on change event, validates tone
+    via validateTone(), reflects back to DOM, saves via setLetterTone().
+  - bindCoverLetterEvents(container, opts) -- convenience wrapper binds both.
+  - Anti-hallucination: storage failures caught silently, missing elements
+    no-op, invalid tone -> 'formal'.
+- Updated extension/src/ui/html/tabs/settings.js: added settingsAI() card at
+  top of getSettingsSection(). 3 fields (Base URL text, API Key password,
+  Model text) + hint about debounce and storage key. No toggle (3 fields are
+  always visible; AI enablement is implicit via API key presence).
+- Updated extension/src/ui/html/tabs/negotiations.js: added #s-letter-tone
+  select (4 options: formal/friendly/concise/enthusiastic) inline with the
+  cover-letter-text label row. Updated hint text to mention auto-save.
+- Updated extension/src/ui/panel/events.js:
+  - Imported bindAiSettingsHandlers, populateAiFields, bindCoverLetterEvents,
+    populateCoverLetterFields.
+  - bindAllEvents() now also calls bindAiSettingsHandlers(container) and
+    bindCoverLetterEvents(container).
+  - switchTab() now triggers populateAiFields() on Settings tab activation
+    and populateCoverLetterFields() on Negotiations tab activation. Both are
+    fire-and-forget (.catch(() => {})).
+- Created extension/tests/ai-settings.test.js (22 tests):
+  - loadAiConfig: {ok,config} shape, direct config shape, defaults when fields
+    missing, EMPTY_RESP on null, NO_BG when chrome.runtime missing, BG_ERR
+    when lastError set (6 tests).
+  - saveAiConfig: success with partial, BAD_INPUT on null, EMPTY_RESP on null
+    BG response (3 tests).
+  - populateAiFields: populates 3 fields, defaults on BG error, false when no
+    shadowRoot (3 tests).
+  - readAiFields: reads 3 values, empty strings when no shadowRoot (2 tests).
+  - bindAiSettingsHandlers: binds without throw, debounced partial save after
+    input event (verified savedPartial value), no-op on null container (3 tests).
+  - Internal helpers: setFieldValue, getFieldValue (exists + missing), AI_FIELD_IDS
+    has exactly 3 ids (5 tests).
+- Created extension/tests/cover-letter-events.test.js (15 tests):
+  - populateCoverLetterFields: populates textarea + tone select, empty template
+    fallback, false when no shadowRoot, no throw on storage error (4 tests).
+  - bindCoverLetterTemplateSave: debounced save after input, cancel clears
+    pending save, no-op cancel when no shadowRoot, no-op when textarea missing
+    (4 tests).
+  - bindLetterToneHandler: saves on change, invalid tone -> formal + reflects
+    back, no-op on null container, no-op when select missing (4 tests).
+  - bindCoverLetterEvents: binds both handlers (verified by triggering both
+    events) (1 test).
+  - Internal exports: DEBOUNCE_MS=500, TONES has 4 entries (2 tests).
+- Rolled back mode-bit drift in working tree: 56 files had 100644 -> 100755
+  mode change (chmod +x by some earlier tool), 0 content changes. Used:
+  git diff --raw | awk '/^:100644 100755/ {print $NF}' | xargs chmod -x
+  After: working tree clean except submodule (anti-hallucination-guard,
+  modified content -- separate concern).
+- Updated cascade/state.json: F1.3 marked completed (was incorrectly pending).
+  _meta.version -> 1.9.48.0, lastUpdated -> 2026-06-23T20:48:00.000Z.
+
+Stage Summary:
+- All acceptance criteria met:
+  [x] AI config reachable from Settings tab UI (3 fields populated from
+      chrome.storage.local.aiConfig via bg message)
+  [x] AI config changes saved to storage (debounced 500ms, partial updates)
+  [x] Cover letter template persists across reloads (debounced save on input,
+      loaded from storage on tab open)
+  [x] Tone selectable in UI (4-tone select next to textarea)
+  [x] Tone saved to storage (immediate save on change, validated)
+- Anti-hallucination checks passed:
+  [x] AI service never crashes on missing config (loadAiConfig returns defaults)
+  [x] BG errors handled gracefully (NO_BG/BG_ERR/BG_THROW/EMPTY_RESP codes)
+  [x] Storage failures don't break UI (caught silently, defaults applied)
+  [x] Invalid tone -> 'formal' (validated in cover-letter-tone.js)
+  [x] Missing DOM elements silently skipped (no throw)
+- Tests: 349/349 pass (was 312, +37 new: 22 ai-settings + 15 cover-letter-events)
+- Lint: 0 errors, 22 warnings (all pre-existing line-length, none in new files
+  except events.js at 198 lines -- WARN threshold 200, within tolerance)
+- Build: v1.9.48.0 OK -- dist/content.js (704.7kb), page-world.js (8.2kb),
+  background/index.js (10.3kb)
+- cascade/state.json: F1.3 marked completed, version -> 1.9.48.0
+- Next: F4.1 (UI чат-листа переговоров -- превью последнего сообщения + unread
+  badge) -- last functional gap in Phase 4. Or F5.3 KPI Dashboard.
