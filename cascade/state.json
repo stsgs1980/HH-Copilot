@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": "1.9.48.0",
+    "version": "1.9.49.0",
     "project": "HH Copilot Chrome Extension",
     "repo": "https://github.com/stsgs1980/HH-Copilot.git",
     "lastUpdated": "2026-06-23T20:48:00.000Z",
@@ -493,7 +493,7 @@
           "title": "UI tab Negotiations: chat list with company, position, last message, date, status, unread badge",
           "priority": "P1",
           "size": "L",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "F1.3",
             "F0.8"
@@ -554,6 +554,19 @@
           ],
           "acceptance": "CAPTCHA on page -> auto-pause. Badge shows notification. Toast 'CAPTCHA detected'. Pause removed manually.",
           "anti_hallucination": "False positive doesn't block work. Multiple CAPTCHAs don't crash. Pause correctly removed."
+        },
+        {
+          "id": "F4.5",
+          "title": "Real chat preview + unread count from chatikLayout",
+          "priority": "P2",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F4.1"
+          ],
+          "implements": [],
+          "acceptance": "Chat list shows actual last employer message as preview (truncated with ellipsis) and a numeric unread count badge. Data sourced from hh.ru chatik interface (chatik-layout / chatik-open-chat). Fallback к старому списку (statusText-based preview) если chatik недоступен.",
+          "anti_hallucination": "Requires live hh.ru DOM research in a separate session. No selector committed without verification. Empty/missing chatik -> graceful fallback, never crash."
         }
       ]
     },

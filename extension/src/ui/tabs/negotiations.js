@@ -30,6 +30,7 @@ import {
   NEGOTIATION_TABS,
 } from '../../parsers/negotiations-aggregator.js';
 import { renderAiReplyArea } from './negotiations-ai-reply.js';
+import { renderNegotiationItem } from './negotiations-item.js';
 
 let activeStatusFilter = 'all';
 let activeTabFilter = 'all';
@@ -155,37 +156,9 @@ export function renderNegotiationList() {
     + (tabChips ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">${tabChips}</div>` : '')
     + errorToast;
 
-  // Items
-  const items = filtered.map(c => {
-    const cfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.unknown;
-    const statusBadge = `<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;background:${cfg.bg};color:${cfg.fg};border:1px solid ${cfg.border};">${esc(cfg.label)}</span>`;
-    const tabBadge = c.tabOrigin && c.tabOrigin !== 'all'
-      ? `<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;background:#F1F5F9;color:#64748B;" title="Источник: ${esc(c.tabOrigin)}">${esc(c.tabOrigin)}</span>`
-      : '';
-    const alsoIn = c.alsoIn && c.alsoIn.length > 0
-      ? `<span style="font-size:9px;color:#94A3B8;" title="Также в: ${esc(c.alsoIn.join(', '))}">[also in: ${esc(c.alsoIn.join(','))}]</span>`
-      : '';
-
-    const vacLink = c.vacancyUrl
-      ? `<a href="${esc(c.vacancyUrl)}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:#050;font-family:Inter,system-ui,sans-serif;text-decoration:none;" data-action="navigate">${esc(c.vacancyTitle || c.name)}</a>`
-      : `<span style="font-size:12px;font-weight:600;">${esc(c.vacancyTitle || c.name)}</span>`;
-
-    return `<div class="conv-item" data-conv-id="${esc(c.id)}" tabindex="0" role="button"
-      style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid #f4f4f5;margin-bottom:4px;">
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          ${vacLink}
-          ${statusBadge}
-          ${tabBadge}
-          ${alsoIn}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:3px;font-size:11px;color:#52525b;">
-          <span>${esc(c.company || '')}</span>
-          ${c.date ? '<span style="color:#a1a1aa;">·</span><span>' + esc(c.date) + '</span>' : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  // Items -- row rendering delegated to renderNegotiationItem (F4.1: preview +
+  // relative timestamp + unread dot; extracted to keep this file under AHG 250).
+  const items = filtered.map(c => renderNegotiationItem(c)).join('');
 
   const emptyFilter = filtered.length === 0
     ? '<div style="padding:16px;text-align:center;font-size:11px;color:#52525b;">Нет откликов с такими фильтрами</div>'

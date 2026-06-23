@@ -3465,3 +3465,55 @@ Stage Summary:
   [x] User-edited templates are not overwritten
   [x] Tone is still saved to storage (immediate on change)
   [x] Swapped template is also saved to storage
+
+---
+Task ID: F4.1
+Agent: main
+Time: 2026-06-23T22:00:00+03:00
+Task: Negotiations chat list UI -- preview + relative timestamp + unread dot (variant 3 hybrid)
+
+Work Log:
+- Read cascade/state.json F4.1 (implements F-NG-01/02/03/05), existing
+  negotiations.js (237 lines, inline item template), negotiations parser,
+  aggregator, summary, and docs/research/04-negotiations-dom-analysis.md.
+- Key finding: the /applicant/negotiations list page does NOT expose real
+  message previews or unread counts (research doc Key Decision #1). With user
+  agreement, closed F4.1 via hybrid (variant 3) from existing parser fields,
+  and opened F4.5 (real chatik preview) as backlog.
+- Design spec: docs/specs/2026-06-23-f4.1-negotiations-chat-list-design.md
+- Plan: docs/plans/2026-06-23-f4.1-negotiations-chat-list.md
+- New: src/ui/tabs/negotiations-format.js (formatRelativeTime, pure, never
+  returns undefined, never throws; passes "вчера"/"сегодня"/"2ч назад"
+  through, returns '' for unrecognized/bare-time -- avoids hallucinating
+  precise relative times without a timestamp component).
+- New: src/ui/tabs/negotiations-item.js (renderNegotiationItem) -- row now has
+  preview line (statusText normal color, or "(нет сообщений)" grey+italic on
+  parse failure), relative timestamp (omitted + no separator when ''), and a
+  red unread dot (no number) with aria-label="Есть непрочитанные" /
+  title="Непросмотрено" when status is not-viewed/invite. Extracted to keep
+  negotiations.js under AHG HARD 250.
+- Modified: src/ui/tabs/negotiations.js -- replaced 30-line inline .map
+  template with renderNegotiationItem call (237 -> 210 lines).
+- Parser and selectors UNTOUCHED (no fabricated selectors; 351 baseline safe).
+- TDD: 13 unit tests for formatRelativeTime; fixed looksRelative regex
+  (JS \b is ASCII-only, broke on Cyrillic "5 мин назад" -- rewrote without \b).
+- Renamed unused `now` param to `_now` to satisfy AHG/ESLint unused-arg rule
+  (kept in signature for F4.5 forward-compat, returns '' today).
+- cascade/state.json: F4.1 -> completed; added F4.5 (pending, L, depends F4.1,
+  acceptance includes "Fallback к старому списку если chatik недоступен").
+- README test counts corrected: 349 -> 364, 9 -> 19 files.
+
+Verification:
+- Tests: 364/364 pass (was 351, +13 new for formatRelativeTime)
+- Lint: 0 errors, 22 pre-existing warnings (no new warnings)
+- Build: v1.9.49.0 OK
+- version-sync.sh: PASSED at 1.9.49.0
+- popup/index.html: 38 lines (intact, not corrupted)
+
+Stage Summary:
+- F4.1 acceptance met: list displays, statuses colored, unread indicator,
+  refresh restarts parsing (pre-existing F1.9). Anti-hallucination: empty
+  list placeholder, long text ellipsis, status from STATUS_CONFIG.
+- Real message preview deferred to F4.5 (requires live hh.ru chatik DOM
+  research in a separate session).
+- Version bumped 1.9.48.0 -> 1.9.49.0 (Rule 9.2, before feat commit).
