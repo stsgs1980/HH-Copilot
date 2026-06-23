@@ -3391,3 +3391,41 @@ Stage Summary:
 - cascade/state.json: F1.3 marked completed, version -> 1.9.48.0
 - Next: F4.1 (UI чат-листа переговоров -- превью последнего сообщения + unread
   badge) -- last functional gap in Phase 4. Or F5.3 KPI Dashboard.
+
+---
+Task ID: F5.6-popup-fix
+Agent: main
+Time: 2026-06-23T23:58:00+03:00
+Task: Repair corrupted popup/index.html (16 stacked DOCTYPEs)
+
+Work Log:
+- User reported popup showed same content 16 times in Chrome
+  ("HH Copilot v1.9.48.0.0 / Открыть hh.ru / HH Copilot -- ..." repeated)
+- Investigated extension/popup/index.html: 608 lines instead of ~38
+- Found 16 <!DOCTYPE html> declarations in one file
+- Found corrupted version strings: "v19321.9.48.0", "v19321.9.46.0",
+  "v19321.9.45.0", "v19321.9.44.0" -- garbage "1932" prefix before
+  each version (likely leftover from an even older v1.9.32.0 that
+  partial-sed kept merging into newer bumps)
+- Root cause: version-sync.sh is read-only checker; AI agents do
+  manual sed bumps. Some past session used a regex that matched
+  "<div class=\"subtitle\">v[0-9.]*" (no closing tag) and replaced
+  only that prefix, leaving old </div> + old <!DOCTYPE html>... in
+  place. Each subsequent bump added another layer.
+- Fix: rewrote popup/index.html from scratch as single clean 38-line
+  file with v1.9.48.0 in subtitle div.
+- Verified: version-sync.sh PASSED (all 5 sources = 1.9.48.0)
+- Tests: 349/349 pass
+- Lint: 0 errors, 22 pre-existing warnings (no new)
+- Build: v1.9.48.0 OK (dist/content.js 704.7kb, page-world.js 8.2kb,
+  background/index.js 10.3kb)
+
+Stage Summary:
+- popup/index.html: 608 lines -> 38 lines, 16 DOCTYPEs -> 1
+- All acceptance criteria met:
+  [x] Popup renders single clean UI in Chrome
+  [x] Version display: "v1.9.48.0" (no garbage prefix)
+  [x] version-sync.sh PASSED
+  [x] Tests 349/349, lint 0 errors, build OK
+- Prevention: after any version bump, verify popup/index.html is
+  ~38 lines (wc -l). If >50 lines, the bump script is broken.
