@@ -1218,7 +1218,7 @@
       "id": "F-CR-02",
       "name": "AI cover letter generation",
       "tab": "Engine",
-      "status": "Stub",
+      "status": "Works",
       "priority": "P1",
       "depends_on": [
         "F-ST-03"

@@ -56,6 +56,7 @@ export function getNegotiationsSection() {
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;flex-wrap:wrap;">
               <label for="cover-letter-text" style="font-size:11px;font-weight:500;">Шаблон сопроводительного</label>
               <div style="display:flex;align-items:center;gap:4px;">
+                <button id="cover-letter-ai-btn" type="button" aria-label="Сгенерировать сопроводительное с AI" style="font-size:11px;padding:3px 10px;background:#7c3aed;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:500;">Сгенерировать с AI</button>
                 <span style="font-size:11px;color:#52525b;">Тон:</span>
                 <select id="s-letter-tone" aria-label="Тон сопроводительного письма" style="font-size:11px;padding:3px 6px;border:1px solid #e4e4e7;border-radius:6px;background:#fff;">
                   <option value="formal">Формальный</option>

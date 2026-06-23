@@ -20,6 +20,7 @@
  */
 
 import { refs } from '../state.js';
+import { panelState } from '../state.js';
 import {
   getCoverLetterConfig,
   setCoverLetterTemplate,
@@ -151,7 +152,71 @@ export function bindLetterToneHandler(container, opts) {
 }
 
 /**
- * Convenience: bind both template save + tone change handlers.
+ * Bind AI button click handler (F-CR-02).
+ * Calls background AI_GENERATE_COVER_LETTER -> fills textarea on success.
+ * @param {Object} [opts] -- { toastImpl } for tests
+ */
+export function bindCoverLetterAIBtn(opts) {
+  const sr = refs.shadowRoot;
+  if (!sr) return;
+  const btn = sr.getElementById('cover-letter-ai-btn');
+  if (!btn) return;
+
+  const toast = (opts && opts.toastImpl) || ((msg) => {
+    // Best-effort: log to console if no toast UI available
+    try { console.log('[CoverLetterAI]', msg); } catch (_e) { /* ignore */ }
+  });
+
+  btn.addEventListener('click', async () => {
+    // Pick vacancy from page global or first in list
+    const vacancy = (typeof window !== 'undefined' && window.__hhVacDetail) ||
+                    (panelState.vacancies && panelState.vacancies[0]) ||
+                    null;
+    const resume = panelState.resume || null;
+    if (!vacancy || !resume) {
+      toast('Нужно активное резюме + вакансия');
+      return;
+    }
+
+    // Current tone from select
+    const toneEl = sr.getElementById('s-letter-tone');
+    const tone = toneEl ? validateTone(toneEl.value) : 'formal';
+
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = 'Генерация...';
+
+    try {
+      const result = await chrome.runtime.sendMessage({
+        type: 'ai-cover-letter',
+        vacancy, resume,
+        opts: { tone },
+      });
+
+      if (result && result.ok) {
+        const ta = sr.getElementById('cover-letter-text');
+        if (ta) {
+          ta.value = result.text;
+          // Trigger debounced save (input event)
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        toast('Письмо сгенерировано' + (result.warnings && result.warnings.length > 0 ? ' (' + result.warnings.length + ' warnings)' : ''));
+      } else {
+        const code = (result && result.code) || 'unknown';
+        const err = (result && result.error) || '';
+        toast('AI error: ' + code + (err ? ' - ' + err : ''));
+      }
+    } catch (e) {
+      toast('AI error: ' + (e.message || String(e)));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  });
+}
+
+/**
+ * Convenience: bind both template save + tone change handlers + AI button.
  * Called once from panel/events.js bindAllEvents().
  * @param {Element} container
  * @param {Object} [opts]
@@ -159,6 +224,7 @@ export function bindLetterToneHandler(container, opts) {
 export function bindCoverLetterEvents(container, opts) {
   bindCoverLetterTemplateSave(opts);
   bindLetterToneHandler(container, opts);
+  bindCoverLetterAIBtn(opts);
 }
 
 /** Exported for tests. */

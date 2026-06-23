@@ -233,34 +233,16 @@ describe('F4.2 -- sendMessage error paths', () => {
   });
 });
 
-describe('F4.2 -- generateCoverLetterAI', () => {
-  it('returns text on success', async () => {
-    const fetchImpl = makeOkFetch('I am excited about this role.');
-    const res = await generateCoverLetterAI(
-      { title: 'Frontend Dev', company: 'Acme', description: 'React work', skills: ['React', 'TS'] },
-      { name: 'Ivan', position: 'Dev', skills: [{ name: 'React' }, 'TS'], experience: '5 years' },
-      { tone: 'enthusiastic', fetchImpl }
-    );
-    expect(res.ok).toBe(true);
-    expect(res.text).toBe('I am excited about this role.');
-  });
+describe('F4.2 -- generateCoverLetterAI (delegates to orchestrator)', () => {
+  // v1.9.50.0 (F-CR-02): generateCoverLetterAI now delegates to
+  // lib/cover-letter-ai.js orchestrator. Full pipeline tests are in
+  // tests/cover-letter-ai.test.js. This file keeps a sanity-check that
+  // the wrapper passes args through.
 
-  it('returns BAD_INPUT when vacancy is null', async () => {
+  it('returns BAD_INPUT when vacancy is null (orchestrator guard)', async () => {
     const res = await generateCoverLetterAI(null, {}, { fetchImpl: makeOkFetch('x') });
     expect(res.ok).toBe(false);
     expect(res.code).toBe('BAD_INPUT');
-  });
-
-  it('forwards tone into system prompt', async () => {
-    const fetchImpl = makeOkFetch('letter');
-    await generateCoverLetterAI(
-      { title: 'T', company: 'C' },
-      { name: 'N', position: 'P' },
-      { tone: 'concise', fetchImpl }
-    );
-    const [, opts] = fetchImpl.mock.calls[0];
-    const body = JSON.parse(opts.body);
-    expect(body.messages[0].content).toContain('concise');
   });
 });
 

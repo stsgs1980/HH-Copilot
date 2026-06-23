@@ -149,49 +149,20 @@ export async function sendMessage(params) {
 
 /**
  * Generate a cover letter via AI based on vacancy + resume context.
- * @param {Object} vacancy -- { title, company, description, skills }
+ *
+ * v1.9.50.0 (F-CR-02): Replaced primitive prompt with structured pipeline
+ * (scorecard -> evidence -> prompt -> AI -> validate -> tone).
+ * Delegates to ../lib/cover-letter-ai.js orchestrator.
+ *
+ * @param {Object} vacancy -- { title, company, description, keySkills }
  * @param {Object} resume -- { name, position, skills, experience }
- * @param {Object} [opts] -- { tone }
+ * @param {Object} [opts] -- { tone, fetchImpl }
+ * @returns {Promise<{ ok: boolean, text?: string, method?: string, warnings?: string[], error?: string, code?: string }>}
  */
 export async function generateCoverLetterAI(vacancy, resume, opts) {
-  if (!vacancy || !resume) {
-    return { ok: false, error: 'vacancy and resume are required', code: 'BAD_INPUT' };
-  }
-  const tone = (opts && opts.tone) || 'formal';
-  const toneDesc = {
-    formal: 'formal and respectful',
-    friendly: 'friendly and warm',
-    concise: 'concise and to the point',
-    enthusiastic: 'enthusiastic and motivated',
-  }[tone] || 'formal';
-
-  const sys = 'You are an expert cover letter writer for the hh.ru job platform. ' +
-    'Write in Russian. Tone: ' + toneDesc + '. ' +
-    'Max 2500 chars. Body only, no greeting/sign-off headers.';
-
-  const user = 'Vacancy:\n' +
-    'Title: ' + (vacancy.title || 'N/A') + '\n' +
-    'Company: ' + (vacancy.company || 'N/A') + '\n' +
-    'Description: ' + ((vacancy.description || '').slice(0, 800)) + '\n' +
-    'Required skills: ' + ((vacancy.skills || []).join(', ')) + '\n\n' +
-    'Candidate resume:\n' +
-    'Name: ' + (resume.name || 'N/A') + '\n' +
-    'Position: ' + (resume.position || 'N/A') + '\n' +
-    'Skills: ' + ((resume.skills || []).map(s => typeof s === 'string' ? s : (s.name || '')).join(', ')) + '\n' +
-    'Experience: ' + ((resume.experience || '').slice(0, 400)) + '\n\n' +
-    'Write a cover letter body highlighting matching skills and motivation.';
-
-  const result = await sendMessage({
-    messages: [
-      { role: 'assistant', content: sys },
-      { role: 'user', content: user },
-    ],
-    temperature: 0.7,
-    fetchImpl: opts && opts.fetchImpl,
-  });
-
-  if (!result.ok) return result;
-  return { ok: true, text: result.text };
+  // Lazy import to avoid circular dep at module load
+  const { generateAICoverLetter } = await import('../lib/cover-letter-ai.js');
+  return generateAICoverLetter(vacancy, resume, opts);
 }
 
 /**

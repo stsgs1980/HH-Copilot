@@ -3517,3 +3517,52 @@ Stage Summary:
 - Real message preview deferred to F4.5 (requires live hh.ru chatik DOM
   research in a separate session).
 - Version bumped 1.9.48.0 -> 1.9.49.0 (Rule 9.2, before feat commit).
+
+---
+Task ID: F-CR-02
+Agent: ZCode session 2026-06-24
+Task: AI cover letter generation (Scorecard -> Evidence -> Projection pipeline)
+
+Work Log:
+- Read existing cover-letter infrastructure (generator, rich, tone, storage, ai-service)
+- Read interview-designer skill: Scorecard (Smart) + Forensic Scan + Future
+  Simulation (Adler) + De-bias (Kahneman). Reverse-applied to candidate side.
+- Read humanizer skill: 24 AI writing patterns. Selected 11 most relevant
+  for Russian cover letters (inflated symbolism, AI vocabulary, negative
+  parallelism, verbal noun filler, rule of three, em dash, generic
+  conclusions, filler, boldface, inline-header lists, sycophantic).
+- Wrote spec: docs/specs/2026-06-24-f-cr-02-ai-cover-letter.md
+- Wrote plan: docs/plans/2026-06-24-f-cr-02-ai-cover-letter.md
+- TDD Phase A (4 pure-logic modules):
+  * cover-letter-scorecard.js (80 lines) + 7 tests
+  * cover-letter-evidence.js (150 lines) + 9 tests
+  * cover-letter-prompt.js (75 lines) + 7 tests
+  * cover-letter-validator.js (165 lines) + 14 tests (incl 7 AI pattern)
+- TDD Phase B (orchestrator):
+  * cover-letter-ai.js (90 lines) + 7 tests
+  * Replaced primitive generateCoverLetterAI in ai-service.js with delegating
+    wrapper (lazy import to avoid circular dep)
+  * Updated tests/ai-service.test.js: removed 3 obsolete impl-detail tests,
+    kept 1 BAD_INPUT sanity-check
+- Phase C (UI wiring):
+  * Added "Сгенерировать с AI" button to negotiations tab HTML (purple #7c3aed)
+  * Added bindCoverLetterAIBtn handler in cover-letter-events.js
+  * Calls background 'ai-cover-letter' message, fills textarea on success
+  * Disables button during request, restores on completion
+- Phase D (docs + version):
+  * cascade/state.json: F-CR-02 status Stub -> Works
+  * Version bump 1.9.49.0 -> 1.9.50.0 in 5 files (manifest, package.json,
+    version.js, popup/index.html, README.md)
+  * README: 364 -> 406 tests, 19 -> 24 files, F-CR-02 features described
+
+Stage Summary:
+- 5 new lib files (~560 lines total):
+  scorecard, evidence, prompt, validator, ai orchestrator
+- 5 new test files (~44 tests, 364 -> 406 total)
+- 1 UI button + handler added (cover-letter-ai-btn)
+- 1 modified module (ai-service.js generateCoverLetterAI delegates to orchestrator)
+- Anti-hallucination: LLM never sees raw resume text, only curated evidence
+  map. Validator flags unverified skills/numbers + 11 AI patterns. Boldface
+  auto-stripped, others warned in logs.
+- F-CR-02 status: Stub -> Works
+- Version: 1.9.49.0 -> 1.9.50.0
