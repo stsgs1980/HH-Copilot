@@ -3429,3 +3429,39 @@ Stage Summary:
   [x] Tests 349/349, lint 0 errors, build OK
 - Prevention: after any version bump, verify popup/index.html is
   ~38 lines (wc -l). If >50 lines, the bump script is broken.
+
+---
+Task ID: F5.6-tone-swap
+Agent: main
+Time: 2026-06-24T00:15:00+03:00
+Task: Smart tone-template swap on tone change (UX fix)
+
+Work Log:
+- User reported: switching tone in #s-letter-tone select does NOT change
+  the cover-letter textarea content. By design F3.2, tone only affects
+  AI generation via applyTone(); the textarea is the user's template.
+- This is technically correct but confusing UX. User expects visible
+  feedback when changing tone.
+- Added smart swap logic to bindLetterToneHandler in
+  extension/src/ui/panel/cover-letter-events.js:
+  - On tone change, if current textarea value EXACTLY matches one of
+    the 4 default templates (formal/friendly/concise/enthusiastic),
+    swap it to the default template for the newly selected tone.
+  - If user has manually edited the template (no match), leave it
+    untouched -- tone only affects AI generation in that case.
+  - The swapped template is also persisted to storage.
+- Added 2 new tests in tests/cover-letter-events.test.js:
+  - "smart-swap: swaps textarea to tone default when current matches a default"
+  - "smart-swap: does NOT swap when user has edited template"
+- Tests: 351/351 pass (was 349, +2 new)
+- Lint: 0 errors, 22 pre-existing warnings
+- Build: v1.9.48.0 OK
+
+Stage Summary:
+- Tone select now has visible effect when template is unedited
+- Custom user templates are preserved (no destructive overwrite)
+- Acceptance criteria met:
+  [x] Changing tone visibly changes the template (for default templates)
+  [x] User-edited templates are not overwritten
+  [x] Tone is still saved to storage (immediate on change)
+  [x] Swapped template is also saved to storage

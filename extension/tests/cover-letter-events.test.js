@@ -235,6 +235,62 @@ describe('F5.6 -- bindLetterToneHandler', () => {
     bindLetterToneHandler(container, { storageImpl: makeStorageStub() });
     expect(true).toBe(true);
   });
+
+  it('smart-swap: swaps textarea to tone default when current matches a default', async () => {
+    const storage = makeStorageStub();
+    const container = document.createElement('div');
+    // Use the EXACT formal default template from cover-letter-tone.js
+    const { _internal: TONE_INTERNAL } = await import('../src/lib/cover-letter-tone.js');
+    const formalDefault = TONE_INTERNAL.TEMPLATES.formal;
+    container.innerHTML = `
+      <textarea id="cover-letter-text">${formalDefault}</textarea>
+      <select id="s-letter-tone">
+        <option value="formal">formal</option>
+        <option value="friendly">friendly</option>
+        <option value="concise">concise</option>
+        <option value="enthusiastic">enthusiastic</option>
+      </select>
+    `;
+    bindLetterToneHandler(container, { storageImpl: storage });
+
+    const sel = container.querySelector('#s-letter-tone');
+    const ta = container.querySelector('#cover-letter-text');
+    sel.value = 'friendly';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await new Promise(r => setTimeout(r, 5));
+    // Tone saved
+    expect(storage._state.settings.letterTone).toBe('friendly');
+    // Textarea swapped to friendly default
+    expect(ta.value).toBe(TONE_INTERNAL.TEMPLATES.friendly);
+    // Template also persisted to storage
+    expect(storage._state.settings.coverLetterTemplate).toBe(TONE_INTERNAL.TEMPLATES.friendly);
+  });
+
+  it('smart-swap: does NOT swap when user has edited template', async () => {
+    const storage = makeStorageStub();
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <textarea id="cover-letter-text">My custom text that does not match any default</textarea>
+      <select id="s-letter-tone">
+        <option value="formal">formal</option>
+        <option value="concise">concise</option>
+      </select>
+    `;
+    bindLetterToneHandler(container, { storageImpl: storage });
+
+    const sel = container.querySelector('#s-letter-tone');
+    const ta = container.querySelector('#cover-letter-text');
+    sel.value = 'concise';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await new Promise(r => setTimeout(r, 5));
+    expect(storage._state.settings.letterTone).toBe('concise');
+    // Textarea unchanged
+    expect(ta.value).toBe('My custom text that does not match any default');
+    // Template NOT persisted (no swap)
+    expect(storage._state.settings.coverLetterTemplate).toBe('');
+  });
 });
 
 // ===============================================

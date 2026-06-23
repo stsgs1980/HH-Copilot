@@ -25,7 +25,7 @@ import {
   setCoverLetterTemplate,
   setLetterTone,
 } from '../../lib/cover-letter-storage.js';
-import { TONES, validateTone } from '../../lib/cover-letter-tone.js';
+import { TONES, validateTone, getTemplateForTone, _internal as TONE_INTERNAL } from '../../lib/cover-letter-tone.js';
 
 const DEBOUNCE_MS = 500;
 
@@ -121,6 +121,27 @@ export function bindLetterToneHandler(container, opts) {
     const tone = validateTone(toneEl.value);
     // Reflect validated value back to DOM
     toneEl.value = tone;
+
+    // Smart template swap: if the current textarea value matches one of the
+    // 4 default templates (i.e., user has NOT manually edited it), swap it to
+    // the default template for the newly selected tone. If user has edited
+    // the template, leave it alone -- tone only affects AI generation then.
+    const tmplEl = container.querySelector('#cover-letter-text') || (refs.shadowRoot && refs.shadowRoot.getElementById('cover-letter-text'));
+    if (tmplEl) {
+      const currentText = tmplEl.value.trim();
+      const allDefaults = Object.values(TONE_INTERNAL.TEMPLATES).map(t => t.trim());
+      if (allDefaults.includes(currentText)) {
+        const newTemplate = getTemplateForTone(tone);
+        tmplEl.value = newTemplate;
+        // Persist the swapped template too
+        if (storage) {
+          storage.setCoverLetterTemplate(newTemplate).catch(() => {});
+        } else {
+          setCoverLetterTemplate(newTemplate).catch(() => {});
+        }
+      }
+    }
+
     if (storage) {
       storage.setLetterTone(tone).catch(() => {});
     } else {
