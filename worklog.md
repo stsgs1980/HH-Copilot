@@ -4073,3 +4073,56 @@ Stage Summary:
 - Ошибка признана
 - FabInspector не будет упоминаться как вариант для HH-Copilot
 - Сделан vanilla-JS микро-инспектор внутри HH-Copilot (Task dom-inspector-001)
+
+---
+Task ID: v1.9.61.0-unicode-cleanup
+Agent: main
+Time: 2026-06-24T18:05:00+03:00
+Task: Replace all emoji in production UI with inline SVG + add ESLint to pre-commit hook
+
+Work Log:
+- User caught that v1.9.58.0-v1.9.60.0 commits contained emoji in production UI (violating UNICODE_POLICY v2.1 [C])
+- VLM (glm-4.6v) confirmed: emoji present in screenshot of v1.9.60.0 sidebar header
+- ESLint rule no-unicode-graphics was already configured as 'error' but pre-commit hook did NOT call ESLint -- that is why violations slipped through
+- Inventory of violations:
+  - dom-inspector.js: 6 emoji in strings (search, clipboard, map-pin, refresh, close) + 3 em dash
+  - shell.js: search emoji in header button
+  - vacancies.js: clipboard + trash emoji in log buttons
+  - cover-letter-events.js: em dash, guillemets, check mark, arrows in toast messages
+  - settings.js: en dash in AI timeout hint
+  - vacancy-fetch-text.js: 258 lines (Rule 12 [C] hard cap 250)
+  - cover-letter-events.js: 348 lines (Rule 12 [C] hard cap 250)
+  - ai-btn-logger.js: 4 unused eslint-disable directives
+- Refactoring:
+  - Split dom-inspector.js (497 lines) -> 3 files: dom-inspector.js (190), dom-inspector-panel.js (228), dom-inspector-report.js (97)
+  - Split cover-letter-events.js (348 lines) -> 2 files: cover-letter-events.js (159), cover-letter-ai-events.js (204)
+  - Split vacancy-fetch-text.js (258 lines) -> 2 files: vacancy-fetch-text.js (203), vacancy-fetch-text-helpers.js (69)
+- Replaced ALL emoji in production UI with inline Lucide-style SVG:
+  - search: <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  - clipboard: <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+  - map-pin: <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+  - refresh-cw: <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+  - x (close): <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  - trash-2: <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+- Replaced em dash (U+2014) with "--" in string literals (cover-letter-events.js, settings.js)
+- Replaced guillemets (U+00AB/BB) with "<<" ">>" in toast messages
+- Replaced check mark (U+2713) with "(ok)" text
+- Replaced arrows (U+2192) with "->" in user-facing strings
+- Used \u2014 escape in vacancy-fetch-text-helpers.js regex (source-level, ESLint-clean)
+- Removed 4 unused eslint-disable-next-line no-console directives from ai-btn-logger.js
+- Added Phase 4.5 to .git/hooks/pre-commit: runs `npx eslint src/ background/ tests/` and blocks commit on any error
+  - Bypass via LINT_BYPASS=1 env var or [no-lint] in commit message (escape hatch for emergencies)
+- Verification:
+  - npx eslint src/: 0 errors, 30 warnings (all [W] level, files 200-250 lines)
+  - npm test: 481/481 tests passed (25 test files)
+  - npm run build: dist/content.js 748.4kb, background 88.6kb, page-world 8.2kb
+  - rg for prohibited Unicode in src/: only em dash remains in COMMENTS (not string literals), which is [W] level and not lint-blocked
+- Version: 1.9.60.0 -> 1.9.61.0 (manifest.json, package.json, src/lib/version.js)
+
+Stage Summary:
+- 5 new files: dom-inspector.js (rewritten), dom-inspector-panel.js, dom-inspector-report.js, cover-letter-ai-events.js, vacancy-fetch-text-helpers.js
+- 5 modified files: shell.js, vacancies.js, settings.js, cover-letter-events.js, vacancy-fetch-text.js, ai-btn-logger.js
+- 1 modified hook: .git/hooks/pre-commit (added Phase 4.5 ESLint)
+- ZERO emoji remain in production UI strings
+- ESLint now runs on every commit -- future violations blocked automatically
+- 481 tests green, build green, lint:ci green (0 errors)

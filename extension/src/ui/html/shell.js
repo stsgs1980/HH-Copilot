@@ -92,8 +92,8 @@ function getHeaderHTML(userName) {
       </div>
       <button class="hh-tour-help" data-action="start-tour" title="Гид по расширению" aria-label="Открыть гид по расширению">?</button>
       <button id="hh-ar-inspector-toggle" class="har-close-btn" data-action="toggle-inspector" title="DOM Inspector: выделить элемент на hh.ru" aria-label="Включить DOM Inspector" aria-pressed="false"
-        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;font-size:14px;line-height:1;">
-        🔍
+        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">

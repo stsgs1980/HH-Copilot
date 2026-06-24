@@ -94,7 +94,6 @@ export function aiBtnLog(step, data) {
     if (typeof window.__hhCopilotAIBtnDump !== 'function') {
       window.__hhCopilotAIBtnDump = () => {
         const lines = (window.__hhCopilotAIBtnLog || []).map(formatEntry);
-        // eslint-disable-next-line no-console
         console.log(lines.join('\n'));
         return lines.join('\n');
       };
@@ -103,7 +102,6 @@ export function aiBtnLog(step, data) {
       window.__hhCopilotAIBtnClear = () => {
         window.__hhCopilotAIBtnLog = [];
         logBuffer.length = 0;
-        // eslint-disable-next-line no-console
         console.log('[AI-BTN] log cleared');
       };
     }
@@ -111,7 +109,6 @@ export function aiBtnLog(step, data) {
 
   // 3. Console (always)
   try {
-    // eslint-disable-next-line no-console
     console.log(formatEntry(entry));
   } catch (_e) { /* ignore */ }
 
@@ -150,7 +147,6 @@ export function clearAiBtnLog() {
     window.__hhCopilotAIBtnLog.length = 0;
   }
   try {
-    // eslint-disable-next-line no-console
     console.log('[AI-BTN] log cleared');
   } catch (_e) { /* ignore */ }
 }
