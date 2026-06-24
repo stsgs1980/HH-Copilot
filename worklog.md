@@ -4407,3 +4407,32 @@ Stage Summary:
   - User's brain / password manager (where it should be)
 - Next session: if push fails with 401, user needs to re-supply PAT (re-prime cache)
 - Lesson: when user says "сделать как надо уже", DO IT. No either/or questions.
+
+---
+Task ID: v1.9.63.0-handoff-update-credential
+Agent: main
+Time: 2026-06-25T20:22:00+03:00
+Task: Update handoff doc to reflect credential.helper cache (not SSH) setup
+
+Work Log:
+- Handoff originally said "switch to SSH" -- wrong, we use credential.helper cache
+- Edited sections:
+  - Session Metadata: last commit b77c24c, session duration 3.5h, updated timestamp
+  - Recent Commits: added b77c24c, 86f1b92; dropped 1841c27, 9ab52fe
+  - Current State Summary: "pushed to GitHub (origin/main at b77c24c)" + credential cache note
+  - Immediate Next Steps #1: struck through SSH switch, pointed to new "Git credential setup (current)" section
+  - NEW section "Git credential setup (current)":
+    * .git/config snapshot (no tokens)
+    * Re-priming command (full bash snippet with PAT extraction)
+    * Why not SSH (openssh-client missing, no root)
+    * Why not credential.helper store (plaintext on disk)
+    * Push workflow (with submodule unstage reminder)
+  - Blockers/Open Questions: 24h TTL warning + F5.2 scope audit
+  - Important Context #4: replaced "remote URL trick" with credential cache summary
+  - Resume Checklist #3,4: updated to b77c24c + plain HTTPS remote
+- Validation: READY for handoff, no secrets detected
+
+Stage Summary:
+- Handoff doc now accurately reflects repo state (b77c24c, clean .git/config)
+- Next session can re-prime credential cache from worklog/handoff instructions
+- One warning: validator can't resolve "panel/index.js" relative path (cosmetic, full path in Critical Files table)
