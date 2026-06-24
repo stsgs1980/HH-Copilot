@@ -463,62 +463,28 @@ export function isInspectorActive() {
 }
 
 /**
- * Create the 🔍 FAB button. Place it to the LEFT of the main FAB.
- * @param {Object} [opts]
+ * Toggle inspector from an external button (e.g. header 🔍 button).
+ * @param {HTMLButtonElement} [btn] -- optional button to update visual state
+ * @returns {boolean} -- true if inspector is now active
  */
-export function createInspectorFab(opts) {
-  if (inspectorState.fabEl) return inspectorState.fabEl;
-
-  const fab = document.createElement('div');
-  fab.id = 'hh-ar-inspector-fab';
-  fab.setAttribute('role', 'button');
-  fab.setAttribute('aria-label', 'DOM Inspector: выделить элемент');
-  fab.setAttribute('tabindex', '0');
-  fab.setAttribute('title', 'DOM Inspector — кликни чтобы включить');
-
-  imp(fab, 'position', 'fixed');
-  imp(fab, 'bottom', '80px');
-  imp(fab, 'right', '88px'); // 24 + 56 + 8 = to the left of main FAB
-  imp(fab, 'width', '40px');
-  imp(fab, 'height', '40px');
-  imp(fab, 'border-radius', '50%');
-  imp(fab, 'cursor', 'pointer');
-  imp(fab, 'z-index', '999999');
-  imp(fab, 'display', 'flex');
-  imp(fab, 'align-items', 'center');
-  imp(fab, 'justify-content', 'center');
-  imp(fab, 'background', '#1f2937');
-  imp(fab, 'color', '#fff');
-  imp(fab, 'box-shadow', '0 4px 12px rgba(0,0,0,0.25)');
-  imp(fab, 'transition', 'all 0.2s');
-  fab.innerHTML = '<span style="font-size:18px;line-height:1;">🔍</span>';
-
-  fab.addEventListener('mouseenter', () => {
-    fab.style.setProperty('transform', 'scale(1.1)', 'important');
-  });
-  fab.addEventListener('mouseleave', () => {
-    fab.style.setProperty('transform', 'scale(1)', 'important');
-  });
-  fab.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (inspectorState.active) {
-      stopInspector();
-    } else {
-      startInspector();
+export function toggleInspector(btn) {
+  if (inspectorState.active) {
+    stopInspector();
+    if (btn) {
+      btn.setAttribute('aria-pressed', 'false');
+      btn.style.background = 'transparent';
+      btn.style.color = '#52525b';
     }
-  });
-  fab.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (inspectorState.active) stopInspector();
-      else startInspector();
+    return false;
+  } else {
+    startInspector();
+    if (btn) {
+      btn.setAttribute('aria-pressed', 'true');
+      btn.style.background = '#7c3aed';
+      btn.style.color = '#fff';
     }
-  });
-
-  document.body.appendChild(fab);
-  inspectorState.fabEl = fab;
-  return fab;
+    return true;
+  }
 }
 
 /** Exports for tests. */

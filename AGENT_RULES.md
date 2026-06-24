@@ -440,6 +440,14 @@ Do NOT update versions manually in individual files.
 Manual updates cause version drift -- one file gets updated,
 another is forgotten. ahg bump eliminates this class of errors.
 
+**MANDATORY**: Every code change -- even a single line, even a CSS tweak,
+even a typo fix -- MUST bump the version. The user must ALWAYS be able to
+answer "which version am I running?" by looking at one number.
+No bump = no commit. Version sources that must stay in sync:
+  - extension/manifest.json
+  - extension/package.json
+  - extension/src/lib/version.js
+
 <!-- ID: RULE-014 | ver:1.1 | Level: C | Related: RULE-002, RULE-004, TOOL-VERIFY -->
 ## Rule 14 [C]: Pre-commit mandatory checklist
 

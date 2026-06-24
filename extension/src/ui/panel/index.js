@@ -16,7 +16,7 @@ export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
 import { createFab, updateFabIcon } from '../fab.js';
-import { createInspectorFab } from '../dom-inspector.js';
+import { toggleInspector } from '../dom-inspector.js';
 import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
@@ -157,10 +157,19 @@ export function setStatus(status) {
 
 export function createPanel() {
   createFab(toggleSidebar);
-  createInspectorFab();
   createSidebar();
   setTimeout(updateAuthState, 1500);
   setInterval(updateAuthState, 5000);
+
+  // Bind inspector toggle button (in header, data-action="toggle-inspector")
+  // Use document-level delegated listener because sidebar is re-rendered on auth change
+  document.addEventListener('click', (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest('[data-action="toggle-inspector"]') : null;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleInspector(btn);
+  }, true);
 
   // Listen for match score updates (from vacancy detail re-score)
   window.addEventListener('hh-ar-match-updated', (e) => {

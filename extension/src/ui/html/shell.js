@@ -91,6 +91,10 @@ function getHeaderHTML(userName) {
         ${badgeLabel}
       </div>
       <button class="hh-tour-help" data-action="start-tour" title="Гид по расширению" aria-label="Открыть гид по расширению">?</button>
+      <button id="hh-ar-inspector-toggle" class="har-close-btn" data-action="toggle-inspector" title="DOM Inspector: выделить элемент на hh.ru" aria-label="Включить DOM Inspector" aria-pressed="false"
+        style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;font-size:14px;line-height:1;">
+        🔍
+      </button>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
         ${ICONS.close}

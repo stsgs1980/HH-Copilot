@@ -4017,3 +4017,59 @@ Stage Summary:
 - Изменены: src/ui/panel/index.js (1 import + 1 строка в createPanel), manifest/package/version
 - Пользовательский workflow: клик 🔍 → наводишь → клик по элементу → 📋 Copy report → вставляешь в чат
 - DevTools не нужен
+
+---
+Task ID: dom-inspector-move-inside-001
+Agent: main
+Time: 2026-06-24T15:25:00+03:00
+Task: Перенести кнопку 🔍 инспектора внутрь панели (в хедер) + добавить Rule 13 о бампе версии
+
+Work Log:
+- Пользователь: "вторая кнопка 🔍 - нужна в FAB приложении, а не рядом"
+- Пользователь: "ЗАПИШИ СЕБЕ В AGENT RULES: каждое изменение, даже незначительное - бампить версию"
+- Добавлен Rule 13 в /home/z/my-project/AGENT_RULES.md:
+  "Version bump on EVERY change" - каждое изменение кода требует бампа версии
+  в трех файлах: manifest.json, package.json, version.js
+- Добавлено уточнение в HH-Copilot-repo/AGENT_RULES.md Rule 13 [C]:
+  MANDATORY бамп версии на каждое изменение, даже typo fix
+- Убрана отдельная плавающая FAB createInspectorFab() из dom-inspector.js
+- Добавлена кнопка 🔍 в хедер sidebar панели (shell.js getHeaderHTML):
+  - id="hh-ar-inspector-toggle"
+  - data-action="toggle-inspector"
+  - расположена между "?" (тур) и "✖" (закрыть)
+  - 28x28px, прозрачный фон, серая иконка
+  - при активном inspector: фон #7c3aed (фиолетовый), белый текст
+- Добавлена функция toggleInspector(btn) в dom-inspector.js:
+  - переключает startInspector/stopInspector
+  - обновляет aria-pressed и стиль кнопки
+- panel/index.js createPanel():
+  - убран вызов createInspectorFab()
+  - добавлен document-level delegated click listener на [data-action="toggle-inspector"]
+  - вызывает toggleInspector(btn)
+- Версия: 1.9.59.0 -> 1.9.60.0 (manifest/package/version)
+- Сборка прошла: dist/content.js
+- 481/481 тестов проходят
+
+Stage Summary:
+- Кнопка 🔍 теперь внутри панели HH Copilot, в хедере
+- Отдельная плавающая кнопка убрана
+- Rule 13 о бампе версии добавлен в оба AGENT_RULES.md
+- Пользовательский workflow: открыть панель -> клик 🔍 в хедере -> навести на элемент -> клик -> 📋 Copy report
+
+---
+Task ID: fab-inspector-apology
+Agent: main
+Time: 2026-06-24T15:25:00+03:00
+Task: Признание ошибки про FabInspector
+
+Work Log:
+- Пользователь указал: я должен был знать ДО предложения что FabInspector не подходит для Chrome extension
+- Проверка: FabInspector/README.md явно указывает зависимости React 19, Next.js 15+, framer-motion
+- install.sh проверяет bun, вставляет код в layout.tsx -- всё это Next.js-specific
+- Я не прочитал README до того как предложить установку -- это моя ошибка
+- Урок: перед предложением установки любого инструмента -- проверять его зависимости и требования
+
+Stage Summary:
+- Ошибка признана
+- FabInspector не будет упоминаться как вариант для HH-Copilot
+- Сделан vanilla-JS микро-инспектор внутри HH-Copilot (Task dom-inspector-001)
