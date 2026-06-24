@@ -3793,3 +3793,24 @@ Stage Summary:
 - Cover letter editor now lives in Vacancies tab next to match score (user's primary workflow).
 - FabInspector submodule added for reference (cannot run as-is in Chrome Extension).
 - All 471 tests passing, build clean, ready to commit + push as v1.9.55.0.
+
+---
+Task ID: 2
+Agent: main
+Task: Add OpenCode integration — opencode.json + AGENTS.md entry point
+
+Work Log:
+- Created opencode.json at repo root: configures opencode/deepseek-v4-flash-free as default model (1M context window, zero cost via OpenCode Zen free tier). Also defines small_model + provider block.
+- Created AGENTS.md at repo root: OpenCode auto-reads this at session start. Contains:
+  - STEP 0 mandatory reading list (AGENT_RULES.md, worklog.md, README.md, cascade-state.json, git log, git status)
+  - Project at a glance (Chrome Extension MV3, vanilla JS, esbuild, vitest)
+  - Critical rules summary (versioning 9.1/9.2/9.4, Windows user PowerShell, docs English / chat Russian, worklog format, read-before-write, no-loops, pre-commit hooks)
+  - OpenCode-specific notes (model, context window, when to switch to Pro)
+  - Directory layout (extension/, FabInspector/, anti-hallucination-guard/)
+  - Recent context v1.9.55.0 (NO_EVIDENCE fix, cover-letter editor moved, FabInspector submodule)
+- No version bump — these are tooling/config files, not extension code.
+
+Stage Summary:
+- Repo now has OpenCode entry point (AGENTS.md) and model config (opencode.json)
+- User on Windows can `git pull` and start OpenCode directly in repo root
+- After OpenCode opens: agent auto-reads AGENTS.md → knows all rules from AGENT_RULES.md → no need to re-explain versioning/worklog/Windows rules
