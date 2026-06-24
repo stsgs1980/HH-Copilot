@@ -137,9 +137,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'ai-cover-letter':
+      // eslint-disable-next-line no-console
+      console.log('[AI-BTN][bg] ai-cover-letter received', {
+        vacancyId: message.vacancy && message.vacancy.id,
+        vacancyTitle: message.vacancy && message.vacancy.title,
+        resumeId: message.resume && message.resume.id,
+        opts: message.opts,
+      });
       generateCoverLetterAI(message.vacancy, message.resume, message.opts || {})
-        .then(sendResponse)
-        .catch((e) => sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' }));
+        .then((result) => {
+          // eslint-disable-next-line no-console
+          console.log('[AI-BTN][bg] ai-cover-letter done', {
+            ok: !!(result && result.ok),
+            code: result && result.code,
+            aiCode: result && result.aiCode,
+            textLen: result && result.text ? result.text.length : 0,
+            warningsCount: result && Array.isArray(result.warnings) ? result.warnings.length : 0,
+          });
+          sendResponse(result);
+        })
+        .catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error('[AI-BTN][bg] ai-cover-letter UNCAUGHT', e);
+          sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' });
+        });
       return true;
 
     case 'ai-chat-reply':

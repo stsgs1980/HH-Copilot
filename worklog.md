@@ -3900,3 +3900,51 @@ Stage Summary:
 - Gap 3-5 behavior pinned by tests (detection of future drift).
 - cover-letter-evidence.js decomposed for Rule 12; 3 focused single-responsibility modules.
 - Version 1.9.55.0 -> 1.9.56.0 (Rule 9.2, 5 files). NOT pushed (user to verify locally).
+
+---
+Task ID: ai-btn-logging-001
+Agent: main
+Time: 2026-06-24T14:46:00+03:00
+Task: Добавить подробное логирование AI-кнопки (F-CR-02)
+
+Work Log:
+- Пользователь: при клике на AI-кнопку "ничего не происходит", нет возможности диагностировать
+- Создан src/ui/panel/ai-btn-logger.js (160 строк) с тройным логированием:
+  1. console.log с префиксом [AI-BTN] (DevTools Console, F12)
+  2. window.__hhCopilotAIBtnLog (массив, доступен из DevTools)
+  3. chrome.storage.local.aiBtnLog (персистентный)
+- Хелперы на window: __hhCopilotAIBtnDump(), __hhCopilotAIBtnClear()
+- Обновлён cover-letter-events.js bindCoverLetterAIBtn — логирует каждый шаг:
+  click / ctx / reject-no-ctx / tone / btn-disabled / send-start / send-done /
+  resp-ok / textarea-updated / toast-success / resp-err / exception / btn-restored
+  + в finally — полный дампп лога в консоль одним блоком
+- В ошибочный тост добавлена инструкция: "F12 -> Console -> filter [AI-BTN] -> copy all lines."
+- Обновлён background/index.js case 'ai-cover-letter' — логирует [AI-BTN][bg]:
+  receipt, completion, UNCAUGHT exceptions
+- Версия: 1.9.56.0 → 1.9.57.0 (manifest.json, package.json, version.js)
+- Сборка прошла успешно: dist/content.js 725KB, background/index.js 88.6KB
+- Все 481 тестов прошли
+- ZIP упакован: download/hh-copilot-v1.9.57.0.zip (170KB)
+
+Stage Summary:
+- Новый файл: src/ui/panel/ai-btn-logger.js
+- Изменены: cover-letter-events.js, background/index.js, manifest.json, package.json, version.js
+- Лог покрывает всю цепочку: click → ctx → tone → sendMessage → background receipt → orchestrator → response → textarea → toast → button restore
+- При любой ошибке пользователь может F12 → filter [AI-BTN] → copy → отправить лог
+
+---
+Task ID: fab-inspector-clarification
+Agent: main
+Time: 2026-06-24T14:46:00+03:00
+Task: Ответ про FabInspector
+
+Work Log:
+- Пользователь спросил: "Fab Inspector установлен?"
+- Проверено: HH-Copilot-repo/FabInspector/ существует в репо, но это React/Next.js dev-инструмент
+- HH-Copilot — Chrome Extension (Manifest V3, esbuild, не React)
+- FabInspector НЕ применим к Chrome-расширениям, НЕ установлен, НЕ нужен
+- FabInspector/README.md явно указывает зависимости: framer-motion, react-syntax-highlighter, next>=15, react>=19
+
+Stage Summary:
+- Fab Inspector не установлен и не нужен для HH-Copilot
+- Можно игнорировать эту папку в репо
