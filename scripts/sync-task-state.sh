@@ -81,7 +81,8 @@ IMPLEMENTED_TASKS=0
 NO_IMPL_FILES=0
 
 # Get all task IDs that have implementationFiles and are pending
-TASK_IDS=$(jq -r '.phases[].tasks[] | select(.implementationFiles != null and .implementationFiles | length > 0) | .id' "$STATE_PATH" 2>/dev/null || true)
+# Note: use `?` to handle null safely; check length only on arrays
+TASK_IDS=$(jq -r '.phases[].tasks[] | select((.implementationFiles // []) | type == "array" and length > 0) | .id' "$STATE_PATH" 2>/dev/null || true)
 
 if [ -z "$TASK_IDS" ]; then
   info "No tasks with implementationFiles found in $STATE_FILE"
@@ -104,6 +105,16 @@ for TASK_ID in $TASK_IDS; do
   # Skip already implemented/completed tasks
   if [ "$CURRENT_STATUS" = "implemented" ] || [ "$CURRENT_STATUS" = "completed" ] || [ "$CURRENT_STATUS" = "done" ]; then
     IMPLEMENTED_TASKS=$((IMPLEMENTED_TASKS + 1))
+    continue
+  fi
+
+  # Skip tasks explicitly marked as blocked/manual -- human must update them
+  # (auditNote with "NOT implemented" prevents auto-sync from incorrectly
+  # marking a task done just because a file exists)
+  HAS_BLOCK_NOTE=$(jq -r ".phases[].tasks[] | select(.id == \"$TASK_ID\") | (.auditNote // \"\") | test(\"NOT implemented|manual|blocked\"; \"i\")" "$STATE_PATH" 2>/dev/null || echo "false")
+  if [ "$HAS_BLOCK_NOTE" = "true" ]; then
+    info "$TASK_ID: skipped (auditNote blocks auto-sync: file exists but feature incomplete)"
+    PENDING_TASKS=$((PENDING_TASKS + 1))
     continue
   fi
 

@@ -4156,3 +4156,69 @@ Stage Summary:
 - ESLint Phase 4.5 in pre-commit hook will block future emoji in source code
 - No automated check for commit message emoji yet -- relies on developer discipline
 - Original history preserved at tag backup-pre-emoji-rewrite (rollback available)
+
+---
+Task ID: v1.9.62.0-cascade-state-cleanup
+Agent: main
+Time: 2026-06-25T16:55:00+03:00
+Task: Fix cascade-state.json corruption + sync-task-state.sh bug + update TASK-CASCADE.md
+
+Work Log:
+- User caught: "пока не наведем порядок, не допишешь нормальный cascade state, так и будем бегать по кругу"
+- Diagnostic: cascade-state.json in repo root was NOT HH-Copilot task cascade
+  - Was overwritten at some point with anti-hallucination-guard module dump
+  - Schema: {ahgVersion, previousCommit, currentCommit, items:[RULE-001..017, PROC-*, STD-ENV-*]}
+  - All 27 items were AHG rules, NOT HH-Copilot tasks (F0.1-F6.4)
+  - Last touched: 2026-06-16 in commit 569721e (F4.4 CAPTCHA)
+  - Referenced commits fa51233/0313d36 are from anti-hallucination-guard submodule, not HH-Copilot
+- Original HH-Copilot cascade-state.json was created in c94845b (2026-06-09) with 35 tasks
+  in 7 phases (P0-P6), schema: {_meta, phases:[{id, name, tasks:[{id, title, status, ...}]}]}
+- Restored original schema from c94845b via: git show c94845b:cascade-state.json > /tmp/cascade-original.json
+- Audited all 35 tasks against actual code state in extension/src/:
+  - F0.1-F0.9: all completed (esbuild, selectors, anti-hallucination, storage, timing,
+    rate-limiter, parsers, UI modules, main.js)
+  - F1.1-F1.6: all completed (vacancy-detail, negotiations parsers, salary/experience parsers)
+  - F2.1-F2.3: all completed (match-scorer modules, derive-skills, vacancies-match UI)
+  - F3.1-F3.4: all completed (apply-orchestrator, cover-letter-*, apply-queue)
+  - F4.1-F4.4: all completed (negotiations UI, ai-service, ai-reply, captcha-detector)
+  - F5.1: completed (6-tab panel)
+  - F5.2: PENDING -- settings.js exists but dark/light theme toggle NOT implemented
+  - F5.3-F5.5: completed (KPI dashboard, shimmer, match breakdown)
+  - F6.1-F6.3: completed (icons, docs, landing page)
+  - F6.4: PENDING -- Chrome Web Store preparation not started
+- Added implementationFiles[] array to each task with file paths relative to repo root
+- Added completedAt timestamp from git log (first commit touching implementationFiles[0])
+- Added auditNote field for tasks requiring human attention (F5.2)
+- Bug found in scripts/sync-task-state.sh line 84:
+  - Original jq: `.phases[].tasks[] | select(.implementationFiles != null and .implementationFiles | length > 0) | .id`
+  - When .implementationFiles is null, `null | length` throws "boolean has no length"
+  - jq operator `and` always evaluates both sides (no short-circuit)
+  - Script silently exited with "No tasks found" message -- corruption went unnoticed
+  - Fixed to: `select((.implementationFiles // []) | type == "array" and length > 0)`
+- Added auditNote guard in sync-task-state.sh:
+  - Tasks with auditNote matching /NOT implemented|manual|blocked/i are skipped
+  - Prevents auto-sync from marking F5.2 as implemented just because settings.js exists
+- Updated extension/docs/TASK-CASCADE.md:
+  - Document version 4.0.0 -> 5.0.0
+  - Date 2026-06-10 -> 2026-06-25
+  - Current extension version 1.9.31.0 -> 1.9.61.0
+  - Fixed typo "1.9.47.02074" -> "1.9.61.0"
+  - Added Changelog v4.0.0 -> v5.0.0 section documenting all changes
+- Version bump: 1.9.61.0 -> 1.9.62.0 (manifest.json, package.json, src/lib/version.js)
+- Verification:
+  - jq '.phases[] | .id, .name, ([.tasks[].status] | group_by(.) | map(...))' cascade-state.json
+    shows 33 completed, 2 pending (F5.2, F6.4)
+  - bash scripts/sync-task-state.sh --dry-run: 33 already implemented, F5.2 skipped
+    (auditNote guard), F6.4 skipped (no impl files), 0 auto-updated
+  - npm run lint:ci: 0 errors, 35 warnings (all [W] level)
+  - npm test: 481/481 tests passed (25 test files)
+
+Stage Summary:
+- cascade-state.json restored to proper HH-Copilot task schema (35 tasks, 7 phases)
+- 33/35 tasks marked completed with git-derived timestamps
+- 2 pending tasks explicitly documented (F5.2 dark/light theme, F6.4 Chrome Web Store)
+- sync-task-state.sh fixed: jq query handles null implementationFiles safely
+- sync-task-state.sh enhanced: auditNote guard prevents false-positive auto-completion
+- TASK-CASCADE.md synced with actual version (1.9.61.0) and cascade-state.json audit results
+- Version: 1.9.61.0 -> 1.9.62.0
+- All checks green: lint 0 errors, 481 tests, sync-task-state runs clean

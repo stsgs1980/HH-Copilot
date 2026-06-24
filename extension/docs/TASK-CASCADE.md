@@ -1,9 +1,26 @@
 # HH Copilot -- Task Cascade
 
-**Document version:** 4.0.0
-**Date:** 2026-06-10
+**Document version:** 5.0.0
+**Date:** 2026-06-25
 **Status:** Master planning document
-**Current extension version:** 1.9.31.0
+**Current extension version:** 1.9.61.0
+**Cascade-state sync:** `cascade-state.json` (root) -- 33/35 tasks completed, 2 pending
+
+---
+
+## Changelog v4.0.0 -> v5.0.0
+
+- Bumped current extension version from 1.9.31.0 (stale) to 1.9.61.0 (actual)
+- Audited all 35 tasks against actual code state in `extension/src/`
+- Marked 33 tasks as COMPLETED with `completedAt` timestamps from git log
+- F5.2 (dark/light theme) remains PENDING: settings.js exists but theme toggle NOT implemented
+- F6.4 (Chrome Web Store) remains PENDING: no implementation files yet
+- Fixed `cascade-state.json` corruption: file was previously overwritten with
+  anti-hallucination-guard module dump (RULE-001..017) instead of HH-Copilot tasks
+- Fixed `scripts/sync-task-state.sh` jq query: `(.implementationFiles | length > 0)`
+  threw "boolean has no length" on null fields; replaced with safe `(.implementationFiles // []) | type == "array" and length > 0`
+- Added auditNote guard in sync-task-state.sh: tasks with auditNote matching
+  "NOT implemented|manual|blocked" are skipped by auto-sync
 
 ---
 
@@ -28,7 +45,7 @@ The extension is built on a Manifest V3 architecture and uses content scripts fo
 
 ### 1.2 Current State
 
-Currently the extension is at version 1.9.47.02074. The monolithic content.js (1637 lines, v1.5.2) has been fully decomposed into a modular structure of 42 JS files in the src/ directory, with all files not exceeding 250 lines. The build is performed via esbuild (IIFE format, entry point src/content/main.js). The version is synchronized across manifest.json, package.json, popup/index.html, and html.js footer.
+Currently the extension is at version 1.9.61.0. The monolithic content.js (1637 lines, v1.5.2) has been fully decomposed into a modular structure of 100+ JS files in the src/ directory, with all files not exceeding 250 lines (Rule 12 anti-monolith enforced via ESLint `max-file-lines-hard` rule). The build is performed via esbuild (IIFE format, entry point src/content/main.js). The version is synchronized across manifest.json, package.json, src/lib/version.js.
 
 **Current modular structure (42 JS files):**
 
