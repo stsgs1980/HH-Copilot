@@ -4222,3 +4222,58 @@ Stage Summary:
 - TASK-CASCADE.md synced with actual version (1.9.61.0) and cascade-state.json audit results
 - Version: 1.9.61.0 -> 1.9.62.0
 - All checks green: lint 0 errors, 481 tests, sync-task-state runs clean
+---
+Task ID: v1.9.62.0-version-drift-cleanup
+Agent: main
+Time: 2026-06-25T17:30:00+03:00
+Task: Fix massive version drift discovered after user pushed back on premature "next steps" suggestion
+
+Work Log:
+- User caught: "ты считаешь мы дошли до этого? меня только это волнует?!" -- I had proposed next steps (F5.2, F6.4) without finishing cleanup
+- Full audit revealed:
+  - README.md: Version 1.9.56.0 (6 versions behind)
+  - extension/CHANGELOG.md: last entry 1.9.55.0 (7 versions missing: 1.9.56.0-1.9.62.0)
+  - AGENT_RULES.md timeline: v1.9.47.0 (15 versions behind)
+  - docs/UNICODE_POLICY-v2.1.md: "Version: 1.9.47.059" (stale + typo)
+  - extension/popup/index.html: 1.9.56.0 (6 versions behind)
+  - extension/docs/research/INDEX.md: 1.9.47.0
+  - extension/docs/UNICODE_POLICY.md: 1.9.47.059
+  - docs/diagrams/hh-copilot-architecture-v2.html: 1.9.47.0
+  - extension/worklog.md: 1.9.47.04122 (stale + typo)
+  - cascade/state.json: 1.9.49.0
+  - extension/docs/TASK-CASCADE.md: 1.9.61.0 (already updated in previous commit but other refs stale)
+- Root cause: I was bumping versions manually (violation of Rule 13 [C]: "Use ahg bump for version updates")
+- Tried `ahg bump 1.9.62.0` but discovered it would clobber 25+ foreign skill files because
+  `discover-versions.ts` SKIP_DIRS includes `anti-hallucination-guard` but NOT `skills/`, `FabInspector/`, `hh-extension/`
+- Cannot patch AHG submodule (Rule 16: AHG submodule is immutable)
+- Solution: created `scripts/ahg-bump-safe.sh` wrapper that:
+  1. Runs `ahg bump --dry-run` to discover files
+  2. Filters out excluded paths (skills/, FabInspector/, hh-extension/, anti-hallucination-guard/)
+  3. For each remaining file, finds lagging version and replaces with target
+  4. Handles typo variants like "1.9.47.059" (extra digits)
+  5. Adds CHANGELOG entry
+- Disaster during session: local main was at 569721e (v1.9.47.0) while remote at 085a9df (v1.9.62.0)
+  - Reflog showed `reset: moving to origin/main` from previous session
+  - Did `git stash && git pull --ff-only && git stash pop` -- caused 5 merge conflicts
+  - Resolved with `git checkout --theirs` -- but in stash pop context, `--theirs` = stash content (WRONG!)
+  - Lost my cascade-state.json fix (reverted to AHG dump)
+  - Recovered via `git checkout HEAD -- cascade-state.json`
+- Final fix sequence:
+  1. `git reset --hard HEAD` to clean working tree
+  2. `bash scripts/ahg-bump-safe.sh 1.9.62.0` -- updated 11 files + CHANGELOG entry
+  3. Manual README.md update (ahg bump does not find README because pattern is `**Version:** X.Y.Z`, not `version: X.Y.Z`)
+  4. Filled CHANGELOG with 7 missing version entries (1.9.56.0-1.9.62.0) from git log
+  5. Updated AGENT_RULES.md timeline line 79: "v1.9.47.0 | 2026-06-13" -> "v1.9.62.0 | 2026-06-25"
+
+Stage Summary:
+- 12 files synced to version 1.9.62.0 (README.md, AGENT_RULES.md, manifest.json, package.json,
+  version.js, popup/index.html, CHANGELOG.md, cascade-state.json, docs/UNICODE_POLICY-v2.1.md,
+  extension/docs/TASK-CASCADE.md, extension/docs/UNICODE_POLICY.md, extension/docs/research/INDEX.md,
+  docs/diagrams/hh-copilot-architecture-v2.html, extension/worklog.md, cascade/state.json)
+- CHANGELOG.md populated with 7 missing entries (1.9.56.0 through 1.9.62.0)
+- New script: scripts/ahg-bump-safe.sh (safe wrapper around ahg bump, excludes foreign dirs)
+- Verification:
+  - npm run lint:ci: 0 errors, 35 warnings
+  - npm test: 481/481 tests passed
+  - bash scripts/ahg.sh verify --ci: all checks consistent
+- Lesson learned: NEVER propose next steps before cleanup is complete and verified

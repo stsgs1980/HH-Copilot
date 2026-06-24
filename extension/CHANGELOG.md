@@ -9,6 +9,65 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.62.0] — 2026-06-25
+
+### Fixed
+- **cascade-state.json corruption** — root `cascade-state.json` had been silently overwritten with anti-hallucination-guard module dump (RULE-001..017, PROC-*, STD-ENV-*) instead of HH-Copilot task cascade (F0.1-F6.4). Restored original schema from commit c94845b. Audited all 35 tasks against actual code: 33 completed, 2 pending (F5.2 dark/light theme, F6.4 Chrome Web Store).
+- **scripts/sync-task-state.sh jq query bug** — `(.implementationFiles | length > 0)` threw "boolean has no length" on null fields; jq `and` does not short-circuit. Replaced with `((.implementationFiles // []) | type == "array" and length > 0)`.
+- **auditNote guard in sync-task-state.sh** — tasks with `auditNote` matching `/NOT implemented|manual|blocked/i` are now skipped by auto-sync. Prevents false-positive completion of F5.2 (settings.js exists but dark/light theme NOT implemented).
+- **Version drift across 11 files** — README.md (1.9.56.0), AGENT_RULES.md (1.9.47.0), docs/UNICODE_POLICY-v2.1.md (1.9.47.059), extension/popup/index.html (1.9.56.0), extension/docs/research/INDEX.md (1.9.47.0), extension/docs/TASK-CASCADE.md (1.9.61.0), extension/docs/UNICODE_POLICY.md (1.9.47.059), docs/diagrams/hh-copilot-architecture-v2.html (1.9.47.0), extension/worklog.md (1.9.47.04122), cascade/state.json (1.9.49.0) — all synced to 1.9.62.0 via new `scripts/ahg-bump-safe.sh` wrapper.
+
+### Added
+- **scripts/ahg-bump-safe.sh** — Safe wrapper around `ahg bump` that excludes `skills/`, `FabInspector/`, `hh-extension/`, `anti-hallucination-guard/` directories. Without this wrapper, `ahg bump` would clobber version strings in 25+ foreign skill files (skills/ has its own version per skill). Needed because `discover-versions.ts` SKIP_DIRS does not include `skills/`, and we cannot patch the AHG submodule (Rule 16: AHG submodule is immutable architecture).
+
+### Changed
+- **extension/docs/TASK-CASCADE.md** — Document version 4.0.0 → 5.0.0, date 2026-06-10 → 2026-06-25, current extension version 1.9.31.0 → 1.9.62.0, fixed typo "1.9.47.02074" → "1.9.61.0". Added Changelog v4.0.0 → v5.0.0 section.
+
+## [1.9.61.0] — 2026-06-24
+
+### Fixed
+- **UNICODE_POLICY v2.1 [C] violations in production UI** — all emoji in production code replaced with inline Lucide-style SVG (16x16 viewBox 24 24). Affected: dom-inspector.js (6 emoji), shell.js (1 emoji), vacancies.js (2 emoji), cover-letter-events.js (em dash, guillemets, check mark, arrows), settings.js (en dash).
+- **ESLint not enforced in pre-commit hook** — rule `no-unicode-graphics` was configured as `error` but pre-commit hook did not call ESLint. Added Phase 4.5 to `.git/hooks/pre-commit`: runs `npx eslint src/ background/ tests/` and blocks commit on any error. Bypass via `LINT_BYPASS=1` env var or `[no-lint]` in commit message.
+
+### Changed
+- **Refactoring (Rule 12 anti-monolith)**:
+  - Split `dom-inspector.js` (497 lines) → 3 files: `dom-inspector.js` (190), `dom-inspector-panel.js` (228), `dom-inspector-report.js` (97).
+  - Split `cover-letter-events.js` (348 lines) → 2 files: `cover-letter-events.js` (159), `cover-letter-ai-events.js` (204).
+  - Split `vacancy-fetch-text.js` (258 lines) → 2 files: `vacancy-fetch-text.js` (203), `vacancy-fetch-text-helpers.js` (69).
+
+## [1.9.60.0] — 2026-06-24
+
+### Changed
+- **DOM inspector button relocated** from separate floating FAB into sidebar panel header (between tour `?` and close `x` button). Removed `createInspectorFab()`; added `toggleInspector(btn)` for state management.
+- **Rule 13 added to AGENT_RULES.md** — version bump is MANDATORY on every code change (even typo).
+
+## [1.9.59.0] — 2026-06-24
+
+### Added
+- **Vanilla-JS DOM micro-inspector** — new module `src/ui/dom-inspector.js` (380 lines). Click FAB → hover highlights element (purple overlay) → click to freeze + show panel with Tag, ID, Classes, CSS Path, Text, Outer HTML, Geometry, Computed Style. 4 panel buttons: Copy report / Copy CSS path / Re-pick / Close. Esc to unfreeze/turn off. All styles use `setProperty('!important')` to resist hh.ru CSS overrides. z-index 2147483000 (overlay) / 2147483001 (panel).
+
+## [1.9.58.0] — 2026-06-24
+
+### Added
+- **Copy/Clear log buttons** in AI toast UI — `vacancies.js`: 2 new buttons under AI toast. Copy uses `navigator.clipboard.writeText` with textarea+execCommand fallback. Clear resets `aiBtnLog`. Empty log → toast "Сначала кликни Сгенерировать с AI". Success → toast "Вставь в чат с разработчиком".
+- **bindAiLogButtons(opts)** in `cover-letter-events.js`.
+
+## [1.9.57.0] — 2026-06-24
+
+### Added
+- **AI button verbose logging (F-CR-02)** — new module `src/ui/panel/ai-btn-logger.js` (160 lines). Triple sink: console `[AI-BTN]` + `window.__hhCopilotAIBtnLog` + `chrome.storage.local.aiBtnLog`. Helpers on window: `__hhCopilotAIBtnDump()`, `__hhCopilotAIBtnClear()`. Logs every step: click / ctx / reject-no-ctx / tone / btn-disabled / send-start / send-done / resp-ok / textarea-updated / toast-success / resp-err / exception / btn-restored.
+- **Error toast now appends**: "F12 -> Console -> filter [AI-BTN] -> copy all lines."
+
+## [1.9.56.0] — 2026-06-23
+
+### Added
+- **AI cover letter orchestrator** (`src/lib/cover-letter-ai.js`) — 3-step pipeline: extract scorecard from vacancy+resume, fetch evidence with stem-matching, generate cover letter via z-ai API.
+- **Cover letter scorecard** (`src/lib/cover-letter-scorecard.js`) — 7-test extraction from LLM output.
+- **Cover letter evidence** (`src/lib/cover-letter-evidence.js`) — forensic evidence mapping with stem-match anti-hallucination hardening.
+- **Cover letter prompt** (`src/lib/cover-letter-prompt.js`) — structured LLM prompt with 11 humanizer patterns (rejects AI-style writing).
+- **Cover letter validator** (`src/lib/cover-letter-validator.js`) — anti-hallucination + AI pattern detection.
+- **AI settings UI** — Base URL + API Key + Model fields with debounced save.
+
 ## [1.9.55.0] — 2026-06-24
 
 ### Added

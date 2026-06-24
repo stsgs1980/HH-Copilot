@@ -3,14 +3,14 @@
 **Document version:** 5.0.0
 **Date:** 2026-06-25
 **Status:** Master planning document
-**Current extension version:** 1.9.61.0
+**Current extension version:** 1.9.62.0
 **Cascade-state sync:** `cascade-state.json` (root) -- 33/35 tasks completed, 2 pending
 
 ---
 
 ## Changelog v4.0.0 -> v5.0.0
 
-- Bumped current extension version from 1.9.31.0 (stale) to 1.9.61.0 (actual)
+- Bumped current extension version from 1.9.31.0 (stale) to 1.9.62.0 (actual)
 - Audited all 35 tasks against actual code state in `extension/src/`
 - Marked 33 tasks as COMPLETED with `completedAt` timestamps from git log
 - F5.2 (dark/light theme) remains PENDING: settings.js exists but theme toggle NOT implemented
