@@ -3948,3 +3948,30 @@ Work Log:
 Stage Summary:
 - Fab Inspector не установлен и не нужен для HH-Copilot
 - Можно игнорировать эту папку в репо
+
+---
+Task ID: ai-btn-log-buttons-001
+Agent: main
+Time: 2026-06-24T15:06:00+03:00
+Task: Добавить кнопки "Скопировать лог" и "Очистить лог" в UI (без DevTools)
+
+Work Log:
+- Пользователь: не должен лазить в DevTools чтобы достать лог
+- В vacancies.js добавлены 2 кнопки под тостом:
+  - "📋 Скопировать лог AI" (id=cl-ai-log-copy-btn)
+  - "🗑️ Очистить лог" (id=cl-ai-log-clear-btn)
+  - status span: "лог пуст" / "скопировано N строк ✓" / "лог очищен"
+- В cover-letter-events.js bindAiLogButtons:
+  - Copy: navigator.clipboard.writeText -> fallback textarea+execCommand -> fallback console.log dump
+  - Clear: clearAiBtnLog() + статус "лог очищен"
+  - Если лог пуст — тост "Сначала кликни «Сгенерировать с AI»"
+  - После успешного копирования — тост "Вставь в чат с разработчиком"
+- bindCoverLetterEvents теперь вызывает bindAiLogButtons(opts) автоматически
+- Версия: 1.9.57.0 -> 1.9.58.0
+- Сборка прошла: dist/content.js 730.7KB
+- 481/481 тестов проходят
+
+Stage Summary:
+- Пользовательский workflow: клик AI -> клик "Скопировать лог AI" -> Ctrl+V в чат
+- DevTools больше не нужен
+- 2 новые кнопки в блоке "Сопроводительное письмо" на вкладке Вакансии

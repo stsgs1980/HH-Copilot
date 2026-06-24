@@ -156,6 +156,11 @@ export function getVacanciesSection() {
         </div>
         <textarea id="cover-letter-text" style="width:100%;height:80px;padding:8px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;resize:none;line-height:1.5;">Здравствуйте! Меня заинтересовала вакансия {position} в {company}. Имею {experience} опыта в {skills}. {matching_sentence}Буду рад обсудить детали на интервью.</textarea>
         <div id="cl-ai-toast" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:11px;line-height:1.4;"></div>
+        <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+          <button id="cl-ai-log-copy-btn" type="button" aria-label="Скопировать лог AI-кнопки в буфер обмена" style="font-size:10px;padding:2px 8px;background:#f4f4f5;color:#27272a;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-weight:500;">📋 Скопировать лог AI</button>
+          <button id="cl-ai-log-clear-btn" type="button" aria-label="Очистить лог AI-кнопки" style="font-size:10px;padding:2px 8px;background:#f4f4f5;color:#27272a;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-weight:500;">🗑️ Очистить лог</button>
+          <span id="cl-ai-log-status" style="font-size:10px;color:#71717a;">лог пуст</span>
+        </div>
         <div style="font-size:10px;color:#71717A;margin-top:4px;line-height:1.4;">Автозаполнение: {position} -- должность, {company} -- компания, {experience} -- стаж, {skills} -- навыки, {matching} -- совпадения, {matching_sentence} -- предложение о совпадениях, {requirements} -- требования. Шаблон сохраняется в storage автоматически.</div>
       </div>
     </div>

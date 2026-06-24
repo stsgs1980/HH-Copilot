@@ -27,7 +27,7 @@ import {
   buildMissingContextMessage,
   buildSuccessMessage,
 } from './cover-letter-ai-ui.js';
-import { aiBtnLog, getAiBtnLogText } from './ai-btn-logger.js';
+import { aiBtnLog, getAiBtnLogText, clearAiBtnLog } from './ai-btn-logger.js';
 
 const DEBOUNCE_MS = 500;
 
@@ -253,6 +253,81 @@ export function bindCoverLetterAIBtn(opts) {
 }
 
 /**
+ * Bind "Copy log" + "Clear log" buttons.
+ * Copy: writes full [AI-BTN] log text to clipboard.
+ * Clear: empties in-memory log buffer + window array.
+ * @param {Object} [opts]
+ */
+export function bindAiLogButtons(opts) {
+  const sr = refs.shadowRoot;
+  if (!sr) return;
+  const copyBtn = sr.getElementById('cl-ai-log-copy-btn');
+  const clearBtn = sr.getElementById('cl-ai-log-clear-btn');
+  const statusEl = sr.getElementById('cl-ai-log-status');
+
+  const customToast = opts && opts.toastImpl;
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const text = getAiBtnLogText();
+      const lineCount = text ? text.split('\n').length : 0;
+      if (lineCount === 0) {
+        if (statusEl) statusEl.textContent = 'лог пуст — кликни AI сначала';
+        if (customToast) customToast('Лог пуст. Сначала кликни «Сгенерировать с AI».');
+        else showAiToast('Лог пуст. Сначала кликни «Сгенерировать с AI».', 'error');
+        return;
+      }
+      // Try clipboard API (requires secure context — hh.ru is https, OK)
+      let copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        }
+      } catch (_e) { /* fall through to fallback */ }
+      // Fallback: hidden textarea + execCommand
+      if (!copied) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '0';
+          (sr.host ? sr.host.parentElement : document.body).appendChild(ta);
+          ta.focus();
+          ta.select();
+          copied = document.execCommand('copy');
+          ta.remove();
+        } catch (_e) { /* ignore */ }
+      }
+      if (copied) {
+        if (statusEl) statusEl.textContent = 'скопировано ' + lineCount + ' строк ✓';
+        if (customToast) customToast('Лог скопирован (' + lineCount + ' строк). Вставь в чат с разработчиком.');
+        else showAiToast('Лог скопирован (' + lineCount + ' строк). Вставь в чат с разработчиком.', 'success');
+      } else {
+        // Last resort: dump to console and instruct to copy manually
+        try {
+          // eslint-disable-next-line no-console
+          console.log('--- [AI-BTN] copy-fallback dump ---\n' + text + '\n--- end dump ---');
+        } catch (_e) { /* ignore */ }
+        if (statusEl) statusEl.textContent = 'не удалось скопировать — см. консоль';
+        if (customToast) customToast('Не удалось скопировать автоматически. F12 → Console → последняя запись → копируй вручную.');
+        else showAiToast('Не удалось скопировать автоматически. F12 → Console → последняя запись → копируй вручную.', 'error');
+      }
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      clearAiBtnLog();
+      if (statusEl) statusEl.textContent = 'лог очищен';
+      if (customToast) customToast('Лог очищен.');
+      else showAiToast('Лог очищен.', 'info');
+    });
+  }
+}
+
+/**
  * Convenience: bind both template save + tone change handlers + AI button.
  * Called once from panel/events.js bindAllEvents().
  * @param {Element} container
@@ -262,6 +337,7 @@ export function bindCoverLetterEvents(container, opts) {
   bindCoverLetterTemplateSave(opts);
   bindLetterToneHandler(container, opts);
   bindCoverLetterAIBtn(opts);
+  bindAiLogButtons(opts);
 }
 
 /** Exported for tests. */
