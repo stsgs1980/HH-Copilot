@@ -6,8 +6,8 @@
     "lastUpdated": "2026-06-24T16:54:32Z",
     "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work.",
     "lastAudit": "2026-06-25T08:35:00Z",
-    "currentVersion": "1.9.62.0",
-    "previousVersion": "1.9.62.0",
+    "currentVersion": "1.9.63.0",
+    "previousVersion": "1.9.63.0",
     "auditSummary": {
       "total": 35,
       "completed": 33,

@@ -5,4 +5,4 @@
  * `process.env.VERSION` into all modules at build time (see esbuild.config.mjs).
  * This file is NOT imported by any module. Update manifest.json, then run: npm run build.
  */
-export const VERSION = '1.9.62.0';
+export const VERSION = '1.9.63.0';

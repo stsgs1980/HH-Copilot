@@ -4,12 +4,20 @@
  * Creates and manages the FAB overlay button.
  * Green gradient (#059669 -> #10B981), pulse animation when panel closed.
  *
+ * v1.9.63.0: inspector mini-button moved to fab-inspector-button.js.
+ *
  * NOTE: FAB lives in the MAIN document (not Shadow DOM), so hh.ru CSS
  * can override inline styles. All visual properties use setProperty(..., 'important')
  * to prevent external CSS conflicts.
  */
 
 import { panelState, refs } from './state.js';
+import {
+  createFabInspectorButton,
+  setFabInspectorActive as setInspectorActiveInternal,
+  hideFabInspector,
+  showFabInspector,
+} from './fab-inspector-button.js';
 
 const FAB_ICONS = {
   loading: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="animation:har-spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>',
@@ -23,7 +31,14 @@ function fabStyle(style, prop, value) {
   style.setProperty(prop, value, 'important');
 }
 
-export function createFab(onClick) {
+/**
+ * Create the FAB and (optionally) the inspector mini-button above it.
+ * @param {Function} onClick - main FAB click handler (toggle sidebar)
+ * @param {Function} [onInspectorToggle] - inspector mini-button click handler.
+ *        Receives the mini-button element as its only argument.
+ *        If omitted, no inspector mini-button is created.
+ */
+export function createFab(onClick, onInspectorToggle) {
   if (refs.fabEl) return;
   refs.fabEl = document.createElement('div');
   refs.fabEl.id = 'hh-ar-fab';
@@ -65,6 +80,12 @@ export function createFab(onClick) {
     s.removeProperty('outline-offset');
   });
   document.body.appendChild(refs.fabEl);
+
+  /* Inspector mini-button lives in a separate module -- create it if a
+     toggle callback was provided. ID matches shouldIgnore() in dom-inspector.js. */
+  if (typeof onInspectorToggle === 'function') {
+    createFabInspectorButton(onInspectorToggle);
+  }
 }
 
 export function updateFabIcon() {
@@ -81,6 +102,7 @@ export function updateFabIcon() {
     refs.fabEl.innerHTML = FAB_ICONS.loading;
     refs.fabEl.setAttribute('title', 'HH Copilot: проверяем авторизацию...');
     refs.fabEl.setAttribute('aria-label', 'HH Copilot: проверяем авторизацию');
+    hideFabInspector();
   } else if (!panelState.isLoggedIn) {
     fabStyle(s, 'background', '#ef4444');
     fabStyle(s, 'box-shadow', '0 4px 20px rgba(239,68,68,0.4)');
@@ -91,12 +113,14 @@ export function updateFabIcon() {
     refs.fabEl.innerHTML = FAB_ICONS.locked;
     refs.fabEl.setAttribute('title', 'HH Copilot: НЕ авторизован на hh.ru');
     refs.fabEl.setAttribute('aria-label', 'HH Copilot: не авторизован');
+    hideFabInspector();
   } else if (panelState.isOpen) {
     fabStyle(s, 'background', '#059669');
     fabStyle(s, 'opacity', '0');
     fabStyle(s, 'transform', 'scale(0) rotate(180deg)');
     fabStyle(s, 'pointer-events', 'none');
     refs.fabEl.setAttribute('title', 'HH Copilot: закрыть панель');
+    hideFabInspector();
   } else {
     fabStyle(s, 'background', 'linear-gradient(135deg,#059669,#10B981)');
     fabStyle(s, 'box-shadow', '0 4px 20px rgba(5,150,105,0.4)');
@@ -107,5 +131,10 @@ export function updateFabIcon() {
     refs.fabEl.innerHTML = FAB_ICONS.briefcase;
     refs.fabEl.setAttribute('title', 'HH Copilot: авторизован. Нажмите для открытия.');
     refs.fabEl.setAttribute('aria-label', 'HH Copilot: открыть панель');
+    showFabInspector();
   }
 }
+
+/* Re-export so callers (panel/index.js) can update pressed-state without
+   coupling to fab-inspector-button.js directly. */
+export const setFabInspectorActive = setInspectorActiveInternal;

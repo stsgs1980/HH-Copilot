@@ -56,6 +56,7 @@ export const panelState = {
  */
 export const refs = {
   fabEl: null,
+  fabInspectorEl: null,
   sidebarEl: null,
   backdropEl: null,
   shadowRoot: null

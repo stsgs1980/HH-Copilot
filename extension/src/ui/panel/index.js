@@ -15,8 +15,8 @@ import { panelState, refs, togglePanelOpen, setVacancies, setStatus as setStatus
 export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
-import { createFab, updateFabIcon } from '../fab.js';
-import { toggleInspector } from '../dom-inspector.js';
+import { createFab, updateFabIcon, setFabInspectorActive } from '../fab.js';
+import { toggleInspector, isInspectorActive } from '../dom-inspector.js';
 import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
@@ -156,19 +156,26 @@ export function setStatus(status) {
 }
 
 export function createPanel() {
-  createFab(toggleSidebar);
+  /* Inspector mini-button callback: do NOT pass btn to toggleInspector --
+     its built-in visual update assumes a transparent header button and
+     would clobber our purple bg. Manage visual state via setFabInspectorActive(). */
+  createFab(toggleSidebar, (_btn) => {
+    toggleInspector();
+    setFabInspectorActive(isInspectorActive());
+  });
   createSidebar();
   setTimeout(updateAuthState, 1500);
   setInterval(updateAuthState, 5000);
 
-  // Bind inspector toggle button (in header, data-action="toggle-inspector")
-  // Use document-level delegated listener because sidebar is re-rendered on auth change
+  // Bind inspector toggle button (in header, data-action="toggle-inspector").
+  // Use document-level delegated listener because sidebar is re-rendered on auth change.
   document.addEventListener('click', (e) => {
     const btn = e.target && e.target.closest ? e.target.closest('[data-action="toggle-inspector"]') : null;
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
     toggleInspector(btn);
+    setFabInspectorActive(isInspectorActive()); /* sync FAB mini-button pressed-state */
   }, true);
 
   // Listen for match score updates (from vacancy detail re-score)

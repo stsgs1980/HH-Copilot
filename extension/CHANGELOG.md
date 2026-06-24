@@ -9,6 +9,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.63.0] — 2026-06-24
+
+### Added
+- **DOM-inspector launch button integrated into the main FAB** — Long-deferred UX task (blocked since v1.9.61.0 by cascade-state corruption). A small 32px purple "eye" mini-button is now stacked above the main FAB. Visible only when logged in and panel is closed. Clicking it toggles the DOM inspector (same as the existing header `[data-action="toggle-inspector"]` button).
+- **extension/src/ui/fab-inspector-button.js** (new file, 120 lines) — Encapsulates the inspector mini-button: `createFabInspectorButton()`, `setFabInspectorActive()`, `hideFabInspector()`, `showFabInspector()`. Split from fab.js for AHG Rule 12 (200-line limit).
+- **`refs.fabInspectorEl`** in `state.js` — New shared DOM reference for the mini-button.
+
+### Changed
+- **`createFab(onClick, onInspectorToggle?)`** in `fab.js` — Second optional callback parameter. When provided, the inspector mini-button is created and appended to `document.body`.
+- **`updateFabIcon()`** in `fab.js` — Now also drives inspector mini-button visibility (hidden during loading / not-logged-in / panel-open states, same lifecycle as the main FAB).
+- **`panel/index.js`** — Passes an inspector toggle callback to `createFab()`. The callback calls `toggleInspector()` without the button arg (the built-in visual update assumes a transparent header button and would clobber the purple bg), then calls `setFabInspectorActive(isInspectorActive())` to manage the pressed-state ring. The existing header `[data-action="toggle-inspector"]` delegated listener now also calls `setFabInspectorActive()` so both entry points stay in sync.
+
+### Notes
+- The mini-button ID `hh-ar-fab-inspector` was already listed in `shouldIgnore()` in `dom-inspector.js` (added in v1.9.61.0), so the inspector does not highlight its own toggle button during hover.
+- UX choice: mini-button stacked above FAB (vs long-press / double-click). Long-press is non-discoverable on desktop; double-click conflicts with quick sidebar toggle.
+
 ## [1.9.62.0] — 2026-06-25
 
 ### Fixed
