@@ -6,15 +6,21 @@ import { ICONS } from '../icons.js';
 export function getNegotiationsSection() {
   return `<div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tabbtn-negotiations" tabindex="0">
     <div class="card fade-in" style="margin-bottom:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="neg-list" role="button" tabindex="0" aria-expanded="false" aria-controls="neg-list-body">
         <div>
           <div style="font-size:13px;font-weight:600;">Переговоры</div>
           <div style="font-size:11px;color:#52525b;margin-top:2px;">Отслеживание сообщений с работодателями</div>
         </div>
-        <span id="neg-count-badge" class="badge badge-blue">0 активных</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="neg-count-badge" class="badge badge-blue">0 активных</span>
+          ${ICONS.chevronDown}
+        </div>
       </div>
-      <div id="neg-list" style="display:flex;flex-direction:column;gap:2px;">
-        <div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">Переговоры пока не загружены</div>
+      <div class="timeline-body" id="neg-list-body" style="margin-top:10px;">
+        <div id="neg-error-toast" style="display:none;"></div>
+        <div id="neg-list" style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:24px;text-align:center;font-size:11px;color:#52525b;">Переговоры пока не загружены</div>
+        </div>
       </div>
     </div>
     <div id="neg-chat-area" class="card fade-in" style="margin-bottom:12px;display:none;">
@@ -53,6 +59,7 @@ export function getNegotiationsSection() {
             </div>
           </div>
           <div>
+            <div id="cl-ai-status" style="font-size:10px;color:#71717A;margin-bottom:6px;line-height:1.4;">Контекст: резюме и вакансия определяются автоматически.</div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;flex-wrap:wrap;">
               <label for="cover-letter-text" style="font-size:11px;font-weight:500;">Шаблон сопроводительного</label>
               <div style="display:flex;align-items:center;gap:4px;">
@@ -67,6 +74,7 @@ export function getNegotiationsSection() {
               </div>
             </div>
             <textarea id="cover-letter-text" style="width:100%;height:80px;padding:8px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;resize:none;line-height:1.5;">Здравствуйте! Меня заинтересовала вакансия {position} в {company}. Имею {experience} опыта в {skills}. {matching_sentence}Буду рад обсудить детали на интервью.</textarea>
+            <div id="cl-ai-toast" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:11px;line-height:1.4;"></div>
             <div style="font-size:10px;color:#71717A;margin-top:4px;line-height:1.4;">Автозаполнение: {position} -- должность, {company} -- компания, {experience} -- стаж, {skills} -- навыки, {matching} -- совпадения, {matching_sentence} -- предложение о совпадениях, {requirements} -- требования. Шаблон сохраняется в storage автоматически.</div>
           </div>
         </div>

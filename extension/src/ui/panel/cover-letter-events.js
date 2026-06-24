@@ -1,32 +1,32 @@
 /**
  * UI: PANEL -- COVER LETTER EVENTS (F5.6)
  * =========================================
- * Loads the saved cover letter template + tone from storage and populates
- * the #cover-letter-text textarea and #s-letter-tone select in the
- * Negotiations tab. On input -- debounced save. On tone change -- immediate save.
+ * Loads saved cover-letter template + tone from storage, populates DOM.
+ * On input -- debounced save. On tone change -- immediate save + smart
+ * template swap. Binds AI button (F-CR-02).
  *
- * Why a separate module: cover-letter-storage.js (F3.2) already has the
- * storage wrappers. This module wires them to the DOM. Keeping it separate
- * avoids bloating tabs/negotiations.js (already 237 lines) and panel/events.js
- * (already 185 lines).
+ * Anti-hallucination: missing storage -> defaults; invalid tone -> 'formal';
+ * no DOM element -> no-op (silent).
  *
- * Anti-hallucination:
- *   - Missing chrome.storage -> defaults applied, never throws
- *   - Empty template in storage -> formal default template used
- *   - Invalid tone -> 'formal' (validateTone handles)
- *   - No DOM element -> no-op (silent)
- *
- * v1.9.48.0
+ * v1.9.51.0
  */
 
 import { refs } from '../state.js';
-import { panelState } from '../state.js';
 import {
   getCoverLetterConfig,
   setCoverLetterTemplate,
   setLetterTone,
 } from '../../lib/cover-letter-storage.js';
 import { TONES, validateTone, getTemplateForTone, _internal as TONE_INTERNAL } from '../../lib/cover-letter-tone.js';
+import {
+  updateAiStatus,
+  showAiToast,
+  refreshAiStatus,
+  getCurrentAiContext,
+  buildAiErrorMessage,
+  buildMissingContextMessage,
+  buildSuccessMessage,
+} from './cover-letter-ai-ui.js';
 
 const DEBOUNCE_MS = 500;
 
@@ -62,6 +62,9 @@ export async function populateCoverLetterFields(opts) {
   if (toneEl) {
     toneEl.value = validateTone(config.tone);
   }
+
+  // Update AI status line with current context (vacancy + resume)
+  refreshAiStatus();
 
   return true;
 }
@@ -120,13 +123,9 @@ export function bindLetterToneHandler(container, opts) {
 
   toneEl.addEventListener('change', () => {
     const tone = validateTone(toneEl.value);
-    // Reflect validated value back to DOM
     toneEl.value = tone;
 
-    // Smart template swap: if the current textarea value matches one of the
-    // 4 default templates (i.e., user has NOT manually edited it), swap it to
-    // the default template for the newly selected tone. If user has edited
-    // the template, leave it alone -- tone only affects AI generation then.
+    // Smart template swap: if textarea still has a default template, swap it.
     const tmplEl = container.querySelector('#cover-letter-text') || (refs.shadowRoot && refs.shadowRoot.getElementById('cover-letter-text'));
     if (tmplEl) {
       const currentText = tmplEl.value.trim();
@@ -134,20 +133,13 @@ export function bindLetterToneHandler(container, opts) {
       if (allDefaults.includes(currentText)) {
         const newTemplate = getTemplateForTone(tone);
         tmplEl.value = newTemplate;
-        // Persist the swapped template too
-        if (storage) {
-          storage.setCoverLetterTemplate(newTemplate).catch(() => {});
-        } else {
-          setCoverLetterTemplate(newTemplate).catch(() => {});
-        }
+        if (storage) storage.setCoverLetterTemplate(newTemplate).catch(() => {});
+        else setCoverLetterTemplate(newTemplate).catch(() => {});
       }
     }
 
-    if (storage) {
-      storage.setLetterTone(tone).catch(() => {});
-    } else {
-      setLetterTone(tone).catch(() => {});
-    }
+    if (storage) storage.setLetterTone(tone).catch(() => {});
+    else setLetterTone(tone).catch(() => {});
   });
 }
 
@@ -162,23 +154,27 @@ export function bindCoverLetterAIBtn(opts) {
   const btn = sr.getElementById('cover-letter-ai-btn');
   if (!btn) return;
 
-  const toast = (opts && opts.toastImpl) || ((msg) => {
-    // Best-effort: log to console if no toast UI available
-    try { console.log('[CoverLetterAI]', msg); } catch (_e) { /* ignore */ }
-  });
+  setTimeout(refreshAiStatus, 0);
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('hh-ar-resume-loaded', refreshAiStatus);
+    window.addEventListener('hh-ar-match-updated', refreshAiStatus);
+  }
+
+  const customToast = opts && opts.toastImpl;
 
   btn.addEventListener('click', async () => {
-    // Pick vacancy from page global or first in list
-    const vacancy = (typeof window !== 'undefined' && window.__hhVacDetail) ||
-                    (panelState.vacancies && panelState.vacancies[0]) ||
-                    null;
-    const resume = panelState.resume || null;
+    const ctx = getCurrentAiContext();
+    const { vacancy, resume } = ctx;
+    updateAiStatus(ctx);
+
     if (!vacancy || !resume) {
-      toast('Нужно активное резюме + вакансия');
+      const msg = buildMissingContextMessage(ctx);
+      if (customToast) customToast(msg);
+      else showAiToast(msg, 'error');
       return;
     }
 
-    // Current tone from select
     const toneEl = sr.getElementById('s-letter-tone');
     const tone = toneEl ? validateTone(toneEl.value) : 'formal';
 
@@ -197,17 +193,20 @@ export function bindCoverLetterAIBtn(opts) {
         const ta = sr.getElementById('cover-letter-text');
         if (ta) {
           ta.value = result.text;
-          // Trigger debounced save (input event)
           ta.dispatchEvent(new Event('input', { bubbles: true }));
         }
-        toast('Письмо сгенерировано' + (result.warnings && result.warnings.length > 0 ? ' (' + result.warnings.length + ' warnings)' : ''));
+        const msg = buildSuccessMessage(result.text, result.warnings);
+        if (customToast) customToast(msg);
+        else showAiToast(msg, 'success');
       } else {
-        const code = (result && result.code) || 'unknown';
-        const err = (result && result.error) || '';
-        toast('AI error: ' + code + (err ? ' - ' + err : ''));
+        const msg = buildAiErrorMessage(result);
+        if (customToast) customToast(msg);
+        else showAiToast(msg, 'error');
       }
     } catch (e) {
-      toast('AI error: ' + (e.message || String(e)));
+      const msg = 'AI error: ' + (e.message || String(e));
+      if (customToast) customToast(msg);
+      else showAiToast(msg, 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = origText;

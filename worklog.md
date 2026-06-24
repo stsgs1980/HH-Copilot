@@ -3566,3 +3566,45 @@ Stage Summary:
   auto-stripped, others warned in logs.
 - F-CR-02 status: Stub -> Works
 - Version: 1.9.49.0 -> 1.9.50.0
+
+---
+Task ID: F-CR-02-fix-1
+Agent: ZCode session 2026-06-24 (continuation)
+Task: Fix UX issues found in real-world testing of F-CR-02
+
+Work Log:
+- User tested on live hh.ru: "Переговоры" block always visible (not collapsed
+  like Resume), and "Сгенерировать с AI" button did nothing visible.
+- Root cause #1: top "Переговоры" card used plain header, no timeline-toggle.
+  Wrapped it in timeline-toggle + timeline-body with aria-expanded="false".
+- Root cause #2: AI button click handler had no visible feedback -- toast
+  implementation was just console.log, user saw nothing when context was
+  missing (no vacancy/resume) or AI call failed.
+- Added #cl-ai-status line above button showing current context
+  (vacancy title @ company | resume title), updates on tab open + on
+  hh-ar-resume-loaded + hh-ar-match-updated events.
+- Added #cl-ai-toast element below textarea with kind-specific styles
+  (error=red, success=green, info=amber). Auto-hides after 6s.
+- Added #neg-error-toast element to HTML (was queried by showErrorToast
+  in tabs/negotiations.js but never existed in DOM -- silent bug).
+- Error messages now include actionable hints:
+  * NO_API_KEY -> "Открой Настройки -> AI API key"
+  * NO_EVIDENCE -> "Нет совпадающих навыков с опытом в резюме"
+  * Missing context -> lists which piece (вакансия/резюме) is missing
+- Extracted helpers into new file src/ui/panel/cover-letter-ai-ui.js
+  (buildAiStatusText, buildMissingContextMessage, buildAiErrorMessage,
+  buildSuccessMessage, updateAiStatus, showAiToast, refreshAiStatus,
+  getCurrentAiContext) -- 143 lines, keeps cover-letter-events.js under
+  AHG Rule 12 250-line limit.
+- Added tests/cover-letter-ai-ui.test.js (29 tests).
+- Version bump 1.9.50.0 -> 1.9.51.0 in 5 files (Rule 9.2).
+
+Stage Summary:
+- 2 new files: cover-letter-ai-ui.js (143 lines) + 29 tests
+- 1 modified HTML: tabs/negotiations.js (top "Переговоры" card now collapsible,
+  added #cl-ai-status, #cl-ai-toast, #neg-error-toast elements)
+- 1 modified module: cover-letter-events.js (uses helpers from cover-letter-ai-ui,
+  visible toast + status refresh on resume/vacancy events)
+- Tests: 406 -> 435 (all pass)
+- UX: user now sees what's wrong (missing context, NO_API_KEY, NO_EVIDENCE)
+  directly in panel, no need to open DevTools console.
