@@ -6,13 +6,20 @@
  * Forensic evidence mapping per interview-designer methodology:
  * For each competency in scorecard, find concrete evidence in resume.
  *
- * Anti-hallucination: ONLY quotes from resume.experience[].description,
- * never paraphrases. Missing skills are SKIPPED silently (Kahneman de-bias:
+ * Anti-hallucination: ONLY quotes from resume.experience[].description
+ * (primary) or declares skill from resume.skills (fallback). Never
+ * paraphrases. Missing skills are SKIPPED silently (Kahneman de-bias:
  * do not invent or pad gaps).
  *
- * Pure function: no I/O.
- *
- * v1.9.50.0
+ * v1.9.50.0: original
+ * v1.9.53.0: added skill-declaration fallback + position/company text
+ *            search. Previously NO_EVIDENCE was returned whenever the
+ *            skill was in resume.skills but not literally repeated in
+ *            any experience.description sentence -- too strict for
+ *            real hh.ru resumes where skill names like "Управление
+ *            продажами" are declared in the skill list but experience
+ *            descriptions use looser phrasing ("Управлял командой",
+ *            "Рост продаж").
  */
 
 const MAX_EVIDENCE_SENTENCE_LEN = 280;
@@ -49,11 +56,21 @@ function assessConfidence(entryDescription) {
   return 'medium';
 }
 
+// Normalize a skill name the same way match-scorer-skills.js does
+function normalizeSkill(s) {
+  return String(s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[-\u2013\u2014]/g, ' ')
+    .replace(/ё/g, 'е')
+    .replace(/\s+/g, ' ');
+}
+
 /**
  * Map scorecard competencies to concrete evidence from resume.
  *
  * @param {Object} scorecard -- { competencies: string[] }
- * @param {Object} resume -- { experience: [{ company, position, period, description }] }
+ * @param {Object} resume -- { skills: string[], experience: [{ company, position, period, description }] }
  * @param {Object} matchResult -- from computeMatchScore(); uses .details.matchingSkills,
  *                                .details.derivedMatchSkills, .details.missingSkills
  * @returns {Array<{ competency, evidenceText, source: {type, index, sentence}, confidence }>}
@@ -68,10 +85,14 @@ export function mapEvidence(scorecard, resume, matchResult) {
   const synonyms = Array.isArray(details.synonymMatchSkills) ? details.synonymMatchSkills : [];
   const implied = Array.isArray(details.impliedMatchSkills) ? details.impliedMatchSkills : [];
   const missing = new Set(
-    (Array.isArray(details.missingSkills) ? details.missingSkills : []).map(s => String(s).toLowerCase().trim())
+    (Array.isArray(details.missingSkills) ? details.missingSkills : []).map(s => normalizeSkill(s))
   );
 
   const experience = Array.isArray(resume.experience) ? resume.experience : [];
+
+  // Normalize resume.skills once for fallback lookups
+  const resumeSkillsArr = Array.isArray(resume.skills) ? resume.skills : [];
+  const resumeSkillsNorm = new Set(resumeSkillsArr.map(normalizeSkill));
 
   const evidence = [];
 
@@ -79,51 +100,116 @@ export function mapEvidence(scorecard, resume, matchResult) {
     const comp = String(competency).trim();
     if (!comp) continue;
     const compLower = comp.toLowerCase();
+    const compNorm = normalizeSkill(comp);
 
     // Skip missing skills (Kahneman de-bias: do not invent evidence for gaps)
-    if (missing.has(compLower)) continue;
+    if (missing.has(compNorm)) continue;
 
     // Determine confidence baseline from skill classification
-    const isMatching = matching.some(s => String(s).toLowerCase().trim() === compLower);
-    const isDerived = derived.some(s => String(s).toLowerCase().trim() === compLower);
-    const isSynonym = synonyms.some(s => String(s).toLowerCase().trim() === compLower);
-    const isImplied = implied.some(s => String(s).toLowerCase().trim() === compLower);
+    const isMatching = matching.some(s => normalizeSkill(s) === compNorm);
+    const isDerived = derived.some(s => normalizeSkill(s) === compNorm);
+    // Synonym entries come shaped like "B2B продажи ~ работа с возражениями" -- check both sides
+    const isSynonym = synonyms.some(s => {
+      const parts = String(s).split('~').map(p => normalizeSkill(p));
+      return parts.includes(compNorm);
+    });
+    const isImplied = implied.some(s => normalizeSkill(s) === compNorm);
 
     if (!isMatching && !isDerived && !isSynonym && !isImplied) {
       // Competency not in match result at all -- skip (no evidence basis)
       continue;
     }
 
-    // Search experience entries from most recent (last in array) backwards
+    // Search experience entries from most recent (last in array) backwards.
+    // Search across description + position + company -- sometimes position title
+    // itself contains the skill keyword (e.g. "Senior B2B Sales Manager" -> B2B).
     let found = null;
     for (let i = experience.length - 1; i >= 0; i--) {
       const exp = experience[i];
-      if (!exp || !exp.description) continue;
-      const sentences = splitSentences(exp.description);
-      for (const sentence of sentences) {
-        if (mentionsSkill(sentence, comp)) {
-          found = {
-            sentence,
-            index: i,
-            company: exp.company || '',
-            position: exp.position || '',
-            period: exp.period || '',
-            entryDescription: exp.description,
-          };
-          break;
+      if (!exp) continue;
+
+      // Primary: scan description sentences
+      if (exp.description) {
+        const sentences = splitSentences(exp.description);
+        for (const sentence of sentences) {
+          if (mentionsSkill(sentence, comp)) {
+            found = {
+              sentence,
+              index: i,
+              company: exp.company || '',
+              position: exp.position || '',
+              period: exp.period || '',
+              entryDescription: exp.description,
+              fieldType: 'description',
+            };
+            break;
+          }
         }
       }
+
+      // Secondary: scan position title as a single "sentence"
+      if (!found && exp.position && mentionsSkill(exp.position, comp)) {
+        found = {
+          sentence: exp.position,
+          index: i,
+          company: exp.company || '',
+          position: exp.position || '',
+          period: exp.period || '',
+          entryDescription: exp.position,
+          fieldType: 'position',
+        };
+      }
+
+      // Tertiary: scan company name
+      if (!found && exp.company && mentionsSkill(exp.company, comp)) {
+        found = {
+          sentence: exp.company,
+          index: i,
+          company: exp.company || '',
+          position: exp.position || '',
+          period: exp.period || '',
+          entryDescription: exp.company,
+          fieldType: 'company',
+        };
+      }
+
       if (found) break;
+    }
+
+    // Fallback: skill declared in resume.skills but no narrative evidence.
+    // Anti-hallucination safe: we state the verifiable fact that the skill
+    // is in the resume's declared skill list, without inventing context.
+    if (!found && resumeSkillsNorm.has(compNorm)) {
+      evidence.push({
+        competency: comp,
+        evidenceText: 'Декларированный навык в резюме: ' + comp,
+        source: {
+          type: 'skill_declaration',
+          index: -1,
+          sentence: '',
+          company: '',
+          position: '',
+          period: '',
+        },
+        confidence: 'declared',
+      });
+      continue;
     }
 
     if (!found) continue; // No evidence -- skip silently
 
-    // Confidence: high if matching skill + entry description has digit, medium if derived/synonym/implied or no digit
+    // Confidence: high if matching skill + entry description has digit,
+    //              medium if derived/synonym/implied or no digit,
+    //              (declared fallback handled above)
     let confidence;
     if (isMatching) {
       confidence = assessConfidence(found.entryDescription);
     } else {
       // derived/synonym/implied -> max medium
+      confidence = 'medium';
+    }
+    // Position-only or company-only matches are weaker -- cap at medium
+    if (found.fieldType !== 'description') {
       confidence = 'medium';
     }
 

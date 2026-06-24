@@ -3654,3 +3654,62 @@ Stage Summary:
 - Version: 1.9.51.0 -> 1.9.52.0
 - User can now configure AI timeout in Settings; default raised to 60s
   which should eliminate most TIMEOUT errors with GLM-4.5
+
+---
+Task ID: F-CR-02-fix-3
+Agent: ZCode session 2026-06-24 (continuation)
+Task: Fix NO_EVIDENCE error when resume has skills but no literal description mention
+
+Work Log:
+- User reported: "AI error: NO_EVIDENCE - No matching skills with experience evidence found"
+  on vacancy "Руководитель отдела продаж/РОП" + resume "Руководитель отдела продаж".
+- Root cause: mapEvidence() was too strict. It only counted evidence from
+  resume.experience[].description sentences that literally contained the
+  skill word (whole-word boundary match). If resume has skill "Управление
+  продажами" in skills[] array but experience descriptions use phrasing
+  like "Управлял командой 15 человек. Рост продаж 40%" (no literal
+  "Управление продажами" phrase) -- evidence was empty -> NO_EVIDENCE.
+- Fix in cover-letter-evidence.js:
+  1. Added skill_declaration fallback: when no narrative evidence found
+     BUT the skill is in resume.skills[], emit evidence with:
+       source.type = 'skill_declaration'
+       confidence = 'declared'
+       evidenceText = 'Декларированный навык в резюме: <skill>'
+     Anti-hallucination safe: states verifiable fact (skill is in
+     declared skill list), not invented context.
+  2. Added position + company text search: when description doesn't
+     mention skill, also scan experience[].position and experience[].company.
+     Position title often contains skill keywords ("Senior React Developer"
+     -> React). Confidence capped at 'medium' for position/company matches.
+  3. Normalized skill comparison using same rules as match-scorer-skills.js
+     (lowercase, ё->е, dash->space) so synonyms like "B2B-продажи" and
+     "B2B продажи" match correctly.
+  4. Fixed synonym matching: synonymMatchSkills entries come shaped as
+     "B2B продажи ~ работа с возражениями" -- now parses both sides of ~.
+- Updated tests/cover-letter-evidence.test.js:
+  * Replaced "skipped" assertion with skill_declaration fallback assertion
+  * Added "missing from matchResult -> still skipped" test
+  * Added "skill mentioned in position title -> found via position" test
+- Updated cover-letter-ai-ui.js buildAiErrorMessage:
+  * NO_EVIDENCE hint now says "Вакансия и резюме не имеют общих навыков.
+    Проверь, что в резюме заполнен блок Навыки" (more actionable)
+  * AI_ERROR [TIMEOUT] hint now says "Увеличь Timeout (мс) в Настройки
+    -> AI-настройки (до 90 000-120 000)"
+- Updated tests/cover-letter-ai-ui.test.js: NO_EVIDENCE assertion updated
+  + new TIMEOUT hint test.
+- Tests: 443 -> 446 (all pass)
+- Version: 1.9.52.0 -> 1.9.53.0 (5 files per Rule 9.2)
+- README: test count 443 -> 446
+
+Stage Summary:
+- cover-letter-evidence.js: skill_declaration fallback + position/company
+  search + normalized comparisons. NO_EVIDENCE now only fires when the
+  skill is genuinely missing from BOTH matchResult and resume.skills.
+- cover-letter-ai-ui.js: clearer error hints for NO_EVIDENCE + TIMEOUT
+- 3 new tests + 1 updated test in cover-letter-evidence.test.js
+- 1 new test in cover-letter-ai-ui.test.js (TIMEOUT hint)
+- Tests: 443 -> 446 (all pass)
+- Version: 1.9.52.0 -> 1.9.53.0
+- User's "РОП" scenario should now generate a letter (matching skills
+  declared in resume.skills[] will be used as evidence with 'declared'
+  confidence even if experience descriptions don't re-mention them).

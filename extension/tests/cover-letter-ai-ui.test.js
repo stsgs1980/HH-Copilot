@@ -140,7 +140,13 @@ describe('buildAiErrorMessage', () => {
   it('handles NO_EVIDENCE with hint', () => {
     const msg = buildAiErrorMessage({ ok: false, code: 'NO_EVIDENCE', error: 'empty' });
     expect(msg).toContain('NO_EVIDENCE');
-    expect(msg).toContain('совпадающих навыков');
+    expect(msg).toContain('Навыки');
+  });
+
+  it('handles AI_ERROR with TIMEOUT aiCode with hint to increase timeout', () => {
+    const msg = buildAiErrorMessage({ ok: false, code: 'AI_ERROR', aiCode: 'TIMEOUT', error: 'timed out' });
+    expect(msg).toContain('[TIMEOUT]');
+    expect(msg).toContain('Timeout');
   });
 
   it('handles unknown code without hints', () => {

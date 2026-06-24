@@ -106,15 +106,59 @@ describe('F-CR-02 -- mapEvidence', () => {
     expect(ts.source.index).toBe(1); // found in 2nd entry, not 1st
   });
 
-  it('skill in resume.skills but not in any experience description -> skipped (no evidence)', () => {
+  it('skill in resume.skills but not in any experience description -> falls back to skill_declaration evidence', () => {
     const resume = {
       ...baseResume,
       experience: [{ company: 'A', position: 'X', period: '2020', description: 'Без упоминания скиллов.' }],
     };
     const ev = mapEvidence(baseScorecard, resume, baseMatchResult);
-    // React is matching skill but no description mentions it -> skipped
+    // React is matching skill but no description mentions it -> fallback
+    const react = ev.find(e => e.competency === 'React');
+    expect(react).toBeDefined();
+    expect(react.source.type).toBe('skill_declaration');
+    expect(react.confidence).toBe('declared');
+    expect(react.evidenceText).toContain('React');
+  });
+
+  it('skill declared but missing from matchResult -> still skipped (no match basis)', () => {
+    // React is in resume.skills but matchResult says it's missing -> skipped
+    const resume = {
+      ...baseResume,
+      experience: [{ company: 'A', position: 'X', period: '2020', description: 'Без упоминания.' }],
+    };
+    const missingMatch = {
+      total: 0,
+      breakdown: {},
+      details: {
+        matchingSkills: [],
+        derivedMatchSkills: [],
+        synonymMatchSkills: [],
+        impliedMatchSkills: [],
+        missingSkills: ['React'],
+        extraSkills: [],
+      },
+    };
+    const ev = mapEvidence(baseScorecard, resume, missingMatch);
     const react = ev.find(e => e.competency === 'React');
     expect(react).toBeUndefined();
+  });
+
+  it('skill mentioned in experience position title (not description) -> found via position fallback', () => {
+    const resume = {
+      ...baseResume,
+      experience: [{
+        company: 'A',
+        position: 'Senior React Developer',
+        period: '2020-2024',
+        description: 'Работал над UI без упоминания технологий в тексте.',
+      }],
+    };
+    const ev = mapEvidence(baseScorecard, resume, baseMatchResult);
+    const react = ev.find(e => e.competency === 'React');
+    expect(react).toBeDefined();
+    expect(react.source.type).toBe('experience');
+    expect(react.source.sentence).toContain('React');
+    expect(react.confidence).toBe('medium'); // position-only -> capped medium
   });
 
   it('evidence source field has type, index, sentence', () => {

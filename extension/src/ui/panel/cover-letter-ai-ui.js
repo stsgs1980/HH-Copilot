@@ -111,7 +111,8 @@ export function buildAiErrorMessage(result) {
   const aiCode = (result && result.aiCode) ? ' [' + result.aiCode + ']' : '';
   const msg = 'AI error: ' + code + aiCode + (err ? ' - ' + err : '') +
               (code === 'NO_API_KEY' ? '. Открой Настройки -> AI API key.' : '') +
-              (code === 'NO_EVIDENCE' ? '. Нет совпадающих навыков с опытом в резюме.' : '');
+              (code === 'NO_EVIDENCE' ? '. Вакансия и резюме не имеют общих навыков. Проверь, что в резюме заполнен блок "Навыки" (вкладка Резюме -> загрузить).' : '') +
+              (code === 'AI_ERROR' && aiCode === ' [TIMEOUT]' ? '. Увеличь Timeout (мс) в Настройки -> AI-настройки (до 90 000-120 000).' : '');
   return msg;
 }
 
