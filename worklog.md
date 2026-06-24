@@ -3975,3 +3975,45 @@ Stage Summary:
 - Пользовательский workflow: клик AI -> клик "Скопировать лог AI" -> Ctrl+V в чат
 - DevTools больше не нужен
 - 2 новые кнопки в блоке "Сопроводительное письмо" на вкладке Вакансии
+
+---
+Task ID: dom-inspector-001
+Agent: main
+Time: 2026-06-24T15:17:00+03:00
+Task: Vanilla-JS микро-инспектор DOM в HH-Copilot
+
+Work Log:
+- Пользователь: хочет визуально кликать на любой элемент hh.ru и видеть что не так (CSS path, text, styles)
+- Создан src/ui/dom-inspector.js (380 строк, vanilla JS, без зависимостей)
+- Возможности:
+  - Отдельная FAB-кнопка 🔍 слева от основной FAB (40x40px, dark gray)
+  - При клике на 🔍 → inspector ON: наводишь на элемент → фиолетовая подсветка (rgba(124,58,237,0.12) + border 2px)
+  - Клик по элементу → freeze: фиолетовая подсветка фиксируется, открывается панель справа (380px, dark theme)
+  - Панель показывает:
+    - Tag, ID, Classes
+    - CSS Path (buildCssPath: id если есть, иначе tag:nth-of-type цепочкой до 8 уровней)
+    - Text (truncated 400 chars)
+    - Geometry: rect, offsetWidth/Height
+    - Computed style: display, visibility, font, color, background, padding, margin, border
+    - Outer HTML (truncated 600 chars)
+  - 4 кнопки в панели:
+    - 📋 Copy report — полный текстовый отчёт в clipboard
+    - 📍 Copy CSS path — только CSS селектор
+    - 🔄 Re-pick — разморозить и выбрать другой элемент
+    - ✖ Close — выключить inspector
+  - Esc: first Esc = unfreeze (back to hover mode), second Esc = turn off inspector
+  - Toast снизу: "Inspector ON — кликни элемент", "Report copied", "Inspector OFF"
+  - Все элементы inspector'а (overlay, panel, toast, fab) исключены из picking'а
+  - Логирование в console: [DOM-Inspector] ON / element picked / OFF
+- Подключён в panel/index.js createPanel(): createInspectorFab() после createFab()
+- Все стили используют setProperty(..., 'important') чтобы перебивать CSS hh.ru
+- z-index: 2147483000 (overlay) и 2147483001 (panel) — выше всего
+- Версия: 1.9.58.0 → 1.9.59.0
+- Сборка прошла: dist/content.js 747.5KB
+- 481/481 тестов проходят
+
+Stage Summary:
+- Новый файл: src/ui/dom-inspector.js
+- Изменены: src/ui/panel/index.js (1 import + 1 строка в createPanel), manifest/package/version
+- Пользовательский workflow: клик 🔍 → наводишь → клик по элементу → 📋 Copy report → вставляешь в чат
+- DevTools не нужен
