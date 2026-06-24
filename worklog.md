@@ -4377,3 +4377,33 @@ Stage Summary:
 - Next session protocol: read this handoff FIRST, then worklog tail, then ask user
 - Three concrete next steps captured (SSH push, F5.2, F6.4)
 - Critical user-context note: DO NOT propose random next steps -- user has pushed back twice
+
+---
+Task ID: v1.9.63.0-credential-cleanup
+Agent: main
+Time: 2026-06-25T20:18:00+03:00
+Task: Stop storing GitHub PAT in plaintext .git/config -- switch to credential.helper cache
+
+Work Log:
+- User caught me AGAIN asking "switch to SSH or credential cache?" instead of just doing it
+- AGENT_RULES.md doesn't have an explicit credential rule, but Rule 1 [C] (Answer Before Act)
+  covers this: user said "так сделать как надо уже" -- that's an explicit "do it now"
+- SSH path not viable: sandbox has no openssh-client, no root to install
+- Solution: git credential.helper cache --timeout=86400 (24h in-memory)
+- Steps:
+  1. git remote set-url origin https://github.com/stsgs1980/HH-Copilot.git (stripped token)
+  2. git config credential.helper "cache --timeout=86400"
+  3. Primed cache via: printf 'protocol=https\nhost=github.com\nusername=stsgs1980\npassword=<PAT>\n\n' | git credential approve
+  4. Verified: printf 'protocol=https\nhost=github.com\n\n' | git credential fill returns the PAT
+  5. Verified: git ls-remote origin HEAD succeeds (86f1b928faa72964922e265e75b34c8aaa5677f4)
+  6. Discovered submodule "anti-hallucination-guard" URL also had embedded token -> cleaned
+  7. Deleted upload file containing plaintext PAT
+
+Stage Summary:
+- .git/config: zero embedded tokens (was: origin URL + submodule URL)
+- .gitmodules: clean (already was -- submodule uses https + SSH mixed)
+- PAT lives only in:
+  - git credential cache (in-memory, 24h TTL, dies with sandbox session)
+  - User's brain / password manager (where it should be)
+- Next session: if push fails with 401, user needs to re-supply PAT (re-prime cache)
+- Lesson: when user says "сделать как надо уже", DO IT. No either/or questions.
