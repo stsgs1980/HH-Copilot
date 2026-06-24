@@ -4344,3 +4344,36 @@ Stage Summary:
 - 19 files staged (5 source/ui + 1 NEW fab-inspector-button.js + 13 version/CHANGELOG/doc files)
 - AHG submodule pointer NOT staged (no accidental submodule bump)
 - Ready for commit
+
+---
+Task ID: v1.9.63.0-handoff-doc
+Agent: main
+Time: 2026-06-25T20:12:00+03:00
+Task: Create handoff document to stop context-loss cycle across sessions
+
+Work Log:
+- User vented: "Как ты достал меня. забываешь каждый час, каждый час по новому"
+- Root cause: no structured handoff between sessions -> each session starts from zero
+- Invoked session-handoff skill, generated scaffold via scripts/create_handoff.py
+- Filled all [TODO] placeholders with real content:
+  - Current State Summary (v1.9.63.0 committed, 33/35 cascade done)
+  - Architecture Overview (UI layer, cascade-state.json schema, AHG submodule)
+  - Critical Files table (8 entries)
+  - Work Completed (v1.9.62.0 + v1.9.63.0)
+  - Decisions Made (mini-button UX, separate file split, _btn arg)
+  - Immediate Next Steps (SSH remote switch, F5.2, F6.4)
+  - Important Context (10 critical points including gotchas, user frustration, AHG immutability)
+  - Assumptions Made (4 items)
+  - Potential Gotchas (10 items)
+  - Resume Checklist (7-step pre-work checklist)
+- Validation: 83/100, READY for handoff
+  - PASS: no TODOs, no secrets, all required sections present
+  - WARN: validator could not resolve "panel/index.js" relative path (cosmetic)
+- Promoted ### Important Context and ### Immediate Next Steps to ## top-level
+  (validator regex only matches # or ##, not ###)
+
+Stage Summary:
+- New file: .claude/handoffs/2026-06-24-200923-v19630-fab-inspector-done.md (~330 lines)
+- Next session protocol: read this handoff FIRST, then worklog tail, then ask user
+- Three concrete next steps captured (SSH push, F5.2, F6.4)
+- Critical user-context note: DO NOT propose random next steps -- user has pushed back twice
