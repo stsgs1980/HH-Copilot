@@ -273,17 +273,92 @@ describe('F-CR-02 -- mentionsSkillStem (v1.9.55.0)', () => {
     expect(mentionsSkillStem('Готовил кофе по утрам.', 'Управление продажами')).toBe(false);
   });
 
-  it('skips skill words shorter than MIN_STEM_LEN (only longer words participate)', () => {
-    // "AI" is 2 chars -- skipped; "UX" is 2 chars -- skipped.
-    // Only "дизайн" (6 chars) participates -> stem "дизай" must be found.
-    expect(mentionsSkillStem('Дизайн интерфейсов.', 'AI UX дизайн')).toBe(true);
-    expect(mentionsSkillStem('Делал интерфейсы.', 'AI UX дизайн')).toBe(false);
+  it('multi-word skill: short tokens require exact match (Gap 2 hardening)', () => {
+    // "AI"/"UX" are < MIN_STEM_LEN -> must be present EXACTLY in the sentence.
+    // Previously they were silently skipped -> false-positive when absent
+    // (same anti-hallucination hole as "C++ разработка").
+    expect(mentionsSkillStem('Дизайн интерфейсов.', 'AI UX дизайн')).toBe(false); // AI/UX absent
+    expect(mentionsSkillStem('AI и UX дизайн интерфейсов.', 'AI UX дизайн')).toBe(true); // all present
+    expect(mentionsSkillStem('Делал интерфейсы.', 'AI UX дизайн')).toBe(false); // AI/UX absent
   });
 
   it('handles empty inputs gracefully', () => {
     expect(mentionsSkillStem('', 'React')).toBe(false);
     expect(mentionsSkillStem('sentence', '')).toBe(false);
     expect(mentionsSkillStem(null, null)).toBe(false);
+  });
+
+  // ============================================================
+  // Gap 1: prefix false-positive hardening (anti-hallucination).
+  // A short stem must not match a longer unrelated word ("react" vs
+  // "Reactive"). Allowed: exact word, or word + inflection suffix.
+  // ============================================================
+  it('Gap 1: does NOT match a longer word sharing the prefix (reactive)', () => {
+    expect(mentionsSkillStem('Reactive programming.', 'react')).toBe(false); // "ive" not a suffix
+  });
+
+  it('Gap 1: does NOT match a longer word sharing the prefix (dockerized)', () => {
+    expect(mentionsSkillStem('Dockerized deployment.', 'docker')).toBe(false); // "ized" not a suffix
+  });
+
+  it('Gap 1: matches exact word', () => {
+    expect(mentionsSkillStem('Опыт работы с react.', 'react')).toBe(true);
+  });
+
+  it('Gap 1: matches word + Russian inflection (творительный падеж)', () => {
+    expect(mentionsSkillStem('Работал с reactом.', 'react')).toBe(true); // "ом" is a RU suffix
+  });
+
+  it('Gap 1: matches word + English inflection (plural)', () => {
+    expect(mentionsSkillStem('Built several reacts.', 'react')).toBe(true); // "s" is an EN suffix
+  });
+
+  // ============================================================
+  // Gap 2: short token (< MIN_STEM_LEN) in a multi-word skill MUST be
+  // present exactly in the sentence (no skipping). Fixes the
+  // "C++ разработка" hole where "C++" was dropped and ignored.
+  // ============================================================
+  it('Gap 2: short symbolic token must be present exactly (C++)', () => {
+    expect(mentionsSkillStem('Руководил разработкой.', 'C++ разработка')).toBe(false); // C++ absent
+    expect(mentionsSkillStem('Разработка на C++ для бэкенда.', 'C++ разработка')).toBe(true); // C++ + разраб
+  });
+
+  it('Gap 2: short alphanumeric token must be present exactly (B2B)', () => {
+    expect(mentionsSkillStem('Работа в команде.', 'B2B продажи')).toBe(false); // B2B absent
+    expect(mentionsSkillStem('Управлял B2B продажами.', 'B2B продажи')).toBe(true); // B2B exact + продаж stem
+  });
+
+  // ============================================================
+  // Gap 3: skills composed ONLY of short tokens. After the Gap 2 fix,
+  // short tokens are checked EXACTLY (not skipped), so a skill of only
+  // short tokens matches when all of them are literally present.
+  // ============================================================
+  it('Gap 3: skill of only short tokens matches when all present exactly', () => {
+    expect(mentionsSkillStem('Работал с AI и UX.', 'AI UX')).toBe(true); // both present
+    expect(mentionsSkillStem('Работал с AI.', 'AI UX')).toBe(false); // UX absent
+    expect(mentionsSkillStem('Опыт с Go.', 'Go')).toBe(true);
+    expect(mentionsSkillStem('Used ML pipelines.', 'ML')).toBe(true);
+    expect(mentionsSkillStem('Знаю C#.', 'C#')).toBe(true);
+  });
+
+  // ============================================================
+  // Gap 4: special characters / dots in skill names. After Gap 2 fix,
+  // short symbolic tokens (C++, .NET) are checked exactly -- so they
+  // match when literally present. Node.js (7 chars) uses the stem tier.
+  // ============================================================
+  it('Gap 4: special-character skills match when present', () => {
+    expect(mentionsSkillStem('Опыт с Node.js.', 'Node.js')).toBe(true); // 7 chars -> stem tier
+    expect(mentionsSkillStem('.NET framework проект.', '.NET')).toBe(true); // exact (4 chars, symbolic)
+    expect(mentionsSkillStem('Работал с C++ в проекте.', 'C++')).toBe(true); // exact (C++ present)
+    expect(mentionsSkillStem('Разработка на Python.', 'C++')).toBe(false); // C++ absent
+  });
+
+  // ============================================================
+  // Gap 5: non-string sentence must not crash (contract hardening).
+  // ============================================================
+  it('Gap 5: non-string sentence coerced instead of throwing', () => {
+    expect(() => mentionsSkillStem(123, 'react')).not.toThrow();
+    expect(mentionsSkillStem(123, 'react')).toBe(false);
   });
 });
 

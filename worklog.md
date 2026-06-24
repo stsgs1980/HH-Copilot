@@ -3852,3 +3852,51 @@ Stage Summary:
 - opencode.json removed from repo
 - OpenCode on Windows should now start with `opencode --port 42018` using defaults
 - User selects model via /model command in OpenCode chat
+
+---
+Task ID: 5
+Agent: zcode
+Time: 2026-06-24T17:20:00+03:00
+Task: Audit + harden mentionsSkillStem() in cover-letter-evidence.js (anti-hallucination)
+
+Work Log:
+- Read AGENT_RULES.md fully + cover-letter-evidence.js (364 lines) + test file (22 tests).
+- Verified 5 edge-case gaps in mentionsSkillStem via Node REPL (Rule 6: facts, not guesses):
+  - Gap 1 (HIGH): prefix false-positive -- mentionsSkillStem('Reactive programming', 'react') -> true.
+    Assigned a skill the candidate does not have. Anti-hallucination hole.
+  - Gap 2 (HIGH): short token dropped, breaks AND -- mentionsSkillStem('Руководил разработкой', 'C++ разработка') -> true.
+    "C++" silently skipped -> matched without C++ present.
+  - Gap 3 (MED): skill of only short tokens -> undocumented false.
+  - Gap 4 (MED): special-char skills (Node.js/.NET/C++) not tested; behavior stochastic.
+  - Gap 5 (LOW): non-string sentence -> TypeError throw.
+- User decision: FIX Gap 1+2 (code+test), TEST-only Gap 3-5. Confirmed Gap 2 fix flips
+  existing test 'AI UX дизайн'/'Дизайн интерфейсов' true->false (was the bug).
+- TDD: RED phase wrote all new tests -> 5 fail, 27 pass (exactly the right 5).
+- GREEN phase fixes:
+  - Gap 1: short stems (skill word <=6 chars) require EXACT word OR word + inflection suffix
+    (RU: а,я,у,ю,ом,ой,ей,е,ы,и,ам,ям,ах,ях,ов,ев,ами,ями,ь,ого,его,ому,ему; EN: s,es,ed,ing,er,or,ly,tion).
+    "react"+"ive" rejected; "react"+"" / "react"+"ом" / "react"+"s" accepted. Added missing "ом".
+  - Gap 2: short tokens (< MIN_STEM_LEN=4) require EXACT word match (not skipped).
+  - Gap 5: String(sentence) cast -- never throws on non-string input.
+- Gap 3/4 test asserts updated to the NEW correct post-fix behavior (short tokens now checked
+  exactly, so AI/UX/Go/C# match when literally present).
+- AHG Rule 12 forced decomposition (file grew to 423). Extracted 3 modules:
+  - skill-stem-match.js (119) -- mentionsSkillStem + SHORT_STEM_SUFFIXES + shortStemMatches.
+  - cover-letter-evidence-search.js (102) -- 4-tier findCompetencyEvidence search.
+  - cover-letter-evidence-fallback.js (69) -- splitSentences + buildExperienceFallback + truncate.
+  - cover-letter-evidence.js: 364 -> 206 (under 250). Re-exports _internal for test compat.
+- Removed unused var compLower + inline truncation (replaced with truncate()).
+- README test counts corrected to actual: 481 total, evidence 32 (was 9), files 25.
+
+Verification:
+- Tests: 481/481 pass (25 files). Evidence: 32/32 (was 22, +10 new).
+- Lint: 0 errors in changed files. 1 [W] warning (evidence.js 206, recommended 200, under HARD 250).
+  Pre-existing errors (vacancy-fetch-text 258, unicode dash) untouched -- not in scope.
+- Build: v1.9.56.0 OK. version-sync.sh: PASSED. popup/index.html: 38 lines (intact).
+
+Stage Summary:
+- Gap 1+2 anti-hallucination holes CLOSED: stem matcher no longer fabricates evidence for
+  absent skills (react/Reactive, C++ разработка without C++).
+- Gap 3-5 behavior pinned by tests (detection of future drift).
+- cover-letter-evidence.js decomposed for Rule 12; 3 focused single-responsibility modules.
+- Version 1.9.55.0 -> 1.9.56.0 (Rule 9.2, 5 files). NOT pushed (user to verify locally).

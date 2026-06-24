@@ -27,81 +27,33 @@
  *            when resume.experience is non-empty, so the cover letter
  *            can always be generated (user explicitly requested the
  *            letter to never silently fail with NO_EVIDENCE).
+ * v1.9.56.0: stem-matching anti-hallucination hardening (Gap 1+2):
+ *            short stems require exact word or word + inflection suffix
+ *            (blocks "react" matching "Reactive"); short skill tokens
+ *            require exact match (blocks "C++ разработка" without "C++").
+ *            Split into skill-stem-match.js, cover-letter-evidence-search.js,
+ *            and cover-letter-evidence-fallback.js (AHG Rule 12).
  */
 
-const MAX_EVIDENCE_SENTENCE_LEN = 280;
-const MIN_STEM_LEN = 4; // words shorter than 4 chars are skipped during stem matching
 const EXPERIENCE_FALLBACK_MAX = 2; // top-N most recent experience items used as final fallback
 
-// Split text into sentences (Russian + English aware)
-function splitSentences(text) {
-  if (!text || typeof text !== 'string') return [];
-  return text
-    .split(/(?<=[.!?])\s+|\n+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 5);
-}
+// Stem/partial matching logic lives in skill-stem-match.js (extracted in
+// v1.9.56.0 to keep this file under AHG Rule 12). Re-exported here so the
+// existing _internal export and tests keep working without import churn.
+import {
+  mentionsSkillStem,
+  MIN_STEM_LEN,
+} from './skill-stem-match.js';
 
-// Case-insensitive substring check
-function mentionsSkill(sentence, skill) {
-  if (!sentence || !skill) return false;
-  const s = sentence.toLowerCase();
-  const k = String(skill).toLowerCase().trim();
-  // Match as whole word boundary (works for Latin + Cyrillic via Unicode escapes)
-  const re = new RegExp('(^|[^a-zа-яё0-9])' + escapeRegex(k) + '([^a-zа-яё0-9]|$)', 'i');
-  return re.test(s);
-}
+// Sentence splitter + experience fallback extracted to a sibling module
+// (v1.9.56.0) to keep this file under AHG Rule 12.
+import {
+  buildExperienceFallback,
+  truncate,
+} from './cover-letter-evidence-fallback.js';
 
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * PARTIAL/STEM MATCHING (v1.9.55.0)
- * =================================
- * Tries to match a skill against a sentence by word-stem prefix.
- * Used as a 4th-tier fallback when exact word-boundary match fails.
- *
- * Strategy:
- *   1. Tokenize skill into words (split on whitespace/dash).
- *   2. For each token of length >= MIN_STEM_LEN, take the first
- *      min(token.len, 6) characters as the stem.
- *   3. For each token, check if any word in the sentence starts
- *      with that stem (case-insensitive).
- *   4. Return true if ALL skill tokens have a matching stem in
- *      the sentence (AND semantics, so "B2B продажи" requires both
- *      "b2b*" and "продаж*" to be present).
- *
- * Examples:
- *   mentionsSkillStem("Управлял командой продаж", "Управление продажами")
- *     -> true  (управл* matches "управлял", продаж* matches "продаж")
- *   mentionsSkillStem("Рост выручки на 30%", "Управление продажами")
- *     -> false (управл* not found, продаж* not found)
- *
- * @param {string} sentence
- * @param {string} skill
- * @returns {boolean}
- */
-function mentionsSkillStem(sentence, skill) {
-  if (!sentence || !skill) return false;
-  const s = sentence.toLowerCase();
-  const skillWords = String(skill)
-    .toLowerCase()
-    .split(/[\s\-—–]+/)
-    .map(w => w.trim())
-    .filter(w => w.length >= MIN_STEM_LEN);
-  if (skillWords.length === 0) return false;
-
-  // For each skill word, derive a stem (first 4-6 chars) and check that
-  // some word in the sentence starts with that stem.
-  for (const sw of skillWords) {
-    const stem = sw.substring(0, Math.min(sw.length, 6));
-    // Word-boundary prefix match (Unicode-aware for Cyrillic + Latin)
-    const re = new RegExp('(^|[^a-zа-яё0-9])' + escapeRegex(stem), 'i');
-    if (!re.test(s)) return false;
-  }
-  return true;
-}
+// 4-tier evidence search extracted to a sibling module (v1.9.56.0).
+import { findCompetencyEvidence } from './cover-letter-evidence-search.js';
 
 // Confidence: high if entry description contains a number/percent/year, else medium
 function assessConfidence(entryDescription) {
@@ -155,7 +107,6 @@ export function mapEvidence(scorecard, resume, matchResult) {
   for (const competency of scorecard.competencies) {
     const comp = String(competency).trim();
     if (!comp) continue;
-    const compLower = comp.toLowerCase();
     const compNorm = normalizeSkill(comp);
 
     // Skip missing skills (Kahneman de-bias: do not invent evidence for gaps)
@@ -176,83 +127,9 @@ export function mapEvidence(scorecard, resume, matchResult) {
       continue;
     }
 
-    // Search experience entries from most recent (last in array) backwards.
-    // Search across description + position + company -- sometimes position title
-    // itself contains the skill keyword (e.g. "Senior B2B Sales Manager" -> B2B).
-    let found = null;
-    for (let i = experience.length - 1; i >= 0; i--) {
-      const exp = experience[i];
-      if (!exp) continue;
-
-      // Primary: scan description sentences
-      if (exp.description) {
-        const sentences = splitSentences(exp.description);
-        for (const sentence of sentences) {
-          if (mentionsSkill(sentence, comp)) {
-            found = {
-              sentence,
-              index: i,
-              company: exp.company || '',
-              position: exp.position || '',
-              period: exp.period || '',
-              entryDescription: exp.description,
-              fieldType: 'description',
-            };
-            break;
-          }
-        }
-      }
-
-      // Secondary: scan position title as a single "sentence"
-      if (!found && exp.position && mentionsSkill(exp.position, comp)) {
-        found = {
-          sentence: exp.position,
-          index: i,
-          company: exp.company || '',
-          position: exp.position || '',
-          period: exp.period || '',
-          entryDescription: exp.position,
-          fieldType: 'position',
-        };
-      }
-
-      // Tertiary: scan company name
-      if (!found && exp.company && mentionsSkill(exp.company, comp)) {
-        found = {
-          sentence: exp.company,
-          index: i,
-          company: exp.company || '',
-          position: exp.position || '',
-          period: exp.period || '',
-          entryDescription: exp.company,
-          fieldType: 'company',
-        };
-      }
-
-      // Quaternary (v1.9.55.0): partial/stem match on description sentences.
-      // Catches word-form variations: "Управление продажами" (skill) vs
-      // "Управлял командой продаж" (description). Marked as fieldType='stem'
-      // so confidence is capped at 'low' below (weaker than exact match).
-      if (!found && exp.description) {
-        const sentences = splitSentences(exp.description);
-        for (const sentence of sentences) {
-          if (mentionsSkillStem(sentence, comp)) {
-            found = {
-              sentence,
-              index: i,
-              company: exp.company || '',
-              position: exp.position || '',
-              period: exp.period || '',
-              entryDescription: exp.description,
-              fieldType: 'stem',
-            };
-            break;
-          }
-        }
-      }
-
-      if (found) break;
-    }
+    // 4-tier evidence search (description > position > company > stem).
+    // See findCompetencyEvidence() in cover-letter-evidence-search.js.
+    const found = findCompetencyEvidence(comp, experience);
 
     // Fallback: skill declared in resume.skills but no narrative evidence.
     // Anti-hallucination safe: we state the verifiable fact that the skill
@@ -296,13 +173,9 @@ export function mapEvidence(scorecard, resume, matchResult) {
       confidence = 'low';
     }
 
-    const evidenceText = found.sentence.length > MAX_EVIDENCE_SENTENCE_LEN
-      ? found.sentence.substring(0, MAX_EVIDENCE_SENTENCE_LEN) + '...'
-      : found.sentence;
-
     evidence.push({
       competency: comp,
-      evidenceText,
+      evidenceText: truncate(found.sentence),
       source: {
         type: 'experience',
         index: found.index,
@@ -317,39 +190,9 @@ export function mapEvidence(scorecard, resume, matchResult) {
 
   // FINAL FALLBACK (v1.9.55.0): if no per-competency evidence was found,
   // return the top-N most recent experience entries as low-confidence
-  // evidence. This guarantees the cover letter can always be generated
-  // (user explicitly requested no silent NO_EVIDENCE failure when the
-  // resume has any experience at all).
-  //
-  // Anti-hallucination safe: we ONLY quote verbatim from resume.experience
-  // (first sentence of description, or position title if description is
-  // empty). competency is marked as '(опыт из резюме)' so the LLM knows
-  // this is generic experience, not a specific skill match.
-  if (evidence.length === 0 && experience.length > 0) {
-    const startIdx = Math.max(0, experience.length - EXPERIENCE_FALLBACK_MAX);
-    for (let i = experience.length - 1; i >= startIdx; i--) {
-      const exp = experience[i];
-      if (!exp) continue;
-      const sentences = exp.description ? splitSentences(exp.description) : [];
-      const sentence = sentences[0] || exp.position || exp.company || '';
-      if (!sentence) continue;
-      const evidenceText = sentence.length > MAX_EVIDENCE_SENTENCE_LEN
-        ? sentence.substring(0, MAX_EVIDENCE_SENTENCE_LEN) + '...'
-        : sentence;
-      evidence.push({
-        competency: '(опыт из резюме)',
-        evidenceText,
-        source: {
-          type: 'experience_fallback',
-          index: i,
-          sentence,
-          company: exp.company || '',
-          position: exp.position || '',
-          period: exp.period || '',
-        },
-        confidence: 'low',
-      });
-    }
+  // evidence. See buildExperienceFallback() in cover-letter-evidence-fallback.js.
+  if (evidence.length === 0) {
+    evidence.push(...buildExperienceFallback(experience, EXPERIENCE_FALLBACK_MAX));
   }
 
   return evidence;
