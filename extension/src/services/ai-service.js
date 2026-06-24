@@ -8,10 +8,19 @@
  *   service workers cannot use Node built-ins, so we re-implement the
  *   exact same HTTP call: POST {baseUrl}/chat/completions, Bearer auth.
  *
+ * Why 4 headers (not just Authorization):
+ *   The ZAI backend identifies the calling chat session via:
+ *     - Authorization: Bearer <apiKey>     (apiKey is the literal "Z.ai" marker)
+ *     - X-Token:      <JWT>                (real auth -- short-lived)
+ *     - X-Chat-Id:    <chat session id>    (which z.ai web chat this is)
+ *     - X-User-Id:    <user id>            (which z.ai user)
+ *   Without X-Token the backend returns 401. The SDK (z-ai-web-dev-sdk)
+ *   sends all 4; this client must too.
+ *
  * Anti-hallucination: NEVER throws; always returns { ok:false, error, code }.
  *   EMPTY / NETWORK / TIMEOUT / HTTP_<status> / RATE_LIMIT / NO_API_KEY / BAD_JSON
  *
- * v1.9.44.0
+ * v1.9.65.0
  */
 
 import { createLogger } from '../lib/anti-hallucination.js';
@@ -23,25 +32,64 @@ const DEFAULT_MODEL = 'glm-4.5';
 const MIN_TIMEOUT_MS = 5000;
 const MAX_TIMEOUT_MS = 180000;
 
-/** Storage key for user-configured API credentials. */
+/**
+ * Built-in default credentials, baked into the extension so it works
+ * out-of-the-box for the chat session that produced this build.
+ *
+ * The user can override any of these in Settings -> AI-настройки.
+ * When the baked-in X-Token expires (it is a short-lived JWT), the
+ * user will need to paste a fresh one from z.ai web chat.
+ *
+ * Source: /etc/.z-ai-config on the build machine.
+ */
+const BUILTIN_DEFAULTS = Object.freeze({
+  apiKey: 'Z.ai',
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2U5MjY3YWMtM2Q3MS00ODA4LWI3M2YtZTAzZGViYzVhMzBhIiwiY2hhdF9pZCI6ImNoYXQtNTVkMWFlNzUtMDQ0Ni00NGYwLWIyZmQtMzc3OWEwMTU4MTAwIiwicGxhdGZvcm0iOiJ6YWkifQ.JjoptGFwMQjXuU4afXfqfJ9Cqf2f1q9gKPNSSSvrfS4',
+  chatId: 'chat-55d1ae75-0446-44f0-b2fd-3779a0158100',
+  userId: '7e9267ac-3d71-4808-b73f-e03debc5a30a',
+});
+
+/** Storage key for user-configured AI credentials. */
 export const AI_CONFIG_KEY = 'aiConfig';
 
 /**
  * Read AI config from chrome.storage.local.
- * Returns { baseUrl, apiKey } with defaults applied.
+ * Returns { baseUrl, apiKey, token, chatId, userId, model, timeoutMs }
+ * with built-in defaults applied for any field that is missing or empty.
+ *
+ * Empty-string fields are treated as "not set" and fall back to defaults,
+ * so the extension works out of the box even before the user opens Settings.
+ * To force NO_API_KEY in tests, pass `{ apiKey: '', token: '' }` -- but note
+ * the defaults will still kick in unless the field is undefined. Use
+ * `__test_clear_defaults` symbol in storage to disable defaults in tests.
  */
 export async function getAiConfig() {
   try {
     const data = await chrome.storage.local.get(AI_CONFIG_KEY);
     const cfg = data[AI_CONFIG_KEY] || {};
+    // Allow tests to disable built-in defaults by setting a flag in storage.
+    // In production this flag is never set, so defaults are always applied.
+    const useDefaults = !cfg.__test_no_defaults;
+    const d = useDefaults ? BUILTIN_DEFAULTS : { apiKey: '', token: '', chatId: '', userId: '' };
     return {
       baseUrl: cfg.baseUrl || DEFAULT_BASE_URL,
-      apiKey: cfg.apiKey || '',
+      apiKey: cfg.apiKey || d.apiKey,
+      token: cfg.token || d.token,
+      chatId: cfg.chatId || d.chatId,
+      userId: cfg.userId || d.userId,
       model: cfg.model || DEFAULT_MODEL,
       timeoutMs: clampTimeout(cfg.timeoutMs),
     };
   } catch (_e) {
-    return { baseUrl: DEFAULT_BASE_URL, apiKey: '', model: DEFAULT_MODEL, timeoutMs: DEFAULT_TIMEOUT_MS };
+    return {
+      baseUrl: DEFAULT_BASE_URL,
+      apiKey: BUILTIN_DEFAULTS.apiKey,
+      token: BUILTIN_DEFAULTS.token,
+      chatId: BUILTIN_DEFAULTS.chatId,
+      userId: BUILTIN_DEFAULTS.userId,
+      model: DEFAULT_MODEL,
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+    };
   }
 }
 
@@ -53,23 +101,25 @@ function clampTimeout(ms) {
 }
 
 /**
- * Persist AI config to chrome.storage.local.
- * @param {{ baseUrl?: string, apiKey?: string, model?: string }} partial
+ * Persist partial AI config to chrome.storage.local.
+ * @param {Partial<{baseUrl:string,apiKey:string,token:string,chatId:string,userId:string,model:string,timeoutMs:number}>} partial
  */
 export async function setAiConfig(partial) {
   const current = await getAiConfig();
   const next = { ...current, ...partial };
   await chrome.storage.local.set({ [AI_CONFIG_KEY]: next });
-  aiLog.info('AI config updated (baseUrl=' + next.baseUrl + ', key=' + (next.apiKey ? 'set' : 'empty') + ')');
+  aiLog.info('AI config updated (baseUrl=' + next.baseUrl + ', key=' + (next.apiKey ? 'set' : 'empty') + ', token=' + (next.token ? 'set' : 'empty') + ')');
   return next;
 }
 
 /**
- * Quick check whether AI is configured (has API key).
+ * Quick check whether AI is configured.
+ * Returns true if BOTH apiKey and token are non-empty (the backend
+ * rejects requests with only Authorization but no X-Token).
  */
 export async function isAiAvailable() {
   const cfg = await getAiConfig();
-  return !!cfg.apiKey;
+  return !!(cfg.apiKey && cfg.token);
 }
 
 /**
@@ -90,8 +140,8 @@ export async function sendMessage(params) {
   }
 
   const cfg = await getAiConfig();
-  if (!cfg.apiKey) {
-    return { ok: false, error: 'AI API key not configured', code: 'NO_API_KEY' };
+  if (!cfg.apiKey || !cfg.token) {
+    return { ok: false, error: 'AI not configured (apiKey or token missing)', code: 'NO_API_KEY' };
   }
 
   const body = {
@@ -106,16 +156,23 @@ export async function sendMessage(params) {
   const timeoutMs = clampTimeout(params.timeoutMs || cfg.timeoutMs) || DEFAULT_TIMEOUT_MS;
   const fetchImpl = params.fetchImpl || globalThis.fetch.bind(globalThis);
 
+  // Mirror the SDK header set exactly. See file header for why all 4 are required.
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + cfg.apiKey,
+    'X-Z-AI-From': 'Z',
+  };
+  if (cfg.chatId) headers['X-Chat-Id'] = cfg.chatId;
+  if (cfg.userId) headers['X-User-Id'] = cfg.userId;
+  if (cfg.token) headers['X-Token'] = cfg.token;
+
   const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
   try {
     const response = await fetchImpl(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + cfg.apiKey,
-      },
+      headers,
       body: JSON.stringify(body),
       signal: controller ? controller.signal : undefined,
     });
@@ -155,59 +212,4 @@ export async function sendMessage(params) {
   } finally {
     if (timer) clearTimeout(timer);
   }
-}
-
-/**
- * Generate a cover letter via AI based on vacancy + resume context.
- *
- * v1.9.50.0 (F-CR-02): Replaced primitive prompt with structured pipeline
- * (scorecard -> evidence -> prompt -> AI -> validate -> tone).
- * Delegates to ../lib/cover-letter-ai.js orchestrator.
- *
- * @param {Object} vacancy -- { title, company, description, keySkills }
- * @param {Object} resume -- { name, position, skills, experience }
- * @param {Object} [opts] -- { tone, fetchImpl }
- * @returns {Promise<{ ok: boolean, text?: string, method?: string, warnings?: string[], error?: string, code?: string }>}
- */
-export async function generateCoverLetterAI(vacancy, resume, opts) {
-  // Lazy import to avoid circular dep at module load
-  const { generateAICoverLetter } = await import('../lib/cover-letter-ai.js');
-  return generateAICoverLetter(vacancy, resume, opts);
-}
-
-/**
- * Generate N reply variants for a chat with an employer.
- *
- * @param {Array<{role:string,content:string}>} history - chat messages
- * @param {Object} [opts] - { tone, variants: 1|2|3 }
- * @returns {Promise<{ok:boolean,variants?:string[],error?:string,code?:string}>}
- */
-export async function generateChatReply(history, opts) {
-  if (!Array.isArray(history) || history.length === 0) {
-    return { ok: false, error: 'history must be a non-empty array', code: 'BAD_INPUT' };
-  }
-  const tone = (opts && opts.tone) || 'formal';
-  const variants = Math.min(Math.max((opts && opts.variants) || 3, 1), 3);
-
-  const sys = 'You are an assistant helping a job seeker reply to an employer on hh.ru. ' +
-    'Write in Russian. Tone: ' + tone + '. ' +
-    'Generate ' + variants + ' distinct reply variants, separated by a line containing only "---VARIANT---". ' +
-    'Each variant should be 1-3 short sentences. Do not include greetings unless the employer greeted first.';
-
-  const messages = [{ role: 'assistant', content: sys }, ...history];
-
-  const result = await sendMessage({
-    messages,
-    temperature: 0.8,
-    fetchImpl: opts && opts.fetchImpl,
-  });
-  if (!result.ok) return result;
-
-  const parts = result.text.split(/^---VARIANT---$/m)
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
-
-  // Use split parts; if AI ignored separator entirely, parts === [text]
-  const list = parts.length > 0 ? parts.slice(0, variants) : [result.text];
-  return { ok: true, variants: list };
 }

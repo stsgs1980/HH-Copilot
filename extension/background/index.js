@@ -13,12 +13,14 @@
 
 import {
   sendMessage as aiSendMessage,
-  generateCoverLetterAI,
-  generateChatReply,
   getAiConfig,
   setAiConfig,
   isAiAvailable,
 } from '../src/services/ai-service.js';
+import {
+  generateCoverLetterAI,
+  generateChatReply,
+} from '../src/services/ai-helpers.js';
 
 // --- Install / Update --------------------------
 

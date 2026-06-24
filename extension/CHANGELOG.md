@@ -9,6 +9,43 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.65.0] — 2026-06-25
+
+### Fixed -- CRITICAL
+- **Cover letter AI generation: NO_API_KEY out of the box** — root cause was that the previous `sendMessage` in `src/services/ai-service.js` only sent `Authorization: Bearer ${apiKey}`, while the ZAI backend requires 4 headers to authenticate the chat session (`Authorization`, `X-Token`, `X-Chat-Id`, `X-User-Id`, plus the `X-Z-AI-From: Z` marker). Without `X-Token`, the backend rejected the request and `isAiAvailable()` returned `false` whenever the user had not manually pasted an API key into Settings. Users saw "AI error: NO_API_KEY - AI API key not configured. Открой Настройки -> AI API key." the very first time they clicked the AI button, with no path to make it work without manual setup.
+- **`ai-service.js` now mirrors the SDK header set exactly**: `Authorization: Bearer <apiKey>` + `X-Token: <JWT>` + `X-Chat-Id: <id>` + `X-User-Id: <id>` + `X-Z-AI-From: Z`. The same 5 headers `z-ai-web-dev-sdk` sends.
+- **Built-in default credentials baked into the extension** — `BUILTIN_DEFAULTS` in `ai-service.js` (apiKey=`Z.ai`, token, chatId, userId from the chat session that produced this build). The extension now works out of the box: when `chrome.storage.local.aiConfig` is empty or missing any field, the built-in default kicks in. The user only needs to override fields in Settings when their JWT expires (which manifests as HTTP 401, not NO_API_KEY).
+- **`isAiAvailable()` now requires BOTH `apiKey` AND `token`** — previously only checked `apiKey`. This matches the backend's actual authentication requirements.
+- **Anti-monolith split**: `ai-service.js` was 270 lines (over the 250 hard cap). Extracted `generateCoverLetterAI` and `generateChatReply` into new `src/services/ai-helpers.js` (67 lines). `background/index.js` now imports the two helpers from `ai-helpers.js` and the rest from `ai-service.js`.
+
+### Added
+- **3 new fields in Settings -> AI-настройки**: `X-Token (JWT)` (textarea), `X-Chat-Id`, `X-User-Id`. Together with the existing `Base URL` / `API Key` / `Model` / `Timeout`, this gives the user full control over all 4 authentication headers.
+- **Inline hint in Settings** explaining how to refresh the JWT when it expires: open `chat.z.ai` -> F12 -> Application -> Local Storage -> find `token` -> paste into the field.
+- **`__test_no_defaults` escape hatch** in `getAiConfig()` for tests: setting this flag in the storage stub disables built-in defaults so NO_API_KEY path can be exercised in unit tests.
+
+### Changed
+- `src/ui/panel/ai-settings.js` — `AI_FIELD_IDS` grew from 4 to 7 entries. `loadAiConfig()` now returns `token`, `chatId`, `userId` in addition to the previous fields. `populateAiFields()` writes all 7 fields. `readAiFields()` reads all 7. The debounced save handler has the field-id-to-config-key map expanded accordingly.
+- `src/ui/html/tabs/settings.js` — `settingsAI()` now renders 7 fields. The `API Key` field is no longer `type="password"` because the value is just the `Z.ai` marker, not a secret. Hint text under `API Key` clarifies it is a marker, not a real key.
+
+### Tests
+- `tests/ai-service.test.js` — 3 new tests, 4 modified:
+  - `getAiConfig returns built-in defaults when no config in storage` — verifies `apiKey='Z.ai'` and `token` matches the built-in JWT prefix `eyJ`.
+  - `isAiAvailable true out-of-the-box` — verifies that with empty storage, `isAiAvailable()` returns `true` (the whole point of baked-in defaults).
+  - `isAiAvailable true when BOTH apiKey and token set, false when either missing` — uses `__test_no_defaults: true` to disable baked-in defaults and exercise both branches.
+  - `returns NO_API_KEY when no key configured` and `returns NO_API_KEY when token missing but apiKey present` — both use `__test_no_defaults: true`.
+  - All existing sendMessage success/error tests updated to pass `token: 'test-jwt'` in the storage stub.
+- `tests/ai-settings.test.js` — `AI_FIELD_IDS has exactly 7 ids` (was 4). `applies defaults when cfg fields missing` now expects `apiKey='Z.ai'` and `token=''` instead of empty apiKey. `falls back to defaults on BG error` expects `s-ai-api-key` to be `'Z.ai'`. `makeShadowRootWithFields()` mock now includes all 7 fields.
+- Total: **483 tests** (was 471, +12 net). All passing.
+
+### Notes
+- The baked-in JWT will eventually expire (ZAI tokens are short-lived). When that happens, the user will see HTTP 401 errors instead of NO_API_KEY. The Settings UI now has a clear hint on how to refresh the token.
+- `z-ai-web-dev-sdk` itself cannot be used directly in Chrome MV3 because it imports `fs`/`path`/`os` for config loading. The fetch-based client in `ai-service.js` is the correct architecture; the bug was in the header set, not in the choice of fetch vs SDK.
+
+## [1.9.64.0] — 2026-06-24
+
+### Changed
+- No user-facing changes; placeholder version created by `scripts/ahg-bump-safe.sh` during the v1.9.63.0 -> v1.9.65.0 bump sequence. All real changes for the cover-letter AI fix landed in 1.9.65.0.
+
 ## [1.9.63.0] — 2026-06-24
 
 ### Added

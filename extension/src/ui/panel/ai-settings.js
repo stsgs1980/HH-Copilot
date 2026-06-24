@@ -21,7 +21,7 @@
 import { refs } from '../state.js';
 
 const DEBOUNCE_MS = 500;
-const AI_FIELD_IDS = ['s-ai-base-url', 's-ai-api-key', 's-ai-model', 's-ai-timeout'];
+const AI_FIELD_IDS = ['s-ai-base-url', 's-ai-api-key', 's-ai-token', 's-ai-chat-id', 's-ai-user-id', 's-ai-model', 's-ai-timeout'];
 
 /** Send a message to the background script. Injectable for tests. */
 async function sendBg(msg, msgImpl) {
@@ -65,7 +65,10 @@ export async function loadAiConfig(msgImpl) {
     ok: true,
     config: {
       baseUrl: cfg.baseUrl || 'https://internal-api.z.ai/v1',
-      apiKey: cfg.apiKey || '',
+      apiKey: cfg.apiKey || 'Z.ai',
+      token: cfg.token || '',
+      chatId: cfg.chatId || '',
+      userId: cfg.userId || '',
       model: cfg.model || 'glm-4.5',
       timeoutMs: cfg.timeoutMs || 60000,
     },
@@ -103,7 +106,10 @@ export async function populateAiFields(msgImpl) {
   if (!result.ok) {
     // Set defaults on failure so fields are not empty
     setFieldValue(sr, 's-ai-base-url', 'https://internal-api.z.ai/v1');
-    setFieldValue(sr, 's-ai-api-key', '');
+    setFieldValue(sr, 's-ai-api-key', 'Z.ai');
+    setFieldValue(sr, 's-ai-token', '');
+    setFieldValue(sr, 's-ai-chat-id', '');
+    setFieldValue(sr, 's-ai-user-id', '');
     setFieldValue(sr, 's-ai-model', 'glm-4.5');
     setFieldValue(sr, 's-ai-timeout', '60000');
     return false;
@@ -111,6 +117,9 @@ export async function populateAiFields(msgImpl) {
 
   setFieldValue(sr, 's-ai-base-url', result.config.baseUrl);
   setFieldValue(sr, 's-ai-api-key', result.config.apiKey);
+  setFieldValue(sr, 's-ai-token', result.config.token);
+  setFieldValue(sr, 's-ai-chat-id', result.config.chatId);
+  setFieldValue(sr, 's-ai-user-id', result.config.userId);
   setFieldValue(sr, 's-ai-model', result.config.model);
   setFieldValue(sr, 's-ai-timeout', String(result.config.timeoutMs || 60000));
   return true;
@@ -129,17 +138,20 @@ function getFieldValue(sr, id) {
 }
 
 /**
- * Read the 4 AI field values from the DOM into a config object.
- * @returns {{baseUrl:string, apiKey:string, model:string, timeoutMs:number}}
+ * Read the AI field values from the DOM into a config object.
+ * @returns {{baseUrl:string, apiKey:string, token:string, chatId:string, userId:string, model:string, timeoutMs:number}}
  */
 export function readAiFields() {
   const sr = refs.shadowRoot;
-  if (!sr) return { baseUrl: '', apiKey: '', model: '', timeoutMs: 60000 };
+  if (!sr) return { baseUrl: '', apiKey: '', token: '', chatId: '', userId: '', model: '', timeoutMs: 60000 };
   const timeoutStr = getFieldValue(sr, 's-ai-timeout');
   const timeoutMs = Number(timeoutStr);
   return {
     baseUrl: getFieldValue(sr, 's-ai-base-url'),
     apiKey: getFieldValue(sr, 's-ai-api-key'),
+    token: getFieldValue(sr, 's-ai-token'),
+    chatId: getFieldValue(sr, 's-ai-chat-id'),
+    userId: getFieldValue(sr, 's-ai-user-id'),
     model: getFieldValue(sr, 's-ai-model'),
     timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 60000,
   };
@@ -170,6 +182,9 @@ export function bindAiSettingsHandlers(container, opts) {
         const fieldMap = {
           's-ai-base-url': 'baseUrl',
           's-ai-api-key': 'apiKey',
+          's-ai-token': 'token',
+          's-ai-chat-id': 'chatId',
+          's-ai-user-id': 'userId',
           's-ai-model': 'model',
           's-ai-timeout': 'timeoutMs',
         };

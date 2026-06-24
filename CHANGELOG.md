@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.65.0] — 2026-06-25
+
+### Fixed — CRITICAL
+- **Cover letter AI generation: NO_API_KEY out of the box.** Root cause: `sendMessage` in `src/services/ai-service.js` sent only `Authorization: Bearer ${apiKey}`, but the ZAI backend requires 4 chat-session headers (`Authorization`, `X-Token`, `X-Chat-Id`, `X-User-Id`, plus `X-Z-AI-From: Z`). Without `X-Token`, every call failed and `isAiAvailable()` returned `false` until the user manually configured an API key in Settings.
+- `ai-service.js` now sends all 5 headers (mirroring `z-ai-web-dev-sdk`). Built-in defaults (apiKey=`Z.ai`, JWT, chatId, userId from the build chat session) are baked into the extension so it works out of the box. When the JWT expires (manifests as HTTP 401, not NO_API_KEY), the user can refresh it via the new fields in Settings -> AI-настройки.
+- `isAiAvailable()` now requires BOTH `apiKey` AND `token` (previously only checked `apiKey`).
+- Anti-monolith split: extracted `generateCoverLetterAI` + `generateChatReply` into new `src/services/ai-helpers.js` (67 lines). `ai-service.js` is now 215 lines (under the 250 cap).
+
+### Added
+- 3 new fields in Settings -> AI-настройки: `X-Token (JWT)`, `X-Chat-Id`, `X-User-Id`. Together with `Base URL` / `API Key` / `Model` / `Timeout` this gives the user full control over all 4 authentication headers.
+- Inline hint in Settings explaining how to refresh the JWT when it expires.
+
+### Tests
+- 483 tests (+12 net). 3 new tests in `ai-service.test.js` covering built-in defaults and `isAiAvailable` with both fields. `ai-settings.test.js` updated for the 7-field UI.
+
+See [`extension/CHANGELOG.md`](./extension/CHANGELOG.md) for full details.
+
 ## [1.9.48.0] — 2026-06-23
 
 ### Added

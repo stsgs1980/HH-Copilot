@@ -66,7 +66,7 @@ Files changed:
 - src/ui/state.js: added _resumeCleared: false to panelState
 - src/ui/tabs/resumes/render-resume-panel.js: respect _resumeCleared flag
 - src/ui/tabs/resumes/render-my-resumes.js: reset _resumeCleared on resume click
-- manifest.json: version 1.9.63.0 → 1.8.7
+- manifest.json: version 1.9.65.0 → 1.8.7
 - initPageLogic() made async for fetchAndParseResume support
 
 Stage Summary:

@@ -11,13 +11,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   sendMessage,
-  generateCoverLetterAI,
-  generateChatReply,
   getAiConfig,
   setAiConfig,
   isAiAvailable,
   AI_CONFIG_KEY,
 } from '../src/services/ai-service.js';
+import {
+  generateCoverLetterAI,
+  generateChatReply,
+} from '../src/services/ai-helpers.js';
 
 // ===============================================
 // chrome.storage.local stub (in-memory)
@@ -94,53 +96,63 @@ function makeNetworkErrFetch(msg = 'Network failed') {
 // ===============================================
 
 beforeEach(() => {
-  installChromeStub({ [AI_CONFIG_KEY]: { baseUrl: 'https://internal-api.z.ai/v1', apiKey: 'test-key' } });
+  installChromeStub({ [AI_CONFIG_KEY]: { baseUrl: 'https://internal-api.z.ai/v1', apiKey: 'test-key', token: 'test-jwt', chatId: 'chat-test', userId: 'user-test' } });
 });
 
 describe('F4.2 -- config', () => {
-  it('getAiConfig returns defaults when no config', async () => {
+  it('getAiConfig returns built-in defaults when no config in storage', async () => {
     installChromeStub({});
     const cfg = await getAiConfig();
     expect(cfg.baseUrl).toBe('https://internal-api.z.ai/v1');
-    expect(cfg.apiKey).toBe('');
+    expect(cfg.apiKey).toBe('Z.ai'); // built-in marker
+    expect(cfg.token).toMatch(/^eyJ/); // built-in JWT
     expect(cfg.model).toBe('glm-4.5');
     expect(cfg.timeoutMs).toBe(60000);
   });
 
   it('setAiConfig merges partial', async () => {
-    const store = installChromeStub({ [AI_CONFIG_KEY]: { baseUrl: 'https://internal-api.z.ai/v1', apiKey: 'old' } });
+    const store = installChromeStub({ [AI_CONFIG_KEY]: { baseUrl: 'https://internal-api.z.ai/v1', apiKey: 'old', token: 'old-jwt' } });
     await setAiConfig({ apiKey: 'new' });
     expect(store[AI_CONFIG_KEY].apiKey).toBe('new');
     expect(store[AI_CONFIG_KEY].baseUrl).toBe('https://internal-api.z.ai/v1');
+    // token is preserved
+    expect(store[AI_CONFIG_KEY].token).toBe('old-jwt');
   });
 
-  it('isAiAvailable true when key set, false when empty', async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k' } });
+  it('isAiAvailable true when BOTH apiKey and token set, false when either missing (with defaults disabled)', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', __test_no_defaults: true } });
     expect(await isAiAvailable()).toBe(true);
-    installChromeStub({});
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: '', __test_no_defaults: true } });
+    expect(await isAiAvailable()).toBe(false);
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: '', token: 'jwt', __test_no_defaults: true } });
     expect(await isAiAvailable()).toBe(false);
   });
 
+  it('isAiAvailable true out-of-the-box (built-in defaults applied when storage empty)', async () => {
+    installChromeStub({});
+    expect(await isAiAvailable()).toBe(true);
+  });
+
   it('getAiConfig returns stored timeoutMs when set', async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 90000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', timeoutMs: 90000 } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(90000);
   });
 
   it('getAiConfig clamps too-small timeoutMs to 5000', async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 1000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', timeoutMs: 1000 } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(5000);
   });
 
   it('getAiConfig clamps too-large timeoutMs to 180000', async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 999999 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', timeoutMs: 999999 } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(180000);
   });
 
   it('getAiConfig falls back to 60000 when timeoutMs is invalid', async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 'abc' } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', timeoutMs: 'abc' } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(60000);
   });
@@ -191,8 +203,18 @@ describe('F4.2 -- sendMessage error paths', () => {
     expect(res.code).toBe('BAD_INPUT');
   });
 
-  it('returns NO_API_KEY when no key configured', async () => {
-    installChromeStub({});
+  it('returns NO_API_KEY when no key configured (both apiKey and token empty, defaults disabled)', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: '', token: '', __test_no_defaults: true } });
+    const res = await sendMessage({
+      messages: [{ role: 'user', content: 'x' }],
+      fetchImpl: makeOkFetch('x'),
+    });
+    expect(res.ok).toBe(false);
+    expect(res.code).toBe('NO_API_KEY');
+  });
+
+  it('returns NO_API_KEY when token missing but apiKey present (defaults disabled)', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: '', __test_no_defaults: true } });
     const res = await sendMessage({
       messages: [{ role: 'user', content: 'x' }],
       fetchImpl: makeOkFetch('x'),
@@ -239,7 +261,7 @@ describe('F4.2 -- sendMessage error paths', () => {
   });
 
   it('uses aiConfig.timeoutMs when params.timeoutMs not provided', async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 120000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', timeoutMs: 120000 } });
     const fetchImpl = makeAbortFetch();
     await sendMessage({ messages: [{ role: 'user', content: 'x' }], fetchImpl });
     // AbortController fires after the configured timeout; for the test we only

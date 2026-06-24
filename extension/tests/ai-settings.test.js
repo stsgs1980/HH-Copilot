@@ -72,7 +72,8 @@ describe('F5.6 -- loadAiConfig', () => {
     const res = await loadAiConfig();
     expect(res.ok).toBe(true);
     expect(res.config.baseUrl).toBe('https://internal-api.z.ai/v1');
-    expect(res.config.apiKey).toBe('');
+    expect(res.config.apiKey).toBe('Z.ai'); // built-in marker default
+    expect(res.config.token).toBe(''); // empty (user must paste their JWT)
     expect(res.config.model).toBe('glm-4.5');
   });
 
@@ -148,6 +149,9 @@ function makeShadowRootWithFields(values) {
   div.innerHTML = `
     <input id="s-ai-base-url" value="">
     <input id="s-ai-api-key" value="">
+    <textarea id="s-ai-token"></textarea>
+    <input id="s-ai-chat-id" value="">
+    <input id="s-ai-user-id" value="">
     <input id="s-ai-model" value="">
     <input id="s-ai-timeout" value="">
   `;
@@ -183,7 +187,10 @@ describe('F5.6 -- populateAiFields', () => {
     const ok = await populateAiFields();
     expect(ok).toBe(false);
     expect(refs.shadowRoot.getElementById('s-ai-base-url').value).toBe('https://internal-api.z.ai/v1');
-    expect(refs.shadowRoot.getElementById('s-ai-api-key').value).toBe('');
+    expect(refs.shadowRoot.getElementById('s-ai-api-key').value).toBe('Z.ai');
+    expect(refs.shadowRoot.getElementById('s-ai-token').value).toBe('');
+    expect(refs.shadowRoot.getElementById('s-ai-chat-id').value).toBe('');
+    expect(refs.shadowRoot.getElementById('s-ai-user-id').value).toBe('');
     expect(refs.shadowRoot.getElementById('s-ai-model').value).toBe('glm-4.5');
     expect(refs.shadowRoot.getElementById('s-ai-timeout').value).toBe('60000');
   });
@@ -363,10 +370,13 @@ describe('F5.6 -- internal helpers', () => {
     expect(_internal.getFieldValue(sr, 'nope')).toBe('');
   });
 
-  it('AI_FIELD_IDS has exactly 4 ids', () => {
-    expect(_internal.AI_FIELD_IDS).toHaveLength(4);
+  it('AI_FIELD_IDS has exactly 7 ids (baseUrl, apiKey, token, chatId, userId, model, timeout)', () => {
+    expect(_internal.AI_FIELD_IDS).toHaveLength(7);
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-base-url');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-api-key');
+    expect(_internal.AI_FIELD_IDS).toContain('s-ai-token');
+    expect(_internal.AI_FIELD_IDS).toContain('s-ai-chat-id');
+    expect(_internal.AI_FIELD_IDS).toContain('s-ai-user-id');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-model');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-timeout');
   });
