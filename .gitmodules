@@ -1,6 +1,6 @@
 [submodule "anti-hallucination-guard"]
-	path = anti-hallucination-guard
-	url = https://github.com/stsgs1980/Anti-hallucination-guard.git
+        path = anti-hallucination-guard
+        url = https://github.com/stsgs1980/Anti-hallucination-guard.git
 [submodule "FabInspector"]
-	path = FabInspector
-	url = https://github.com/stsgs1980/FabInspector.git
+        path = FabInspector
+        url = git@github.com:stsgs1980/FabInspector.git
