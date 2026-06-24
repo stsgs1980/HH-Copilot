@@ -3816,6 +3816,26 @@ Stage Summary:
 - After OpenCode opens: agent auto-reads AGENTS.md → knows all rules from AGENT_RULES.md → no need to re-explain versioning/worklog/Windows rules
 
 ---
+Task ID: 4
+Agent: opencode
+Task: Clean repo root -- ignore desktop.ini + remove stale HANDOFF.md
+
+Work Log:
+- Read HANDOFF.md (51 lines): stale handoff referencing v1.9.48.0 and 351
+  tests, never tracked in git (mtime 2026-06-23). Superseded by AGENTS.md
+  (current entry point at v1.9.55.0).
+- Read .gitignore: # OS section had .DS_Store + Thumbs.db only;
+  desktop.ini missing, HANDOFF.md not ignored.
+- Added desktop.ini to # OS section in .gitignore (after Thumbs.db).
+- Deleted HANDOFF.md (stale, superseded by AGENTS.md).
+- No version bump -- .gitignore/HANDOFF changes are not src/ or tests/
+  (Rule 9.1 does not apply).
+
+Stage Summary:
+- Repo root cleaned: desktop.ini now ignored, stale HANDOFF.md removed.
+- git status clean after commit. Ready to push.
+
+---
 Task ID: 3
 Agent: main
 Task: Revert opencode.json — was breaking OpenCode startup on Windows
