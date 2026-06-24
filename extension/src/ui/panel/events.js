@@ -53,6 +53,11 @@ function switchTab(tabId) {
     // F5.6: populate cover-letter template + tone from storage when tab opens
     populateCoverLetterFields().catch(() => {});
   }
+  if (tabId === 'vacancies') {
+    // v1.9.55.0: cover-letter editor now lives in Vacancies tab (next to match score).
+    // Populate template + tone from storage when Vacancies tab opens.
+    populateCoverLetterFields().catch(() => {});
+  }
   if (tabId === 'settings') {
     // F5.6: populate AI fields from storage when Settings tab opens
     populateAiFields().catch(() => {});

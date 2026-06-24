@@ -3769,3 +3769,27 @@ Stage Summary:
 - 13 new tests in vacancy-fetch.test.js
 - Tests: 446 -> 459 (all pass)
 - Version: 1.9.53.0 -> 1.9.54.0
+
+---
+Task ID: 1
+Agent: main
+Task: v1.9.55.0 — fix NO_EVIDENCE + relocate cover-letter editor to Vacancies tab + add FabInspector submodule
+
+Work Log:
+- Read cover-letter-evidence.js (237 lines): strict mentionsSkill() word-boundary match failed on Russian word-form variations ("Управление" vs "Управлял", "продажи" vs "продаж"), causing mapEvidence() to return [] and cover-letter-ai.js to return NO_EVIDENCE.
+- Added mentionsSkillStem() helper: tokenizes skill into words ≥4 chars, takes first 4-6 chars as stem, matches if ALL stems appear as word-prefixes in sentence. Exported via _internal for tests.
+- Added 4th-tier search in mapEvidence(): after position/company match fails, tries stem match on description sentences. fieldType='stem' caps confidence at 'low'.
+- Added FINAL experience-based fallback: if evidence.length===0 and experience.length>0, returns top-2 most recent experience entries as confidence='low', competency='(опыт из резюме)', source.type='experience_fallback'. Capped at EXPERIENCE_FALLBACK_MAX=2.
+- Updated tests/cover-letter-evidence.test.js: +11 new tests (mentionsSkillStem unit tests, stem integration tests, fallback tests). Old "no matching skills -> []" test replaced with 3 new tests covering the fallback behavior. File total: 11 -> 22 tests.
+- Updated tests/cover-letter-ai.test.js: old "no matching skills -> NO_EVIDENCE" test replaced with 2 new tests — (a) empty experience -> NO_EVIDENCE, (b) experience present + unrelated skills -> fallback evidence + AI IS called.
+- Relocated cover-letter editor from Negotiations tab to Vacancies tab (right after vac-match-section). negotiations.js now keeps only the typing-emulation toggle (card renamed "Шаблоны и ввод" -> "Эмуляция набора"). vacancies.js gets new card "Сопроводительное письмо" with timeline-body class="open" (expanded by default).
+- events.js switchTab(): added populateCoverLetterFields() call when vacancies tab opens (in addition to negotiations).
+- Added FabInspector git submodule at /FabInspector (git submodule add https://github.com/stsgs1980/FabInspector.git FabInspector). NOTE: FabInspector targets Next.js 15 + React 19; HH-Copilot is a Chrome Extension (no React/Next runtime). Submodule is added as code reference; the inspector itself cannot run inside the extension.
+- Version bump 1.9.54.0 -> 1.9.55.0: manifest.json, package.json, src/lib/version.js, CHANGELOG.md (new [1.9.55.0] entry).
+- npm run build: OK (v1.9.55.0). npm test: 471/471 passing.
+
+Stage Summary:
+- NO_EVIDENCE silent failure fixed: mapEvidence() never returns [] when resume.experience is non-empty (stem matching + experience fallback).
+- Cover letter editor now lives in Vacancies tab next to match score (user's primary workflow).
+- FabInspector submodule added for reference (cannot run as-is in Chrome Extension).
+- All 471 tests passing, build clean, ready to commit + push as v1.9.55.0.

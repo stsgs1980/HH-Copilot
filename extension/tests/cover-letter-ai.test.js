@@ -57,18 +57,36 @@ describe('F-CR-02 -- generateAICoverLetter', () => {
     expect(sendMessage).not.toHaveBeenCalled();
   });
 
-  it('no evidence (no matching skills) -> returns NO_EVIDENCE', async () => {
+  it('no evidence AND empty experience -> returns NO_EVIDENCE', async () => {
     isAiAvailable.mockResolvedValue(true);
-    // Resume with completely different skills
+    // Resume with no experience at all -> fallback cannot kick in
+    const emptyResume = {
+      ...baseResume,
+      skills: ['Cooking', 'Painting'],
+      experience: [],
+    };
+    const r = await generateAICoverLetter(baseVacancy, emptyResume, {});
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('NO_EVIDENCE');
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('no matching skills BUT experience present -> fallback evidence, AI IS called (v1.9.55.0)', async () => {
+    isAiAvailable.mockResolvedValue(true);
+    sendMessage.mockResolvedValue({
+      ok: true,
+      text: 'Здравствуйте! Опыт работы в cafe. Готов к интервью.',
+    });
+    // Resume with completely different skills -- previously NO_EVIDENCE,
+    // now the experience_fallback kicks in so the AI IS called.
     const wrongResume = {
       ...baseResume,
       skills: ['Cooking', 'Painting'],
       experience: [{ company: 'Cafe', position: 'Chef', period: '2020', description: 'Готовил еду.' }],
     };
     const r = await generateAICoverLetter(baseVacancy, wrongResume, {});
-    expect(r.ok).toBe(false);
-    expect(r.code).toBe('NO_EVIDENCE');
-    expect(sendMessage).not.toHaveBeenCalled();
+    expect(r.ok).toBe(true);
+    expect(sendMessage).toHaveBeenCalledTimes(1);
   });
 
   it('successful path with fetchImpl stub -> ok=true, text from LLM', async () => {

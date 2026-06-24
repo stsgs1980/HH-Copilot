@@ -20,9 +20,18 @@
  *            продажами" are declared in the skill list but experience
  *            descriptions use looser phrasing ("Управлял командой",
  *            "Рост продаж").
+ * v1.9.55.0: added partial/stem matching (4-tier search) and a final
+ *            experience-based fallback that returns the top-2 most
+ *            recent experience items when no per-competency evidence
+ *            is found. This guarantees mapEvidence() never returns []
+ *            when resume.experience is non-empty, so the cover letter
+ *            can always be generated (user explicitly requested the
+ *            letter to never silently fail with NO_EVIDENCE).
  */
 
 const MAX_EVIDENCE_SENTENCE_LEN = 280;
+const MIN_STEM_LEN = 4; // words shorter than 4 chars are skipped during stem matching
+const EXPERIENCE_FALLBACK_MAX = 2; // top-N most recent experience items used as final fallback
 
 // Split text into sentences (Russian + English aware)
 function splitSentences(text) {
@@ -45,6 +54,53 @@ function mentionsSkill(sentence, skill) {
 
 function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * PARTIAL/STEM MATCHING (v1.9.55.0)
+ * =================================
+ * Tries to match a skill against a sentence by word-stem prefix.
+ * Used as a 4th-tier fallback when exact word-boundary match fails.
+ *
+ * Strategy:
+ *   1. Tokenize skill into words (split on whitespace/dash).
+ *   2. For each token of length >= MIN_STEM_LEN, take the first
+ *      min(token.len, 6) characters as the stem.
+ *   3. For each token, check if any word in the sentence starts
+ *      with that stem (case-insensitive).
+ *   4. Return true if ALL skill tokens have a matching stem in
+ *      the sentence (AND semantics, so "B2B продажи" requires both
+ *      "b2b*" and "продаж*" to be present).
+ *
+ * Examples:
+ *   mentionsSkillStem("Управлял командой продаж", "Управление продажами")
+ *     -> true  (управл* matches "управлял", продаж* matches "продаж")
+ *   mentionsSkillStem("Рост выручки на 30%", "Управление продажами")
+ *     -> false (управл* not found, продаж* not found)
+ *
+ * @param {string} sentence
+ * @param {string} skill
+ * @returns {boolean}
+ */
+function mentionsSkillStem(sentence, skill) {
+  if (!sentence || !skill) return false;
+  const s = sentence.toLowerCase();
+  const skillWords = String(skill)
+    .toLowerCase()
+    .split(/[\s\-—–]+/)
+    .map(w => w.trim())
+    .filter(w => w.length >= MIN_STEM_LEN);
+  if (skillWords.length === 0) return false;
+
+  // For each skill word, derive a stem (first 4-6 chars) and check that
+  // some word in the sentence starts with that stem.
+  for (const sw of skillWords) {
+    const stem = sw.substring(0, Math.min(sw.length, 6));
+    // Word-boundary prefix match (Unicode-aware for Cyrillic + Latin)
+    const re = new RegExp('(^|[^a-zа-яё0-9])' + escapeRegex(stem), 'i');
+    if (!re.test(s)) return false;
+  }
+  return true;
 }
 
 // Confidence: high if entry description contains a number/percent/year, else medium
@@ -173,6 +229,28 @@ export function mapEvidence(scorecard, resume, matchResult) {
         };
       }
 
+      // Quaternary (v1.9.55.0): partial/stem match on description sentences.
+      // Catches word-form variations: "Управление продажами" (skill) vs
+      // "Управлял командой продаж" (description). Marked as fieldType='stem'
+      // so confidence is capped at 'low' below (weaker than exact match).
+      if (!found && exp.description) {
+        const sentences = splitSentences(exp.description);
+        for (const sentence of sentences) {
+          if (mentionsSkillStem(sentence, comp)) {
+            found = {
+              sentence,
+              index: i,
+              company: exp.company || '',
+              position: exp.position || '',
+              period: exp.period || '',
+              entryDescription: exp.description,
+              fieldType: 'stem',
+            };
+            break;
+          }
+        }
+      }
+
       if (found) break;
     }
 
@@ -200,6 +278,7 @@ export function mapEvidence(scorecard, resume, matchResult) {
 
     // Confidence: high if matching skill + entry description has digit,
     //              medium if derived/synonym/implied or no digit,
+    //              low if matched via partial/stem (weaker evidence),
     //              (declared fallback handled above)
     let confidence;
     if (isMatching) {
@@ -211,6 +290,10 @@ export function mapEvidence(scorecard, resume, matchResult) {
     // Position-only or company-only matches are weaker -- cap at medium
     if (found.fieldType !== 'description') {
       confidence = 'medium';
+    }
+    // Stem match is the weakest -- cap at 'low' so the LLM knows to be cautious
+    if (found.fieldType === 'stem') {
+      confidence = 'low';
     }
 
     const evidenceText = found.sentence.length > MAX_EVIDENCE_SENTENCE_LEN
@@ -232,5 +315,49 @@ export function mapEvidence(scorecard, resume, matchResult) {
     });
   }
 
+  // FINAL FALLBACK (v1.9.55.0): if no per-competency evidence was found,
+  // return the top-N most recent experience entries as low-confidence
+  // evidence. This guarantees the cover letter can always be generated
+  // (user explicitly requested no silent NO_EVIDENCE failure when the
+  // resume has any experience at all).
+  //
+  // Anti-hallucination safe: we ONLY quote verbatim from resume.experience
+  // (first sentence of description, or position title if description is
+  // empty). competency is marked as '(опыт из резюме)' so the LLM knows
+  // this is generic experience, not a specific skill match.
+  if (evidence.length === 0 && experience.length > 0) {
+    const startIdx = Math.max(0, experience.length - EXPERIENCE_FALLBACK_MAX);
+    for (let i = experience.length - 1; i >= startIdx; i--) {
+      const exp = experience[i];
+      if (!exp) continue;
+      const sentences = exp.description ? splitSentences(exp.description) : [];
+      const sentence = sentences[0] || exp.position || exp.company || '';
+      if (!sentence) continue;
+      const evidenceText = sentence.length > MAX_EVIDENCE_SENTENCE_LEN
+        ? sentence.substring(0, MAX_EVIDENCE_SENTENCE_LEN) + '...'
+        : sentence;
+      evidence.push({
+        competency: '(опыт из резюме)',
+        evidenceText,
+        source: {
+          type: 'experience_fallback',
+          index: i,
+          sentence,
+          company: exp.company || '',
+          position: exp.position || '',
+          period: exp.period || '',
+        },
+        confidence: 'low',
+      });
+    }
+  }
+
   return evidence;
 }
+
+/** Exported for tests. */
+export const _internal = {
+  mentionsSkillStem,
+  MIN_STEM_LEN,
+  EXPERIENCE_FALLBACK_MAX,
+};

@@ -9,6 +9,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.55.0] — 2026-06-24
+
+### Added
+- **FabInspector git submodule** at repo root (`/FabInspector`). Adds the visual element inspector (Next.js dev mode) as a reference module. NOTE: FabInspector targets Next.js 15 + React 19 projects; HH-Copilot is a Chrome Extension (Manifest V3 + esbuild, no React/Next.js runtime), so the inspector cannot be loaded as-is inside the extension. The submodule is added for code reference and possible adaptation of the FAB-triggered inspection pattern.
+- **Partial/stem matching (4-tier evidence search)** in `src/lib/cover-letter-evidence.js`: new `mentionsSkillStem()` helper matches skill names against experience sentences by word-stem prefix (first 4–6 chars of each word, ≥4 chars). Catches Russian word-form variations like "Управление продажами" (skill) vs "Управлял командой продаж" (description). Stem-matched evidence is tagged `confidence: 'low'` so the LLM knows it's weaker than an exact match.
+- **Experience-based fallback** in `mapEvidence()`: when no per-competency evidence is found, returns the top-2 most recent experience items as `confidence: 'low'` evidence with `competency: '(опыт из резюме)'` and `source.type: 'experience_fallback'`. This guarantees `mapEvidence()` never returns `[]` when `resume.experience` is non-empty — the cover letter can always be generated (user explicitly requested no silent `NO_EVIDENCE` failure when the resume has any experience at all).
+
+### Changed
+- **Cover letter editor relocated: Negotiations tab → Vacancies tab.** The "Шаблон сопроводительного" card with textarea, tone selector, AI-generate button, and AI status/toast now lives in the Vacancies tab right after the match-score section, so the user sees their score and writes/generates the letter in the same view. The Negotiations tab retains only the "Эмуляция набора" toggle (typing-speed emulation when sending the letter on hh.ru), with updated copy explaining the template moved. Card title in Negotiations renamed from "Шаблоны и ввод" → "Эмуляция набора".
+- `src/ui/panel/events.js` `switchTab()` now calls `populateCoverLetterFields()` when the Vacancies tab opens (in addition to Negotiations), so the textarea + tone select are populated from storage regardless of which tab the user opens first.
+
+### Tests
+- 11 new tests in `tests/cover-letter-evidence.test.js` (was 11, now 22 total). New coverage:
+  - `mentionsSkillStem` unit tests (6): Russian word-form variation, plural variation, multi-word AND semantics, unrelated-sentence negative, short-word skip, empty-input graceful handling.
+  - Stem matching integration in `mapEvidence` (2): stem match → confidence='low'; exact match takes priority over stem (confidence stays high).
+  - Experience fallback tests (3): top-2 most recent entries returned when no per-competency evidence; capped at `EXPERIENCE_FALLBACK_MAX=2`; fallback skipped when `resume.experience=[]`.
+- Updated `tests/cover-letter-ai.test.js`: old "no matching skills → NO_EVIDENCE" test replaced with two new tests — (a) empty experience → NO_EVIDENCE still returned, (b) experience present + unrelated skills → fallback evidence + AI IS called.
+- Total: **471 tests** (was 469, +2 net). All passing.
+
+### Fixed
+- **`NO_EVIDENCE` silent failure** — root cause: strict word-boundary matching in `mentionsSkill()` failed on Russian word-form variations ("Управление" vs "Управлял", "продажи" vs "продаж"), causing `mapEvidence()` to return `[]` for resumes where the skill was clearly relevant but phrased differently. Fix: added partial/stem matching as a 4th-tier search + experience-based fallback that always returns at least 2 evidence items when experience is non-empty.
+
+---
+
 ## [1.9.48.0] — 2026-06-23
 
 ### Added

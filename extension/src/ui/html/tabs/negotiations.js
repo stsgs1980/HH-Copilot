@@ -37,45 +37,24 @@ export function getNegotiationsSection() {
     <div class="card fade-in">
       <div class="timeline-toggle" style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;" data-timeline="cover-letter" role="button" tabindex="0" aria-expanded="false" aria-controls="cl-body">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="font-size:12px;font-weight:600;">Шаблоны и ввод</div>
+          <div style="font-size:12px;font-weight:600;">Эмуляция набора</div>
           <div style="display:flex;gap:4px;">
-            <span style="font-size:11px;color:#52525b;background:#f4f4f5;padding:1px 6px;border-radius:4px;">сопроводительное</span>
-            <span style="font-size:11px;color:#52525b;background:#f4f4f5;padding:1px 6px;border-radius:4px;">эмуляция набора</span>
+            <span style="font-size:11px;color:#52525b;background:#f4f4f5;padding:1px 6px;border-radius:4px;">антибот</span>
+            <span style="font-size:11px;color:#52525b;background:#f4f4f5;padding:1px 6px;border-radius:4px;">посимвольно</span>
           </div>
         </div>
         ${ICONS.chevronDown}
       </div>
       <div class="timeline-body" id="cl-body" style="margin-top:10px;">
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <label class="toggle" aria-label="Эмуляция набора"><input type="checkbox" id="neg-type-emulation" checked role="switch" aria-checked="true"><span class="slider"></span></label>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11px;font-weight:500;">Эмуляция набора</div>
-              <div style="font-size:11px;color:#52525b;">Посимвольный ввод (антибот)</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-              <input type="number" id="neg-type-speed" value="80" aria-label="Скорость набора в миллисекундах" style="width:52px;padding:4px 6px;border:1px solid #e4e4e7;border-radius:6px;font-size:11px;text-align:center;">
-              <span style="font-size:11px;color:#52525b;">мс</span>
-            </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <label class="toggle" aria-label="Эмуляция набора"><input type="checkbox" id="neg-type-emulation" checked role="switch" aria-checked="true"><span class="slider"></span></label>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:500;">Эмуляция набора</div>
+            <div style="font-size:11px;color:#52525b;">Посимвольный ввод при отправке (антибот). Шаблон письма редактируется на вкладке "Вакансии".</div>
           </div>
-          <div>
-            <div id="cl-ai-status" style="font-size:10px;color:#71717A;margin-bottom:6px;line-height:1.4;">Контекст: резюме и вакансия определяются автоматически.</div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;flex-wrap:wrap;">
-              <label for="cover-letter-text" style="font-size:11px;font-weight:500;">Шаблон сопроводительного</label>
-              <div style="display:flex;align-items:center;gap:4px;">
-                <button id="cover-letter-ai-btn" type="button" aria-label="Сгенерировать сопроводительное с AI" style="font-size:11px;padding:3px 10px;background:#7c3aed;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:500;">Сгенерировать с AI</button>
-                <span style="font-size:11px;color:#52525b;">Тон:</span>
-                <select id="s-letter-tone" aria-label="Тон сопроводительного письма" style="font-size:11px;padding:3px 6px;border:1px solid #e4e4e7;border-radius:6px;background:#fff;">
-                  <option value="formal">Формальный</option>
-                  <option value="friendly">Дружелюбный</option>
-                  <option value="concise">Краткий</option>
-                  <option value="enthusiastic">Энтузиаст</option>
-                </select>
-              </div>
-            </div>
-            <textarea id="cover-letter-text" style="width:100%;height:80px;padding:8px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;resize:none;line-height:1.5;">Здравствуйте! Меня заинтересовала вакансия {position} в {company}. Имею {experience} опыта в {skills}. {matching_sentence}Буду рад обсудить детали на интервью.</textarea>
-            <div id="cl-ai-toast" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:11px;line-height:1.4;"></div>
-            <div style="font-size:10px;color:#71717A;margin-top:4px;line-height:1.4;">Автозаполнение: {position} -- должность, {company} -- компания, {experience} -- стаж, {skills} -- навыки, {matching} -- совпадения, {matching_sentence} -- предложение о совпадениях, {requirements} -- требования. Шаблон сохраняется в storage автоматически.</div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+            <input type="number" id="neg-type-speed" value="80" aria-label="Скорость набора в миллисекундах" style="width:52px;padding:4px 6px;border:1px solid #e4e4e7;border-radius:6px;font-size:11px;text-align:center;">
+            <span style="font-size:11px;color:#52525b;">мс</span>
           </div>
         </div>
       </div>
