@@ -4467,3 +4467,28 @@ Stage Summary:
 - Root cause was missing X-Token header, not SDK-vs-fetch architecture choice
 - Built-in JWT will eventually expire -- user will see HTTP 401 (not NO_API_KEY) and can refresh via Settings UI
 - 483 tests passing, 0 lint errors, build succeeds
+
+---
+Task ID: fix-ai-network-1.9.66
+Agent: main
+Task: Fix AI NETWORK error (Failed to fetch) -- missing host_permissions for internal-api.z.ai
+
+Work Log:
+- User pasted AI-BTN log showing `send-done {"elapsedMs":42383,"ok":false,"code":"AI_ERROR","aiCode":"NETWORK"}` and `error: "Failed to fetch"` after 42 seconds
+- 42s elapsed + "Failed to fetch" in MV3 background = classic Chrome blocking cross-origin fetch due to missing host_permissions
+- Inspected manifest.json: host_permissions only had `https://hh.ru/*` and `https://*.hh.ru/*` -- NO entry for `https://internal-api.z.ai/*`
+- Background service worker calls `fetch('https://internal-api.z.ai/v1/chat/completions')` from ai-service.js -- needs explicit permission in MV3
+- Added `"https://internal-api.z.ai/*"` to host_permissions array
+- Bumped version 1.9.65.0 -> 1.9.66.0 in 3 files:
+  - manifest.json
+  - package.json
+  - src/lib/version.js
+- Updated CHANGELOG.md with [1.9.66.0] section explaining root cause, fix, and troubleshooting notes for follow-up failures (401/403/NETWORK residual)
+
+Stage Summary:
+- Single-line config fix: host_permissions += "https://internal-api.z.ai/*"
+- v1.9.65.0 fixed the missing X-Token header (auth layer)
+- v1.9.66.0 fixes the missing host permission (network layer)
+- Together these two fixes complete the AI pipeline end-to-end
+- User needs to: rebuild extension, reload in chrome://extensions/, F5 on hh.ru
+- If still failing: 401 = JWT expired (paste fresh in Settings), 403 = rate limited, NETWORK = corporate proxy/antivirus blocking

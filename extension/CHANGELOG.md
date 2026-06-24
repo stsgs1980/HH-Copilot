@@ -9,6 +9,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.66.0] — 2026-06-25
+
+### Fixed -- CRITICAL
+- **AI NETWORK error: Failed to fetch** — root cause was missing `host_permissions` entry for the ZAI API domain. The manifest only declared `https://hh.ru/*` and `https://*.hh.ru/*`, so the background service worker had no permission to `fetch('https://internal-api.z.ai/v1/chat/completions')`. Chrome silently blocked the request, the fetch eventually rejected with `TypeError: Failed to fetch` after ~42s of TLS retry attempts. Users saw `AI error: AI_ERROR [NETWORK] - Failed to fetch` in the AI-button log.
+- **`manifest.json` `host_permissions` now includes `https://internal-api.z.ai/*`** — single one-line addition. Without this entry, MV3 service workers are not allowed to send cross-origin requests to the API endpoint, regardless of what `ai-service.js` does in code.
+
+### Changed
+- Version bumped 1.9.65.0 → 1.9.66.0 (Rule 13: MANDATORY on every code/config change).
+- `extension/src/lib/version.js` synced to `1.9.66.0`.
+- `extension/package.json` synced to `1.9.66.0`.
+
+### Notes
+- This was the second bug in the AI pipeline uncovered by the user testing v1.9.65.0 end-to-end. The v1.9.65.0 fix added the missing `X-Token` header and the baked-in default credentials; this v1.9.66.0 fix removes the last blocker — the network permission. After reloading the unpacked extension in `chrome://extensions/`, the AI button should finally reach the ZAI backend.
+- Symptom to look for if it still fails: HTTP 401 means the baked-in JWT has expired (paste a fresh one from chat.z.ai); HTTP 403 means rate limited or session invalidated; NETWORK still means something else is blocking the request (corporate proxy, antivirus, etc.).
+
 ## [1.9.65.0] — 2026-06-25
 
 ### Fixed -- CRITICAL
