@@ -3814,3 +3814,21 @@ Stage Summary:
 - Repo now has OpenCode entry point (AGENTS.md) and model config (opencode.json)
 - User on Windows can `git pull` and start OpenCode directly in repo root
 - After OpenCode opens: agent auto-reads AGENTS.md → knows all rules from AGENT_RULES.md → no need to re-explain versioning/worklog/Windows rules
+
+---
+Task ID: 3
+Agent: main
+Task: Revert opencode.json — was breaking OpenCode startup on Windows
+
+Work Log:
+- User reported OpenCode failed to start with schema validation error on opencode.json
+- Initially added opencode.json with provider/models/limit/cost fields — schema rejected limit as number
+- Fixed by simplifying to minimal config (just model + permission) — still caused issues
+- User confirmed OpenCode worked fine WITHOUT any opencode.json (defaults work)
+- Removed opencode.json entirely. OpenCode will use built-in defaults + user can /model select.
+- AGENTS.md kept — it's documentation, doesn't affect OpenCode config validation.
+
+Stage Summary:
+- opencode.json removed from repo
+- OpenCode on Windows should now start with `opencode --port 42018` using defaults
+- User selects model via /model command in OpenCode chat
