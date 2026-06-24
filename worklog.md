@@ -3713,3 +3713,59 @@ Stage Summary:
 - User's "РОП" scenario should now generate a letter (matching skills
   declared in resume.skills[] will be used as evidence with 'declared'
   confidence even if experience descriptions don't re-mention them).
+
+---
+Task ID: F-CR-02-fix-4
+Agent: ZCode session 2026-06-24 (continuation)
+Task: Fix company name extraction pulling in review count + inline script
+
+Work Log:
+- User reported context line showed:
+  "Вакансия: Руководитель отдела продаж (вторичный рынок) @
+   ООО САНЛАЙФ4,935 отзывов window.globalServiceVars = ..."
+- Root cause: vacancy-fetch-text.js used `companyEl.textContent` to read
+  company name. On modern hh.ru pages, the [data-qa="vacancy-company-name"]
+  element (or its parent <a>) contains:
+    - The company name text node
+    - A sibling/nested <span data-qa="employer-reviews-front">4,935 отзывов</span>
+    - An inline <script>window.globalServiceVars = ...</script>
+  textContent grabs ALL of that as one string.
+- Fix: added extractCleanCompanyName(el) helper. Strategy:
+  1. Clone the element (so we don't mutate the page DOM)
+  2. Remove <script>, <style>, <svg>, [data-qa*="reviews"], [data-qa*="rating"]
+     from the clone
+  3. Read textContent of the cleaned clone
+  4. Cut at "N отзывов" / "N reviews" pattern if it slipped through
+     (regex: /\s*\d[\d\s.,]*\s*(отзыв\w*|review\w*)\s*.*/i)
+  5. Cut at " window." start if a script somehow leaked
+  6. Trim trailing separators (—, |, •, ·)
+- Updated parseVacancyDetailFromDoc to call extractCleanCompanyName instead
+  of raw textContent.
+- Added 13 new tests in vacancy-fetch.test.js:
+  * 11 unit tests for extractCleanCompanyName:
+    - plain text passthrough
+    - cut "N отзывов" fragment from text
+    - cut "N отзыва" singular variant
+    - remove nested <script> with globalServiceVars
+    - remove nested <svg> star-rating icons
+    - remove nested [data-qa*="reviews"] elements
+    - remove nested [data-qa*="rating"] elements
+    - full hh.ru-style noise (script + reviews + rating)
+    - trim trailing em dash
+    - null input
+    - graceful fallback when cloneNode throws
+  * 2 integration tests via parseVacancyDetailFromDoc:
+    - extract clean company from hh.ru-style noisy HTML
+    - title with parentheses preserved
+- All 459 tests pass (was 446 before).
+- Version bump 1.9.53.0 -> 1.9.54.0 in 5 files (Rule 9.2).
+- README: test count 446 -> 459.
+
+Stage Summary:
+- vacancy-fetch-text.js: extractCleanCompanyName(el) helper added
+- parseVacancyDetailFromDoc now uses it instead of raw textContent
+- Company field will be clean: "ООО САНЛАЙФ" instead of
+  "ООО САНЛАЙФ4,935 отзывов window.globalServiceVars = ..."
+- 13 new tests in vacancy-fetch.test.js
+- Tests: 446 -> 459 (all pass)
+- Version: 1.9.53.0 -> 1.9.54.0
