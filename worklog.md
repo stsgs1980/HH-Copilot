@@ -3608,3 +3608,49 @@ Stage Summary:
 - Tests: 406 -> 435 (all pass)
 - UX: user now sees what's wrong (missing context, NO_API_KEY, NO_EVIDENCE)
   directly in panel, no need to open DevTools console.
+
+---
+Task ID: F-CR-02-fix-2
+Agent: ZCode session 2026-06-24 (continuation)
+Task: Fix AI request timeout (30s -> 60s default + user-configurable)
+
+Work Log:
+- User reported: "AI error: AI_ERROR [TIMEOUT] - Request timeout after 30000ms"
+- Root cause: DEFAULT_TIMEOUT_MS = 30000 was too low for GLM-4.5 thinking
+  models. Some requests took >30s, abort fired, user saw TIMEOUT error.
+- ai-service.js: bumped DEFAULT_TIMEOUT_MS 30000 -> 60000.
+- Added clampTimeout(ms) helper: clamps user input to [5000, 180000] range.
+- getAiConfig now returns cfg.timeoutMs (clamped), defaulting to 60000.
+- sendMessage: now uses params.timeoutMs OR cfg.timeoutMs (whichever is set
+  first), both clamped.
+- Settings UI (settings.js): added new "Timeout (мс)" number input
+  (id=s-ai-timeout, min=5000, max=180000, step=1000, default=60000)
+  with helper text "5 000-180 000 мс. Если AI отвечает медленно --
+  увеличь до 90 000-120 000."
+- ai-settings.js: AI_FIELD_IDS array expanded to include 's-ai-timeout'.
+  loadAiConfig returns cfg.timeoutMs. populateAiFields sets timeout field.
+  readAiFields parses timeout as Number. bindAiSettingsHandlers fieldMap
+  extended with 's-ai-timeout': 'timeoutMs'.
+- Tests:
+  * ai-service.test.js: +6 tests (timeoutMs default 60000, stored value
+    returned, clamping low to 5000, clamping high to 180000, invalid falls
+    back to 60000, params.timeoutMs overrides cfg.timeoutMs, error msg
+    contains configured timeout value)
+  * ai-settings.test.js: updated 3 existing tests (3 fields -> 4 fields)
+    and +1 new test (saves timeoutMs partial when timeout field changes).
+    AI_FIELD_IDS length assertion 3 -> 4.
+- All 443 tests pass (was 435 before).
+- Version bump 1.9.51.0 -> 1.9.52.0 in 5 files (manifest.json, package.json,
+  version.js, popup/index.html, README.md).
+- README: test count 406 -> 443, file count 24 -> 25.
+
+Stage Summary:
+- ai-service.js: timeout default 30s -> 60s, clamping 5s-180s added,
+  cfg.timeoutMs honored
+- settings.js: new "Timeout (мс)" input field in AI-настройки card
+- ai-settings.js: read/write/save timeoutMs like other AI fields
+- 7 new/updated tests in ai-service.test.js + 4 in ai-settings.test.js
+- Tests: 435 -> 443 (all pass)
+- Version: 1.9.51.0 -> 1.9.52.0
+- User can now configure AI timeout in Settings; default raised to 60s
+  which should eliminate most TIMEOUT errors with GLM-4.5

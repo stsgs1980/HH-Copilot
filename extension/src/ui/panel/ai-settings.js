@@ -21,7 +21,7 @@
 import { refs } from '../state.js';
 
 const DEBOUNCE_MS = 500;
-const AI_FIELD_IDS = ['s-ai-base-url', 's-ai-api-key', 's-ai-model'];
+const AI_FIELD_IDS = ['s-ai-base-url', 's-ai-api-key', 's-ai-model', 's-ai-timeout'];
 
 /** Send a message to the background script. Injectable for tests. */
 async function sendBg(msg, msgImpl) {
@@ -67,6 +67,7 @@ export async function loadAiConfig(msgImpl) {
       baseUrl: cfg.baseUrl || 'https://internal-api.z.ai/v1',
       apiKey: cfg.apiKey || '',
       model: cfg.model || 'glm-4.5',
+      timeoutMs: cfg.timeoutMs || 60000,
     },
   };
 }
@@ -104,12 +105,14 @@ export async function populateAiFields(msgImpl) {
     setFieldValue(sr, 's-ai-base-url', 'https://internal-api.z.ai/v1');
     setFieldValue(sr, 's-ai-api-key', '');
     setFieldValue(sr, 's-ai-model', 'glm-4.5');
+    setFieldValue(sr, 's-ai-timeout', '60000');
     return false;
   }
 
   setFieldValue(sr, 's-ai-base-url', result.config.baseUrl);
   setFieldValue(sr, 's-ai-api-key', result.config.apiKey);
   setFieldValue(sr, 's-ai-model', result.config.model);
+  setFieldValue(sr, 's-ai-timeout', String(result.config.timeoutMs || 60000));
   return true;
 }
 
@@ -126,16 +129,19 @@ function getFieldValue(sr, id) {
 }
 
 /**
- * Read the 3 AI field values from the DOM into a config object.
- * @returns {{baseUrl:string, apiKey:string, model:string}}
+ * Read the 4 AI field values from the DOM into a config object.
+ * @returns {{baseUrl:string, apiKey:string, model:string, timeoutMs:number}}
  */
 export function readAiFields() {
   const sr = refs.shadowRoot;
-  if (!sr) return { baseUrl: '', apiKey: '', model: '' };
+  if (!sr) return { baseUrl: '', apiKey: '', model: '', timeoutMs: 60000 };
+  const timeoutStr = getFieldValue(sr, 's-ai-timeout');
+  const timeoutMs = Number(timeoutStr);
   return {
     baseUrl: getFieldValue(sr, 's-ai-base-url'),
     apiKey: getFieldValue(sr, 's-ai-api-key'),
     model: getFieldValue(sr, 's-ai-model'),
+    timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 60000,
   };
 }
 
@@ -165,6 +171,7 @@ export function bindAiSettingsHandlers(container, opts) {
           's-ai-base-url': 'baseUrl',
           's-ai-api-key': 'apiKey',
           's-ai-model': 'model',
+          's-ai-timeout': 'timeoutMs',
         };
         const partial = { [fieldMap[id]]: cfg[fieldMap[id]] };
         saveAiConfig(partial, msgImpl).catch(() => { /* silent fail; field still in DOM */ });

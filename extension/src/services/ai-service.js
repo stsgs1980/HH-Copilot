@@ -18,8 +18,10 @@ import { createLogger } from '../lib/anti-hallucination.js';
 
 const aiLog = createLogger('AIService');
 const DEFAULT_BASE_URL = 'https://internal-api.z.ai/v1';
-const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 60000;
 const DEFAULT_MODEL = 'glm-4.5';
+const MIN_TIMEOUT_MS = 5000;
+const MAX_TIMEOUT_MS = 180000;
 
 /** Storage key for user-configured API credentials. */
 export const AI_CONFIG_KEY = 'aiConfig';
@@ -36,10 +38,18 @@ export async function getAiConfig() {
       baseUrl: cfg.baseUrl || DEFAULT_BASE_URL,
       apiKey: cfg.apiKey || '',
       model: cfg.model || DEFAULT_MODEL,
+      timeoutMs: clampTimeout(cfg.timeoutMs),
     };
   } catch (_e) {
-    return { baseUrl: DEFAULT_BASE_URL, apiKey: '', model: DEFAULT_MODEL };
+    return { baseUrl: DEFAULT_BASE_URL, apiKey: '', model: DEFAULT_MODEL, timeoutMs: DEFAULT_TIMEOUT_MS };
   }
+}
+
+/** Clamp user-provided timeout to safe bounds. */
+function clampTimeout(ms) {
+  const n = Number(ms);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_TIMEOUT_MS;
+  return Math.min(MAX_TIMEOUT_MS, Math.max(MIN_TIMEOUT_MS, Math.floor(n)));
 }
 
 /**
@@ -69,7 +79,7 @@ export async function isAiAvailable() {
  * @param {Array<{role:string,content:string}>} params.messages
  * @param {string} [params.model] -- defaults to 'glm-4.5'
  * @param {number} [params.temperature] -- 0..2, default 0.7
- * @param {number} [params.timeoutMs] -- default 30000
+ * @param {number} [params.timeoutMs] -- default 60000 (or aiConfig.timeoutMs if set, clamped 5000-180000)
  * @param {Function} [params.fetchImpl] -- injectable for testing
  * @returns {Promise<{ok:boolean,text?:string,usage?:Object,error?:string,code?:string}>}
  */
@@ -93,7 +103,7 @@ export async function sendMessage(params) {
   };
 
   const url = cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
-  const timeoutMs = params.timeoutMs || DEFAULT_TIMEOUT_MS;
+  const timeoutMs = clampTimeout(params.timeoutMs || cfg.timeoutMs) || DEFAULT_TIMEOUT_MS;
   const fetchImpl = params.fetchImpl || globalThis.fetch.bind(globalThis);
 
   const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;

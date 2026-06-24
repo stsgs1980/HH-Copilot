@@ -149,6 +149,7 @@ function makeShadowRootWithFields(values) {
     <input id="s-ai-base-url" value="">
     <input id="s-ai-api-key" value="">
     <input id="s-ai-model" value="">
+    <input id="s-ai-timeout" value="">
   `;
   const sr = {
     getElementById(id) {
@@ -161,16 +162,17 @@ function makeShadowRootWithFields(values) {
 }
 
 describe('F5.6 -- populateAiFields', () => {
-  it('populates the 3 fields from loaded config', async () => {
+  it('populates the 4 fields from loaded config', async () => {
     refs.shadowRoot = makeShadowRootWithFields();
     chrome.runtime.sendMessage.mockImplementation((msg, cb) => {
-      cb({ ok: true, config: { baseUrl: 'https://b/v1', apiKey: 'kk', model: 'mm' } });
+      cb({ ok: true, config: { baseUrl: 'https://b/v1', apiKey: 'kk', model: 'mm', timeoutMs: 75000 } });
     });
     const ok = await populateAiFields();
     expect(ok).toBe(true);
     expect(refs.shadowRoot.getElementById('s-ai-base-url').value).toBe('https://b/v1');
     expect(refs.shadowRoot.getElementById('s-ai-api-key').value).toBe('kk');
     expect(refs.shadowRoot.getElementById('s-ai-model').value).toBe('mm');
+    expect(refs.shadowRoot.getElementById('s-ai-timeout').value).toBe('75000');
   });
 
   it('falls back to defaults on BG error', async () => {
@@ -183,6 +185,7 @@ describe('F5.6 -- populateAiFields', () => {
     expect(refs.shadowRoot.getElementById('s-ai-base-url').value).toBe('https://internal-api.z.ai/v1');
     expect(refs.shadowRoot.getElementById('s-ai-api-key').value).toBe('');
     expect(refs.shadowRoot.getElementById('s-ai-model').value).toBe('glm-4.5');
+    expect(refs.shadowRoot.getElementById('s-ai-timeout').value).toBe('60000');
   });
 
   it('returns false when no shadowRoot', async () => {
@@ -197,24 +200,38 @@ describe('F5.6 -- populateAiFields', () => {
 // ===============================================
 
 describe('F5.6 -- readAiFields', () => {
-  it('reads 3 field values from DOM', () => {
+  it('reads 4 field values from DOM', () => {
     refs.shadowRoot = makeShadowRootWithFields({
       's-ai-base-url': 'https://r/v1',
       's-ai-api-key': 'rk',
       's-ai-model': 'rm',
+      's-ai-timeout': '120000',
     });
     const cfg = readAiFields();
     expect(cfg.baseUrl).toBe('https://r/v1');
     expect(cfg.apiKey).toBe('rk');
     expect(cfg.model).toBe('rm');
+    expect(cfg.timeoutMs).toBe(120000);
   });
 
-  it('returns empty strings when no shadowRoot', () => {
+  it('falls back to 60000 when timeout field is empty or invalid', () => {
+    refs.shadowRoot = makeShadowRootWithFields({
+      's-ai-base-url': 'https://r/v1',
+      's-ai-api-key': 'rk',
+      's-ai-model': 'rm',
+      's-ai-timeout': 'abc',
+    });
+    const cfg = readAiFields();
+    expect(cfg.timeoutMs).toBe(60000);
+  });
+
+  it('returns empty strings (and 60000 timeout) when no shadowRoot', () => {
     refs.shadowRoot = null;
     const cfg = readAiFields();
     expect(cfg.baseUrl).toBe('');
     expect(cfg.apiKey).toBe('');
     expect(cfg.model).toBe('');
+    expect(cfg.timeoutMs).toBe(60000);
   });
 });
 
@@ -223,12 +240,13 @@ describe('F5.6 -- readAiFields', () => {
 // ===============================================
 
 describe('F5.6 -- bindAiSettingsHandlers', () => {
-  it('binds input handlers to 3 AI fields', () => {
+  it('binds input handlers to 4 AI fields', () => {
     const container = document.createElement('div');
     container.innerHTML = `
       <input id="s-ai-base-url" value="https://a/v1">
       <input id="s-ai-api-key" value="k">
       <input id="s-ai-model" value="m">
+      <input id="s-ai-timeout" value="60000">
     `;
     refs.shadowRoot = makeShadowRootWithFields();
     bindAiSettingsHandlers(container, { debounceMs: 10 });
@@ -242,6 +260,7 @@ describe('F5.6 -- bindAiSettingsHandlers', () => {
       <input id="s-ai-base-url" value="https://a/v1">
       <input id="s-ai-api-key" value="k">
       <input id="s-ai-model" value="m">
+      <input id="s-ai-timeout" value="60000">
     `;
     refs.shadowRoot = {
       getElementById(id) {
@@ -267,6 +286,39 @@ describe('F5.6 -- bindAiSettingsHandlers', () => {
     await new Promise(r => setTimeout(r, 30));
 
     expect(savedPartial).toEqual({ apiKey: 'new-key' });
+  });
+
+  it('saves timeoutMs partial when timeout field changes', async () => {
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <input id="s-ai-base-url" value="https://a/v1">
+      <input id="s-ai-api-key" value="k">
+      <input id="s-ai-model" value="m">
+      <input id="s-ai-timeout" value="60000">
+    `;
+    refs.shadowRoot = {
+      getElementById(id) {
+        return container.querySelector('#' + id);
+      },
+    };
+    let savedPartial = null;
+    chrome.runtime.sendMessage.mockImplementation((msg, cb) => {
+      if (msg.type === 'ai-set-config') {
+        savedPartial = msg.config;
+        cb({ ok: true });
+      } else {
+        cb({ ok: true, config: {} });
+      }
+    });
+
+    bindAiSettingsHandlers(container, { debounceMs: 10 });
+    const input = container.querySelector('#s-ai-timeout');
+    input.value = '120000';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    await new Promise(r => setTimeout(r, 30));
+
+    expect(savedPartial).toEqual({ timeoutMs: 120000 });
   });
 
   it('no-op when container is null', () => {
@@ -311,10 +363,11 @@ describe('F5.6 -- internal helpers', () => {
     expect(_internal.getFieldValue(sr, 'nope')).toBe('');
   });
 
-  it('AI_FIELD_IDS has exactly 3 ids', () => {
-    expect(_internal.AI_FIELD_IDS).toHaveLength(3);
+  it('AI_FIELD_IDS has exactly 4 ids', () => {
+    expect(_internal.AI_FIELD_IDS).toHaveLength(4);
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-base-url');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-api-key');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-model');
+    expect(_internal.AI_FIELD_IDS).toContain('s-ai-timeout');
   });
 });

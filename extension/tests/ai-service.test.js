@@ -104,6 +104,7 @@ describe('F4.2 -- config', () => {
     expect(cfg.baseUrl).toBe('https://internal-api.z.ai/v1');
     expect(cfg.apiKey).toBe('');
     expect(cfg.model).toBe('glm-4.5');
+    expect(cfg.timeoutMs).toBe(60000);
   });
 
   it('setAiConfig merges partial', async () => {
@@ -118,6 +119,30 @@ describe('F4.2 -- config', () => {
     expect(await isAiAvailable()).toBe(true);
     installChromeStub({});
     expect(await isAiAvailable()).toBe(false);
+  });
+
+  it('getAiConfig returns stored timeoutMs when set', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 90000 } });
+    const cfg = await getAiConfig();
+    expect(cfg.timeoutMs).toBe(90000);
+  });
+
+  it('getAiConfig clamps too-small timeoutMs to 5000', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 1000 } });
+    const cfg = await getAiConfig();
+    expect(cfg.timeoutMs).toBe(5000);
+  });
+
+  it('getAiConfig clamps too-large timeoutMs to 180000', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 999999 } });
+    const cfg = await getAiConfig();
+    expect(cfg.timeoutMs).toBe(180000);
+  });
+
+  it('getAiConfig falls back to 60000 when timeoutMs is invalid', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 'abc' } });
+    const cfg = await getAiConfig();
+    expect(cfg.timeoutMs).toBe(60000);
   });
 });
 
@@ -211,6 +236,31 @@ describe('F4.2 -- sendMessage error paths', () => {
     });
     expect(res.ok).toBe(false);
     expect(res.code).toBe('TIMEOUT');
+  });
+
+  it('uses aiConfig.timeoutMs when params.timeoutMs not provided', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 120000 } });
+    const fetchImpl = makeAbortFetch();
+    await sendMessage({ messages: [{ role: 'user', content: 'x' }], fetchImpl });
+    // AbortController fires after the configured timeout; for the test we only
+    // need to verify that the error message reports the right timeout value.
+    // Since makeAbortFetch aborts synchronously, we just check the returned
+    // error contains the configured timeout.
+    const res = await sendMessage({ messages: [{ role: 'user', content: 'x' }], fetchImpl });
+    expect(res.code).toBe('TIMEOUT');
+    expect(res.error).toContain('120000ms');
+  });
+
+  it('params.timeoutMs overrides aiConfig.timeoutMs', async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', timeoutMs: 120000 } });
+    const fetchImpl = makeAbortFetch();
+    const res = await sendMessage({
+      messages: [{ role: 'user', content: 'x' }],
+      fetchImpl,
+      timeoutMs: 90000,
+    });
+    expect(res.code).toBe('TIMEOUT');
+    expect(res.error).toContain('90000ms');
   });
 
   it('returns NETWORK on generic fetch error', async () => {
