@@ -4126,3 +4126,33 @@ Stage Summary:
 - ZERO emoji remain in production UI strings
 - ESLint now runs on every commit -- future violations blocked automatically
 - 481 tests green, build green, lint:ci green (0 errors)
+
+---
+Task ID: v1.9.61.0-commit-msg-rewrite
+Agent: main
+Time: 2026-06-25T08:30:00+03:00
+Task: Rewrite commit messages v1.9.57.0-v1.9.61.0 to remove emoji (force-push)
+
+Work Log:
+- User caught that commit messages of v1.9.59.0 (f765f42) and v1.9.60.0 (91af7bc) contained magnifier emoji in subject AND body
+- Also found clipboard/trash/check-mark emoji in body of v1.9.58.0 and v1.9.60.0 commit messages
+- Tagged backup-pre-emoji-rewrite at 5e87fde before any rewrite
+- Used git filter-branch --msg-filter with perl -CSD over range 73bc131..HEAD (5 commits)
+- Three passes:
+  1. Universal emoji sweep: stripped all chars in U+1F300-1FA00, U+2600-27C0, U+2190-21FF, U+2500-25A0, U+2100-214F, U+2150-218F, U+2070-209F + collapsed double spaces
+  2. Paren-space fixup: "( " -> "(", " )" -> ")"
+  3. Final pass: stripped variation selectors U+FE00-FE0F, replaced empty '' with [x]
+- Verification:
+  - git log --pretty=%B 73bc131..HEAD | grep -P "[prohibited ranges]" -> 0 matches
+  - No dangling whitespace, no empty quote pairs
+- Force-pushed to origin/main: 5e87fde...9ab52fe (forced update)
+- pre-push hook (AHG verify) passed cleanly
+- Backup tag preserved locally: backup-pre-emoji-rewrite -> 5e87fde (original v1.9.61.0)
+
+Stage Summary:
+- 5 commit hashes rewritten (v1.9.57.0 - v1.9.61.0)
+- ZERO emoji / prohibited Unicode in any commit message in range
+- Remote main now at 9ab52fe
+- ESLint Phase 4.5 in pre-commit hook will block future emoji in source code
+- No automated check for commit message emoji yet -- relies on developer discipline
+- Original history preserved at tag backup-pre-emoji-rewrite (rollback available)
