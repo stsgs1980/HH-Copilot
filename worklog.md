@@ -4492,3 +4492,61 @@ Stage Summary:
 - Together these two fixes complete the AI pipeline end-to-end
 - User needs to: rebuild extension, reload in chrome://extensions/, F5 on hh.ru
 - If still failing: 401 = JWT expired (paste fresh in Settings), 403 = rate limited, NETWORK = corporate proxy/antivirus blocking
+
+---
+Task ID: 6
+Agent: zcode
+Time: 2026-06-26T01:30:00+03:00
+Task: Audit matching/skills/cover-letter pipeline + add derive-skills test suite (RF-1 deep dive)
+
+Work Log:
+- User concern: is resume/vacancy scoring done correctly, and does the cover
+  letter rely on the best match? Requested deep investigation.
+- Ran 3 parallel Explore agents (matching engine, skill pipeline, cover-letter
+  pipeline) + manual cross-checks. All findings cited with file:line.
+- Audit report: docs/audit/2026-06-24-matching-skills-coverletter-audit.md
+- CORRECTED false premises (README/my earlier claims were WRONG, verified in code):
+  - Function is computeMatchScore(resume, vacancy), NOT calculateMatchScore(vacancy,resume)
+  - 4 components (skills 40 / title 30 / salary 15 / experience 15), NOT 5 (no location)
+  - skills use weighted ratio, NOT Jaccard
+  - AI cover-letter orchestrator is cover-letter-ai.js, NOT cover-letter-generator.js
+  - validator has 10 patterns, README claims 11
+- REFUTED agent #3 Red Flag A: normalizeSkill (cover-letter-evidence.js:68) and
+  normalizeSkillSet (match-scorer-skills.js:133) are LOGICALLY IDENTICAL. No
+  silent competency drops from normalizer mismatch.
+- Deep dive RF-1 (derive-skills false-positives): ran REAL deriveSkillsFromExperience
+  on 7 adversarial resumes. 6/7 (86%) produced fabricated skills. Worst offenders:
+  bare-substring patterns (/B2B/, /CRM/, /стресс/), 2-letter acronym patterns
+  (/\bPM\b/, /\bTS\b/, /\bBI\b/), no negation awareness ("не использовал CRM" -> CRM),
+  no tense/role separation ("компания ищет React" -> React). Each fabricated skill
+  earns 0.7*40=28 points. Documented in audit report section 9.
+- CRITICAL discovery: derive-skills.js had ZERO tests (confirmed: no
+  derive-skills.test.js). This is why RF-1 went undetected.
+- Added tests/derive-skills.test.js (26 tests): happy-path true-positives,
+  edge cases (null/empty/dedup), 6 RF-1 BUG characterization tests (each
+  explicitly tagged, asserting current broken behavior with "flip to .not.toContain
+  after fix" instruction), 2 newly-discovered pattern-gap tests:
+    - "управление командой продаж" derives "управление командой" (dictionary
+      order priority ambiguity, not "продажами")
+    - "Управление отделом продаж" (instrumental case) does NOT match the
+      sales-management pattern (pattern requires nominative "отдел продаж")
+- Version drift found and fixed: popup was 1.9.65.0, README was 1.9.62.0 while
+  manifest/package/version.js were 1.9.66.0. Synced all 5 files to 1.9.67.0.
+- README test counts corrected: 481 -> 509, added derive-skills (26) to coverage.
+
+Verification:
+- Tests: 509/509 pass (26 files). Was 483, +26 new.
+- Lint: 0 errors on derive-skills.test.js.
+- Build: v1.9.67.0 OK. version-sync.sh: PASSED. popup/index.html: 38 lines.
+- Pre-existing lint errors (vacancy-fetch-text-helpers, unicode dash) NOT touched
+  -- out of scope (Rule 10).
+
+Stage Summary:
+- Comprehensive audit report documents 9+ red flags across matching/skills/cover-letter.
+- RF-1 measured: 86% false-positive rate on adversarial resumes.
+- derive-skills now has a test suite -- future fixes/regressions are detectable.
+- No source code changed (test-only + docs + version sync). Fixes deferred to user decision.
+- Version 1.9.66.0 -> 1.9.67.0 (also resolved a 4-version drift in popup/README).
+- Top fix candidates when ready: (1) negation guard in derive-skills, (2) rewrite
+  worst patterns to phrase-level, (3) replace validator hardcoded whitelist with
+  dynamic resume.skills+evidence set.
