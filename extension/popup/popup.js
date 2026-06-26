@@ -1,26 +1,27 @@
 /**
  * Popup script: DOM inspector toggle button.
- * v1.9.76.0
+ * v1.9.76.1
  */
 
 const btn = document.getElementById('btn-inspector');
+const btnText = document.getElementById('btn-inspector-text');
 let inspectorActive = false;
 
 btn.addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0] || !tabs[0].url || !tabs[0].url.includes('hh.ru')) {
-      btn.textContent = 'Откройте вкладку hh.ru';
-      setTimeout(() => { btn.textContent = inspectorActive ? 'DOM-инспектор: ВКЛ' : 'DOM-инспектор'; }, 1500);
+      btnText.textContent = 'Откройте вкладку hh.ru';
+      setTimeout(() => { btnText.textContent = inspectorActive ? 'DOM-инспектор: ВКЛ' : 'DOM-инспектор'; }, 1500);
       return;
     }
     chrome.tabs.sendMessage(tabs[0].id, { type: 'toggle-inspector' }, (resp) => {
       if (chrome.runtime.lastError) {
-        btn.textContent = 'Ошибка связи';
-        setTimeout(() => { btn.textContent = 'DOM-инспектор'; }, 1500);
+        btnText.textContent = 'Ошибка связи';
+        setTimeout(() => { btnText.textContent = 'DOM-инспектор'; }, 1500);
         return;
       }
       inspectorActive = resp && resp.active;
-      btn.textContent = inspectorActive ? 'DOM-инспектор: ВКЛ' : 'DOM-инспектор';
+      btnText.textContent = inspectorActive ? 'DOM-инспектор: ВКЛ' : 'DOM-инспектор';
       btn.classList.toggle('active', inspectorActive);
     });
   });
