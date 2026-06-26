@@ -104,22 +104,23 @@ describe('findSynonymMatch -- RF-SYN known false-negatives (characterization)', 
     // Currently: normalize("Навыки переговоров") = "навыки переговоров" is
     // NOT an index key -> null. Should match the "переговоры" group.
     const matched = findSynonymMatch('Навыки переговоров', SALES_RESUME_SKILLS);
-    // BUG: currently null. Flip to .not.toBeNull() after the fix.
-    expect(matched).toBeNull();
+    // Fixed in v1.9.69.0: prefix stripping + stem fallback.
+    expect(matched).not.toBeNull();
   });
 
   it('[RF-SYN BUG] "Деловая коммуникация" should match resume "деловое общение"', () => {
     // "Деловая коммуникация" is semantically the same as "деловое общение"
     // (a member of the negotiations synonym group), but it is not an exact
     // group member -> null today.
+    // Fixed in v1.9.69.0: "деловая коммуникация" added to synonym group.
     const matched = findSynonymMatch('Деловая коммуникация', SALES_RESUME_SKILLS);
-    expect(matched).toBeNull();
+    expect(matched).not.toBeNull();
   });
 
   it('[RF-SYN BUG] "отработка возражений" should match resume "работа с возражениями"', () => {
     // Word-form variant of the stored group member "работа с возражениями".
-    // Stem "возраж" is shared, but exact lookup fails.
+    // Stem "возр" is shared -> OR-semantic fallback matches.
     const matched = findSynonymMatch('отработка возражений', SALES_RESUME_SKILLS);
-    expect(matched).toBeNull();
+    expect(matched).not.toBeNull();
   });
 });

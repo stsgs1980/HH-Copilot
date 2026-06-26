@@ -4,3 +4,6 @@
 [submodule "FabInspector"]
         path = FabInspector
         url = git@github.com:stsgs1980/FabInspector.git
+[submodule ".superpowers-zai"]
+	path = .superpowers-zai
+	url = https://github.com/stsgs1980/Superpowers-Z.ai.git
