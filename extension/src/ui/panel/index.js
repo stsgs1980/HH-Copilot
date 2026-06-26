@@ -16,7 +16,7 @@ export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
 import { createFab, updateFabIcon } from '../fab.js';
-import { toggleInspector, isInspectorActive } from '../dom-inspector.js';
+import { toggleInspector } from '../dom-inspector.js';
 import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
 import { renderOverviewKPI } from '../tabs/overview.js';

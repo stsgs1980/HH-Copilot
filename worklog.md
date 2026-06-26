@@ -4746,3 +4746,18 @@ Stage Summary:
 - All 8 call sites verified
 - Resume address parser: now filters employment metadata (тип занятости, формат работы, etc.)
 - buildScoringVacancy: now passes location/schedule/employment
+
+---
+Task ID: popup-inspector-svg-compliance
+Agent: main
+Task: Add Lucide SVG icon to popup inspector button per UNICODE_POLICY v2.1
+
+Work Log:
+- User pointed out Section 7 of UNICODE_POLICY: any visual symbol in UI = SVG only, Lucide = primary
+- Added Lucide "eye" SVG icon to popup inspector button
+- Made .btn flex with gap for icon+text alignment
+- Removed unused isInspectorActive import from panel/index.js
+
+Stage Summary:
+- Popup button now has Lucide eye icon (SVG, stroke-based, currentColor)
+- 0 ESLint errors, 640/640 tests pass
