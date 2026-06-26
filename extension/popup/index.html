@@ -13,9 +13,13 @@
     .body { padding: 0 16px 16px; }
     .hint { font-size: 12px; color: #52525B; line-height: 1.6; text-align: center; padding: 16px; background: #FAFAFA; border-radius: 10px; border: 1px solid rgba(0,0,0,0.06); }
     .hint b { color: #059669; }
-    .btn { display: block; width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; margin-top: 12px; background: #059669; color: #fff; transition: background 0.15s; }
-    .btn:hover { background: #047857; }
+    .btn { display: block; width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; margin-top: 12px; transition: background 0.15s; }
     .btn:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+    .btn-primary { background: #059669; color: #fff; }
+    .btn-primary:hover { background: #047857; }
+    .btn-secondary { background: #F4F4F5; color: #18181b; }
+    .btn-secondary:hover { background: #E4E4E7; }
+    .btn-secondary.active { background: #7c3aed; color: #fff; }
     .footer { padding: 10px 16px; text-align: center; font-size: 10px; color: #71717a; border-top: 1px solid #f4f4f5; }
   </style>
 </head>
@@ -25,14 +29,18 @@
       <svg width="20" height="20" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <div class="title">HH Copilot</div>
-    <div class="subtitle">v1.9.71.0</div>
+    <div class="subtitle" id="version">v1.9.75.0</div>
   </div>
   <div class="body">
     <div class="hint">
       Панель управления доступна на страницах hh.ru через <b>зелёную кнопку FAB</b> в правом нижнем углу.
     </div>
-    <a href="https://hh.ru" target="_blank" rel="noopener" class="btn">Открыть hh.ru</a>
+    <button class="btn btn-secondary" id="btn-inspector" title="Включить/выключить DOM-инспектор на текущей вкладке">
+      DOM-инспектор
+    </button>
+    <a href="https://hh.ru" target="_blank" rel="noopener" class="btn btn-primary">Открыть hh.ru</a>
   </div>
   <div class="footer">HH Copilot -- автоматизация откликов</div>
+  <script src="popup.js"></script>
 </body>
 </html>

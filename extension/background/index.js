@@ -103,6 +103,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true;
 
+    case 'toggle-inspector':
     case 'apply-vacancy':
       // Forward to active tab's content script
       chrome.tabs.query({ active: true, url: 'https://hh.ru/*' }, (tabs) => {

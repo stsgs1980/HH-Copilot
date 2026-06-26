@@ -30,6 +30,8 @@ import { handleLoadResume, handleReparseResume } from './main-resume-loader.js';
 import { handleSyncResumes } from './main-sync.js';
 import { loadSavedResumes } from './main-resume-boot.js';
 import { loadCaptchaState, checkAndPause } from '../lib/captcha-detector.js';
+import { toggleInspector as toggleDomInspector, isInspectorActive } from '../ui/dom-inspector.js';
+import { setFabInspectorActive } from '../ui/fab.js';
 
 // Re-export for dynamic import from panel (ui/panel/index.js)
 export { initPageLogic };
@@ -181,6 +183,17 @@ async function init() {
     }
   });
 }
+
+// ===============================================
+// Message listener (from popup / background)
+// ===============================================
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === 'toggle-inspector') {
+    toggleDomInspector();
+    setFabInspectorActive(isInspectorActive());
+    sendResponse({ active: isInspectorActive() });
+  }
+});
 
 // ===============================================
 // Hot-Module Replacement (HMR) -- dev-only

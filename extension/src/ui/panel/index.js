@@ -15,7 +15,7 @@ import { panelState, refs, togglePanelOpen, setVacancies, setStatus as setStatus
 export { panelState };
 import { getSidebarCSS } from '../styles.js';
 import { getSidebarHTML } from '../html.js';
-import { createFab, updateFabIcon, setFabInspectorActive } from '../fab.js';
+import { createFab, updateFabIcon } from '../fab.js';
 import { toggleInspector, isInspectorActive } from '../dom-inspector.js';
 import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
@@ -156,13 +156,8 @@ export function setStatus(status) {
 }
 
 export function createPanel() {
-  /* Inspector mini-button callback: do NOT pass btn to toggleInspector --
-     its built-in visual update assumes a transparent header button and
-     would clobber our purple bg. Manage visual state via setFabInspectorActive(). */
-  createFab(toggleSidebar, (_btn) => {
-    toggleInspector();
-    setFabInspectorActive(isInspectorActive());
-  });
+  // Inspector button moved to popup (v1.9.76.0). No more FAB mini-button.
+  createFab(toggleSidebar);
   createSidebar();
   setTimeout(updateAuthState, 1500);
   setInterval(updateAuthState, 5000);
@@ -175,7 +170,6 @@ export function createPanel() {
     e.preventDefault();
     e.stopPropagation();
     toggleInspector(btn);
-    setFabInspectorActive(isInspectorActive()); /* sync FAB mini-button pressed-state */
   }, true);
 
   // Listen for match score updates (from vacancy detail re-score)
