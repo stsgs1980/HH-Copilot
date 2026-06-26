@@ -4662,3 +4662,60 @@ Work Log:
 Stage Summary:
 - 60 new tests covering the entire scoring engine
 - F7.1 complete
+
+---
+Task ID: hotfix-resume-address-buildscoring
+Agent: main
+Task: Fix two integration bugs found during live testing: resume address parser + buildScoringVacancy missing fields
+
+Work Log:
+- User tested v1.9.73.0 on live hh.ru and shared console logs
+- Bug 1: resume address parser eats "Тип занятости: Постоянная работа" instead of city
+  - Root cause: resume-fetch-parse.js and parse-resume-personal.js filter out gender/age/salary but NOT employment metadata strings
+  - Fix: added isEmploymentMeta regex filter (тип занятости, формат работы, etc.) in both files
+- Bug 2: buildScoringVacancy() in vacancy-fetch-enrichment.js does NOT pass location/schedule/employment to scorer
+  - Root cause: function was written before F7.2 (location scorer), never updated
+  - Effect: after enrichment, all vacancies get city=? region=? schedule=unknown → default 8/15 location score instead of real 12-15
+  - Fix: added sv.location, sv.schedule, sv.employment to buildScoringVacancy output
+- Both bugs are INTEGRATION issues, not caught by F7.1 unit tests (which test scoring modules in isolation)
+- Also fixed duplicate 'мытищи' key in match-scorer-location.js
+
+Stage Summary:
+- v1.9.74.0 pushed (b52fe2f)
+- 640/640 tests pass
+- AUDIT GAP: scoring-audit (Task ID: scoring-audit) only tested modules in isolation, missed glue code. Should have traced full data flow from resume parse → buildScoringVacancy → scorer with real hh.ru console output
+- Worklog was not updated for F7.2 and F7.3 — gap in handoff discipline
+
+---
+Task ID: F7.2
+Agent: main
+Task: Add location scoring dimension (0-15pts), rebalance all weights to sum=100
+
+Work Log:
+- Created match-scorer-location.js (380 lines)
+- 50+ Russian cities mapped to region groups (moscow, spb, regions, remote)
+- Abbreviation expansion: МСК→Москва, СПб→СПб, НН→Нижний Новгород, etc.
+- Remote/hybrid/office detection for both resume and vacancy
+- Rebalanced weights: skills 35/40, title 25/30, salary 15, experience 10/15, location 15 = 100
+- Fixed "НН" false positive inside "удаленная" (filter keys < 3 chars for substring)
+- Fixed "гибрид" not detected as hybrid format
+- 38 new location tests, total 98/98 pass
+
+Stage Summary:
+- v1.9.72.0, commit d1dabae
+- Location now contributes 0-15pts to total score
+
+---
+Task ID: F7.3
+Agent: main
+Task: Title matching upgrade — Russian stem matching + 50+ abbreviation map
+
+Work Log:
+- Expanded abbreviation map from 10 to 50+ entries (IT, sales, marketing, HR, finance)
+- Added crudeStem() — 4-char prefix Russian stem matching with 0.7 weight vs exact match
+- Title scorer now: abbreviation expansion → keyword overlap → stem overlap → combined score
+- 542 new tests added (total 640/640 pass)
+
+Stage Summary:
+- v1.9.73.0, commit 775c2f3
+- Title matching significantly improved for Russian job titles
