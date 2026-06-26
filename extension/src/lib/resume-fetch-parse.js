@@ -223,7 +223,8 @@ export function parsePersonalDataFromDoc(doc, titleEl, dbg, resume) {
     if (!resume.address && t.length > 3) {
       const isGender = GENDER_PATTERNS.some(p => p.test(t));
       const isAge = AGE_PATTERN.test(t) || AGE_PATTERN2.test(t);
-      if (!isGender && !isAge && !t.includes('руб') && !t.includes('USD') &&
+      const isEmploymentMeta = /тип занятости|формат работы|график работы|полная занятость|частичная занятость|проектная работа|стажировка|удаленная работа|гибридный формат/i.test(t);
+      if (!isGender && !isAge && !isEmploymentMeta && !t.includes('руб') && !t.includes('USD') &&
           !t.includes('з/п') && !t.includes('уровень') && !t.includes('доход') &&
           t !== resume.salary && t !== resume.title) {
         if (/[А-Яа-яЁё]{2,}/.test(t) && t.length < 80) {

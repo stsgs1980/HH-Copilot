@@ -74,7 +74,8 @@ export function parsePersonalData(titleEl, dbg, resume) {
       const isGender = genderPatterns.some(p => p.test(t));
       const isAge = agePattern.test(t) || agePattern2.test(t);
       const isName = resume.name && t === resume.name;
-      if (!isGender && !isAge && !isName && !t.includes('руб') && !t.includes('USD') &&
+      const isEmploymentMeta = /тип занятости|формат работы|график работы|полная занятость|частичная занятость|проектная работа|стажировка|удаленная работа|гибридный формат/i.test(t);
+      if (!isGender && !isAge && !isName && !isEmploymentMeta && !t.includes('руб') && !t.includes('USD') &&
           !t.includes('з/п') && !t.includes('уровень') && !t.includes('доход') &&
           t !== resume.salary && t !== resume.title) {
         if (/[А-Яа-яЁё]{2,}/.test(t) && t.length < 80) {

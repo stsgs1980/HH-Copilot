@@ -145,6 +145,11 @@ function buildScoringVacancy(vacancy) {
   // Experience: always an object (SERP uses parseExperienceString)
   sv.experience = vacancy.experience;
 
+  // Location & schedule -- needed by location scorer (F7.2)
+  sv.location = vacancy.location || '';
+  sv.schedule = vacancy.schedule || '';
+  sv.employment = vacancy.employment || '';
+
   return sv;
 }
 
