@@ -364,3 +364,95 @@ Combined with:
    `deriveSkillsFromExperience` (confirmed: no `derive-skills.test.js`). This is
    why RF-1 went undetected. Highest-value defensive fix regardless of (1)-(4).
 
+---
+
+## 10. RF-SYN — synonym matching not robust to "навыки"-prefix and word-form variants
+
+**Date added:** 2026-06-26 (follow-up, after running the real pipeline on a
+user's actual resume + vacancy). **Severity: HIGH — affects every candidate on
+every hh.ru vacancy.**
+
+### 10.1 Problem
+
+`findSynonymMatch(skillA, skillSet)` (`skill-synonyms.js:81`) looks up the
+EXACT normalized key in the synonym index:
+
+```js
+const synonyms = _synonymIndex.get(normalize(skillA));
+if (!synonyms) return null;          // <-- dead end for "навыки переговоров"
+```
+
+`normalize()` (`skill-synonyms.js:65-71`) only does lowercase / trim /
+hyphen→space / ё→е. It does NOT strip service prefixes ("навыки ", "навык ",
+"умение ", "работа с ", "ведение ") and does NOT do stem-matching.
+
+The synonym index keys are the literal group-member strings
+(e.g. `"переговоры"`, `"работа с возражениями"`). So a vacancy skill written as
+**"Навыки переговоров"** normalizes to `"навыки переговоры"` — a key that does
+NOT exist in the index → `null` → skill dumped into `missingSkills`.
+
+### 10.2 Measured reproduction (real data)
+
+Ran `findSynonymMatch` with a resume skill set `{переговоры, деловое общение,
+работа с возражениями}` against formulations a real hh.ru vacancy used:
+
+| Vacancy skill | normalize → | Result | Should match |
+|---------------|-------------|--------|--------------|
+| `"Навыки переговоров"` | `"навыки переговоров"` | **NULL → missing** | `"переговоры"` |
+| `"Деловая коммуникация"` | `"деловая коммуникация"` | **NULL → missing** | `"деловое общение"` |
+| `"отработка возражений"` | `"отработка возражений"` | **NULL → missing** | `"работа с возражениями"` |
+| `"Работа с возражениями"` | (exact group member) | MATCH ✅ | — |
+| `"переговоры"` | (exact group member) | MATCH ✅ | — |
+
+**3 of 5 legitimate formulations fail.** The two that pass only pass because
+they happen to be exact members of the hardcoded synonym group.
+
+### 10.3 Real-world impact (measured on a real resume)
+
+Resume: "Руководитель отдела продаж", 20+ years experience, explicit skills
+include `CRM, Управление командой, B2B Продажи, Управленческие навыки` plus a
+rich experience text (reanimated a sales dept, +35% productivity, hired 40
+people, etc.).
+
+Vacancy: "Руководитель отдела продаж" for an AV-equipment distributor,
+keySkills = `[Управление командой, Планирование, Подбор персонала,
+Обучение персонала, Навыки переговоров, Руководство коллективом,
+Деловая коммуникация, Мотивация персонала, B2B Продажи,
+Управленческие навыки, Навыки продаж, Аналитическое мышление]`.
+
+`computeMatchScore(resume, vacancy)` returned **67/100**, because 5 of 12
+vacancy skills landed in `missingSkills`:
+`Подбор персонала, Навыки переговоров, Деловая коммуникация, Навыки продаж,
+Аналитическое мышление` — of which at least **Навыки переговоров** and
+**Деловая коммуникация** are false-negatives caused directly by RF-SYN (the
+candidate demonstrably has negotiations + business communication). A
+reasonable score for this resume/vacancy pair is ~80+.
+
+### 10.4 Root causes
+
+**RC-SYN-1 — No prefix/suffix stripping.** hh.ru vacancies routinely phrase
+keySkills as "Навыки X", "X-навыки", "Работа с Y", "Умение Z". None of these
+surface forms survive exact-equality lookup against bare group members.
+
+**RC-SYN-2 — No stem fallback.** Even with exact members, natural language
+varies ("отработка возражений" vs the stored "работа с возражениями"). A
+stem-prefix check (which already exists and was hardened in
+`skill-stem-match.js` for the cover-letter evidence path) is not applied to
+synonym lookup.
+
+### 10.5 Mitigation (planned, not executed — awaiting user OK)
+
+1. **Strip service prefixes/suffixes** before lookup: `навыки? `, `навык `,
+   `умение `, `работа с `, `ведение `, trailing `-навыки` / ` навыки`.
+2. **Stem fallback** in `findSynonymMatch`: if exact lookup returns null,
+   check whether any group member shares a stem-prefix with `skillA`
+   (reuse `mentionsSkillStem` from `skill-stem-match.js`).
+3. **Acceptance criterion**: the real resume/vacancy pair above must move
+   from 67 → ~80, and "Навыки переговоров" must MATCH "переговоры".
+
+### 10.6 Also discovered: `skill-synonyms.js` has NO tests
+
+Confirmed: no `skill-synonyms.test.js` exists and `findSynonymMatch` is not
+referenced in any test file. Same blind spot as `derive-skills` had before §9.
+A characterization test suite will be added alongside the fix.
+

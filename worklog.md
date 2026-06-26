@@ -4550,3 +4550,54 @@ Stage Summary:
 - Top fix candidates when ready: (1) negation guard in derive-skills, (2) rewrite
   worst patterns to phrase-level, (3) replace validator hardcoded whitelist with
   dynamic resume.skills+evidence set.
+
+---
+Task ID: 7
+Agent: zcode
+Time: 2026-06-26T13:55:00+03:00
+Task: Document RF-SYN (synonym matching false-negatives) + add skill-synonyms test suite
+
+Work Log:
+- User supplied a REAL resume ("Руководитель отдела продаж", 20+ years) + a REAL
+  hh.ru vacancy (AV-equipment distributor). Ran the real pipeline
+  (deriveSkillsFromExperience + computeMatchScore) on it.
+- Result: 67/100. Title 30/30, salary 8 (no-data), experience 8 (unknown). But
+  skills = 21/40 because 5 of 12 vacancy skills landed in missingSkills,
+  including "Навыки переговоров" and "Деловая коммуникация" -- both of which the
+  candidate demonstrably has.
+- Root cause (RF-SYN, NEW): findSynonymMatch (skill-synonyms.js:81) uses exact
+  equality on normalize(skillA). normalize only does lowercase/trim/dash/ё -- it
+  does NOT strip service prefixes ("навыки ", "работа с ", "ведение ") and does
+  NOT stem-match. So "Навыки переговоров" -> "навыки переговоры" -> not an index
+  key -> null -> missingSkills. Confirmed by REPL probe: 3 of 5 legitimate
+  vacancy formulations fail to match.
+- Step 1a: added section 10 (RF-SYN) to docs/audit/2026-06-24-matching-skills-
+  coverletter-audit.md with the measured reproduction table, real-world impact
+  (67 vs ~80), root causes, and mitigation plan.
+- Step 1b: created tests/skill-synonyms.test.js (13 tests). This module had
+  ZERO tests before (same blind spot as derive-skills had). Coverage:
+    - 5 happy-path findSynonymMatch (bidirectional, null cases, ё-insensitive)
+    - 5 getSynonyms/areSynonyms/SYNONYM_WEIGHT helpers
+    - 3 RF-SYN characterization tests, each asserting CURRENT broken behavior
+      (toBeNull) with "flip to .not.toBeNull after fix" instruction. These are
+      the TDD-RED markers: when the Step 2 fix lands, they flip to passing.
+- Fixed my own incorrect ё-test (assumed "делёвое"->"делевое" matches "деловое";
+  it does not -- normalize is symmetric, different keys). Replaced with a real
+  group member "Ведение переговоров" which correctly matches via ё->е.
+- README: 509 -> 522 tests, 26 -> 27 files, added skill-synonyms to coverage list.
+
+Verification:
+- Tests: 522/522 pass (27 files). Was 509, +13 new.
+- Lint: 0 errors on skill-synonyms.test.js.
+- Build: v1.9.68.0 OK. version-sync.sh: PASSED. popup/index.html: 38 lines.
+
+Stage Summary:
+- RF-SYN bug documented with a measured real-world impact (candidate's score
+  undercounted by ~13 points due to false-negatives).
+- skill-synonyms.js now has a test suite -- the fix in Step 2 will be guarded.
+- No source code changed (docs + tests + version sync only). Fix is Step 2,
+  awaiting user OK.
+- Version 1.9.67.0 -> 1.9.68.0.
+- Next: Step 2 -- extend findSynonymMatch with prefix stripping + stem fallback
+  (reuse mentionsSkillStem from skill-stem-match.js). Acceptance: the 3 RF-SYN
+  tests flip to .not.toBeNull, and the real resume score rises from 67 toward 80.
