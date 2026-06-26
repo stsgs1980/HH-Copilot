@@ -46,7 +46,6 @@ const CITY_REGIONS = {
   'домодедово': 'moscow',
   'реутов': 'moscow',
   'королёв': 'moscow',
-  'мытищи': 'moscow',
   'электросталь': 'moscow',
   'жуковский': 'moscow',
   'раменское': 'moscow',
