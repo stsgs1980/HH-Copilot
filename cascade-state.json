@@ -807,7 +807,7 @@
           "title": "Scoring engine unit tests: computeMatchScore, scoreSkills, scoreTitle, scoreSalary, scoreExperience (CRITICAL -- 0 tests exist)",
           "priority": "P0",
           "size": "M",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [],
           "implements": [],
           "acceptance": "30+ tests covering: exact skill match, derived skill match, synonym match, role-implied match, missing skills, confidence factor (1/2/3/5+ vac skills), title exact/keyword/abbrev, salary within/below/above/missing, experience within/slightly-below/overqual/missing, role mismatch penalty (0 sim -> cap 25%, <0.15 -> cap 40%), empty inputs",

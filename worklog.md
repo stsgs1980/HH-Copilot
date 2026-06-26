@@ -4645,3 +4645,20 @@ Stage Summary:
 - HIGH: Salary ignores currency (F7.5)
 - MEDIUM: Role-implied skills too generous (F7.6)
 - MEDIUM: README out of sync (F7.7)
+
+---
+Task ID: F7.1
+Agent: main
+Task: Write scoring engine unit tests (was 0, target 30+)
+
+Work Log:
+- Created tests/match-scorer.test.js with 60 tests
+- Coverage: computeMatchScore (5), scoreSkills (20), scoreTitle (8), scoreSalary (10), scoreExperience (10), normalizeSkillSet (3), role mismatch penalty (2)
+- Tested: explicit/derived/synonym/implied skill weights, confidence factor (1/2/3/5+ vac skills), role mismatch caps (25%/40%), salary ranges, experience ranges, title overlap + abbreviation bonus, normalization (ё→е, hyphens, {name} objects)
+- Found 1 documented minor bug: normalizeSkillSet crashes on null array element (hh.ru never produces these)
+- Fixed 3 test expectation errors during development (rounding math, synonym group lookup, role-implied interference)
+- Full suite: 582/582 pass (was 522)
+
+Stage Summary:
+- 60 new tests covering the entire scoring engine
+- F7.1 complete
