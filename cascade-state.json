@@ -3,16 +3,16 @@
     "version": "3.0",
     "project": "HH Copilot Chrome Extension",
     "repo": "https://github.com/stsgs1980/HH-Copilot.git",
-    "lastUpdated": "2026-06-24T16:54:32Z",
+    "lastUpdated": "2026-06-25T16:00:00Z",
     "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work.",
     "lastAudit": "2026-06-25T08:35:00Z",
     "currentVersion": "1.9.65.0",
     "previousVersion": "1.9.65.0",
     "auditSummary": {
-      "total": 35,
+      "total": 42,
       "completed": 33,
       "partial": 0,
-      "pending": 2
+      "pending": 9
     }
   },
   "phases": [
@@ -794,6 +794,100 @@
           "anti_hallucination": "Zip <= 10MB. manifest.json valid. No deprecated permissions. All permissions justified.",
           "implementationFiles": [],
           "auditNote": "No implementation files mapped yet"
+        }
+      ]
+    },
+    {
+      "id": "P7",
+      "name": "Scoring Quality & Accuracy (post-audit)",
+      "gate": "No dependencies -- parallel with F5.2/F6.4",
+      "tasks": [
+        {
+          "id": "F7.1",
+          "title": "Scoring engine unit tests: computeMatchScore, scoreSkills, scoreTitle, scoreSalary, scoreExperience (CRITICAL -- 0 tests exist)",
+          "priority": "P0",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [],
+          "implements": [],
+          "acceptance": "30+ tests covering: exact skill match, derived skill match, synonym match, role-implied match, missing skills, confidence factor (1/2/3/5+ vac skills), title exact/keyword/abbrev, salary within/below/above/missing, experience within/slightly-below/overqual/missing, role mismatch penalty (0 sim -> cap 25%, <0.15 -> cap 40%), empty inputs",
+          "anti_hallucination": "Do NOT test derivedSkills content -- test the scoring logic with mock skill arrays"
+        },
+        {
+          "id": "F7.2",
+          "title": "Location scoring dimension (0-15pts): city matching with Russian city list, remote bonus, hybrid handling",
+          "priority": "P0",
+          "size": "L",
+          "status": "pending",
+          "depends_on": [
+            "F7.1"
+          ],
+          "implements": [],
+          "acceptance": "match-scorer-location.js module. Score 15/15 same city, 12/15 nearby region, 8/15 different city, 12/15 remote matches remote, 5/15 office vs remote. Renormalize: skills 35, title 25, salary 15, experience 10, location 15 (total 100). All existing tests updated. README version text updated.",
+          "anti_hallucination": "Use a finite city list (top 50 Russian cities + regions). Do NOT try to parse every possible location string -- unknown locations score 8/15 (neutral)."
+        },
+        {
+          "id": "F7.3",
+          "title": "Title matching upgrade: Russian stem matching + expanded abbreviation map (50+ entries covering IT, sales, marketing, HR, finance)",
+          "priority": "P1",
+          "size": "M",
+          "status": "pending",
+          "depends_on": [
+            "F7.1"
+          ],
+          "implements": [],
+          "acceptance": "'Frontend-разработчик' vs 'Веб-разработчик' -> similarity > 0 (stem: 'разработ' matches). 'SMM-менеджер' vs 'Менеджер по соцсетям' -> bonus. 50+ abbreviation/synonym entries in the map. Tests for 10+ title pairs.",
+          "anti_hallucination": "Stem function must be simple (first 4-5 chars of word, not a full morphological analyzer). No external NLP libraries."
+        },
+        {
+          "id": "F7.4",
+          "title": "Defer initial search result scoring until enrichment completes (prevent score reshuffling)",
+          "priority": "P1",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [],
+          "implements": [],
+          "acceptance": "When search results load, show a loading skeleton/spinner for match scores until enrichment batch completes. Vacancies sort only after ALL first-batch enrichments finish. No visible reshuffling.",
+          "anti_hallucination": "If enrichment fails for a vacancy, fall back to title-only score (no skills dimension)."
+        },
+        {
+          "id": "F7.5",
+          "title": "Salary scoring: basic currency awareness (USD/EUR/RUB conversion at approximate rates)",
+          "priority": "P2",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F7.1"
+          ],
+          "implements": [],
+          "acceptance": "Resume: 500000 RUB, Vacancy: $5000 -> within range (not 'way below'). Uses approximate rates (1 USD ~ 90 RUB, 1 EUR ~ 100 RUB). Different currency but no conversion possible -> 8/15 (neutral).",
+          "anti_hallucination": "Do NOT fetch live exchange rates. Hardcoded approximate rates are sufficient. Do NOT add a currency selector UI."
+        },
+        {
+          "id": "F7.6",
+          "title": "Tune role-implied skills: reduce from 15 to 5-7 core skills per role group, add exclusion for seniority mismatches",
+          "priority": "P2",
+          "size": "S",
+          "status": "pending",
+          "depends_on": [
+            "F7.1"
+          ],
+          "implements": [],
+          "acceptance": "'Руководитель' group reduced to 5-7 most essential skills (управление командой, делегирование, постановка задач, мотивация персонала, планирование). 'Junior' titles get 0 implied skills. Tests verify reduced count.",
+          "anti_hallucination": "Do NOT remove implied skills entirely -- they serve an important anti-false-negative purpose. Just reduce quantity."
+        },
+        {
+          "id": "F7.7",
+          "title": "Fix README scoring description to match actual code (location 15% -> title 30%)",
+          "priority": "P1",
+          "size": "XS",
+          "status": "pending",
+          "depends_on": [
+            "F7.2"
+          ],
+          "implements": [],
+          "acceptance": "README accurately reflects the final scoring breakdown after F7.2 lands.",
+          "anti_hallucination": "Just text changes in README."
         }
       ]
     }

@@ -4622,3 +4622,26 @@ Stage Summary:
 - RF-1 fix complete: negation filter now works with Cyrillic text
 - Files changed: derive-skills.js, skill-dictionary-management-sales.js, 5 version files
 - derive-skills.test.js: 26/26 pass
+
+---
+Task ID: scoring-audit
+Agent: main
+Task: Audit scoring/matching pipeline, run tests, add new tasks to cascade
+
+Work Log:
+- Ran full test suite: 522/522 pass under vitest (182 failures from bun test = jsdom infra issue, not code bugs)
+- Traced complete data flow: parseVacancyDetail -> computeMatchScore -> UI rendering
+- Read all 4 scoring modules: skills (0-40), title (0-30), salary (0-15), experience (0-15)
+- Read enrichment pipeline: cache enrichment + background iframe/text fetch
+- Found 7 issues (1 critical, 4 high, 2 medium)
+- Added P7 phase to cascade-state.json with 7 tasks (F7.1-F7.7)
+
+Stage Summary:
+- Scoring pipeline WORKS in happy path (detail page + enriched search results)
+- CRITICAL: 0 unit tests on scoring engine (F7.1)
+- HIGH: Location dimension missing from scoring (F7.2)
+- HIGH: Initial search scores unreliable, causes visible reshuffling (F7.4)
+- HIGH: Title matching too simplistic (F7.3)
+- HIGH: Salary ignores currency (F7.5)
+- MEDIUM: Role-implied skills too generous (F7.6)
+- MEDIUM: README out of sync (F7.7)
