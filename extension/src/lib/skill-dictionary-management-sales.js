@@ -140,8 +140,7 @@ export const SALES_SKILLS = [
     /отработк[аеу]\s+возражен/i,
   ]},
   { skill: 'CRM', patterns: [
-    /CRM/i,
-    /crm/i,
+    /(?<!\p{L})CRM(?!\p{L})/iu,  // Unicode-aware boundary: blocks 'микроCRM' (RF-1)
     /customer\s+relationship/i,
     /управлен(?:ие|ием)\s+отношен/i,
   ]},

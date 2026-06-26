@@ -69,7 +69,7 @@ export const FINANCE_SKILLS = [
   { skill: 'управление проектами', patterns: [
     /проектн/i,
     /управлен(?:ие|ием|ию)\s+проект/i,
-    /\bPM\b/i,
+    // /\bPM\b/i removed (RF-1): too ambiguous (Product Manager, Performance Mgmt)
     /project\s+manag/i,
     /Agile/i,
     /Scrum/i,
@@ -100,7 +100,7 @@ export const IT_SKILLS = [
   ]},
   { skill: 'TypeScript', patterns: [
     /typescript/i,
-    /\bTS\b/,
+    // /\bTS\b/ removed (RF-1): too ambiguous (Test Specialist, TS format)
   ]},
   { skill: 'React', patterns: [
     /\breact\b/i,

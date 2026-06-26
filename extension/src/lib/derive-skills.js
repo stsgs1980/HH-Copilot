@@ -12,12 +12,70 @@
  *   parseSkills()       -> resume.skills[]     (explicit tags from page)
  *   deriveSkillsFromExperience() -> resume.derivedSkills[] (inferred from text)
  *   scoreSkills()       -> merges both for matching
+ *
+ * v1.9.70.0: RF-1 fix -- sentence-level negation/context filter
  */
 
 import { SKILL_PATTERNS } from './skill-dictionary.js';
 import { createLogger } from './anti-hallucination.js';
 
 const deriveLog = createLogger('DeriveSkills');
+
+// ===============================================
+// NEGATION / CONTEXT FILTER (RF-1 fix, v1.9.70.0)
+// ===============================================
+
+/**
+ * Sentence-level patterns that indicate the candidate does NOT possess
+ * a skill mentioned in the same sentence. Any sentence matching one of
+ * these is excluded from skill derivation.
+ *
+ * Categories:
+ *   A. Explicit negation of action: "не использовал CRM"
+ *   B. Abandonment: "пробовал 1С, бросил"
+ *   C. Company context: "компания ищет React"
+ *   D. Access denied: "доступа не имел"
+ *   E. No practice: "на практике не применял"
+ */
+const NEGATION_MARKERS = [
+  // A. Explicit negation -- candidate says they DON'T do/have X
+  // NOTE: \b does NOT work with Cyrillic (JS treats non-ASCII as non-word).
+  //       Use (?<!\p{L}) / (?!\p{L}) with 'u' flag for Unicode-aware boundaries.
+  /(?<!\p{L})не\s+(?:использовал|применял|имел|знал|работал|владел|умел|использую|применяю|работаю|владею|кодил)(?!\p{L})/iu,
+  /(?<!\p{L})без\s+(?:опыта|знания|практики)(?!\p{L})/iu,
+
+  // B. Abandonment / past-tense attempts that didn't stick
+  /(?<!\p{L})(?:бросил|забросил|оставил|не продолжил|не стал)(?!\p{L})/iu,
+
+  // C. Company context -- the COMPANY seeks the skill, not the candidate
+  /(?<!\p{L})компания\s+(?:ищет|требует|нанимает|нужен|нужны)(?!\p{L})/iu,
+  /(?<!\p{L})(?:ищем|ищу|требуются|нужны)\s+(?:разработчик|специалист|менеджер|инженер)(?!\p{L})/iu,
+
+  // D. Access denied
+  /(?<!\p{L})(?:доступ[ау]?\s*не\s+(?:имел|был|получил)|не\s+имел\s+доступ)(?!\p{L})/iu,
+
+  // E. No practical application
+  /(?<!\p{L})(?:на\s+практике\s+не|не\s+применял\s+на\s+практике)(?!\p{L})/iu,
+  /(?<!\p{L})(?:только\s+(?:читал|слышал|знал)\s+про)(?!\p{L})/iu,
+];
+
+/**
+ * Split text into sentences and filter out those with negation/context markers.
+ * Returns a corpus string of only "safe" sentences.
+ *
+ * @param {string} corpus -- full text corpus
+ * @returns {string} -- filtered corpus (safe sentences only)
+ */
+function buildSafeCorpus(corpus) {
+  // Split on sentence terminators and newlines
+  const sentences = corpus.split(/(?<=[.!?])\s+|\n/);
+  const safe = sentences.filter(s => {
+    const trimmed = s.trim();
+    if (trimmed.length < 8) return true; // truly trivial fragments ("CRM.", "B2B.") are safe
+    return !NEGATION_MARKERS.some(re => re.test(trimmed));
+  });
+  return safe.join('\n');
+}
 
 /**
  * Derive skills from resume experience descriptions and title.
@@ -60,6 +118,9 @@ export function deriveSkillsFromExperience(resume) {
     return [];
   }
 
+  // RF-1 fix: filter out negated/contextual sentences before matching
+  const safeCorpus = buildSafeCorpus(corpus);
+
   // Normalise existing skills for dedup
   const existingSkills = new Set(
     (resume.skills || []).map(s => s.toLowerCase().trim().replace(/\s+/g, ' '))
@@ -71,9 +132,9 @@ export function deriveSkillsFromExperience(resume) {
     // Skip if already in explicit skills
     if (existingSkills.has(entry.skill.toLowerCase().trim())) continue;
 
-    // Check each pattern
+    // Check each pattern against SAFE corpus only
     for (const pattern of entry.patterns) {
-      if (pattern.test(corpus)) {
+      if (pattern.test(safeCorpus)) {
         derived.push(entry.skill);
         break; // one match is enough per skill
       }
@@ -114,8 +175,11 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
   }
   if (resume.additionalInfo) textParts.push(resume.additionalInfo);
 
-  const corpus = textParts.join('\n').toLowerCase();
+  const corpus = textParts.join('\n');
   if (!corpus) return [];
+
+  // RF-1 fix: same negation filter for reverse derivation
+  const safeCorpus = buildSafeCorpus(corpus).toLowerCase();
 
   const existingSkills = new Set(
     (resume.skills || []).map(s => s.toLowerCase().trim())
@@ -128,8 +192,8 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
     // Already in explicit skills -- skip
     if (existingSkills.has(normalized)) continue;
 
-    // Check if the skill name itself appears in text
-    if (corpus.includes(normalized)) {
+    // Check if the skill name itself appears in SAFE text
+    if (safeCorpus.includes(normalized)) {
       matched.push(skill);
       continue;
     }
@@ -138,7 +202,7 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
     for (const entry of SKILL_PATTERNS) {
       if (entry.skill.toLowerCase() === normalized) {
         for (const pattern of entry.patterns) {
-          if (pattern.test(corpus)) {
+          if (pattern.test(safeCorpus)) {
             matched.push(skill);
             break;
           }

@@ -171,9 +171,9 @@ describe('deriveSkillsFromExperience -- RF-1 known false-positives (characteriza
       }],
     };
     const derived = deriveSkillsFromExperience(resume);
-    // BUG: negation markers (не, без) are ignored; bare /B2B/i and /CRM/i match.
-    expect(derived).toContain('B2B продажи'); // flip to .not.toContain after fix
-    expect(derived).toContain('CRM'); // flip to .not.toContain after fix
+    // RF-1 FIX: negation filter blocks 'не использовал' and 'без опыта'
+    expect(derived).not.toContain('B2B продажи');
+    expect(derived).not.toContain('CRM');
   });
 
   it('[RF-1 BUG] derives React/Python when the COMPANY (not the candidate) seeks them', () => {
@@ -184,9 +184,9 @@ describe('deriveSkillsFromExperience -- RF-1 known false-positives (characteriza
       }],
     };
     const derived = deriveSkillsFromExperience(resume);
-    // BUG: role context invisible; bare tokens match.
-    expect(derived).toContain('Python'); // flip to .not.toContain after fix
-    expect(derived).toContain('React'); // flip to .not.toContain after fix
+    // RF-1 FIX: company-context filter blocks 'компания ищет'
+    expect(derived).not.toContain('Python');
+    expect(derived).not.toContain('React');
   });
 
   it('[RF-1 BUG] derives 1С/Docker from abandoned/past-tense attempts', () => {
@@ -197,9 +197,9 @@ describe('deriveSkillsFromExperience -- RF-1 known false-positives (characteriza
       }],
     };
     const derived = deriveSkillsFromExperience(resume);
-    // BUG: past tense / abandoned attempts match identically to active use.
-    expect(derived).toContain('Docker'); // flip to .not.toContain after fix
-    expect(derived).toContain('1С'); // flip to .not.toContain after fix
+    // RF-1 FIX: abandonment filter blocks 'бросил' and 'на практике не'
+    expect(derived).not.toContain('Docker');
+    expect(derived).not.toContain('1С');
   });
 
   it('[RF-1 BUG] derives TypeScript/pm/BI from 2-letter acronyms in unrelated role text', () => {
@@ -210,10 +210,10 @@ describe('deriveSkillsFromExperience -- RF-1 known false-positives (characteriza
       }],
     };
     const derived = deriveSkillsFromExperience(resume);
-    // BUG: /\bPM\b/, /\bTS\b/, /\bBI\b/ match unrelated role abbreviations.
-    expect(derived).toContain('TypeScript'); // flip to .not.toContain after fix
-    expect(derived).toContain('управление проектами'); // from /\bPM\b/
-    expect(derived).toContain('анализ данных'); // from /\bBI\b/
+    // RF-1 FIX: short-acronym patterns (TS, PM, BI) removed from dictionary
+    expect(derived).not.toContain('TypeScript');
+    expect(derived).not.toContain('управление проектами');
+    expect(derived).not.toContain('анализ данных');
   });
 
   it('[RF-1 BUG] derives "стрессоустойчивость" from any mention of stress', () => {
@@ -222,8 +222,8 @@ describe('deriveSkillsFromExperience -- RF-1 known false-positives (characteriza
       experience: [{ description: 'Был стресс на работе из-за дедлайнов.' }],
     };
     const derived = deriveSkillsFromExperience(resume);
-    // BUG: /стресс/i is the sole pattern; any stress mention = the skill.
-    expect(derived).toContain('стрессоустойчивость'); // flip to .not.toContain after fix
+    // RF-1 FIX: pattern changed from /стресс/i to /стрессоустойчив/i
+    expect(derived).not.toContain('стрессоустойчивость');
   });
 
   it('[RF-1 BUG] derives CRM from substring inside "микроCRM" (access denied)', () => {
@@ -234,8 +234,8 @@ describe('deriveSkillsFromExperience -- RF-1 known false-positives (characteriza
       }],
     };
     const derived = deriveSkillsFromExperience(resume);
-    // BUG: /CRM/i matches as substring inside "микроCRM".
-    expect(derived).toContain('CRM'); // flip to .not.toContain after fix
+    // RF-1 FIX: CRM pattern now has word boundary (blocks 'микроCRM') + negation filter
+    expect(derived).not.toContain('CRM');
   });
 });
 

@@ -140,7 +140,7 @@ export const SOFT_SKILLS = [
     /анализ\s+данн/i,
     /data\s+analysis/i,
     /big\s+data/i,
-    /\bBI\b/i,
+    // /\bBI\b/i removed (RF-1): too ambiguous
     /business\s+intelligence/i,
   ]},
 
@@ -162,7 +162,7 @@ export const SOFT_SKILLS = [
     /приоритизац/i,
   ]},
   { skill: 'стрессоустойчивость', patterns: [
-    /стресс/i,
+    /\bстрессоустойчив/i,  // RF-1: was /стресс/i -- 'был стресс' is not the skill
   ]},
   { skill: 'LLM', patterns: [
     /\bLLMs?\b/i,

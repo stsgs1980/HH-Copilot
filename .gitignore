@@ -97,3 +97,4 @@ tool-results/
 
 # HH.ru scraped data files (research artifacts, not source)
 hh_*.json
+skills/sp-*

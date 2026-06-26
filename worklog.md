@@ -4601,3 +4601,24 @@ Stage Summary:
 - Next: Step 2 -- extend findSynonymMatch with prefix stripping + stem fallback
   (reuse mentionsSkillStem from skill-stem-match.js). Acceptance: the 3 RF-SYN
   tests flip to .not.toBeNull, and the real resume score rises from 67 toward 80.
+
+---
+Task ID: RF-1
+Agent: main
+Task: Fix derive-skills 86% false-positive rate (RF-1)
+
+Work Log:
+- Diagnosed 4 failing RF-1 characterization tests in derive-skills.test.js
+- Root cause 1: JavaScript `\b` word boundary does NOT work with Cyrillic characters (treats them as non-word chars), making ALL NEGATION_MARKERS patterns dead
+- Root cause 2: Short-fragment bypass threshold `<15` let "Без опыта b2b." (14 chars) through without negation check
+- Root cause 3: `\bCRM\b` matches inside "микроCRM" because Cyrillic→ASCII transition is an ASCII word boundary
+- Fix 1: Replaced all `\b` in NEGATION_MARKERS with Unicode-aware `(?<!\p{L})`/`(?!\p{L})` + `u` flag
+- Fix 2: Lowered short-fragment threshold from 15 to 8 chars
+- Fix 3: Changed CRM pattern from `/\bCRM\b/i` to `/(?<!\p{L})CRM(?!\p{L})/iu` in skill-dictionary-management-sales.js
+- All 26 derive-skills tests now pass (was 4 fail)
+- Version bumped 1.9.69.0 → 1.9.70.0 in all 5 files
+
+Stage Summary:
+- RF-1 fix complete: negation filter now works with Cyrillic text
+- Files changed: derive-skills.js, skill-dictionary-management-sales.js, 5 version files
+- derive-skills.test.js: 26/26 pass
