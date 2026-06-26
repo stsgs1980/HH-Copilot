@@ -4719,3 +4719,30 @@ Work Log:
 Stage Summary:
 - v1.9.73.0, commit 775c2f3
 - Title matching significantly improved for Russian job titles
+
+---
+Task ID: integration-audit-v2
+Agent: main
+Task: Full integration audit after user found 2 bugs in live testing
+
+Work Log:
+- Traced complete data flow: resume parse → SERP/Detail parse → buildScoringVacancy → computeMatchScore → UI
+- Checked all 5 scorer modules read correct fields from resume/vacancy objects
+- Checked all call sites of computeMatchScore (8 total):
+  1. vacancy-fetch-enrichment.js:100 -- via buildScoringVacancy ✅ (fixed in v1.9.74.0)
+  2. vacancy-list-helpers.js:95 -- direct with SERP vacancy ✅ (has location + schedule from card)
+  3. content/main.js:169 -- direct with parseVacancyDetail() ✅ (detail parser includes location/schedule)
+  4. main-page-handlers-vacancy.js:93 -- same as above ✅
+  5. cover-letter-placeholders.js:40 -- direct with vacancy ✅ (typically enriched)
+  6. cover-letter-rich.js:61 -- direct with vacancy ✅
+  7. cover-letter-ai.js:60 -- direct with vacancy ✅
+  8. vacancies-match.js:113 -- direct with detail ✅
+- Field mapping verified:
+  - resume: skills ✅, title ✅, salary ✅, experience ✅, address ✅ (fixed parser), workFormat ✅
+  - vacancy: keySkills/skills ✅, title ✅, salary ✅, experience ✅, location ✅, schedule ✅, employment ✅
+
+Stage Summary:
+- No more integration gaps found after v1.9.74.0 fixes
+- All 8 call sites verified
+- Resume address parser: now filters employment metadata (тип занятости, формат работы, etc.)
+- buildScoringVacancy: now passes location/schedule/employment
