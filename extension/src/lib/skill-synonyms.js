@@ -128,30 +128,14 @@ function contentWords(normalized) {
     .filter(w => w.length >= STEM_MIN_WORD);
 }
 
-/**
- * Crude stem: first STEM_LEN lowercase characters.
- * Good enough for Russian skill-name inflection variants:
- *   "переговоров" -> "пере", "переговоры" -> "пере" (match)
- *   "возражений" -> "возр", "возражениями" -> "возр" (match)
- *   "отработка" -> "отра", "работа" -> "рабо" (no match -- correct)
- */
+/** Crude stem: first STEM_LEN chars. Matches Russian inflection variants. */
 function crudeStem(word) {
   return word.toLowerCase().substring(0, STEM_LEN);
 }
 
 /**
- * OR-semantic stem match between two normalized skill names.
- * Returns true if ANY content word from skillA shares a stem with
- * ANY content word from skillB.
- *
- * Unlike mentionsSkillStem (AND semantics, designed for skill-vs-sentence),
- * this is designed for skill-vs-skill comparison where prepositions and
- * function words should be ignored.
- *
- * Examples:
- *   stemMatchSkills("переговоров", "переговоры") -> true ("пере" = "пере")
- *   stemMatchSkills("отработка возражений", "работа с возражениями") -> true ("возр" = "возр")
- *   stemMatchSkills("деловая коммуникация", "деловое общение") -> false (no shared stem)
+ * OR-semantic stem match: true if ANY content word from skillA
+ * shares a stem with ANY content word from skillB.
  */
 function stemMatchSkills(normA, normB) {
   const wordsA = contentWords(normA);
@@ -171,14 +155,7 @@ function stemMatchSkills(normA, normB) {
 // ===============================================
 
 /**
- * Check if skillA has a synonym match with any skill in the provided set.
- * Returns the matched synonym from the set, or null if no synonym match.
- *
- * Three-tier lookup (v1.9.69.0):
- *   1. Direct index lookup (exact match after normalize)
- *   2. Prefix-stripped lookup (strip "навыки ", "умение ", etc.)
- *   3. OR-semantic stem fallback against all known group members
- *
+ * Three-tier synonym lookup: direct index -> prefix-stripped -> stem fallback.
  * @param {string} skillA -- skill name to check (will be normalized)
  * @param {Set<string>} skillSet -- set of normalized skill names
  * @returns {string|null} -- the synonym found in skillSet, or null
@@ -224,33 +201,18 @@ export function findSynonymMatch(skillA, skillSet) {
   return null;
 }
 
-/**
- * Get all synonyms for a skill (normalized).
- * Returns an empty Set if the skill has no synonym group.
- *
- * @param {string} skill -- skill name (will be normalized)
- * @returns {Set<string>}
- */
+/** Get all synonyms for a skill (normalized). Empty Set if none. */
 export function getSynonyms(skill) {
   if (!_synonymIndex) _synonymIndex = buildSynonymIndex();
   return _synonymIndex.get(normalize(skill)) || new Set();
 }
 
-/**
- * Check if two normalized skills are in the same synonym group.
- *
- * @param {string} skillA -- normalized skill name
- * @param {string} skillB -- normalized skill name
- * @returns {boolean}
- */
+/** Check if two normalized skills are in the same synonym group. */
 export function areSynonyms(skillA, skillB) {
   if (!_synonymIndex) _synonymIndex = buildSynonymIndex();
   const synonyms = _synonymIndex.get(normalize(skillA));
   return synonyms ? synonyms.has(normalize(skillB)) : false;
 }
 
-/**
- * Weight for synonym matches (between derived 0.7 and missing 0).
- * Synonym = related but not identical skill.
- */
+/** Weight for synonym matches (between derived 0.7 and missing 0). */
 export const SYNONYM_WEIGHT = 0.5;

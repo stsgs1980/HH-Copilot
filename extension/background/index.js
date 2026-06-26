@@ -139,7 +139,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'ai-cover-letter':
-      // eslint-disable-next-line no-console
+       
       console.log('[AI-BTN][bg] ai-cover-letter received', {
         vacancyId: message.vacancy && message.vacancy.id,
         vacancyTitle: message.vacancy && message.vacancy.title,
@@ -148,7 +148,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       generateCoverLetterAI(message.vacancy, message.resume, message.opts || {})
         .then((result) => {
-          // eslint-disable-next-line no-console
+           
           console.log('[AI-BTN][bg] ai-cover-letter done', {
             ok: !!(result && result.ok),
             code: result && result.code,
@@ -159,7 +159,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse(result);
         })
         .catch((e) => {
-          // eslint-disable-next-line no-console
+           
           console.error('[AI-BTN][bg] ai-cover-letter UNCAUGHT', e);
           sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' });
         });

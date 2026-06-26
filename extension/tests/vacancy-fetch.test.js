@@ -393,7 +393,7 @@ describe('vacancy-fetch-text: extractCleanCompanyName', () => {
 
   it('trims trailing separators (em dash, pipe, dot)', () => {
     const el = document.createElement('span');
-    el.innerHTML = 'Газпром —';
+    el.innerHTML = 'Газпром --';
     expect(extractCleanCompanyName(el)).toBe('Газпром');
   });
 
