@@ -21,7 +21,7 @@ export function getResumeSection() {
         </div>
         <div id="res-cta-load" style="padding-top:6px;display:none;">
           <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg> Взять со страницы
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Взять со страницы
           </button>
         </div>
         <div style="padding-top:6px;">
@@ -95,7 +95,7 @@ export function getResumeSection() {
       <!-- Red flags -->
       <div id="res-red-flags" style="display:none;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span style="color:#DC2626;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
           <span style="font-size:11px;font-weight:600;color:#DC2626;">Красные флаги</span>
         </div>
         <div id="res-red-flags-list" style="font-size:11px;"></div>
@@ -103,7 +103,7 @@ export function getResumeSection() {
       <!-- Strengths -->
       <div id="res-strengths" style="display:none;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span style="color:#059669;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
           <span style="font-size:11px;font-weight:600;color:#059669;">Сильные стороны</span>
         </div>
         <div id="res-strengths-list" style="font-size:11px;"></div>
@@ -111,7 +111,7 @@ export function getResumeSection() {
       <!-- Recommendations -->
       <div id="res-recommendations" style="display:none;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <span style="color:#D97706;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
           <span style="font-size:11px;font-weight:600;color:#D97706;">Что улучшить</span>
         </div>
         <div id="res-recommendations-list" style="font-size:11px;"></div>

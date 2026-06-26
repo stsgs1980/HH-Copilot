@@ -1,8 +1,17 @@
 {
   "name": "hh-copilot",
-  "version": "1.9.76.1",
-  "private": true,
+  "version": "1.9.77.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^10.5.0",
+    "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.8",
+    "ws": "^8.18.0"
+  },
   "description": "HH Copilot -- автоматизация откликов на hh.ru, Chrome Extension (esbuild)",
+  "private": true,
   "scripts": {
     "build": "node esbuild.config.mjs",
     "build:prod": "node esbuild.config.mjs --production",
@@ -13,14 +22,5 @@
     "lint:fix": "eslint --fix src/ background/ tests/",
     "lint:ci": "eslint src/ background/ tests/",
     "cascade": "node ../scripts/cascade-task.js"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "esbuild": "^0.24.0",
-    "eslint": "^10.5.0",
-    "globals": "^17.6.0",
-    "jsdom": "^29.1.1",
-    "vitest": "^4.1.8",
-    "ws": "^8.18.0"
   }
 }

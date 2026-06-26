@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "HH Copilot",
   "description": "HH Copilot -- \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u044f \u043e\u0442\u043a\u043b\u0438\u043a\u043e\u0432 \u043d\u0430 hh.ru, FAB + 6-tab sidebar",
-  "version": "1.9.76.1",
+  "version": "1.9.77.0",
   "permissions": [
     "storage",
     "cookies",

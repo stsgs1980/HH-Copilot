@@ -160,7 +160,7 @@ function updateResumeScore(r) {
       redFlagsContainer.style.display = '';
       redFlagsList.innerHTML = result.redFlags.map(f =>
         '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;">' +
-        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+        '<span style="color:#DC2626;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>' +
         '<span style="color:#991B1B;line-height:1.4;">' + esc(f) + '</span></div>'
       ).join('');
     } else {
@@ -176,7 +176,7 @@ function updateResumeScore(r) {
       strengthsContainer.style.display = '';
       strengthsList.innerHTML = result.strengths.map(s =>
         '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#F0FDF4;border-radius:6px;">' +
-        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+        '<span style="color:#059669;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>' +
         '<span style="color:#166534;line-height:1.4;">' + esc(s) + '</span></div>'
       ).join('');
     } else {
@@ -198,7 +198,7 @@ function updateResumeScore(r) {
           ? '<span title="' + esc(rec.tooltip) + '" style="cursor:help;border-bottom:1px dashed #a1a1aa;line-height:1.4;">' + esc(rec.text) + '</span>'
           : '<span style="line-height:1.4;">' + esc(rec.text) + '</span>';
         return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:' + priorityBg + ';border:' + priorityBorder + ';border-radius:6px;">' +
-          '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>' +
+          '<span style="color:#D97706;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>' +
           '<span style="color:' + priorityColor + ';">' + textSpan + '</span></div>';
       }).join('');
     } else {

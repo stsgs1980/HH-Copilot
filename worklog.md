@@ -4761,3 +4761,50 @@ Work Log:
 Stage Summary:
 - Popup button now has Lucide eye icon (SVG, stroke-based, currentColor)
 - 0 ESLint errors, 640/640 tests pass
+
+---
+Task ID: fix-popup-doc003-svg
+Agent: main
+Task: Fix popup SVG violations per DOC-003 (No-Unicode Policy s7)
+
+Work Log:
+- Read DOC-003 section 7 (Icon Standard): Lucide is primary library, SVGs must have xmlns, currentColor, fallback
+- Identified violations: hand-drawn SVG paths (not Lucide), no xmlns, no fallback, logo hardcoded stroke=#fff
+- Replaced logo SVG with official Lucide briefcase (path + rect), eye SVG with Lucide eye
+- Added xmlns="http://www.w3.org/2000/svg" to both SVGs
+- Changed logo stroke from CSS `stroke: #fff` to CSS `color: #fff` on parent + SVG `stroke="currentColor"` (theming support)
+- Added onerror fallback pattern per DOC-003 s9.2: `<span class="icon"><svg onerror="..."><span class="icon-fallback">`
+- Added `.icon`, `.icon svg`, `.icon-fallback` CSS rules
+- Fixed popup.js bug: `btn.textContent = ...` was destroying SVG icon on error/feedback messages; now targets `#btn-inspector-text` span only
+- Version bump: 1.9.76.0 -> 1.9.76.1
+- Build OK, ESLint 0 errors, pre-commit hook passed
+
+Stage Summary:
+- popup/index.html: 2 official Lucide SVGs (briefcase, eye) with fallback
+- popup/popup.js: text updates no longer destroy SVG icons
+- v1.9.76.1 pushed (commit 4e6be8d)
+
+---
+Task ID: fix-all-svg-lucide-compliance
+Agent: subagent
+Task: Replace all ~50 inline SVG icons with official Lucide SVG paths per DOC-003 s7
+
+Work Log:
+- Installed lucide, extracted official SVG paths for 32 icons via node script
+- Rewrote icons.js: 21 icons replaced with Lucide, fixed duplicates (send/rocket/mail/check/search), removed hardcoded colors, added helper L() for DRY SVG generation
+- Fixed fab.js: 4 FAB icons (loading/locked/briefcase/close) replaced with Lucide paths, xmlns added
+- Fixed fab-inspector-button.js: eye icon replaced with Lucide eye path, xmlns added
+- Fixed dom-inspector-panel.js: 5 inspector icons replaced with Lucide (search/clipboard/mapPin/refresh/close), updated comment
+- Fixed shell.js: inline search SVG replaced with Lucide search path, xmlns added
+- Fixed resume-helpers.js: chevron hardcoded color #71717a -> currentColor, xmlns added
+- Fixed resume.js: 4 inline SVGs replaced (refresh-cw, circle-alert, circle-check, lightbulb), hardcoded colors -> currentColor + parent color wrapper
+- Fixed render-resume-panel.js: 3 inline SVGs replaced (circle-alert, circle-check, lightbulb), hardcoded colors -> currentColor + parent color wrapper
+- Fixed vacancies.js: 4 inline SVGs replaced (clipboard-copy, trash-2, alert-triangle, circle-alert), xmlns added
+- Fixed render.js: lock SVG replaced with Lucide lock, hardcoded #ef4444 -> currentColor + parent color wrapper
+- All SVGs now have xmlns="http://www.w3.org/2000/svg", stroke-linecap="round", stroke-linejoin="round"
+- Hardcoded stroke colors replaced with currentColor + parent color wrapper spans
+
+Stage Summary:
+- ~50 SVG icons across 10 files now use official Lucide paths
+- DOC-003 s7 full compliance: Lucide library, currentColor, xmlns, unified stroke style
+- Build OK, ESLint clean (0 errors, 36 pre-existing warnings)
