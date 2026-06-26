@@ -5274,29 +5274,45 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   var L, ICONS;
   var init_icons = __esm({
     "src/ui/html/icons.js"() {
-      L = (w, h, inner) => `<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+      L = (w, h, inner, fallback = "?") => '<span class="icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + `" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">` + inner + '</svg><span class="icon-fallback" style="display:none">' + fallback + "</span></span>";
       ICONS = {
-        briefcase: L(16, 16, '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>'),
-        file: L(16, 16, '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/>'),
-        folder: L(16, 16, '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>'),
-        chat: L(16, 16, '<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/>'),
-        gear: L(16, 16, '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>'),
-        chart: L(16, 16, '<path d="M5 21v-6"/><path d="M12 21V3"/><path d="M19 21V9"/>'),
-        send: L(14, 14, '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>'),
-        close: L(16, 16, '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
-        search: L(12, 12, '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>'),
-        refresh: L(12, 12, '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>'),
-        rocket: L(12, 12, '<path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"/><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05"/>'),
-        sun: L(16, 16, '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>'),
-        mail: L(16, 16, '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>'),
-        envelope: L(16, 16, '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>'),
-        ai: L(14, 14, '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>'),
-        clock: L(10, 10, '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'),
-        code: L(10, 10, '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>'),
-        money: L(10, 10, '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'),
-        bubble: L(10, 10, '<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>'),
-        check: L(12, 12, '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>'),
-        chevronDown: L(14, 14, '<path d="m6 9 6 6 6-6"/>')
+        briefcase: L(16, 16, '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>', "BB"),
+        file: L(16, 16, '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/>', "F"),
+        folder: L(16, 16, '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>', "Fo"),
+        chat: L(16, 16, '<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/>', "Ch"),
+        gear: L(16, 16, '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>', "G"),
+        chart: L(16, 16, '<path d="M5 21v-6"/><path d="M12 21V3"/><path d="M19 21V9"/>', "Ch"),
+        send: L(14, 14, '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>', "S"),
+        close: L(16, 16, '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', "X"),
+        search: L(12, 12, '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>', "S"),
+        refresh: L(12, 12, '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>', "R"),
+        rocket: L(12, 12, '<path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"/><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05"/>', "R"),
+        sun: L(16, 16, '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>', "Su"),
+        mail: L(16, 16, '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>', "M"),
+        envelope: L(16, 16, '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>', "E"),
+        ai: L(14, 14, '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>', "AI"),
+        clock: L(10, 10, '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', "Cl"),
+        code: L(10, 10, '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>', "</>"),
+        money: L(10, 10, '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>', "$"),
+        bubble: L(10, 10, '<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>', "B"),
+        searchSmall: L(12, 12, '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>', "S"),
+        /* Legacy alias -- used in overview + vacancies tabs for "parse" buttons */
+        check: L(12, 12, '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>', "S"),
+        chevronDown: L(14, 14, '<path d="m6 9 6 6 6-6"/>', "v"),
+        /* --- Status / indicator icons (DOC-003 s7, used in resume scoring) --- */
+        alertCircle: L(12, 12, '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>', "!"),
+        checkCircle: L(12, 12, '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', "ok"),
+        lightbulb: L(12, 12, '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>', "?"),
+        triangleAlert: L(14, 14, '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', "!!"),
+        clipboardCopy: L(12, 12, '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/>', "Cp"),
+        trash2: L(12, 12, '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>', "Del"),
+        lock: L(16, 16, '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', "Lk"),
+        eye: L(16, 16, '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>', "E"),
+        refreshCw: L(12, 12, '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>', "R"),
+        /* --- Tour navigation icons --- */
+        arrowLeft: L(12, 12, '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>', "<"),
+        arrowRight: L(12, 12, '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', ">"),
+        checkMark: L(12, 12, '<path d="M20 6 9 17l-5-5"/>', "ok")
       };
     }
   });
@@ -5378,7 +5394,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   }
   function kpiRing() {
     return `<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;">
-    <svg width="108" height="108" viewBox="0 0 120 120" role="img" aria-label="\u0414\u043D\u0435\u0432\u043D\u043E\u0439 \u043B\u0438\u043C\u0438\u0442: 0 \u0438\u0437 200">
+    <svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 120 120" role="img" aria-label="\u0414\u043D\u0435\u0432\u043D\u043E\u0439 \u043B\u0438\u043C\u0438\u0442: 0 \u0438\u0437 200">
       <defs><linearGradient id="kpiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34D399"/>
       </linearGradient></defs>
@@ -5522,7 +5538,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         </div>
         <div id="res-cta-load" style="padding-top:6px;display:none;">
           <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> \u0412\u0437\u044F\u0442\u044C \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B
+            ${ICONS.refreshCw} \u0412\u0437\u044F\u0442\u044C \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B
           </button>
         </div>
         <div style="padding-top:6px;">
@@ -5596,7 +5612,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       <!-- Red flags -->
       <div id="res-red-flags" style="display:none;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <span style="color:#DC2626;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+          <span style="color:#DC2626;">${ICONS.alertCircle}</span>
           <span style="font-size:11px;font-weight:600;color:#DC2626;">\u041A\u0440\u0430\u0441\u043D\u044B\u0435 \u0444\u043B\u0430\u0433\u0438</span>
         </div>
         <div id="res-red-flags-list" style="font-size:11px;"></div>
@@ -5604,7 +5620,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       <!-- Strengths -->
       <div id="res-strengths" style="display:none;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <span style="color:#059669;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span style="color:#059669;">${ICONS.checkCircle}</span>
           <span style="font-size:11px;font-weight:600;color:#059669;">\u0421\u0438\u043B\u044C\u043D\u044B\u0435 \u0441\u0442\u043E\u0440\u043E\u043D\u044B</span>
         </div>
         <div id="res-strengths-list" style="font-size:11px;"></div>
@@ -5612,7 +5628,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       <!-- Recommendations -->
       <div id="res-recommendations" style="display:none;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <span style="color:#D97706;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+          <span style="color:#D97706;">${ICONS.lightbulb}</span>
           <span style="font-size:11px;font-weight:600;color:#D97706;">\u0427\u0442\u043E \u0443\u043B\u0443\u0447\u0448\u0438\u0442\u044C</span>
         </div>
         <div id="res-recommendations-list" style="font-size:11px;"></div>
@@ -5796,8 +5812,8 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         <textarea id="cover-letter-text" style="width:100%;height:80px;padding:8px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;resize:none;line-height:1.5;">\u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435! \u041C\u0435\u043D\u044F \u0437\u0430\u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043E\u0432\u0430\u043B\u0430 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044F {position} \u0432 {company}. \u0418\u043C\u0435\u044E {experience} \u043E\u043F\u044B\u0442\u0430 \u0432 {skills}. {matching_sentence}\u0411\u0443\u0434\u0443 \u0440\u0430\u0434 \u043E\u0431\u0441\u0443\u0434\u0438\u0442\u044C \u0434\u0435\u0442\u0430\u043B\u0438 \u043D\u0430 \u0438\u043D\u0442\u0435\u0440\u0432\u044C\u044E.</textarea>
         <div id="cl-ai-toast" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:11px;line-height:1.4;"></div>
         <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-          <button id="cl-ai-log-copy-btn" type="button" aria-label="\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043B\u043E\u0433 AI-\u043A\u043D\u043E\u043F\u043A\u0438 \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430" style="font-size:10px;padding:2px 8px;background:#f4f4f5;color:#27272a;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/></svg> \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043B\u043E\u0433 AI</button>
-          <button id="cl-ai-log-clear-btn" type="button" aria-label="\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043B\u043E\u0433 AI-\u043A\u043D\u043E\u043F\u043A\u0438" style="font-size:10px;padding:2px 8px;background:#f4f4f5;color:#27272a;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043B\u043E\u0433</button>
+          <button id="cl-ai-log-copy-btn" type="button" aria-label="\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043B\u043E\u0433 AI-\u043A\u043D\u043E\u043F\u043A\u0438 \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430" style="font-size:10px;padding:2px 8px;background:#f4f4f5;color:#27272a;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;">${ICONS.clipboardCopy} \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043B\u043E\u0433 AI</button>
+          <button id="cl-ai-log-clear-btn" type="button" aria-label="\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043B\u043E\u0433 AI-\u043A\u043D\u043E\u043F\u043A\u0438" style="font-size:10px;padding:2px 8px;background:#f4f4f5;color:#27272a;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:4px;">${ICONS.trash2} \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043B\u043E\u0433</button>
           <span id="cl-ai-log-status" style="font-size:10px;color:#71717a;">\u043B\u043E\u0433 \u043F\u0443\u0441\u0442</span>
         </div>
         <div style="font-size:10px;color:#71717A;margin-top:4px;line-height:1.4;">\u0410\u0432\u0442\u043E\u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435: {position} -- \u0434\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044C, {company} -- \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044F, {experience} -- \u0441\u0442\u0430\u0436, {skills} -- \u043D\u0430\u0432\u044B\u043A\u0438, {matching} -- \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u044F, {matching_sentence} -- \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043E \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u044F\u0445, {requirements} -- \u0442\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F. \u0428\u0430\u0431\u043B\u043E\u043D \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442\u0441\u044F \u0432 storage \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.</div>
@@ -5861,7 +5877,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       </div>
       <!-- Recommendation -->
       <div id="res-gap-recommendation" style="display:none;background:#FFFBEB;border:1px solid rgba(217,119,6,0.15);border-radius:8px;padding:8px 10px;align-items:flex-start;gap:6px;">
-        <span style="color:#D97706;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+        <span style="color:#D97706;flex-shrink:0;margin-top:1px;">${ICONS.triangleAlert}</span>
         <span id="res-gap-recommendation-text" style="font-size:11px;color:#92400E;line-height:1.5;"></span>
       </div>
     </div>
@@ -6144,7 +6160,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     <div class="har-header">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          ${ICONS.briefcase.replace("currentColor", "#fff").replace('width="16" height="16"', 'width="16" height="16" aria-hidden="true"')}
+          ${ICONS.briefcase.replace("currentColor", "#fff")}
         </div>
         <div>
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
@@ -6200,7 +6216,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     <div class="har-header" lang="ru">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          ${ICONS.briefcase.replace("currentColor", "#fff").replace('width="16" height="16"', 'width="16" height="16" aria-hidden="true"')}
+          ${ICONS.briefcase.replace("currentColor", "#fff")}
         </div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
@@ -6217,7 +6233,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       <button class="hh-tour-help" data-action="start-tour" title="\u0413\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E" aria-label="\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0433\u0438\u0434 \u043F\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044E">?</button>
       <button id="hh-ar-inspector-toggle" class="har-close-btn" data-action="toggle-inspector" title="DOM Inspector: \u0432\u044B\u0434\u0435\u043B\u0438\u0442\u044C \u044D\u043B\u0435\u043C\u0435\u043D\u0442 \u043D\u0430 hh.ru" aria-label="\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C DOM Inspector" aria-pressed="false"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        ${ICONS.search}
       </button>
       <button class="har-close-btn" data-action="close-panel" aria-label="\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u0430\u043D\u0435\u043B\u044C"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
@@ -6292,6 +6308,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     fabStyle(ib, "display", "flex");
     fabStyle(ib, "align-items", "center");
     fabStyle(ib, "justify-content", "center");
+    fabStyle(ib, "color", "white");
     fabStyle(ib, "background", "#7c3aed");
     fabStyle(ib, "box-shadow", "0 2px 10px rgba(124,58,237,0.45)");
     fabStyle(ib, "transition", "transform 0.2s, opacity 0.3s, background 0.2s, box-shadow 0.2s");
@@ -6360,7 +6377,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   var init_fab_inspector_button = __esm({
     "src/ui/fab-inspector-button.js"() {
       init_state();
-      INSPECTOR_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>';
+      INSPECTOR_ICON = `<span class="icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg><span class="icon-fallback" style="display:none">E</span></span>`;
     }
   });
 
@@ -6387,6 +6404,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     fabStyle2(s, "display", "flex");
     fabStyle2(s, "align-items", "center");
     fabStyle2(s, "justify-content", "center");
+    fabStyle2(s, "color", "white");
     fabStyle2(s, "background", "linear-gradient(135deg,#059669,#10B981)");
     fabStyle2(s, "box-shadow", "0 4px 20px rgba(5,150,105,0.4)");
     fabStyle2(s, "transition", "right 0.3s cubic-bezier(0.4,0,0.2,1),transform 0.2s,opacity 0.3s");
@@ -6466,16 +6484,17 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       showFabInspector();
     }
   }
-  var FAB_ICONS, setFabInspectorActive2;
+  var FL, FAB_ICONS, setFabInspectorActive2;
   var init_fab = __esm({
     "src/ui/fab.js"() {
       init_state();
       init_fab_inspector_button();
+      FL = (w, h, inner, fb, extra) => '<span class="icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' + (extra || "") + ` onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">` + inner + '</svg><span class="icon-fallback" style="display:none">' + (fb || "?") + "</span></span>";
       FAB_ICONS = {
-        loading: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:har-spin 1s linear infinite"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>',
-        locked: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-        briefcase: '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>',
-        close: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
+        loading: FL(24, 24, '<path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/>', "...", ' style="animation:har-spin 1s linear infinite"'),
+        locked: FL(24, 24, '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', "Lk"),
+        briefcase: FL(26, 26, '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>', "BB"),
+        close: FL(24, 24, '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', "X")
       };
       setFabInspectorActive2 = setFabInspectorActive;
     }
@@ -6741,17 +6760,18 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     } catch (_e) {
     }
   }
-  var INSPECTOR_Z, INSPECTOR_ICONS;
+  var INSPECTOR_Z, IL, INSPECTOR_ICONS;
   var init_dom_inspector_panel = __esm({
     "src/ui/dom-inspector-panel.js"() {
       init_dom_inspector_report();
       INSPECTOR_Z = 2147483e3;
+      IL = (w, h, inner, fb) => '<span class="icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + `" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">` + inner + '</svg><span class="icon-fallback" style="display:none">' + (fb || "?") + "</span></span>";
       INSPECTOR_ICONS = {
-        search: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>',
-        clipboard: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/></svg>',
-        mapPin: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>',
-        refresh: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
-        close: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
+        search: IL(14, 14, '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>', "S"),
+        clipboard: IL(12, 12, '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/>', "Cp"),
+        mapPin: IL(12, 12, '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>', "Pin"),
+        refresh: IL(12, 12, '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>', "R"),
+        close: IL(12, 12, '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', "X")
       };
     }
   });
@@ -7113,13 +7133,14 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         section.prepend(hint);
       }
     }
-    hint.innerHTML = '<div style="font-size:20px;margin-bottom:6px;">&#128270;</div>' + esc(message);
+    hint.innerHTML = '<div style="margin-bottom:6px;">' + ICONS.search + "</div>" + esc(message);
     hint.style.display = "";
   }
   var init_resume_helpers_gap = __esm({
     "src/ui/tabs/resumes/resume-helpers-gap.js"() {
       init_state();
       init_html2();
+      init_icons();
       init_vacancy_skills_collector();
       init_skill_synonyms();
     }
@@ -7150,7 +7171,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     if (chev) chev.classList.toggle("open");
   }
   function buildSubAccordion(bodyId, chevronId, title, count, dotColor, contentHtml) {
-    return '<div class="tl-dot" style="background:' + dotColor + ';"></div><div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span><span style="font-size:11px;color:#52525b;">' + esc(count) + '</span></div><svg class="sub-chevron" id="' + chevronId + '" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div><div class="sub-body" id="' + bodyId + '">' + contentHtml + "</div>";
+    return '<div class="tl-dot" style="background:' + dotColor + ';"></div><div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span><span style="font-size:11px;color:#52525b;">' + esc(count) + '</span></div><span class="icon"><svg class="sub-chevron" id="' + chevronId + `" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span></div><div class="sub-body" id="` + bodyId + '">' + contentHtml + "</div>";
   }
   function buildGrid(pairs) {
     const rows = pairs.filter(([, val]) => val).map(
@@ -7343,7 +7364,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     if (irrelevant.length > 0) {
       html += '<div style="margin-top:8px;padding:8px 10px;background:#F4F4F5;border-radius:8px;border:1px solid #E4E4E7;">';
       html += '<button data-action="toggle-irrelevant" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;cursor:pointer;font-size:11px;color:#71717A;padding:0;">';
-      html += '<svg class="irrelevant-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.15s;transform:rotate(180deg);"><polyline points="6 9 12 15 18 9"/></svg>';
+      html += `<span class="icon"><svg class="irrelevant-chevron" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.15s;transform:rotate(180deg);" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span>`;
       html += "<span>\u041D\u0438\u0437\u043A\u043E\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 (" + irrelevant.length + ")</span>";
       html += "</button>";
       html += '<div class="irrelevant-list" style="margin-top:6px;">';
@@ -8848,7 +8869,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       if (result.redFlags.length > 0) {
         redFlagsContainer.style.display = "";
         redFlagsList.innerHTML = result.redFlags.map(
-          (f) => '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;"><span style="color:#DC2626;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span><span style="color:#991B1B;line-height:1.4;">' + esc(f) + "</span></div>"
+          (f) => '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;"><span style="color:#DC2626;flex-shrink:0;margin-top:1px;">' + ICONS.alertCircle + '</span><span style="color:#991B1B;line-height:1.4;">' + esc(f) + "</span></div>"
         ).join("");
       } else {
         redFlagsContainer.style.display = "none";
@@ -8860,7 +8881,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       if (result.strengths.length > 0) {
         strengthsContainer.style.display = "";
         strengthsList.innerHTML = result.strengths.map(
-          (s) => '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#F0FDF4;border-radius:6px;"><span style="color:#059669;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><span style="color:#166534;line-height:1.4;">' + esc(s) + "</span></div>"
+          (s) => '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#F0FDF4;border-radius:6px;"><span style="color:#059669;flex-shrink:0;margin-top:1px;">' + ICONS.checkCircle + '</span><span style="color:#166534;line-height:1.4;">' + esc(s) + "</span></div>"
         ).join("");
       } else {
         strengthsContainer.style.display = "none";
@@ -8876,7 +8897,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
           const priorityBg = rec.priority === "critical" ? "#FEF2F2" : rec.priority === "high" ? "#FFFBEB" : "#FAFAFA";
           const priorityBorder = rec.priority === "critical" ? "1px solid rgba(220,38,38,0.15)" : rec.priority === "high" ? "1px solid rgba(217,119,6,0.15)" : "1px solid #e4e4e7";
           const textSpan = rec.tooltip ? '<span title="' + esc(rec.tooltip) + '" style="cursor:help;border-bottom:1px dashed #a1a1aa;line-height:1.4;">' + esc(rec.text) + "</span>" : '<span style="line-height:1.4;">' + esc(rec.text) + "</span>";
-          return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:' + priorityBg + ";border:" + priorityBorder + ';border-radius:6px;"><span style="color:#D97706;flex-shrink:0;margin-top:1px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span><span style="color:' + priorityColor + ';">' + textSpan + "</span></div>";
+          return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:' + priorityBg + ";border:" + priorityBorder + ';border-radius:6px;"><span style="color:#D97706;flex-shrink:0;margin-top:1px;">' + ICONS.lightbulb + '</span><span style="color:' + priorityColor + ';">' + textSpan + "</span></div>";
         }).join("");
       } else {
         recsContainer.style.display = "none";
@@ -8887,6 +8908,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     "src/ui/tabs/resumes/render-resume-panel.js"() {
       init_state();
       init_html2();
+      init_icons();
       init_resume_detail2();
       init_resume_helpers();
       init_render_my_resumes();
@@ -12564,7 +12586,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     const isLast = idx === stepsLen - 1;
     const isFirst = idx === 0;
     const counter = idx + 1 + "/" + stepsLen;
-    return '<div class="hh-tour-header"><span class="hh-tour-counter">' + counter + '</span><button class="hh-tour-skip" data-tour="skip">\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C</button></div>' + (step.title ? '<div class="hh-tour-title">' + step.title + "</div>" : "") + '<div class="hh-tour-text">' + step.text + '</div><div class="hh-tour-footer">' + (isFirst ? "" : '<button class="hh-tour-prev" data-tour="prev">\u2190 \u041D\u0430\u0437\u0430\u0434</button>') + '<button class="hh-tour-next" data-tour="next">' + (isLast ? "\u0413\u043E\u0442\u043E\u0432\u043E \u2713" : "\u0414\u0430\u043B\u0435\u0435 \u2192") + "</button></div>";
+    return '<div class="hh-tour-header"><span class="hh-tour-counter">' + counter + '</span><button class="hh-tour-skip" data-tour="skip">\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C</button></div>' + (step.title ? '<div class="hh-tour-title">' + step.title + "</div>" : "") + '<div class="hh-tour-text">' + step.text + '</div><div class="hh-tour-footer">' + (isFirst ? "" : '<button class="hh-tour-prev" data-tour="prev">' + ICONS.arrowLeft + " \u041D\u0430\u0437\u0430\u0434</button>") + '<button class="hh-tour-next" data-tour="next">' + (isLast ? "\u0413\u043E\u0442\u043E\u0432\u043E " + ICONS.checkMark : "\u0414\u0430\u043B\u0435\u0435 " + ICONS.arrowRight) + "</button></div>";
   }
   function positionTooltip(tipEl, targetRect, pos) {
     const panel = getPanel();
@@ -12623,6 +12645,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   var init_tour_tooltip = __esm({
     "src/lib/tour-tooltip.js"() {
       init_state();
+      init_icons();
       TOUR_Z = 9999999;
       tooltip = null;
     }
@@ -14038,7 +14061,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     }
     if (!panelState.isLoggedIn) {
       content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
-      <span style="color:#ef4444;"><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <span style="color:#ef4444;">${ICONS.lock}</span>
       <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">\u0412\u043E\u0439\u0434\u0438\u0442\u0435 \u0432 hh.ru</h3>
       <p style="font-size:13px;color:#52525b;line-height:1.5;margin-bottom:24px;">\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0441 \u0432\u0430\u0448\u0435\u0439 \u0443\u0447\u0451\u0442\u043D\u043E\u0439 \u0437\u0430\u043F\u0438\u0441\u044C\u044E.<br>\u0410\u0432\u0442\u043E\u0440\u0438\u0437\u0443\u0439\u0442\u0435\u0441\u044C \u0434\u043B\u044F \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0437\u0430\u0446\u0438\u0438.</p>
       <a href="https://hh.ru/account/login" target="_blank" class="btn btn-primary" style="text-decoration:none;">\u0412\u043E\u0439\u0442\u0438 \u043D\u0430 hh.ru</a>
@@ -14113,6 +14136,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     "src/ui/panel/render.js"() {
       init_state();
       init_html2();
+      init_icons();
       init_auth();
       init_vacancies2();
       init_overview2();

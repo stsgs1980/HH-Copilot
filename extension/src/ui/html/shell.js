@@ -16,7 +16,7 @@ export function getSidebarHTML() {
     <div class="har-header">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          ${ICONS.briefcase.replace('currentColor', '#fff').replace('width="16" height="16"', 'width="16" height="16" aria-hidden="true"')}
+          ${ICONS.briefcase.replace('currentColor', '#fff')}
         </div>
         <div>
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
@@ -76,7 +76,7 @@ function getHeaderHTML(userName) {
     <div class="har-header" lang="ru">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          ${ICONS.briefcase.replace('currentColor', '#fff').replace('width="16" height="16"', 'width="16" height="16" aria-hidden="true"')}
+          ${ICONS.briefcase.replace('currentColor', '#fff')}
         </div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
@@ -93,7 +93,7 @@ function getHeaderHTML(userName) {
       <button class="hh-tour-help" data-action="start-tour" title="Гид по расширению" aria-label="Открыть гид по расширению">?</button>
       <button id="hh-ar-inspector-toggle" class="har-close-btn" data-action="toggle-inspector" title="DOM Inspector: выделить элемент на hh.ru" aria-label="Включить DOM Inspector" aria-pressed="false"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        ${ICONS.search}
       </button>
       <button class="har-close-btn" data-action="close-panel" aria-label="Закрыть панель"
         style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#52525b;">

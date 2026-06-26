@@ -41,7 +41,7 @@ export function renderVacancyList() {
   if (irrelevant.length > 0) {
     html += '<div style="margin-top:8px;padding:8px 10px;background:#F4F4F5;border-radius:8px;border:1px solid #E4E4E7;">';
     html += '<button data-action="toggle-irrelevant" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;cursor:pointer;font-size:11px;color:#71717A;padding:0;">';
-    html += '<svg class="irrelevant-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.15s;transform:rotate(180deg);"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '<span class="icon"><svg class="irrelevant-chevron" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.15s;transform:rotate(180deg);" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span>';
     html += '<span>Низкое совпадение (' + irrelevant.length + ')</span>';
     html += '</button>';
     html += '<div class="irrelevant-list" style="margin-top:6px;">';

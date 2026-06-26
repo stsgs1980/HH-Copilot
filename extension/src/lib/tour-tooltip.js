@@ -15,6 +15,7 @@
  */
 
 import { refs } from '../ui/state.js';
+import { ICONS } from '../ui/html/icons.js';
 
 const TOUR_Z = 9999999;
 
@@ -105,9 +106,9 @@ function buildTooltipHTML(step, idx, stepsLen) {
     (step.title ? '<div class="hh-tour-title">' + step.title + '</div>' : '') +
     '<div class="hh-tour-text">' + step.text + '</div>' +
     '<div class="hh-tour-footer">' +
-      (isFirst ? '' : '<button class="hh-tour-prev" data-tour="prev">\u2190 Назад</button>') +
+      (isFirst ? '' : '<button class="hh-tour-prev" data-tour="prev">' + ICONS.arrowLeft + ' Назад</button>') +
       '<button class="hh-tour-next" data-tour="next">' +
-        (isLast ? 'Готово \u2713' : 'Далее \u2192') +
+        (isLast ? 'Готово ' + ICONS.checkMark : 'Далее ' + ICONS.arrowRight) +
       '</button>' +
     '</div>';
 }

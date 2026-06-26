@@ -10,6 +10,7 @@
 
 import { refs } from '../../state.js';
 import { esc } from '../../html.js';
+import { ICONS } from '../../html/icons.js';
 import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
 import { findSynonymMatch, SYNONYM_WEIGHT } from '../../../lib/skill-synonyms.js';
 
@@ -221,6 +222,6 @@ function showGapEmpty(section, message) {
       section.prepend(hint);
     }
   }
-  hint.innerHTML = '<div style="font-size:20px;margin-bottom:6px;">&#128270;</div>' + esc(message);
+  hint.innerHTML = '<div style="margin-bottom:6px;">' + ICONS.search + '</div>' + esc(message);
   hint.style.display = '';
 }

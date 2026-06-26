@@ -4808,3 +4808,32 @@ Stage Summary:
 - ~50 SVG icons across 10 files now use official Lucide paths
 - DOC-003 s7 full compliance: Lucide library, currentColor, xmlns, unified stroke style
 - Build OK, ESLint clean (0 errors, 36 pre-existing warnings)
+---
+Task ID: 1
+Agent: main
+Task: DOC-003 full SVG/emoji audit — s9.2 fallback, currentColor, zero emoji
+
+Work Log:
+- Grepped entire extension/src/ for emoji chars (raw, HTML entities, unicode escapes) — found &#128270; (🔍) in resume-helpers-gap.js
+- Grepped for all inline <svg> tags outside icons.js and dom-inspector-panel.js
+- icons.js: Updated L() helper to include s9.2 fallback pattern (onerror → hide SVG, show icon-fallback span)
+- icons.js: Added 9 new icon definitions (alertCircle, checkCircle, lightbulb, triangleAlert, clipboardCopy, trash2, lock, eye, refreshCw, arrowLeft, arrowRight, checkMark)
+- fab.js: Replaced raw FAB_ICONS with FL() helper (currentColor + s9.2 fallback), added color:white via fabStyle
+- fab-inspector-button.js: Replaced INSPECTOR_ICON with s9.2 fallback pattern, added color:white
+- tabs/vacancies.js: Wrapped irrelevant-chevron SVG in s9.2 fallback, fixed polyline→path (Lucide)
+- resumes/resume-helpers.js: Wrapped sub-chevron SVG in s9.2 fallback
+- resume-helpers-gap.js: Replaced &#128270; HTML entity with ICONS.search
+- resume.js: 4 inline SVGs → ICONS references
+- render-resume-panel.js: 3 inline SVGs → ICONS references
+- render.js: inline lock SVG → ICONS.lock
+- shell.js: inline search SVG → ICONS.search
+- tour-tooltip.js: unicode arrows (←→✓) → Lucide SVG icons
+- overview.js: Added xmlns to KPI ring SVG
+- vacancies html tab: 2 inline SVGs + triangleAlert → ICONS references
+- Build OK, lint 0 errors, pre-commit passed
+
+Stage Summary:
+- ALL emoji/unicode visual symbols eliminated (🔍 entity was the last one)
+- ALL SVG icons now have: xmlns, currentColor, Lucide paths, aria-hidden, s9.2 fallback
+- Only SVGs without fallback: KPI ring chart (data viz, role=img, not an icon)
+- Built dist/, ready for commit

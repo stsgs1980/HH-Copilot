@@ -7,6 +7,7 @@
 
 import { refs, panelState } from '../state.js';
 import { getLoggedInHTML, esc } from '../html.js';
+import { ICONS } from '../html/icons.js';
 import { getUserName } from '../auth.js';
 import { renderVacancyList, renderStatsValues, tryShowVacancyMatch } from '../tabs/vacancies.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
@@ -38,7 +39,7 @@ export function renderSidebarContent() {
   }
   if (!panelState.isLoggedIn) {
     content.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
-      <span style="color:#ef4444;"><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <span style="color:#ef4444;">${ICONS.lock}</span>
       <h3 style="font-size:16px;font-weight:700;margin:16px 0 8px;">Войдите в hh.ru</h3>
       <p style="font-size:13px;color:#52525b;line-height:1.5;margin-bottom:24px;">Расширение работает с вашей учётной записью.<br>Авторизуйтесь для включения автоматизации.</p>
       <a href="https://hh.ru/account/login" target="_blank" class="btn btn-primary" style="text-decoration:none;">Войти на hh.ru</a>

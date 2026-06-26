@@ -19,11 +19,20 @@ import {
   showFabInspector,
 } from './fab-inspector-button.js';
 
+/** Build SVG with s9.2 fallback. Uses currentColor for theming (DOC-003 s7).
+ *  FAB parent sets color:white via fabStyle so currentColor resolves correctly. */
+const FL = (w, h, inner, fb, extra) =>
+  '<span class="icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h +
+  '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+  'stroke-linecap="round" stroke-linejoin="round"' + (extra || '') +
+  ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'">' +
+  inner + '</svg><span class="icon-fallback" style="display:none">' + (fb || '?') + '</span></span>';
+
 const FAB_ICONS = {
-  loading: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:har-spin 1s linear infinite"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>',
-  locked: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-  briefcase: '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>',
-  close: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  loading: FL(24, 24, '<path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/>', '...', ' style="animation:har-spin 1s linear infinite"'),
+  locked: FL(24, 24, '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', 'Lk'),
+  briefcase: FL(26, 26, '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>', 'BB'),
+  close: FL(24, 24, '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', 'X'),
 };
 
 /* Helper: set CSS property with !important to prevent hh.ru overrides */
@@ -58,6 +67,7 @@ export function createFab(onClick, onInspectorToggle) {
   fabStyle(s, 'display', 'flex');
   fabStyle(s, 'align-items', 'center');
   fabStyle(s, 'justify-content', 'center');
+  fabStyle(s, 'color', 'white');
   fabStyle(s, 'background', 'linear-gradient(135deg,#059669,#10B981)');
   fabStyle(s, 'box-shadow', '0 4px 20px rgba(5,150,105,0.4)');
   fabStyle(s, 'transition', 'right 0.3s cubic-bezier(0.4,0,0.2,1),transform 0.2s,opacity 0.3s');

@@ -11,11 +11,14 @@
 
 import { refs } from './state.js';
 
+/** Lucide eye icon with s9.2 fallback (DOC-003 s7). Uses currentColor. */
 const INSPECTOR_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" ' +
-  'stroke-linecap="round" stroke-linejoin="round">' +
+  '<span class="icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+  'stroke-linecap="round" stroke-linejoin="round" ' +
+  'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'">' +
   '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>' +
-  '<circle cx="12" cy="12" r="3"/></svg>';
+  '<circle cx="12" cy="12" r="3"/></svg>' +
+  '<span class="icon-fallback" style="display:none">E</span></span>';
 
 function fabStyle(style, prop, value) {
   style.setProperty(prop, value, 'important');
@@ -54,6 +57,7 @@ export function createFabInspectorButton(onToggle) {
   fabStyle(ib, 'display', 'flex');
   fabStyle(ib, 'align-items', 'center');
   fabStyle(ib, 'justify-content', 'center');
+  fabStyle(ib, 'color', 'white');
   fabStyle(ib, 'background', '#7c3aed');
   fabStyle(ib, 'box-shadow', '0 2px 10px rgba(124,58,237,0.45)');
   fabStyle(ib, 'transition', 'transform 0.2s, opacity 0.3s, background 0.2s, box-shadow 0.2s');

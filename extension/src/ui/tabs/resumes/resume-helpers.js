@@ -46,7 +46,7 @@ export function buildSubAccordion(bodyId, chevronId, title, count, dotColor, con
         '<span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span>' +
         '<span style="font-size:11px;color:#52525b;">' + esc(count) + '</span>' +
       '</div>' +
-      '<svg class="sub-chevron" id="' + chevronId + '" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
+      '<span class="icon"><svg class="sub-chevron" id="' + chevronId + '" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span>' +
     '</div>' +
     '<div class="sub-body" id="' + bodyId + '">' + contentHtml + '</div>';
 }

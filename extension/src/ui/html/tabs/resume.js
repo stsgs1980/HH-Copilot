@@ -21,7 +21,7 @@ export function getResumeSection() {
         </div>
         <div id="res-cta-load" style="padding-top:6px;display:none;">
           <button class="btn btn-primary btn-sm" data-action="load-resume" style="width:100%;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Взять со страницы
+            ${ICONS.refreshCw} Взять со страницы
           </button>
         </div>
         <div style="padding-top:6px;">
@@ -95,7 +95,7 @@ export function getResumeSection() {
       <!-- Red flags -->
       <div id="res-red-flags" style="display:none;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <span style="color:#DC2626;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+          <span style="color:#DC2626;">${ICONS.alertCircle}</span>
           <span style="font-size:11px;font-weight:600;color:#DC2626;">Красные флаги</span>
         </div>
         <div id="res-red-flags-list" style="font-size:11px;"></div>
@@ -103,7 +103,7 @@ export function getResumeSection() {
       <!-- Strengths -->
       <div id="res-strengths" style="display:none;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <span style="color:#059669;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span style="color:#059669;">${ICONS.checkCircle}</span>
           <span style="font-size:11px;font-weight:600;color:#059669;">Сильные стороны</span>
         </div>
         <div id="res-strengths-list" style="font-size:11px;"></div>
@@ -111,7 +111,7 @@ export function getResumeSection() {
       <!-- Recommendations -->
       <div id="res-recommendations" style="display:none;">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-          <span style="color:#D97706;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+          <span style="color:#D97706;">${ICONS.lightbulb}</span>
           <span style="font-size:11px;font-weight:600;color:#D97706;">Что улучшить</span>
         </div>
         <div id="res-recommendations-list" style="font-size:11px;"></div>
