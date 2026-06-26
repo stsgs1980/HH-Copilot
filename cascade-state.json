@@ -6,7 +6,7 @@
     "lastUpdated": "2026-06-25T16:00:00Z",
     "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work.",
     "lastAudit": "2026-06-25T08:35:00Z",
-    "currentVersion": "1.9.65.0",
+    "currentVersion": "1.9.72.0",
     "previousVersion": "1.9.65.0",
     "auditSummary": {
       "total": 42,
@@ -818,7 +818,7 @@
           "title": "Location scoring dimension (0-15pts): city matching with Russian city list, remote bonus, hybrid handling",
           "priority": "P0",
           "size": "L",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "F7.1"
           ],
