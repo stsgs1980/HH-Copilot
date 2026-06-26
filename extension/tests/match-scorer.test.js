@@ -18,7 +18,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeMatchScore } from '../src/lib/match-scorer.js';
 import { scoreSkills, normalizeSkillSet } from '../src/lib/match-scorer-skills.js';
-import { scoreTitle } from '../src/lib/match-scorer-title.js';
+import { scoreTitle, tokenize, crudeStem, stemMatchAny, ABBR_MAP } from '../src/lib/match-scorer-title.js';
 import { scoreSalary } from '../src/lib/match-scorer-salary.js';
 import { scoreExperience } from '../src/lib/match-scorer-experience.js';
 import { scoreLocation, identifyCity, getRegion, detectWorkFormat } from '../src/lib/match-scorer-location.js';
@@ -399,12 +399,13 @@ describe('scoreTitle', () => {
     expect(r.score).toBe(18);
   });
 
-  it('stop words are excluded from tokenization', () => {
+  it('stem matching catches inflection: "продажам" ~ "продаж"', () => {
     const r = scoreTitle(
       makeResume({ title: 'Менеджер по продажам' }),
       makeVacancy({ title: 'Менеджер продаж' }),
     );
-    expect(r.similarity).toBe(0.5);
+    // "менеджер" exact + "продажам" stem-matches "продаж" -> similarity > 0.5
+    expect(r.similarity).toBeGreaterThan(0.5);
   });
 
   it('bonus is capped at 5 (max one abbreviation match)', () => {
@@ -857,6 +858,155 @@ describe('detectWorkFormat -- helper', () => {
 
   it('returns unknown for null', () => {
     expect(detectWorkFormat(null)).toBe('unknown');
+  });
+});
+
+// ============================================================
+// TITLE STEM MATCHING (F7.3)
+// ============================================================
+
+describe('scoreTitle -- stem matching (F7.3)', () => {
+  it('"Frontend-разработчик" vs "Веб-разработчик" -> stem "разраб" matches, similarity > 0', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'Frontend-разработчик' }),
+      makeVacancy({ title: 'Веб-разработчик' }),
+    );
+    expect(r.similarity).toBeGreaterThan(0);
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('"Разработчик Python" vs "Python Developer" -> "python" overlaps + abbreviation bonus', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'Разработчик Python' }),
+      makeVacancy({ title: 'Python Developer' }),
+    );
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('"Менеджер по продажам" vs "Менеджер продажам" -> stem match on "продаж"', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'Менеджер по продажам' }),
+      makeVacancy({ title: 'Менеджер продажам' }),
+    );
+    // "менеджер" exact + "продаж" stem match (продажам -> продаж)
+    expect(r.similarity).toBeGreaterThan(0.5);
+  });
+
+  it('"SMM-менеджер" vs "Менеджер по соцсетям" -> abbreviation bonus', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'SMM-менеджер' }),
+      makeVacancy({ title: 'Менеджер по соцсетям' }),
+    );
+    // "менеджер" overlap + SMM abbreviation bonus
+    expect(r.score).toBeGreaterThan(12);
+  });
+
+  it('"Техлид" vs "Ведущий разработчик" -> abbreviation bonus', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'Техлид' }),
+      makeVacancy({ title: 'Ведущий разработчик' }),
+    );
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('"CTO" vs "Технический директор" -> abbreviation bonus', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'CTO' }),
+      makeVacancy({ title: 'Технический директор' }),
+    );
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('"Junior разработчик" vs "Младший программист" -> junior abbreviation + stem on "разработ/программ" no match, but junior + программист->разработчик bonus', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'Junior разработчик' }),
+      makeVacancy({ title: 'Младший программист' }),
+    );
+    // "junior"~"младший" bonus + "программист"~"разработчик" bonus -> but capped at one bonus
+    expect(r.score).toBeGreaterThan(0);
+  });
+
+  it('"Data Scientist" vs "Дата саентист" -> abbreviation bonus', () => {
+    const r = scoreTitle(
+      makeResume({ title: 'Data Scientist' }),
+      makeVacancy({ title: 'Дата саентист' }),
+    );
+    expect(r.score).toBe(5); // abbreviation bonus only, no word overlap
+  });
+
+  it('stem does NOT match unrelated words', () => {
+    // "курьер" (курь) vs "руководитель" (руков) -> no stem match
+    const r = scoreTitle(
+      makeResume({ title: 'Курьер' }),
+      makeVacancy({ title: 'Руководитель' }),
+    );
+    expect(r.similarity).toBe(0);
+    expect(r.score).toBe(0);
+  });
+
+  it('stem requires minimum 4 chars', () => {
+    // "seo" (3 chars) vs "сео" (3 chars) -- too short for stem, but exact match
+    const set = new Set(['сео']);
+    expect(stemMatchAny('seo', set)).toBe(false); // both < 4 chars
+  });
+});
+
+describe('crudeStem -- helper', () => {
+  it('"разработчик" -> "разра" (5 chars)', () => {
+    expect(crudeStem('разработчик')).toBe('разра');
+  });
+
+  it('"продажам" -> "прода" (5 chars)', () => {
+    expect(crudeStem('продажам')).toBe('прода');
+  });
+
+  it('"продаж" -> "прода" (6 chars, >= 5, returns first 5)', () => {
+    expect(crudeStem('продаж')).toBe('прода');
+  });
+
+  it('"abc" (< 4 chars) returns as-is', () => {
+    expect(crudeStem('abc')).toBe('abc');
+  });
+});
+
+describe('ABBR_MAP -- 50+ entries', () => {
+  it('has at least 50 abbreviation entries', () => {
+    expect(ABBR_MAP.length).toBeGreaterThanOrEqual(50);
+  });
+
+  it('covers IT abbreviations', () => {
+    const entries = ABBR_MAP.map(e => e.a);
+    expect(entries).toContain('devops');
+    expect(entries).toContain('frontend');
+    expect(entries).toContain('backend');
+    expect(entries).toContain('qa');
+    expect(entries).toContain('tech lead');
+    expect(entries).toContain('team lead');
+  });
+
+  it('covers sales abbreviations', () => {
+    const entries = ABBR_MAP.map(e => e.a);
+    expect(entries).toContain('роп');
+    expect(entries).toContain('sales manager');
+  });
+
+  it('covers marketing abbreviations', () => {
+    const entries = ABBR_MAP.map(e => e.a);
+    expect(entries).toContain('smm');
+    expect(entries).toContain('seo');
+    expect(entries).toContain('ppc');
+  });
+
+  it('covers HR abbreviations', () => {
+    const entries = ABBR_MAP.map(e => e.a);
+    expect(entries).toContain('hr');
+    expect(entries).toContain('recruiter');
+    expect(entries).toContain('hrbp');
+  });
+
+  it('covers finance abbreviations', () => {
+    const entries = ABBR_MAP.map(e => e.a);
+    expect(entries).toContain('cfo');
   });
 });
 

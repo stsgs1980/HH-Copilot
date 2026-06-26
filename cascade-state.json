@@ -6,7 +6,7 @@
     "lastUpdated": "2026-06-25T16:00:00Z",
     "description": "Single source of truth for cascade task execution. AI agents MUST read this file before starting any work.",
     "lastAudit": "2026-06-25T08:35:00Z",
-    "currentVersion": "1.9.72.0",
+    "currentVersion": "1.9.73.0",
     "previousVersion": "1.9.65.0",
     "auditSummary": {
       "total": 42,
@@ -831,7 +831,7 @@
           "title": "Title matching upgrade: Russian stem matching + expanded abbreviation map (50+ entries covering IT, sales, marketing, HR, finance)",
           "priority": "P1",
           "size": "M",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "F7.1"
           ],
