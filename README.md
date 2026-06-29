@@ -6,6 +6,31 @@
 **License:** Private project. All rights reserved.
 
 
+[![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square)](https://react.dev)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square)](https://python.org)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square)](https://nodejs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square)](https://fastapi.tiangolo.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
+
+## Table of Contents
+
+- [1. HH Copilot -- Brief Description](#1-hh-copilot----brief-description)
+- [2. Features](#2-features)
+- [3. Installation and Setup](#3-installation-and-setup)
+- [4. Project Structure](#4-project-structure)
+- [5. Resume Parsing](#5-resume-parsing)
+- [6. Architecture](#6-architecture)
+- [7. Technologies](#7-technologies)
+- [8. Versioning](#8-versioning)
+- [9. Development](#9-development)
+- [10. Roadmap](#10-roadmap)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [License](#license)
+
 ## 1. HH Copilot -- Brief Description
 
 HH Copilot is a browser extension for automating job search on the hh.ru portal. The project solves the problem of routine responses to vacancies: it parses vacancy cards from the search page, extracts user resume data, shows results in a built-in sidebar, and allows responding to suitable positions with one click or in fully automatic mode.
@@ -23,7 +48,7 @@ Current version (1.9.71.0) features a modular architecture based on esbuild. The
 
 ### What the extension can do now
 
-**Modular build (esbuild).** The source code is located in the extension/src/ directory and consists of 112 ES modules organized by layers: lib/ (libraries, 75 files), parsers/ (parsers, 10 files), engine/ (business logic, 5 files), ui/ (interface, 15 files), content/ (7 files), plus page-world.js (MAIN world script). The esbuild bundler combines modules into a single IIFE bundle content.js (Manifest V3 does not support ES modules in content_scripts). Additionally, page-world.js is injected into the MAIN world for SPA navigation. Commands: `npm run build` (build), `npm run watch` (development with auto-rebuild), `npm run lint` (ESLint with AHG rules), `npm test` (522 unit tests).
+**Modular build (esbuild).** The source code is located in the extension/src/ directory and consists of 112 ES modules organized by layers: lib/ (libraries, 75 files), parsers/ (parsers, 10 files), engine/ (business logic, 5 files), ui/ (interface, 15 files), content/ (7 files), plus page-world.js (MAIN world script). The esbuild bundler combines modules into a single IIFE bundle content.js (Manifest V3 does not support ES modules in content_scripts). Additionally, page-world.js is injected into the MAIN world for SPA navigation. Commands: `bun run build` (build), `bun run watch` (development with auto-rebuild), `bun run lint` (ESLint with AHG rules), `bun run test` (522 unit tests).
 
 **Vacancy parsing from the search page.** The extension finds all vacancy cards on the hh.ru/search/vacancy page and extracts from each: position title, company name, salary, location, required experience, skill tags, URL, and identifier. Data is validated (title, company, URL, id checks), filtered by company blacklist and list of already-applied vacancies.
 
@@ -53,15 +78,15 @@ Current version (1.9.71.0) features a modular architecture based on esbuild. The
 
 **Version sync.** Version is synchronized between manifest.json, package.json, popup/index.html, and src/lib/version.js. The single source of truth is manifest.json (esbuild reads it and injects process.env.VERSION). Module src/lib/version.js contains the constant for reference but is not imported by any module.
 
-**Tests.** 522 unit tests across 27 files based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), cover-letter (17 tests), cover-letter-scorecard (7 -- F-CR-02 scorecard extraction), cover-letter-evidence (32 -- F-CR-02 forensic evidence mapping + stem-match anti-hallucination hardening), cover-letter-prompt (7 -- F-CR-02 structured LLM prompt + 11 humanizer patterns), cover-letter-validator (14 -- F-CR-02 anti-hallucination + AI pattern detection), cover-letter-ai (7 -- F-CR-02 orchestrator pipeline), derive-skills (26 -- skill derivation from experience text + RF-1 false-positive characterization), negotiations (34 tests -- selectors, parser, diagnostic, 50+ items anti-hallucination), negotiations-format (13 -- relative time formatting), parse-experience (13 -- all experience string formats), routing (11 -- all routes including main page), selectors (9 -- ~= word-match, VotD selectors), skill-synonyms (13 -- synonym matching + RF-SYN prefix/word-form characterization), timing (13 -- simulateTyping with native setter), vacancy-fetch, vacancy-list. Run: `npm test`, watch mode: `npm run test:watch`. All 522 tests passing as of v1.9.71.0.
+**Tests.** 522 unit tests across 27 files based on Vitest + jsdom. Coverage: anti-hallucination (21 tests -- extractVacancyId, validateVacancyData, VotD URL patterns), cover-letter (17 tests), cover-letter-scorecard (7 -- F-CR-02 scorecard extraction), cover-letter-evidence (32 -- F-CR-02 forensic evidence mapping + stem-match anti-hallucination hardening), cover-letter-prompt (7 -- F-CR-02 structured LLM prompt + 11 humanizer patterns), cover-letter-validator (14 -- F-CR-02 anti-hallucination + AI pattern detection), cover-letter-ai (7 -- F-CR-02 orchestrator pipeline), derive-skills (26 -- skill derivation from experience text + RF-1 false-positive characterization), negotiations (34 tests -- selectors, parser, diagnostic, 50+ items anti-hallucination), negotiations-format (13 -- relative time formatting), parse-experience (13 -- all experience string formats), routing (11 -- all routes including main page), selectors (9 -- ~= word-match, VotD selectors), skill-synonyms (13 -- synonym matching + RF-SYN prefix/word-form characterization), timing (13 -- simulateTyping with native setter), vacancy-fetch, vacancy-list. Run: `bun run test`, watch mode: `bun run test:watch`. All 522 tests passing as of v1.9.71.0.
 
-**Hot-reload for development.** WebSocket server (ws://localhost:35729) is started by `npm run watch`. On rebuild, the extension automatically reloads via chrome.runtime.reload(). Eliminates manual refresh in chrome://extensions.
+**Hot-reload for development.** WebSocket server (ws://localhost:35729) is started by `bun run watch`. On rebuild, the extension automatically reloads via chrome.runtime.reload(). Eliminates manual refresh in chrome://extensions.
 
 **Negotiations page parser.** When the user is on /applicant/negotiations (or when the sidebar opens from any page), the extension parses the negotiations list: vacancy title, company, date, status (`not-viewed` / `viewed` / `discard` / `invite`), and vacancy ID. Status badges color-coded (amber / blue / red / green). The background auto-load path (`fetchAndParseNegotiations`) uses fetch + DOMParser so it works from any page. Module: src/parsers/negotiations.js + src/parsers/negotiations-diagnostic.js (split for AHG Rule 12 compliance).
 
-**ESLint integration with AHG rules.** The project enforces two custom ESLint rules: `ahg-rules/max-file-lines` (WARN at 200 lines) and `ahg-rules/max-file-lines-hard` (ERROR at 250 lines, HARD CAP 400). The pre-commit hook blocks commits on any ERROR. Rule 15 (`no-unicode-graphics`) warns on em-dash and other Unicode graphics. Run: `npm run lint` (or `npm run lint:fix`).
+**ESLint integration with AHG rules.** The project enforces two custom ESLint rules: `ahg-rules/max-file-lines` (WARN at 200 lines) and `ahg-rules/max-file-lines-hard` (ERROR at 250 lines, HARD CAP 400). The pre-commit hook blocks commits on any ERROR. Rule 15 (`no-unicode-graphics`) warns on em-dash and other Unicode graphics. Run: `bun run lint` (or `bun run lint:fix`).
 
-**Cascade CLI (Node.js).** `scripts/cascade-task.js` is a cross-platform Node.js CLI (430 lines, no external deps) for managing the task cascade in `cascade/state.json`. 13 commands: `next-task`, `ready-tasks`, `status`, `phases`, `task`, `deps`, `start`, `complete`, `block`, `pending`, `blocked`, `functions`, `validate`. Replaces the old bash+jq `cascade-cli.sh`. Run from extension/: `npm run cascade -- next-task`.
+**Cascade CLI (Node.js).** `scripts/cascade-task.js` is a cross-platform Node.js CLI (430 lines, no external deps) for managing the task cascade in `cascade/state.json`. 13 commands: `next-task`, `ready-tasks`, `status`, `phases`, `task`, `deps`, `start`, `complete`, `block`, `pending`, `blocked`, `functions`, `validate`. Replaces the old bash+jq `cascade-cli.sh`. Run from extension/: `bun run cascade -- next-task`.
 
 ### What does NOT work (stubs, planned for subsequent phases)
 
@@ -84,22 +109,22 @@ Current version (1.9.71.0) features a modular architecture based on esbuild. The
 
 The extension is built using esbuild. Source modules are located in src/, the bundler generates a single IIFE bundle content.js in the extension root.
 
-```
+```bash
 git clone https://github.com/stsgs1980/HH-Copilot.git
 cd HH-Copilot
 git submodule update --init   # initialize submodule (anti-hallucination-guard)
 cd extension
-npm install          # install esbuild + ws (devDependencies)
-npm run build        # build content.js from src/content/main.js
-npm test             # run 522 unit tests (Vitest + jsdom)
-npm run lint         # ESLint with AHG rules (0 errors expected)
+bun install          # install esbuild + ws (devDependencies)
+bun run build        # build content.js from src/content/main.js
+bun run test             # run 522 unit tests (Vitest + jsdom)
+bun run lint         # ESLint with AHG rules (0 errors expected)
 ```
 
 For development with auto-rebuild and hot-reload (extension reloads automatically):
 
-```
-npm install ws       # once -- WebSocket server for hot-reload
-npm run watch        # auto-rebuild + hot-reload on ws://localhost:35729
+```bash
+bun install ws       # once -- WebSocket server for hot-reload
+bun run watch        # auto-rebuild + hot-reload on ws://localhost:35729
 ```
 
 Built extension files (in the dist/ directory): content.js (bundle), page-world.js (MAIN world script), manifest.json, background/index.js (service worker), popup/index.html (popup, redirect to FAB), icons/.
@@ -135,7 +160,7 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
 
 ### Repository root
 
-```
+```bash
 /
   extension/   -- extension code
   docs/wireframes/                            -- UI prototypes (FAB panel + landing)
@@ -163,12 +188,12 @@ The Service Worker can be inspected on the chrome://extensions page -- find the 
 
 ### Extension code (extension/)
 
-```
+```bash
 manifest.json                  -- Manifest V3 configuration (v1.9.71.0, source of truth for version)
 package.json                   -- esbuild, build/watch scripts
 esbuild.config.mjs              -- build configuration (IIFE, bundle, output -> dist/)
 dist/                          -- build directory (load in Chrome as unpacked extension)
-  content.js                   -- built bundle (generated by npm run build from src/content/main.js)
+  content.js                   -- built bundle (generated by bun run build from src/content/main.js)
   page-world.js                -- MAIN world script (copied from src/page-world.js)
   manifest.json                -- copy of root manifest.json (esbuild)
   background/index.js          -- service worker (copy)
@@ -271,7 +296,6 @@ worklog.md                      -- extension work log (in extension root)
 The project uses two git submodules to ensure code quality:
 
 
-
 **anti-hallucination-guard/** (https://github.com/stsgs1980/Anti-hallucination-guard.git, commit 0759547) -- guard system against code hallucinations. AHG rules 1-6 are integrated into AGENT_RULES.md in the repository root.
 
 **Git hooks** (installed manually via `tools/verify-docs/templates/install-hooks.ts`):
@@ -279,7 +303,7 @@ The project uses two git submodules to ensure code quality:
 - `.git/hooks/pre-push` -- runs validate.sh before pushing to the remote repository
 
 After cloning the repository, install the hooks:
-```
+```bash
 npx ts-node tools/verify-docs/templates/install-hooks.ts
 ```
 
@@ -358,14 +382,14 @@ The extension is built on Manifest V3 -- the current version of the Chrome Exten
 
 ### esbuild
 
-The esbuild bundler was chosen as the fastest and most minimal configuration option. Configuration in esbuild.config.mjs: entry point src/content/main.js, output file dist/content.js, IIFE format, bundle=true, minify=false (for debugging), sourcemap=false. Second entry point: src/page-world.js -> dist/page-world.js (bundle=false). Static files (manifest.json, background/, popup/, icons/) are copied to dist/. Commands: `npm run build` (build to dist/), `npm run watch` (watch for changes + hot-reload). Load in Chrome by selecting the dist/ folder as an unpacked extension.
+The esbuild bundler was chosen as the fastest and most minimal configuration option. Configuration in esbuild.config.mjs: entry point src/content/main.js, output file dist/content.js, IIFE format, bundle=true, minify=false (for debugging), sourcemap=false. Second entry point: src/page-world.js -> dist/page-world.js (bundle=false). Static files (manifest.json, background/, popup/, icons/) are copied to dist/. Commands: `bun run build` (build to dist/), `bun run watch` (watch for changes + hot-reload). Load in Chrome by selecting the dist/ folder as an unpacked extension.
 
-**Hot-Module Replacement (HMR)** -- automatic extension reload during development. When running `npm run watch`, esbuild starts a WebSocket server on port 35729. When a source file changes, esbuild rebuilds the bundle and sends a "reload" signal via WebSocket. The extension receives the signal and calls `chrome.runtime.reload()` -- the extension reloads without manual clicks.
+**Hot-Module Replacement (HMR)** -- automatic extension reload during development. When running `bun run watch`, esbuild starts a WebSocket server on port 35729. When a source file changes, esbuild rebuilds the bundle and sends a "reload" signal via WebSocket. The extension receives the signal and calls `chrome.runtime.reload()` -- the extension reloads without manual clicks.
 
-Requirement: `npm install ws` (devDependency, already added to package.json). If the `ws` package is not installed, hot-reload silently disables -- regular `npm run watch` works as before.
+Requirement: `bun install ws` (devDependency, already added to package.json). If the `ws` package is not installed, hot-reload silently disables -- regular `bun run watch` works as before.
 
 Workflow diagram:
-```
+```bash
 Save file -> esbuild rebuilds -> WebSocket "reload" -> chrome.runtime.reload() -> extension updated
 ```
 
@@ -443,7 +467,7 @@ Full version history is maintained in extension/CHANGELOG.md (detailed) and CHAN
 
 ### How to add new functionality
 
-**Adding a new module.** All modules are located in the src/ directory. Library modules -- in src/lib/, parsers -- in src/parsers/, business logic -- in src/engine/, services -- in src/services/, UI -- in src/ui/. A new module is created as an ES module with named exports and connected via the barrel file (index.js) of the corresponding directory. After building (`npm run build`), the module is included in content.js.
+**Adding a new module.** All modules are located in the src/ directory. Library modules -- in src/lib/, parsers -- in src/parsers/, business logic -- in src/engine/, services -- in src/services/, UI -- in src/ui/. A new module is created as an ES module with named exports and connected via the barrel file (index.js) of the corresponding directory. After building (`bun run build`), the module is included in content.js.
 
 **Adding a new selector.** Open the HH_SELECTORS object in src/lib/selectors.js. Find the appropriate group (Vacancy Search, Vacancy Page, Resume Page, Auth) or create a new one. Add the selector to the array: first element -- data-qa (most stable), then fallback variants. Test via diagnoseResumeDOM() (window.__hhDiagnose) -- it will check all resume selectors and show which are found and which are not.
 
@@ -503,3 +527,45 @@ KPI dashboard, conversion funnel, extended statistics, adaptive slowdown with vi
 ### Phase 6: Polish
 
 Dark theme, skill gap analysis UI, Chrome Web Store publication. All tasks -- pending.
+
+
+## Features
+
+- Feature 1 - description
+- Feature 2 - description
+
+
+## Tech Stack
+
+- **Framework** - Next.js, FastAPI
+- **Language** - JavaScript, Python
+- **Styling** - CSS, HTML
+- **Tools** - React, Node.js
+
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+ or Bun
+
+### Installation
+
+```bash
+git clone https://github.com/stsgs1980/HH-Copilot.git
+cd HH-Copilot
+bun install
+```
+
+### Run
+
+```bash
+bun run dev
+```
+
+## License
+
+[MIT](LICENSE)
+
+---
+Built with: Next.js + React + JavaScript + Python
