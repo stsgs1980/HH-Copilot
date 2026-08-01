@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "created": "2026-06-14T12:12:12Z",
+  "created": "2026-08-01T18:45:58Z",
   "hooks": {
     "pre-commit": "a60080e34af0424ea961dfc19d782e1ab38ee2bd4a5026d6739be68022a7df34",
-    "pre-push": "bcf706b89dd6460da92055f9bd93034a39fc7eced9946c2dbe8a21dbc1e34e44"
+    "pre-push": "75efdab5e24844dcb243e29b0a3a527528aa0bb6c6b6ca50a5c8a74004aaa7bc"
   },
   "config": {
-    "AGENT_RULES.md": "1acaad5a2b1de2c815c456033324f3c50b668b4db92d9ef4fc04dc2d10dd1599",
-    "verify-docs.json": "28970cb8a8aba646a3307e3dc78d22602f7ab988a113827e51740fb6fe1c35f2"
+    "AGENT_RULES.md": "83e01c4cc62ba2737e6dfa5d7fc6789f10fa977170959e6e66bb9d7dfd608cff",
+    "verify-docs.json": "c45d5cfd93b8fabcff7478079079b130dcd5f9fbe53ad1a71545557a2d0d99c7"
   },
   "gitConfig": {
     "core.hooksPath": "unset"

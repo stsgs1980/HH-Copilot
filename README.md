@@ -92,7 +92,7 @@ The extension uses Manifest V3 with three executable contexts:
 
 Data flows:
 
-- **Vacancy parsing**: content.js injects at document_idle, determines page type, calls appropriate parser. MutationObserver with 1-second debounce handles SPA re-parsing
+- **Vacancy parsing**: content.js injects at document_idle, determines page type, calls appropriate parser. MutationObserver with 1-second debounce handles SPA reparsing
 - **Resume parsing**: on `/resume/{hash}`, extracts 13 fields via data-qa selectors with fallback strategies. Two-level visibility detection (list page + detail page, 6 strategies)
 - **Authorization**: `checkAuth()` polls DOM every 2 seconds with cookie fallback (`hhruuid`, `_HH-RU`, `hhtoken`)
 - **Communication**: CustomEvent bridge between UI and engine (hh-ar-apply, hh-ar-apply-all, hh-ar-refresh, etc.)
