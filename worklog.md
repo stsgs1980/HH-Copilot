@@ -4862,3 +4862,16 @@ Stage Summary:
 - anti-hallucination-guard fully functional on Windows/WSL
 - All hooks working, bun detection fixed
 - CRLF issue permanently resolved via .gitattributes
+
+---
+Task ID: ahg-skill-update
+Agent: main
+Task: Update skills/anti-hallucination-guard/SKILL.md from v1.0 to v2.5.0
+
+Work Log:
+- setup.sh skipped skills/ update (bug: doesn't overwrite existing directory)
+- Manually copied SKILL.md from submodule: v1.0 -> v2.5.0
+- Verified: skills/anti-hallucination-guard/SKILL.md now matches submodule
+
+Stage Summary:
+- Skill definition updated to v2.5.0

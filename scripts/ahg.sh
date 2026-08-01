@@ -93,33 +93,9 @@ fi
 
 # -- Helper: check bun --------------------------------------------------------
 check_bun() {
-    if command -v bun &>/dev/null; then
-        BUN_CMD="bun"
-        return 0
-    fi
-    # Check common Windows paths for bun
-    local _bun_paths=(
-        "/mnt/c/Users/$USER/.bun/bin/bun.exe"
-        "/mnt/c/Users/stsgr/.bun/bin/bun.exe"
-        "$HOME/.bun/bin/bun.exe"
-    )
-    for _bun_path in "${_bun_paths[@]}"; do
-        if [ -x "$_bun_path" ]; then
-            BUN_CMD="$_bun_path"
-            return 0
-        fi
-    done
-    echo "ahg: bun is required. Install: https://bun.sh"
-    exit 1
-}
-
-# Convert WSL path to Windows path for bun
-to_winpath() {
-    local path="$1"
-    if [[ "$path" =~ ^/mnt/([a-zA-Z])/(.*) ]]; then
-        echo "${BASH_REMATCH[1]^^}:/${BASH_REMATCH[2]}"
-    else
-        echo "$path"
+    if ! command -v bun &>/dev/null; then
+        echo "ahg: bun is required. Install: https://bun.sh"
+        exit 1
     fi
 }
 
@@ -146,13 +122,13 @@ case "${1:-}" in
   verify)
     shift
     check_bun && check_vd
-    $BUN_CMD run "$(to_winpath "$VD_CLI")" "$@"
+    bun run "$VD_CLI" "$@"
     ;;
 
   discover)
     shift
     check_bun && check_vd
-    $BUN_CMD run "$(to_winpath "$VD_CLI")" --discover "$@"
+    bun run "$VD_CLI" --discover "$@"
     ;;
 
   bump)
@@ -162,22 +138,22 @@ case "${1:-}" in
         echo "ahg bump: version required (e.g. ahg bump 2.0.0)"
         exit 1
     fi
-    $BUN_CMD run "$(to_winpath "$VD_CLI")" --bump="$1" "${@:2}"
+    bun run "$VD_CLI" --bump="$1" "${@:2}"
     ;;
 
   init)
     shift
     check_bun && check_vd
-    $BUN_CMD run "$(to_winpath "$VD_CLI")" --init "$@"
+    bun run "$VD_CLI" --init "$@"
     ;;
 
   baseline)
     shift
     check_bun && check_vd
     if echo "$@" | grep -q "\-\-check"; then
-        $BUN_CMD run "$(to_winpath "$VD_CLI")" --baseline --check "$@"
+        bun run "$VD_CLI" --baseline --check "$@"
     else
-        $BUN_CMD run "$(to_winpath "$VD_CLI")" --baseline "$@"
+        bun run "$VD_CLI" --baseline "$@"
     fi
     ;;
 
