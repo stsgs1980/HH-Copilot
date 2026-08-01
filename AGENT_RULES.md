@@ -212,6 +212,7 @@ If a commit is blocked by these checks, FIX the documentation — do NOT bypass 
 
 
 
+
 <!-- AHG:START -->
 <!-- Do NOT edit between START and END markers. This block is managed by anti-hallucination-guard/setup.sh -->
 <!-- ANTI-MONOLITH exception: single-source rules reference for AI agents.
@@ -245,6 +246,7 @@ If a commit is blocked by these checks, FIX the documentation — do NOT bypass 
 - [Rule 16 [C]: AHG submodule is immutable](#rule-16-c-ahg-submodule-is-immutable-architecture-no-removal-no-inlining)
 - [Rule 17 [C]: Upstream write protection](#rule-17-c-upstream-write-protection-no-consumer-agent-may-push-to-ahg)
 - [worklog.md format](#worklogmd-format)
+---
 
 <!-- ID: RULE-001 | ver:1.0 | Level: C | Related: RULE-006, RULE-007 -->
 ## Rule 1 [C]: ANSWER BEFORE ACT (NO UNSOLICITED ACTION)
@@ -260,6 +262,7 @@ ONLY ACT WHEN GIVEN AN EXPLICIT TASK.
 This rule is the FIRST rule for a reason. Every session, every agent,
 every time. Read it. Follow it.
 
+---
 <!-- ID: RULE-002 | ver:1.0 | Level: C | Related: RULE-004, RULE-007 -->
 ## Rule 2 [C]: worklog -- BEFORE and AFTER every action
 
@@ -440,14 +443,6 @@ Do NOT update versions manually in individual files.
 Manual updates cause version drift -- one file gets updated,
 another is forgotten. ahg bump eliminates this class of errors.
 
-**MANDATORY**: Every code change -- even a single line, even a CSS tweak,
-even a typo fix -- MUST bump the version. The user must ALWAYS be able to
-answer "which version am I running?" by looking at one number.
-No bump = no commit. Version sources that must stay in sync:
-  - extension/manifest.json
-  - extension/package.json
-  - extension/src/lib/version.js
-
 <!-- ID: RULE-014 | ver:1.1 | Level: C | Related: RULE-002, RULE-004, TOOL-VERIFY -->
 ## Rule 14 [C]: Pre-commit mandatory checklist
 
@@ -596,10 +591,12 @@ Repository Settings > Branches > Branch protection rules > main
   [x] Do not allow bypassing the above settings
 ```
 
+---
 
 ## worklog.md format
 
 ```markdown
+---
 Task ID: [step number]
 Agent: [agent name or "main"]
 Task: [what we are doing]
@@ -611,8 +608,10 @@ Work Log:
 
 Stage Summary:
 - [What was accomplished, what is next]
+---
 ```
 
+---
 
 
 <!-- AHG:END -->

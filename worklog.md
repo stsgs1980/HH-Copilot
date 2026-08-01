@@ -4837,3 +4837,28 @@ Stage Summary:
 - ALL SVG icons now have: xmlns, currentColor, Lucide paths, aria-hidden, s9.2 fallback
 - Only SVGs without fallback: KPI ring chart (data viz, role=img, not an icon)
 - Built dist/, ready for commit
+
+---
+Task ID: ahg-crlf-fix
+Agent: main
+Task: Fix CRLF issue in anti-hallucination-guard submodule + bun detection
+
+Work Log:
+- Diagnosed CRLF issue: all .sh files and hooks had \r\n line endings
+- Created .gitattributes in submodule (*.sh text eol=lf, .git-hooks/* text eol=lf)
+- Converted 28 files (25 .sh + 3 hooks) from CRLF to LF
+- Added .gitattributes to .gitignore whitelist
+- Created PR #21: https://github.com/stsgs1980/Anti-hallucination-guard/pull/21
+- Fixed validate.sh to allow .gitattributes in whitelist
+- PR merged, submodule updated to e304818
+- Created .gitattributes in main project for scripts/*.sh
+- Converted 13 scripts/*.sh files from CRLF to LF
+- Ran setup.sh: hooks installed (pre-commit, pre-push, post-checkout)
+- Fixed bun detection: added check_bun with Windows path fallback + to_winpath converter
+- ahg.sh discover now works: found 16 version mismatches (expected)
+- Installed bun 1.3.14
+
+Stage Summary:
+- anti-hallucination-guard fully functional on Windows/WSL
+- All hooks working, bun detection fixed
+- CRLF issue permanently resolved via .gitattributes
