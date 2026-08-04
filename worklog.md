@@ -5035,3 +5035,18 @@ Stage Summary:
 - Cover letter template confirmed connected to match score via {matching_sentence}
 - extractPlaceholders() builds sentence from allMatches array
 ---
+Task ID: task-7
+Agent: opencode
+Task: Make analysis button more visible
+
+Work Log:
+- Modified extension/src/ui/html/tabs/vacancies.js lines 183-185
+- Changed button class from btn-outline to btn-primary with inline style background:#7c3aed;color:#fff
+- Changed button text from "Анализ" to "Анализ навыков"
+- Lint passed: 1 pre-existing error (ai-service.js >250 lines), 73 pre-existing warnings
+- No new errors or warnings introduced
+
+Stage Summary:
+- Analysis button now purple (#7c3aed) with white text, more prominent
+- Button text changed to "Анализ навыков" for clarity
+---

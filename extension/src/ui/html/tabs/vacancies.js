@@ -180,8 +180,8 @@ export function getVacanciesSection() {
           <div style="font-size:13px;font-weight:600;">Анализ навыков рынка</div>
           <div id="res-gap-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Резюме vs вакансии</div>
         </div>
-        <button class="btn btn-outline btn-sm" data-action="analyze-skills">
-          ${ICONS.ai} Анализ
+        <button class="btn btn-primary btn-sm" data-action="analyze-skills" style="background:#7c3aed;color:#fff;">
+          ${ICONS.ai} Анализ навыков
         </button>
       </div>
       <!-- Stacked bar -->
