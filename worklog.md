@@ -5152,3 +5152,21 @@ Stage Summary:
 - Version 1.9.84.0 synchronized across 5 files
 - Source code: 4 files modified (vacancy-list-helpers.js, vacancy-list.js, vacancy-list-votd.js, 3 test files)
 - 1 pre-existing test failure (ai-service.test.js: timeout clamp expects 180000 but code allows 600000)
+
+---
+Task ID: task-12
+Agent: main
+Task: Create market analytics dashboard (Task 12 from superpowers plan)
+
+Work Log:
+- Created extension/src/ui/html/tabs/analytics.js -- HTML template with getAnalyticsSection() function
+- Created extension/src/ui/tabs/analytics-render.js -- renderAnalytics() function computing avg score, total, top skill, top-10 skills
+- Modified extension/src/ui/html/tabs/vacancies.js -- added import of getAnalyticsSection and included it after last card
+- Modified extension/src/ui/panel/index.js -- added import of renderAnalytics and hh-ar-vacancies-updated event listener
+- Bumped version 1.9.84.0 -> 1.9.85.0 in all 5 files (manifest.json, package.json, version.js, popup/index.html, README.md)
+- Added CHANGELOG entry for v1.9.85.0
+
+Stage Summary:
+- Market analytics dashboard implemented: avg score, vacancy count, top skill, top-10 in-demand skills
+- 2 new files created, 2 files modified, 5 version files updated
+- Version 1.9.85.0 synchronized across all references

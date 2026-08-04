@@ -9,6 +9,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.85.0] — 2026-08-04
+
+### Added
+- **Market analytics dashboard** -- new analytics card in Vacancies tab showing average match score, total vacancies, top skill, and top-10 in-demand skills list.
+- `extension/src/ui/html/tabs/analytics.js` -- HTML template for analytics section.
+- `extension/src/ui/tabs/analytics-render.js` -- rendering logic for analytics from loaded vacancies.
+
+### Changed
+- Version bumped 1.9.84.0 → 1.9.85.0 (Rule 13: MANDATORY on every code/config change).
+- `extension/src/ui/html/tabs/vacancies.js` -- imports and renders analytics section.
+- `extension/src/ui/panel/index.js` -- listens for `hh-ar-vacancies-updated` event to re-render analytics.
+
+---
+
 ## [1.9.66.0] — 2026-06-25
 
 ### Fixed -- CRITICAL

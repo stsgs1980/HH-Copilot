@@ -2,6 +2,7 @@
  * TAB 3: VACANCIES
  */
 import { ICONS } from '../icons.js';
+import { getAnalyticsSection } from './analytics.js';
 
 export function getVacanciesSection() {
   return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies" tabindex="0">
@@ -236,5 +237,6 @@ export function getVacanciesSection() {
       <div style="font-size:12px;font-weight:600;margin-bottom:10px;">Вакансии на странице</div>
       <div id="har-vlist"><div style="padding:24px;text-align:center;color:#52525b;font-size:12px;line-height:1.6;">Загрузка...</div></div>
     </div>
+    ${getAnalyticsSection()}
   </div>`;
 }

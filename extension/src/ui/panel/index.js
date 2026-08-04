@@ -18,6 +18,7 @@ import { getSidebarHTML } from '../html.js';
 import { createFab, updateFabIcon } from '../fab.js';
 import { toggleInspector } from '../dom-inspector.js';
 import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
+import { renderAnalytics } from '../tabs/analytics-render.js';
 import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
 import { renderOverviewKPI } from '../tabs/overview.js';
 
@@ -171,6 +172,12 @@ export function createPanel() {
     e.stopPropagation();
     toggleInspector(btn);
   }, true);
+
+  // Update analytics when vacancies change
+  window.addEventListener('hh-ar-vacancies-updated', (e) => {
+    const vacancies = e.detail?.vacancies || panelState.vacancies;
+    renderAnalytics(vacancies, panelState.resume);
+  });
 
   // Listen for match score updates (from vacancy detail re-score)
   window.addEventListener('hh-ar-match-updated', (e) => {
