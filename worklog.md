@@ -5223,16 +5223,20 @@ Stage Summary:
 - No source code changes (test-only)
 - No version bump (test-only changes per brief)
 ---
-Task
-ID:
-14
-Agent:
-opencode
-Task:
-Write
-unit
-tests
-for
-match-scorer
-weight
-profiles
+---
+Task ID: 14
+Agent: opencode
+Task: Write unit tests for match-scorer weight profiles
+
+Work Log:
+- Read extension/tests/match-scorer.test.js: already exists with 118 tests
+- All tests from brief already present: precise mode, flexible mode, null inputs, weight validation
+- 118/118 match-scorer tests pass under vitest
+- No code changes needed -- test file exceeds brief requirements
+- Pre-existing ai-service.test.js failure (timeoutMs clamp) is unrelated
+
+Stage Summary:
+- Task 14 already implemented (F7.1 created match-scorer.test.js, expanded by F7.2/F7.3)
+- All 118 tests pass, no commits needed (test file already existed)
+
+---
