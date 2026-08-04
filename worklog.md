@@ -5200,3 +5200,39 @@ Stage Summary:
 - Initial render works on panel open
 - 10 new tests for renderAnalytics()
 - Version 1.9.86.0
+
+---
+
+Task ID: 15
+Agent: opencode
+Task: Write unit tests for AI semantic comparison (ai-semantic.test.js)
+
+Work Log:
+- Created extension/tests/ai-semantic.test.js with 11 tests for computeSemanticSimilarity()
+- Tests cover: null inputs (resume/vacancy/both), valid response in 0-1 range, clamping >1 and <0, fetch error returns 0, empty AI response, empty choices array, correct Groq API request (URL, headers, model, temperature, max_tokens), resume with missing optional fields
+- Mocked chrome.storage.local for getApiKey() and global.fetch for API calls
+- All 11 tests pass
+
+Verification:
+- Tests: 11/11 pass (new file)
+- Full suite: 671/672 (1 pre-existing ai-service.test.js failure, unrelated)
+- Lint: 0 new errors
+
+Stage Summary:
+- New file: extension/tests/ai-semantic.test.js (11 tests)
+- No source code changes (test-only)
+- No version bump (test-only changes per brief)
+---
+Task
+ID:
+14
+Agent:
+opencode
+Task:
+Write
+unit
+tests
+for
+match-scorer
+weight
+profiles
