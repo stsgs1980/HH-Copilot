@@ -4933,6 +4933,22 @@ Work Log:
 
 Stage Summary:
 - Ollama model fetch now works from Chrome extension background script
+
+---
+Task ID: fix-ollama-native-api
+Agent: main
+Task: Switch Ollama to native /api/chat endpoint (Chrome CORS fix)
+
+Work Log:
+- Chrome extensions block OpenAI-compatible /v1/chat/completions with 403
+- Ollama native /api/chat endpoint works without CORS issues
+- Added sendOllamaNative() function in ai-service.js
+- Ollama provider now uses /api/chat, Z.ai/Custom use /v1/chat/completions
+- All 651 tests pass, build OK
+
+Stage Summary:
+- Ollama requests now go through native API, bypassing Chrome CORS restrictions
+---
 ---
 ---
 ---
