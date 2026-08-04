@@ -884,6 +884,25 @@ Stage Summary:
 - User can now see exactly where/why a resume gets marked VISIBLE or HIDDEN
 
 ---
+Task ID: 10
+Agent: main
+Task: Create AI semantic comparison module (v1.9.83.0)
+
+Work Log:
+- Created extension/src/lib/ai-semantic.js -- Groq API semantic similarity scorer
+- Module exports computeSemanticSimilarity(resume, vacancy) -> Promise<number> 0-1
+- Uses llama-3.3-70b-versatile model, temperature 0.1, max_tokens 10
+- API key from chrome.storage.local 'aiApiKey'
+- Graceful fallback: returns 0 on error or missing inputs
+- Version bumped to 1.9.83.0 in all 5 files (manifest, package, version.js, popup, README)
+- ESLint: PASS
+
+Stage Summary:
+- New file: ai-semantic.js (85 lines, under 250 anti-monolith limit)
+- Version: 1.9.82.0 -> 1.9.83.0
+- Ready for commit
+
+---
 Task ID: v1.9.8-audit
 Agent: main
 Task: Code audit — fix getResumePageType() bug, add JSDoc, fix docs gaps, v1.9.8
