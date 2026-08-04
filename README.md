@@ -2,7 +2,7 @@
 
 Chrome extension for automating job search on hh.ru -- parses vacancies, extracts resume data, scores matches, and applies to positions with one click or in fully automatic mode.
 
-**Version:** 1.9.78.0 | **Platform:** Chrome Extension (Manifest V3) | **Target:** hh.ru (Magritte design system)
+**Version:** 1.9.79.0 | **Platform:** Chrome Extension (Manifest V3) | **Target:** hh.ru (Magritte design system)
 
 [![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-61DAFB?style=flat-square)](https://react.dev)

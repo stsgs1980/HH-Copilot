@@ -2051,6 +2051,22 @@ Stage Summary:
 - CHANGELOG updated
 
 ---
+Task ID: 1
+Agent: main
+Task: Bump version 1.9.78.0 -> 1.9.79.0 for vacancies-match.js fix (Task 1 review fix)
+
+Work Log:
+- Bumped version in 5 files: manifest.json, package.json, version.js, popup/index.html (dynamic), README.md
+- Version 1.9.78.0 -> 1.9.79.0
+- Ran version-sync.sh to verify all sources match
+- Ran ESLint (npm run lint) to verify no regressions
+
+Stage Summary:
+- Version bumped per Rule 9.1/9.2
+- All 5 version sources synchronized
+- Verification pending (will run after edits)
+
+---
 Task ID: 8
 Agent: Main
 Task: Vacancy fetch integration audit, bug fixes, cover letter generator, parser unification
