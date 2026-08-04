@@ -35,21 +35,19 @@ import { scoreLocation } from './match-scorer-location.js';
 
 const scoreLog = createLogger('Scorer');
 
-// Weight multipliers: old max -> new max
-// skills 40->35 (×0.875), title 30->25 (×0.833), salary 15->15 (×1.0), experience 15->10 (×0.667)
-const W_SKILLS = 35 / 40;
-const W_TITLE = 25 / 30;
-const W_SALARY = 15 / 15;
-const W_EXP = 10 / 15;
+const WEIGHT_PROFILES = {
+  precise: { skills: 35, title: 25, salary: 15, experience: 10, location: 15 },
+  flexible: { semantic: 45, experience: 20, salary: 15, skills: 15, location: 5 }
+};
+
+export function computeMatchScore(resume, vacancy, mode = 'precise') {
+  const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
+  const W_SKILLS = profile.skills / 40;
+  const W_TITLE = profile.title / 30;
+  const W_SALARY = profile.salary / 15;
+  const W_EXP = profile.experience / 15;
 // location is a new module returning 0-15 directly, no multiplier needed
 
-/**
- * Compute match score between a resume and a vacancy.
- * @param {Object} resume  -- parsed resume object (from parseResume)
- * @param {Object} vacancy -- parsed vacancy object (from parseVacancyDetail or vacancy-list)
- * @returns {{ total: number, breakdown: Object, details: Object }}
- */
-export function computeMatchScore(resume, vacancy) {
   if (!resume || !vacancy) {
     return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0 }, details: {} };
   }
