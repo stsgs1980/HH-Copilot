@@ -5050,3 +5050,39 @@ Stage Summary:
 - Analysis button now purple (#7c3aed) with white text, more prominent
 - Button text changed to "Анализ навыков" for clarity
 ---
+Task ID: task-8-fix
+Agent: opencode
+Task: Fix flexible profile key mismatch and bump version
+
+Work Log:
+- Fixed WEIGHT_PROFILES flexible key: changed `semantic: 45` to `title: 45` in match-scorer.js:40
+- Added trailing newline at end of match-scorer.js
+- Version already at 1.9.81.0 in manifest.json, package.json, version.js, README.md
+- popup/index.html version bumped from 1.9.80.0 to 1.9.81.0 (was uncommitted)
+- Lint passed: 1 pre-existing error (ai-service.js >250 lines), 73 pre-existing warnings
+- Tests: 650 passed, 1 pre-existing failure (ai-service.test.js timeout clamp)
+- No new errors or warnings introduced
+
+Stage Summary:
+- Flexible profile key corrected: semantic -> title (prevents NaN in flexible mode)
+- Version 1.9.81.0 consistent across all 5 files
+- Trailing newline added to match-scorer.js
+---
+Task ID: task-9
+Agent: main
+Task: Add match mode setting (precise/flexible) to Settings UI
+
+Work Log:
+- Added matchMode: 'precise' to panelState.settings in extension/src/ui/state.js
+- Added match mode dropdown in extension/src/ui/html/tabs/settings.js (settingsGeneral function)
+- Added set('s-match-mode', ...) in extension/src/ui/tabs/settings.js renderSettingsValues
+- Added change event handler in extension/src/ui/panel/events.js (saves to chrome.storage.local, dispatches hh-ar-match-mode-changed)
+- Lint passed: no new errors introduced
+- Build passed: content.js, page-world.js, background/index.js compiled successfully
+- Tests: 650 passed, 1 pre-existing failure (unrelated)
+
+Stage Summary:
+- Match mode dropdown added to Settings tab UI
+- Setting persisted to chrome.storage.local under key matchMode
+- CustomEvent hh-ar-match-mode-changed dispatched on change
+---

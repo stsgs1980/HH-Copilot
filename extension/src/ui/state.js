@@ -32,7 +32,8 @@ export const panelState = {
     autoAuthCheck: true,
     notifications: true,
     logging: true,
-    shadowDOM: true
+    shadowDOM: true,
+    matchMode: 'precise'
   },
   logs: [],
   dailyStats: {

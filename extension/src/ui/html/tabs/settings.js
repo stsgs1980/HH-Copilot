@@ -139,6 +139,14 @@ function settingsGeneral() {
   return `<div class="card fade-in">
     <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Общие настройки</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;font-weight:500;margin-bottom:4px;">Режим матчинга</label>
+        <select id="s-match-mode" style="width:100%;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;background:#FAFAFA;">
+          <option value="precise">Точный (навыки + должность)</option>
+          <option value="flexible">Гибкий (семантика + опыт)</option>
+        </select>
+        <div style="font-size:10px;color:#71717A;margin-top:4px;">Точный: навыки 35%, должность 25%. Гибкий: семантика 45%, опыт 20%.</div>
+      </div>
       ${settingToggle('Авто-проверка авторизации', '', 's-auth-check', true)}
       ${settingToggle('Уведомления', '', 's-notifications', true)}
       ${settingToggle('Логирование действий', '', 's-logging', true)}

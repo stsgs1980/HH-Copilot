@@ -200,4 +200,14 @@ function bindInputChanges(container) {
       setAiTone(aiToneSelect.value);
     });
   }
+
+  /* Match mode selector change */
+  const matchModeSelect = container.querySelector('#s-match-mode');
+  if (matchModeSelect) {
+    matchModeSelect.addEventListener('change', async (e) => {
+      const mode = e.target.value;
+      await chrome.storage.local.set({ matchMode: mode });
+      window.dispatchEvent(new CustomEvent('hh-ar-match-mode-changed', { detail: { mode } }));
+    });
+  }
 }

@@ -47,6 +47,7 @@ export function renderSettingsValues() {
   chk('s-notifications', panelState.settings.notifications);
   chk('s-logging', panelState.settings.logging);
   chk('s-shadow-dom', panelState.settings.shadowDOM);
+  set('s-match-mode', panelState.settings.matchMode || 'precise');
 }
 
 function declension(n, forms) {
