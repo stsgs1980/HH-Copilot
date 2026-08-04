@@ -9,7 +9,7 @@
  * v1.9.43.0
  */
 
-import { refs, setActiveTab } from '../state.js';
+import { refs, panelState, setActiveTab } from '../state.js';
 import { renderResumePanel } from '../tabs/resumes.js';
 import { renderStats } from '../tabs/stats.js';
 import { renderNegotiationList, setNegotiationStatusFilter, setNegotiationTabFilter, refreshNegotiations } from '../tabs/negotiations.js';
@@ -206,7 +206,11 @@ function bindInputChanges(container) {
   if (matchModeSelect) {
     matchModeSelect.addEventListener('change', async (e) => {
       const mode = e.target.value;
-      await chrome.storage.local.set({ matchMode: mode });
+      const data = await chrome.storage.local.get('settings');
+      const settings = data.settings || {};
+      settings.matchMode = mode;
+      await chrome.storage.local.set({ settings });
+      panelState.settings.matchMode = mode;
       window.dispatchEvent(new CustomEvent('hh-ar-match-mode-changed', { detail: { mode } }));
     });
   }

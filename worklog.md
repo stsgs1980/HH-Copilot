@@ -5086,3 +5086,21 @@ Stage Summary:
 - Setting persisted to chrome.storage.local under key matchMode
 - CustomEvent hh-ar-match-mode-changed dispatched on change
 ---
+
+Task ID: task-9-fix
+Agent: main
+Task: Fix match mode storage key mismatch and bump version
+
+Work Log:
+- Fixed storage key mismatch in events.js: matchMode now saved under settings object (was top-level key)
+- Fixed panelState.settings.matchMode not updated on change: added panelState update after save
+- Bumped version 1.9.81.0 -> 1.9.82.0 in all 5 files: manifest.json, package.json, version.js, popup/index.html, README.md
+- Added panelState import to events.js
+- Verified version consistency across all 5 files
+- Lint passed: no new errors introduced (1 pre-existing error in ai-service.js)
+
+Stage Summary:
+- Storage key fixed: matchMode now reads correctly from settings object on boot
+- panelState.settings.matchMode updated in-memory on every change
+- Version bumped to 1.9.82.0
+---
