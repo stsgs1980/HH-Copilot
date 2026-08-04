@@ -12,7 +12,9 @@
   "host_permissions": [
     "https://hh.ru/*",
     "https://*.hh.ru/*",
-    "https://internal-api.z.ai/*"
+    "https://internal-api.z.ai/*",
+    "http://localhost:11434/*",
+    "http://127.0.0.1:11434/*"
   ],
   "content_scripts": [
     {

@@ -4919,5 +4919,20 @@ Work Log:
 
 Stage Summary:
 - Version bumped to 1.9.78.0 for Ollama provider feature
+
+---
+Task ID: fix-ollama-host-permission
+Agent: main
+Task: Add localhost host_permissions for Ollama API access
+
+Work Log:
+- Chrome extensions require explicit host_permissions for localhost fetch
+- Added http://localhost:11434/* and http://127.0.0.1:11434/* to manifest.json host_permissions
+- Without this, background script cannot reach Ollama /api/tags endpoint
+- Rebuilt dist, all 651 tests pass
+
+Stage Summary:
+- Ollama model fetch now works from Chrome extension background script
+---
 ---
 ---
