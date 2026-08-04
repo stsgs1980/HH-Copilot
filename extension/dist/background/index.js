@@ -21,24 +21,68 @@ var init_anti_hallucination = __esm({
   }
 });
 
+// src/services/ai-providers.js
+function detectProvider(baseUrl) {
+  if (!baseUrl) return PROVIDER_ZAI;
+  const u = baseUrl.toLowerCase();
+  if (u.includes("z.ai")) return PROVIDER_ZAI;
+  if (u.includes("localhost:11434") || u.includes("127.0.0.1:11434")) return PROVIDER_OLLAMA;
+  return PROVIDER_CUSTOM;
+}
+async function fetchOllamaModels(baseUrl, fetchImpl) {
+  const base = (baseUrl || OLLAMA_BASE_URL).replace(/\/v1\/?$/, "").replace(/\/$/, "");
+  const url = base + "/api/tags";
+  const fetchFn = fetchImpl || globalThis.fetch.bind(globalThis);
+  try {
+    const resp = await fetchFn(url, { method: "GET" });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    if (!data || !Array.isArray(data.models)) return [];
+    return data.models.map((m) => m.name).filter(Boolean);
+  } catch (_e) {
+    return [];
+  }
+}
+var PROVIDER_ZAI, PROVIDER_OLLAMA, PROVIDER_CUSTOM, OLLAMA_BASE_URL, OLLAMA_DEFAULT_MODEL;
+var init_ai_providers = __esm({
+  "src/services/ai-providers.js"() {
+    PROVIDER_ZAI = "zai";
+    PROVIDER_OLLAMA = "ollama";
+    PROVIDER_CUSTOM = "custom";
+    OLLAMA_BASE_URL = "http://localhost:11434/v1";
+    OLLAMA_DEFAULT_MODEL = "llama3";
+  }
+});
+
 // src/services/ai-service.js
 async function getAiConfig() {
   try {
     const data = await chrome.storage.local.get(AI_CONFIG_KEY);
     const cfg = data[AI_CONFIG_KEY] || {};
     const useDefaults = !cfg.__test_no_defaults;
-    const d = useDefaults ? BUILTIN_DEFAULTS : { apiKey: "", token: "", chatId: "", userId: "" };
+    const baseUrl = cfg.baseUrl || DEFAULT_BASE_URL;
+    const provider = cfg.provider || detectProvider(baseUrl);
+    let d;
+    if (provider === PROVIDER_OLLAMA) {
+      d = useDefaults ? OLLAMA_DEFAULTS : { apiKey: "", token: "", chatId: "", userId: "" };
+    } else if (provider === PROVIDER_CUSTOM) {
+      d = { apiKey: "", token: "", chatId: "", userId: "" };
+    } else {
+      d = useDefaults ? BUILTIN_DEFAULTS : { apiKey: "", token: "", chatId: "", userId: "" };
+    }
     return {
-      baseUrl: cfg.baseUrl || DEFAULT_BASE_URL,
+      provider,
+      baseUrl: provider === PROVIDER_OLLAMA ? cfg.baseUrl || OLLAMA_BASE_URL : baseUrl,
       apiKey: cfg.apiKey || d.apiKey,
       token: cfg.token || d.token,
       chatId: cfg.chatId || d.chatId,
       userId: cfg.userId || d.userId,
-      model: cfg.model || DEFAULT_MODEL,
+      model: cfg.model || (provider === PROVIDER_OLLAMA ? OLLAMA_DEFAULT_MODEL : DEFAULT_MODEL),
       timeoutMs: clampTimeout(cfg.timeoutMs)
     };
   } catch (_e) {
     return {
+      provider: PROVIDER_ZAI,
       baseUrl: DEFAULT_BASE_URL,
       apiKey: BUILTIN_DEFAULTS.apiKey,
       token: BUILTIN_DEFAULTS.token,
@@ -58,11 +102,13 @@ async function setAiConfig(partial) {
   const current = await getAiConfig();
   const next = { ...current, ...partial };
   await chrome.storage.local.set({ [AI_CONFIG_KEY]: next });
-  aiLog.info("AI config updated (baseUrl=" + next.baseUrl + ", key=" + (next.apiKey ? "set" : "empty") + ", token=" + (next.token ? "set" : "empty") + ")");
+  aiLog.info("AI config updated (baseUrl=" + next.baseUrl + ", provider=" + next.provider + ")");
   return next;
 }
 async function isAiAvailable() {
   const cfg = await getAiConfig();
+  if (cfg.provider === PROVIDER_OLLAMA) return true;
+  if (cfg.provider === PROVIDER_CUSTOM) return !!cfg.apiKey;
   return !!(cfg.apiKey && cfg.token);
 }
 async function sendMessage(params) {
@@ -71,27 +117,37 @@ async function sendMessage(params) {
     return { ok: false, error: "messages must be a non-empty array", code: "BAD_INPUT" };
   }
   const cfg = await getAiConfig();
-  if (!cfg.apiKey || !cfg.token) {
+  if (cfg.provider === PROVIDER_ZAI && (!cfg.apiKey || !cfg.token)) {
     return { ok: false, error: "AI not configured (apiKey or token missing)", code: "NO_API_KEY" };
+  }
+  if (cfg.provider === PROVIDER_CUSTOM && !cfg.apiKey) {
+    return { ok: false, error: "AI not configured (apiKey missing)", code: "NO_API_KEY" };
+  }
+  const timeoutMs = clampTimeout(params.timeoutMs || cfg.timeoutMs) || DEFAULT_TIMEOUT_MS;
+  const fetchImpl = params.fetchImpl || fetch;
+  if (cfg.provider === PROVIDER_OLLAMA) {
+    return sendOllamaNative(messages, params.model || cfg.model, params.temperature, timeoutMs, fetchImpl, cfg.baseUrl);
   }
   const body = {
     messages,
     model: params.model || cfg.model,
     temperature: typeof params.temperature === "number" ? params.temperature : 0.7,
-    thinking: { type: "disabled" },
     stream: false
   };
+  if (cfg.provider === PROVIDER_ZAI) {
+    body.thinking = { type: "disabled" };
+  }
   const url = cfg.baseUrl.replace(/\/$/, "") + "/chat/completions";
-  const timeoutMs = clampTimeout(params.timeoutMs || cfg.timeoutMs) || DEFAULT_TIMEOUT_MS;
-  const fetchImpl = params.fetchImpl || globalThis.fetch.bind(globalThis);
-  const headers = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + cfg.apiKey,
-    "X-Z-AI-From": "Z"
-  };
-  if (cfg.chatId) headers["X-Chat-Id"] = cfg.chatId;
-  if (cfg.userId) headers["X-User-Id"] = cfg.userId;
-  if (cfg.token) headers["X-Token"] = cfg.token;
+  const headers = { "Content-Type": "application/json" };
+  if (cfg.provider === PROVIDER_ZAI) {
+    headers["Authorization"] = "Bearer " + cfg.apiKey;
+    headers["X-Z-AI-From"] = "Z";
+    if (cfg.chatId) headers["X-Chat-Id"] = cfg.chatId;
+    if (cfg.userId) headers["X-User-Id"] = cfg.userId;
+    if (cfg.token) headers["X-Token"] = cfg.token;
+  } else if (cfg.provider === PROVIDER_CUSTOM) {
+    headers["Authorization"] = "Bearer " + cfg.apiKey;
+  }
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
   const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
   try {
@@ -121,11 +177,7 @@ async function sendMessage(params) {
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return { ok: false, error: "AI returned empty content", code: "EMPTY", raw: data };
     }
-    return {
-      ok: true,
-      text: text.trim(),
-      usage: data.usage || null
-    };
+    return { ok: true, text: text.trim(), usage: data.usage || null };
   } catch (err) {
     const isAbort = err && (err.name === "AbortError" || /aborted/i.test(err.message || ""));
     if (isAbort) {
@@ -137,21 +189,85 @@ async function sendMessage(params) {
     if (timer) clearTimeout(timer);
   }
 }
-var aiLog, DEFAULT_BASE_URL, DEFAULT_TIMEOUT_MS, DEFAULT_MODEL, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, BUILTIN_DEFAULTS, AI_CONFIG_KEY;
+async function sendOllamaNative(messages, model, temperature, timeoutMs, fetchImpl, baseUrl) {
+  const base = (baseUrl || "http://localhost:11434").replace(/\/v1\/?$/, "").replace(/\/$/, "");
+  const url = base + "/api/chat";
+  const body = {
+    model,
+    messages,
+    stream: false,
+    options: typeof temperature === "number" ? { temperature } : void 0
+  };
+  aiLog.info("Ollama request: url=" + url + ", model=" + model + ", msgs=" + messages.length);
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const response = await fetchImpl(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Origin": "http://localhost:11434"
+      },
+      body: JSON.stringify(body),
+      signal: controller ? controller.signal : void 0
+    });
+    aiLog.info("Ollama response: status=" + response.status + ", ok=" + response.ok);
+    if (!response.ok) {
+      const code = response.status === 429 ? "RATE_LIMIT" : "HTTP_" + response.status;
+      let errBody = "";
+      try {
+        errBody = await response.text();
+      } catch (_e) {
+      }
+      aiLog.warn("Ollama HTTP " + response.status + ": " + errBody.slice(0, 500));
+      return { ok: false, error: "HTTP " + response.status + ": " + errBody.slice(0, 200), code, httpBody: errBody.slice(0, 500) };
+    }
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      return { ok: false, error: "Invalid JSON from Ollama: " + e.message, code: "BAD_JSON" };
+    }
+    const text = data?.message?.content;
+    if (!text || typeof text !== "string" || text.trim().length === 0) {
+      return { ok: false, error: "Ollama returned empty content", code: "EMPTY", raw: data };
+    }
+    return { ok: true, text: text.trim() };
+  } catch (err) {
+    const isAbort = err && (err.name === "AbortError" || /aborted/i.test(err.message || ""));
+    if (isAbort) {
+      return { ok: false, error: "Ollama timeout after " + timeoutMs + "ms", code: "TIMEOUT" };
+    }
+    aiLog.warn("Ollama network error: " + (err.message || String(err)));
+    return { ok: false, error: err.message || String(err), code: "NETWORK" };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+var aiLog, DEFAULT_BASE_URL, DEFAULT_TIMEOUT_MS, DEFAULT_MODEL, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, BUILTIN_DEFAULTS, OLLAMA_DEFAULTS, AI_CONFIG_KEY;
 var init_ai_service = __esm({
   "src/services/ai-service.js"() {
     init_anti_hallucination();
+    init_ai_providers();
     aiLog = createLogger("AIService");
     DEFAULT_BASE_URL = "https://internal-api.z.ai/v1";
     DEFAULT_TIMEOUT_MS = 6e4;
     DEFAULT_MODEL = "glm-4.5";
     MIN_TIMEOUT_MS = 5e3;
-    MAX_TIMEOUT_MS = 18e4;
+    MAX_TIMEOUT_MS = 6e5;
     BUILTIN_DEFAULTS = Object.freeze({
+      provider: PROVIDER_ZAI,
       apiKey: "Z.ai",
       token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2U5MjY3YWMtM2Q3MS00ODA4LWI3M2YtZTAzZGViYzVhMzBhIiwiY2hhdF9pZCI6ImNoYXQtNTVkMWFlNzUtMDQ0Ni00NGYwLWIyZmQtMzc3OWEwMTU4MTAwIiwicGxhdGZvcm0iOiJ6YWkifQ.JjoptGFwMQjXuU4afXfqfJ9Cqf2f1q9gKPNSSSvrfS4",
       chatId: "chat-55d1ae75-0446-44f0-b2fd-3779a0158100",
       userId: "7e9267ac-3d71-4808-b73f-e03debc5a30a"
+    });
+    OLLAMA_DEFAULTS = Object.freeze({
+      provider: PROVIDER_OLLAMA,
+      apiKey: "",
+      token: "",
+      chatId: "",
+      userId: ""
     });
     AI_CONFIG_KEY = "aiConfig";
   }
@@ -2045,6 +2161,7 @@ var init_cover_letter_ai = __esm({
 
 // background/index.js
 init_ai_service();
+init_ai_providers();
 
 // src/services/ai-helpers.js
 init_ai_service();
@@ -2200,6 +2317,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     case "ai-available":
       isAiAvailable().then(sendResponse);
+      return true;
+    case "ai-fetch-ollama-models":
+      fetchOllamaModels(message.baseUrl).then((models) => sendResponse({ ok: true, models })).catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
       return true;
   }
 });

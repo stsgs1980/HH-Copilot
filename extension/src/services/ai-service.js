@@ -30,7 +30,7 @@ const DEFAULT_BASE_URL = 'https://internal-api.z.ai/v1';
 const DEFAULT_TIMEOUT_MS = 60000;
 const DEFAULT_MODEL = 'glm-4.5';
 const MIN_TIMEOUT_MS = 5000;
-const MAX_TIMEOUT_MS = 180000;
+const MAX_TIMEOUT_MS = 600000;
 
 const BUILTIN_DEFAULTS = Object.freeze({
   provider: PROVIDER_ZAI,
@@ -138,7 +138,7 @@ export async function sendMessage(params) {
   }
 
   const timeoutMs = clampTimeout(params.timeoutMs || cfg.timeoutMs) || DEFAULT_TIMEOUT_MS;
-  const fetchImpl = params.fetchImpl || globalThis.fetch.bind(globalThis);
+  const fetchImpl = params.fetchImpl || fetch;
 
   // Ollama: use native /api/chat endpoint (no CORS issues)
   if (cfg.provider === PROVIDER_OLLAMA) {
@@ -235,23 +235,30 @@ async function sendOllamaNative(messages, model, temperature, timeoutMs, fetchIm
     options: typeof temperature === 'number' ? { temperature } : undefined,
   };
 
+  aiLog.info('Ollama request: url=' + url + ', model=' + model + ', msgs=' + messages.length);
+
   const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
   try {
     const response = await fetchImpl(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': 'http://localhost:11434',
+      },
       body: JSON.stringify(body),
       signal: controller ? controller.signal : undefined,
     });
+
+    aiLog.info('Ollama response: status=' + response.status + ', ok=' + response.ok);
 
     if (!response.ok) {
       const code = response.status === 429 ? 'RATE_LIMIT' : ('HTTP_' + response.status);
       let errBody = '';
       try { errBody = await response.text(); } catch (_e) { /* ignore */ }
-      aiLog.warn('Ollama HTTP ' + response.status + ': ' + errBody.slice(0, 200));
-      return { ok: false, error: 'HTTP ' + response.status, code, httpBody: errBody.slice(0, 500) };
+      aiLog.warn('Ollama HTTP ' + response.status + ': ' + errBody.slice(0, 500));
+      return { ok: false, error: 'HTTP ' + response.status + ': ' + errBody.slice(0, 200), code, httpBody: errBody.slice(0, 500) };
     }
 
     let data;

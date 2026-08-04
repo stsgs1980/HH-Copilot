@@ -33,12 +33,12 @@ function settingsAI() {
         <label for="s-ai-base-url" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Base URL</label>
         <input type="text" id="s-ai-base-url" value="https://internal-api.z.ai/v1" placeholder="https://api.example.com/v1" aria-label="AI API base URL" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
       </div>
+      <div>
+        <label for="s-ai-api-key" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">API Key</label>
+        <input type="text" id="s-ai-api-key" value="" placeholder="API ключ" aria-label="AI API key" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">API ключ провайдера. Для Z.ai оставь "Z.ai". Для Custom впиши ключ.</div>
+      </div>
       <div id="s-ai-zai-fields">
-        <div style="margin-bottom:10px;">
-          <label for="s-ai-api-key" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">API Key (маркер)</label>
-          <input type="text" id="s-ai-api-key" value="Z.ai" placeholder="Z.ai" aria-label="AI API key marker" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
-          <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">Маркер для Authorization. По умолчанию "Z.ai" -- не меняй без необходимости.</div>
-        </div>
         <div style="margin-bottom:10px;">
           <label for="s-ai-token" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Token (JWT)</label>
           <textarea id="s-ai-token" rows="2" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." aria-label="ZAI JWT token" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;resize:vertical;"></textarea>
@@ -63,7 +63,7 @@ function settingsAI() {
       </div>
       <div>
         <label for="s-ai-timeout" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Timeout (мс)</label>
-        <input type="number" id="s-ai-timeout" value="60000" min="5000" max="180000" step="1000" placeholder="60000" aria-label="AI request timeout in milliseconds" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <input type="number" id="s-ai-timeout" value="60000" min="5000" max="600000" step="1000" placeholder="60000" aria-label="AI request timeout in milliseconds" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
         <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">5 000--180 000 мс. Если AI отвечает медленно -- увеличь до 90 000--120 000.</div>
       </div>
       <div id="s-ai-status" style="font-size:11px;padding:6px 8px;border-radius:6px;display:none;"></div>

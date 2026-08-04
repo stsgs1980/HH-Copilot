@@ -2060,11 +2060,13 @@ Work Log:
 - Version 1.9.78.0 -> 1.9.79.0
 - Ran version-sync.sh to verify all sources match
 - Ran ESLint (npm run lint) to verify no regressions
+- Committed as e6f675e
 
 Stage Summary:
-- Version bumped per Rule 9.1/9.2
-- All 5 version sources synchronized
-- Verification pending (will run after edits)
+- Version bumped: 1.9.78.0 -> 1.9.79.0 (all 5 sources synchronized)
+- Pre-commit hooks passed (worklog, verify-docs, anti-monolith, co-change)
+- ESLint: 1 pre-existing error (ai-service.js hard cap), 0 new errors
+- Commit: e6f675e chore: bump version to 1.9.79.0
 
 ---
 Task ID: 8
@@ -4981,4 +4983,55 @@ Work Log:
 Stage Summary:
 - Match score UI labels corrected to reflect actual weights
 - Ready to commit
+---
+
+Task ID: task-2
+Agent: opencode
+Task: Add location dimension to match score UI
+
+Work Log:
+- Modified extension/src/ui/html/tabs/vacancies.js: added location column (vac-match-loc) and bar segment (vac-match-bar-loc) after experience
+- Modified extension/src/ui/tabs/vacancies-match.js: added location score display and bar calculation with (b.location || 0) fallback
+- Bumped version to 1.9.80.0 in all 5 sources (manifest.json, package.json, version.js, popup/index.html, README.md)
+- Verified version sync: all 5 files match at 1.9.80.0
+- Lint passed (npm run lint): 1 pre-existing error (ai-service.js >250 lines), 73 pre-existing warnings
+- No new errors or warnings introduced
+- Commit: cfb91fa feat: add location dimension to match score UI
+
+Stage Summary:
+- Location dimension (0-15) added to match score UI with sky-blue (#0EA5E9) color
+- Bar calculation now includes location in total for proportional width
+- All 5 version sources synchronized at 1.9.80.0
+---
+
+Task ID: task-4
+Agent: opencode
+Task: Rename sections for clarity
+
+Work Log:
+- Renamed "Совпадение с вакансией" → "Оценка для этой вакансии" (vacancies.js:79)
+- Renamed "Совпадение навыков" → "Анализ навыков рынка" (vacancies.js:180)
+- Lint passed: 1 pre-existing error (ai-service.js), 73 pre-existing warnings
+- No new errors or warnings introduced
+- Commit: 9476706 docs: rename match sections for clarity
+
+Stage Summary:
+- 2 section headers renamed in vacancies tab for clarity
+- No logic or behavior changes
+---
+
+Task ID: task-6
+Agent: opencode
+Task: Verify cover letter template includes matching skills
+
+Work Log:
+- Verified extension/src/ui/html/tabs/vacancies.js:163 -- template textarea includes {matching_sentence} placeholder
+- Verified extension/src/lib/cover-letter-placeholders.js:64-66 -- extractPlaceholders() populates matching_sentence with formatted skill list
+- Lint passed: 1 pre-existing error (ai-service.js >250 lines), 73 pre-existing warnings
+- No new errors or warnings introduced
+- No code changes needed -- verification only
+
+Stage Summary:
+- Cover letter template confirmed connected to match score via {matching_sentence}
+- extractPlaceholders() builds sentence from allMatches array
 ---

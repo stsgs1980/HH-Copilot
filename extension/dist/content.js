@@ -5800,6 +5800,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
           <label for="cover-letter-text" style="font-size:11px;font-weight:500;">\u0428\u0430\u0431\u043B\u043E\u043D \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0433\u043E</label>
           <div style="display:flex;align-items:center;gap:4px;">
             <button id="cover-letter-ai-btn" type="button" aria-label="\u0421\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0435 \u0441 AI" style="font-size:11px;padding:3px 10px;background:#7c3aed;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:500;">\u0421\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441 AI</button>
+            <button id="cover-letter-clear-btn" type="button" aria-label="\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0435" style="font-size:11px;padding:3px 8px;background:#f4f4f5;color:#52525b;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;">\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C</button>
             <span style="font-size:11px;color:#52525b;">\u0422\u043E\u043D:</span>
             <select id="s-letter-tone" aria-label="\u0422\u043E\u043D \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0433\u043E \u043F\u0438\u0441\u044C\u043C\u0430" style="font-size:11px;padding:3px 6px;border:1px solid #e4e4e7;border-radius:6px;background:#fff;">
               <option value="formal">\u0424\u043E\u0440\u043C\u0430\u043B\u044C\u043D\u044B\u0439</option>
@@ -5972,39 +5973,55 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   function settingsAI() {
     return `<div class="card fade-in" style="margin-bottom:12px;">
     <div style="font-size:13px;font-weight:600;margin-bottom:10px;">AI-\u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438</div>
-    <div style="font-size:11px;color:#52525b;margin-bottom:10px;">\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u0434\u043B\u044F \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u0438 \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u0438 \u043E\u0442\u0432\u0435\u0442\u043E\u0432 \u0432 \u0447\u0430\u0442\u0435. \u041F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E \u0443\u0436\u0435 \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u044B -- \u0440\u0430\u0431\u043E\u0442\u0430\u044E\u0442 \u0438\u0437 \u043A\u043E\u0440\u043E\u0431\u043A\u0438.</div>
+    <div style="font-size:11px;color:#52525b;margin-bottom:10px;">\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u0434\u043B\u044F \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u0438 \u0441\u043E\u043F\u0440\u043E\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u0438 \u043E\u0442\u0432\u0435\u0442\u043E\u0432 \u0432 \u0447\u0430\u0442\u0435.</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <label for="s-ai-provider" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440</label>
+        <select id="s-ai-provider" aria-label="AI provider" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
+          <option value="zai">Z.ai (\u043E\u0431\u043B\u0430\u0447\u043D\u044B\u0439)</option>
+          <option value="ollama">Ollama (\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u044B\u0439)</option>
+          <option value="custom">Custom OpenAI-compatible</option>
+        </select>
+        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">Z.ai -- \u0438\u0437 \u043A\u043E\u0440\u043E\u0431\u043A\u0438. Ollama -- \u0437\u0430\u043F\u0443\u0441\u0442\u0438 <code>ollama serve</code> \u0438 \u0441\u043A\u0430\u0447\u0430\u0439 \u043C\u043E\u0434\u0435\u043B\u044C. Custom -- \u043B\u044E\u0431\u043E\u0439 OpenAI-\u0441\u043E\u0432\u043C\u0435\u0441\u0442\u0438\u043C\u044B\u0439 API.</div>
+      </div>
       <div>
         <label for="s-ai-base-url" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Base URL</label>
         <input type="text" id="s-ai-base-url" value="https://internal-api.z.ai/v1" placeholder="https://api.example.com/v1" aria-label="AI API base URL" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
       </div>
       <div>
-        <label for="s-ai-api-key" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">API Key (\u043C\u0430\u0440\u043A\u0435\u0440)</label>
-        <input type="text" id="s-ai-api-key" value="Z.ai" placeholder="Z.ai" aria-label="AI API key marker" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
-        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">\u041C\u0430\u0440\u043A\u0435\u0440 \u0434\u043B\u044F Authorization. \u041F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E "Z.ai" -- \u043D\u0435 \u043C\u0435\u043D\u044F\u0439 \u0431\u0435\u0437 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438.</div>
+        <label for="s-ai-api-key" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">API Key</label>
+        <input type="text" id="s-ai-api-key" value="" placeholder="API \u043A\u043B\u044E\u0447" aria-label="AI API key" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">API \u043A\u043B\u044E\u0447 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430. \u0414\u043B\u044F Z.ai \u043E\u0441\u0442\u0430\u0432\u044C "Z.ai". \u0414\u043B\u044F Custom \u0432\u043F\u0438\u0448\u0438 \u043A\u043B\u044E\u0447.</div>
       </div>
-      <div>
-        <label for="s-ai-token" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Token (JWT)</label>
-        <textarea id="s-ai-token" rows="2" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." aria-label="ZAI JWT token" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;resize:vertical;"></textarea>
-        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">JWT-\u0442\u043E\u043A\u0435\u043D \u0438\u0437 z.ai web chat. \u0415\u0441\u043B\u0438 AI \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u043E\u0448\u0438\u0431\u043A\u043E\u0439 HTTP 401 -- \u0442\u043E\u043A\u0435\u043D \u0438\u0441\u0442\u0451\u043A, \u043E\u0431\u043D\u043E\u0432\u0438 \u0435\u0433\u043E: \u043E\u0442\u043A\u0440\u043E\u0439 <a href="https://chat.z.ai" target="_blank" rel="noopener">chat.z.ai</a> -> F12 -> Application -> Local Storage -> \u043D\u0430\u0439\u0434\u0438 "token" -> \u0441\u043A\u043E\u043F\u0438\u0440\u0443\u0439 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0441\u044E\u0434\u0430.</div>
-      </div>
-      <div>
-        <label for="s-ai-chat-id" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Chat-Id</label>
-        <input type="text" id="s-ai-chat-id" value="" placeholder="chat-xxxxxxxx-xxxx-..." aria-label="ZAI chat id" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;">
-      </div>
-      <div>
-        <label for="s-ai-user-id" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-User-Id</label>
-        <input type="text" id="s-ai-user-id" value="" placeholder="xxxxxxxx-xxxx-xxxx-..." aria-label="ZAI user id" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;">
+      <div id="s-ai-zai-fields">
+        <div style="margin-bottom:10px;">
+          <label for="s-ai-token" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Token (JWT)</label>
+          <textarea id="s-ai-token" rows="2" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." aria-label="ZAI JWT token" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;resize:vertical;"></textarea>
+          <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">JWT-\u0442\u043E\u043A\u0435\u043D \u0438\u0437 z.ai web chat. \u0415\u0441\u043B\u0438 AI \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u043E\u0448\u0438\u0431\u043A\u043E\u0439 HTTP 401 -- \u0442\u043E\u043A\u0435\u043D \u0438\u0441\u0442\u0451\u043A, \u043E\u0431\u043D\u043E\u0432\u0438 \u0435\u0433\u043E: \u043E\u0442\u043A\u0440\u043E\u0439 <a href="https://chat.z.ai" target="_blank" rel="noopener">chat.z.ai</a> -> F12 -> Application -> Local Storage -> \u043D\u0430\u0439\u0434\u0438 "token" -> \u0441\u043A\u043E\u043F\u0438\u0440\u0443\u0439 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0441\u044E\u0434\u0430.</div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label for="s-ai-chat-id" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Chat-Id</label>
+          <input type="text" id="s-ai-chat-id" value="" placeholder="chat-xxxxxxxx-xxxx-..." aria-label="ZAI chat id" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;">
+        </div>
+        <div>
+          <label for="s-ai-user-id" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-User-Id</label>
+          <input type="text" id="s-ai-user-id" value="" placeholder="xxxxxxxx-xxxx-xxxx-..." aria-label="ZAI user id" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;">
+        </div>
       </div>
       <div>
         <label for="s-ai-model" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Model</label>
-        <input type="text" id="s-ai-model" value="glm-4.5" placeholder="glm-4.5" aria-label="AI model name" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="s-ai-model" value="glm-4.5" placeholder="glm-4.5" aria-label="AI model name" style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+          <button type="button" id="s-ai-fetch-models" class="btn btn-outline btn-sm" style="white-space:nowrap;font-size:11px;padding:7px 10px;" title="\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0438\u0437 Ollama">\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C</button>
+        </div>
+        <div id="s-ai-model-list" style="margin-top:4px;font-size:10px;color:#71717A;"></div>
       </div>
       <div>
         <label for="s-ai-timeout" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Timeout (\u043C\u0441)</label>
-        <input type="number" id="s-ai-timeout" value="60000" min="5000" max="180000" step="1000" placeholder="60000" aria-label="AI request timeout in milliseconds" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <input type="number" id="s-ai-timeout" value="60000" min="5000" max="600000" step="1000" placeholder="60000" aria-label="AI request timeout in milliseconds" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
         <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">5 000--180 000 \u043C\u0441. \u0415\u0441\u043B\u0438 AI \u043E\u0442\u0432\u0435\u0447\u0430\u0435\u0442 \u043C\u0435\u0434\u043B\u0435\u043D\u043D\u043E -- \u0443\u0432\u0435\u043B\u0438\u0447\u044C \u0434\u043E 90 000--120 000.</div>
       </div>
+      <div id="s-ai-status" style="font-size:11px;padding:6px 8px;border-radius:6px;display:none;"></div>
       <div style="font-size:10px;color:#71717A;line-height:1.4;">\u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u044E\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 (debounce 500 \u043C\u0441). \u041F\u043E\u043B\u044F \u0445\u0440\u0430\u043D\u044F\u0442\u0441\u044F \u0432 chrome.storage.local \u043F\u043E\u0434 \u043A\u043B\u044E\u0447\u043E\u043C aiConfig.</div>
     </div>
   </div>`;
@@ -6183,7 +6200,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.77.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.78.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
         <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
@@ -6202,7 +6219,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.77.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.78.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
         <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
@@ -13148,6 +13165,86 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     }
   });
 
+  // src/ui/panel/ai-settings-handlers.js
+  function setFieldValue(sr, id, value) {
+    const el = sr.getElementById(id);
+    if (el) el.value = value || "";
+  }
+  function getFieldValue(sr, id) {
+    const el = sr.getElementById(id);
+    return el ? el.value || "" : "";
+  }
+  function toggleZaiFields(sr, provider) {
+    const zaiBlock = sr.getElementById("s-ai-zai-fields");
+    if (zaiBlock) zaiBlock.style.display = provider === "zai" ? "" : "none";
+  }
+  function bindProviderHandler(container, readAiFields2, saveAiConfig2, msgImpl) {
+    const providerEl = container.querySelector("#s-ai-provider");
+    if (!providerEl) return;
+    providerEl.addEventListener("change", () => {
+      const sr = refs.shadowRoot;
+      if (!sr) return;
+      const provider = providerEl.value;
+      const defs = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.zai;
+      toggleZaiFields(sr, provider);
+      setFieldValue(sr, "s-ai-base-url", defs.baseUrl);
+      setFieldValue(sr, "s-ai-api-key", defs.apiKey);
+      setFieldValue(sr, "s-ai-model", defs.model);
+      if (provider !== "zai") {
+        setFieldValue(sr, "s-ai-token", "");
+        setFieldValue(sr, "s-ai-chat-id", "");
+        setFieldValue(sr, "s-ai-user-id", "");
+      }
+      const cfg = readAiFields2();
+      saveAiConfig2(cfg, msgImpl).catch(() => {
+      });
+    });
+  }
+  function bindModelFetchHandler(container, sendBg3, setFieldValue_, saveAiConfig2, msgImpl) {
+    const fetchBtn = container.querySelector("#s-ai-fetch-models");
+    if (!fetchBtn) return;
+    fetchBtn.addEventListener("click", async () => {
+      const sr = refs.shadowRoot;
+      if (!sr) return;
+      const listEl = sr.getElementById("s-ai-model-list");
+      const baseUrl = getFieldValue(sr, "s-ai-base-url");
+      fetchBtn.disabled = true;
+      fetchBtn.textContent = "...";
+      try {
+        const result = await sendBg3({ type: "ai-fetch-ollama-models", baseUrl }, msgImpl);
+        if (result && result.models && result.models.length > 0) {
+          listEl.innerHTML = result.models.map(
+            (m) => `<span class="ai-model-tag" style="display:inline-block;padding:2px 6px;margin:2px;border:1px solid #e4e4e7;border-radius:4px;font-size:10px;cursor:pointer;" data-model="${m}">${m}</span>`
+          ).join("");
+          listEl.querySelectorAll(".ai-model-tag").forEach((tag) => {
+            tag.addEventListener("click", () => {
+              setFieldValue_(sr, "s-ai-model", tag.dataset.model);
+              saveAiConfig2({ model: tag.dataset.model }, msgImpl).catch(() => {
+              });
+            });
+          });
+        } else {
+          listEl.textContent = "\u041C\u043E\u0434\u0435\u043B\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B. \u041F\u0440\u043E\u0432\u0435\u0440\u044C, \u0447\u0442\u043E Ollama \u0437\u0430\u043F\u0443\u0449\u0435\u043D.";
+        }
+      } catch (_e) {
+        listEl.textContent = "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043A Ollama.";
+      }
+      fetchBtn.disabled = false;
+      fetchBtn.textContent = "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C";
+    });
+  }
+  var PROVIDER_DEFAULTS;
+  var init_ai_settings_handlers = __esm({
+    "src/ui/panel/ai-settings-handlers.js"() {
+      init_state();
+      PROVIDER_DEFAULTS = {
+        zai: { baseUrl: "https://internal-api.z.ai/v1", apiKey: "Z.ai", model: "glm-4.5" },
+        ollama: { baseUrl: "http://localhost:11434/v1", apiKey: "", model: "llama3" },
+        custom: { baseUrl: "", apiKey: "", model: "" }
+      };
+    }
+  });
+
   // src/ui/panel/ai-settings.js
   async function sendBg2(msg, msgImpl) {
     const sender = msgImpl || typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage;
@@ -13180,6 +13277,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     return {
       ok: true,
       config: {
+        provider: cfg.provider || "zai",
         baseUrl: cfg.baseUrl || "https://internal-api.z.ai/v1",
         apiKey: cfg.apiKey || "Z.ai",
         token: cfg.token || "",
@@ -13205,44 +13303,49 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     if (!sr) return false;
     const result = await loadAiConfig(msgImpl);
     if (!result.ok) {
-      setFieldValue(sr, "s-ai-base-url", "https://internal-api.z.ai/v1");
-      setFieldValue(sr, "s-ai-api-key", "Z.ai");
-      setFieldValue(sr, "s-ai-token", "");
-      setFieldValue(sr, "s-ai-chat-id", "");
-      setFieldValue(sr, "s-ai-user-id", "");
-      setFieldValue(sr, "s-ai-model", "glm-4.5");
-      setFieldValue(sr, "s-ai-timeout", "60000");
+      setFieldValue2(sr, "s-ai-provider", "zai");
+      setFieldValue2(sr, "s-ai-base-url", "https://internal-api.z.ai/v1");
+      setFieldValue2(sr, "s-ai-api-key", "Z.ai");
+      setFieldValue2(sr, "s-ai-token", "");
+      setFieldValue2(sr, "s-ai-chat-id", "");
+      setFieldValue2(sr, "s-ai-user-id", "");
+      setFieldValue2(sr, "s-ai-model", "glm-4.5");
+      setFieldValue2(sr, "s-ai-timeout", "60000");
+      toggleZaiFields(sr, "zai");
       return false;
     }
-    setFieldValue(sr, "s-ai-base-url", result.config.baseUrl);
-    setFieldValue(sr, "s-ai-api-key", result.config.apiKey);
-    setFieldValue(sr, "s-ai-token", result.config.token);
-    setFieldValue(sr, "s-ai-chat-id", result.config.chatId);
-    setFieldValue(sr, "s-ai-user-id", result.config.userId);
-    setFieldValue(sr, "s-ai-model", result.config.model);
-    setFieldValue(sr, "s-ai-timeout", String(result.config.timeoutMs || 6e4));
+    setFieldValue2(sr, "s-ai-provider", result.config.provider);
+    setFieldValue2(sr, "s-ai-base-url", result.config.baseUrl);
+    setFieldValue2(sr, "s-ai-api-key", result.config.apiKey);
+    setFieldValue2(sr, "s-ai-token", result.config.token);
+    setFieldValue2(sr, "s-ai-chat-id", result.config.chatId);
+    setFieldValue2(sr, "s-ai-user-id", result.config.userId);
+    setFieldValue2(sr, "s-ai-model", result.config.model);
+    setFieldValue2(sr, "s-ai-timeout", String(result.config.timeoutMs || 6e4));
+    toggleZaiFields(sr, result.config.provider);
     return true;
   }
-  function setFieldValue(sr, id, value) {
+  function setFieldValue2(sr, id, value) {
     const el = sr.getElementById(id);
     if (el) el.value = value || "";
   }
-  function getFieldValue(sr, id) {
+  function getFieldValue2(sr, id) {
     const el = sr.getElementById(id);
     return el ? el.value || "" : "";
   }
   function readAiFields() {
     const sr = refs.shadowRoot;
-    if (!sr) return { baseUrl: "", apiKey: "", token: "", chatId: "", userId: "", model: "", timeoutMs: 6e4 };
-    const timeoutStr = getFieldValue(sr, "s-ai-timeout");
+    if (!sr) return { provider: "zai", baseUrl: "", apiKey: "", token: "", chatId: "", userId: "", model: "", timeoutMs: 6e4 };
+    const timeoutStr = getFieldValue2(sr, "s-ai-timeout");
     const timeoutMs = Number(timeoutStr);
     return {
-      baseUrl: getFieldValue(sr, "s-ai-base-url"),
-      apiKey: getFieldValue(sr, "s-ai-api-key"),
-      token: getFieldValue(sr, "s-ai-token"),
-      chatId: getFieldValue(sr, "s-ai-chat-id"),
-      userId: getFieldValue(sr, "s-ai-user-id"),
-      model: getFieldValue(sr, "s-ai-model"),
+      provider: getFieldValue2(sr, "s-ai-provider") || "zai",
+      baseUrl: getFieldValue2(sr, "s-ai-base-url"),
+      apiKey: getFieldValue2(sr, "s-ai-api-key"),
+      token: getFieldValue2(sr, "s-ai-token"),
+      chatId: getFieldValue2(sr, "s-ai-chat-id"),
+      userId: getFieldValue2(sr, "s-ai-user-id"),
+      model: getFieldValue2(sr, "s-ai-model"),
       timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 6e4
     };
   }
@@ -13251,7 +13354,20 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     const msgImpl = opts && opts.msgImpl;
     const debounceMs = opts && opts.debounceMs || DEBOUNCE_MS;
     const timers = /* @__PURE__ */ new Map();
+    const fieldMap = {
+      "s-ai-provider": "provider",
+      "s-ai-base-url": "baseUrl",
+      "s-ai-api-key": "apiKey",
+      "s-ai-token": "token",
+      "s-ai-chat-id": "chatId",
+      "s-ai-user-id": "userId",
+      "s-ai-model": "model",
+      "s-ai-timeout": "timeoutMs"
+    };
+    bindProviderHandler(container, readAiFields, saveAiConfig, msgImpl);
+    bindModelFetchHandler(container, sendBg2, setFieldValue2, saveAiConfig, msgImpl);
     for (const id of AI_FIELD_IDS) {
+      if (id === "s-ai-provider") continue;
       const el = container.querySelector("#" + id);
       if (!el) continue;
       el.addEventListener("input", () => {
@@ -13259,15 +13375,6 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         timers.set(id, setTimeout(() => {
           timers.delete(id);
           const cfg = readAiFields();
-          const fieldMap = {
-            "s-ai-base-url": "baseUrl",
-            "s-ai-api-key": "apiKey",
-            "s-ai-token": "token",
-            "s-ai-chat-id": "chatId",
-            "s-ai-user-id": "userId",
-            "s-ai-model": "model",
-            "s-ai-timeout": "timeoutMs"
-          };
           const partial = { [fieldMap[id]]: cfg[fieldMap[id]] };
           saveAiConfig(partial, msgImpl).catch(() => {
           });
@@ -13279,14 +13386,15 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   var init_ai_settings = __esm({
     "src/ui/panel/ai-settings.js"() {
       init_state();
+      init_ai_settings_handlers();
       DEBOUNCE_MS = 500;
-      AI_FIELD_IDS = ["s-ai-base-url", "s-ai-api-key", "s-ai-token", "s-ai-chat-id", "s-ai-user-id", "s-ai-model", "s-ai-timeout"];
+      AI_FIELD_IDS = ["s-ai-provider", "s-ai-base-url", "s-ai-api-key", "s-ai-token", "s-ai-chat-id", "s-ai-user-id", "s-ai-model", "s-ai-timeout"];
       _internal4 = {
         AI_FIELD_IDS,
         DEBOUNCE_MS,
         sendBg: sendBg2,
-        setFieldValue,
-        getFieldValue
+        setFieldValue: setFieldValue2,
+        getFieldValue: getFieldValue2
       };
     }
   });
@@ -13647,6 +13755,16 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         if (statusEl) statusEl.textContent = "\u043B\u043E\u0433 \u043E\u0447\u0438\u0449\u0435\u043D";
         if (customToast) customToast("\u041B\u043E\u0433 \u043E\u0447\u0438\u0449\u0435\u043D.");
         else showAiToast("\u041B\u043E\u0433 \u043E\u0447\u0438\u0449\u0435\u043D.", "info");
+      });
+    }
+    const clearLetterBtn = sr.getElementById("cover-letter-clear-btn");
+    if (clearLetterBtn) {
+      clearLetterBtn.addEventListener("click", () => {
+        const ta = sr.getElementById("cover-letter-text");
+        if (ta) {
+          ta.value = "";
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+        }
       });
     }
   }

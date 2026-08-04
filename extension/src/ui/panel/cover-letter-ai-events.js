@@ -201,4 +201,15 @@ export function bindAiLogButtons(opts) {
       else showAiToast('Лог очищен.', 'info');
     });
   }
+
+  const clearLetterBtn = sr.getElementById('cover-letter-clear-btn');
+  if (clearLetterBtn) {
+    clearLetterBtn.addEventListener('click', () => {
+      const ta = sr.getElementById('cover-letter-text');
+      if (ta) {
+        ta.value = '';
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
 }
