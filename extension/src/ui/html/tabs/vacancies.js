@@ -76,7 +76,7 @@ export function getVacanciesSection() {
           <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#52525b;">0%</div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">Совпадение с вакансией</div>
+          <div style="font-size:13px;font-weight:600;">Оценка для этой вакансии</div>
           <div id="vac-match-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Оцените соответствие</div>
         </div>
       </div>
@@ -177,7 +177,7 @@ export function getVacanciesSection() {
           <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#059669;">0%</div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">Совпадение навыков</div>
+          <div style="font-size:13px;font-weight:600;">Анализ навыков рынка</div>
           <div id="res-gap-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">Резюме vs вакансии</div>
         </div>
         <button class="btn btn-outline btn-sm" data-action="analyze-skills">
