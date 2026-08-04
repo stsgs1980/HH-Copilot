@@ -113,7 +113,7 @@ export async function parseVacanciesOfTheDay(resume) {
       parsedAt: new Date().toISOString(), matchScore: null
     };
 
-    applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
+    await applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
     vacancies.push(vacancy);
   }
 

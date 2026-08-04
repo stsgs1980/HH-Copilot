@@ -86,13 +86,13 @@ export async function loadAppliedAndBlacklisted() {
  * @param {string[]} blacklisted
  * @param {Object|null} resume -- for match scoring
  */
-export function applyStatusAndScore(vacancy, appliedIds, blacklisted, resume) {
+export async function applyStatusAndScore(vacancy, appliedIds, blacklisted, resume) {
   if (appliedIds.includes(vacancy.id)) vacancy.status = 'applied';
   if (blacklisted.includes(vacancy.company)) vacancy.status = 'blacklisted';
 
   if (resume) {
     try {
-      const score = computeMatchScore(resume, vacancy);
+      const score = await computeMatchScore(resume, vacancy);
       vacancy.matchScore = score.total;
     } catch (_e) {
       // score failure is non-fatal

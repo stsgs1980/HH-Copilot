@@ -55,13 +55,13 @@ describe('cover-letter-generator: generateCoverLetter', () => {
     generateCoverLetter = mod.generateCoverLetter;
   });
 
-  it('returns empty text when no vacancy provided', () => {
-    const result = generateCoverLetter(null, null);
+  it('returns empty text when no vacancy provided', async () => {
+    const result = await generateCoverLetter(null, null);
     expect(result.text).toBe('');
     expect(result.method).toBe('none');
   });
 
-  it('generates a letter with vacancy title and company', () => {
+  it('generates a letter with vacancy title and company', async () => {
     const vacancy = {
       id: '1',
       title: 'Senior Developer',
@@ -74,13 +74,13 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       experience: [],
     };
 
-    const result = generateCoverLetter(vacancy, resume);
+    const result = await generateCoverLetter(vacancy, resume);
     expect(result.text).toContain('Senior Developer');
     expect(result.text).toContain('Яндекс');
     expect(result.text.length).toBeGreaterThan(20);
   });
 
-  it('uses custom template when provided', () => {
+  it('uses custom template when provided', async () => {
     const vacancy = {
       id: '1',
       title: 'Developer',
@@ -88,14 +88,14 @@ describe('cover-letter-generator: generateCoverLetter', () => {
     };
     const resume = null;
 
-    const result = generateCoverLetter(vacancy, resume, {
+    const result = await generateCoverLetter(vacancy, resume, {
       template: 'My custom letter for {position} at {company}',
     });
     expect(result.text).toBe('My custom letter for Developer at Test');
     expect(result.method).toBe('template');
   });
 
-  it('generates rich letter when vacancy has keySkills and resume has skills', () => {
+  it('generates rich letter when vacancy has keySkills and resume has skills', async () => {
     const vacancy = {
       id: '1',
       title: 'Frontend Developer',
@@ -122,7 +122,7 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       salary: '150 000 \u20BD',
     };
 
-    const result = generateCoverLetter(vacancy, resume);
+    const result = await generateCoverLetter(vacancy, resume);
     expect(result.text).toContain('Frontend Developer');
     expect(result.text).toContain('Google');
     // Rich letter should mention matching skills
@@ -130,7 +130,7 @@ describe('cover-letter-generator: generateCoverLetter', () => {
     expect(result.method).toBe('rich');
   });
 
-  it('truncates letter that exceeds maxLength', () => {
+  it('truncates letter that exceeds maxLength', async () => {
     const vacancy = {
       id: '1',
       title: 'A'.repeat(100),
@@ -143,11 +143,11 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       experience: [],
     };
 
-    const result = generateCoverLetter(vacancy, resume, { maxLength: 200 });
+    const result = await generateCoverLetter(vacancy, resume, { maxLength: 200 });
     expect(result.text.length).toBeLessThanOrEqual(200);
   });
 
-  it('handles vacancy with no company name', () => {
+  it('handles vacancy with no company name', async () => {
     const vacancy = {
       id: '1',
       title: 'Developer',
@@ -159,12 +159,12 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       experience: [],
     };
 
-    const result = generateCoverLetter(vacancy, resume);
+    const result = await generateCoverLetter(vacancy, resume);
     expect(result.text).toContain('Developer');
     expect(result.text.length).toBeGreaterThan(10);
   });
 
-  it('handles resume with experience entries', () => {
+  it('handles resume with experience entries', async () => {
     const vacancy = {
       id: '1',
       title: 'Developer',
@@ -179,12 +179,12 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       ],
     };
 
-    const result = generateCoverLetter(vacancy, resume);
+    const result = await generateCoverLetter(vacancy, resume);
     // Should contain experience text (years)
     expect(result.text).toMatch(/\d+\s*(лет|года)/);
   });
 
-  it('includes matching skills from score details', () => {
+  it('includes matching skills from score details', async () => {
     const vacancy = {
       id: '1',
       title: 'Backend Developer',
@@ -198,12 +198,12 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       experience: [],
     };
 
-    const result = generateCoverLetter(vacancy, resume);
+    const result = await generateCoverLetter(vacancy, resume);
     // Should mention at least some matching skills
     expect(result.text).toMatch(/Python|Django|PostgreSQL/);
   });
 
-  it('references vacancy description sections when available', () => {
+  it('references vacancy description sections when available', async () => {
     const vacancy = {
       id: '1',
       title: 'Developer',
@@ -225,7 +225,7 @@ describe('cover-letter-generator: generateCoverLetter', () => {
       experience: [],
     };
 
-    const result = generateCoverLetter(vacancy, resume);
+    const result = await generateCoverLetter(vacancy, resume);
     // Rich letter should reference conditions
     expect(result.text.length).toBeGreaterThan(50);
   });

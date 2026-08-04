@@ -72,7 +72,7 @@ export async function parseVacanciesFromPage(resume) {
     const validation = validateVacancyData(vacancy);
     if (!validation.valid) { parserLog.warn('Card #' + i + ' invalid: ' + validation.errors.join(', ')); continue; }
 
-    applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
+    await applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
     vacancies.push(vacancy);
   }
 

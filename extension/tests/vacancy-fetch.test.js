@@ -144,7 +144,7 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
     enrichVacanciesFromCache = mod.enrichVacanciesFromCache;
   });
 
-  it('enriches a shallow vacancy with keySkills and derivedSkills', () => {
+  it('enriches a shallow vacancy with keySkills and derivedSkills', async () => {
     const vacancy = {
       id: '123', title: 'Dev', company: 'Co',
       skills: ['tag1', 'tag2'], salary: '100 000 \u20BD',
@@ -162,7 +162,7 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
       source: 'detail',
     };
 
-    const result = enrichVacancy(vacancy, detail, null);
+    const result = await enrichVacancy(vacancy, detail, null);
 
     expect(result.keySkills).toEqual(['Python', 'Django', 'PostgreSQL']);
     expect(result.derivedSkills).toEqual(['REST API']);
@@ -171,7 +171,7 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
     expect(result.enrichmentSource).toBe('iframe');
   });
 
-  it('re-scores after enrichment when resume is provided', () => {
+  it('re-scores after enrichment when resume is provided', async () => {
     const vacancy = {
       id: '123', title: 'Frontend Developer', company: 'Co',
       skills: ['React'], salary: '100 000 \u20BD',
@@ -195,7 +195,7 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
       source: 'detail',
     };
 
-    enrichVacancy(vacancy, detail, resume);
+    await enrichVacancy(vacancy, detail, resume);
 
     // matchScore should be computed now
     expect(vacancy.matchScore).toBeGreaterThanOrEqual(0);
@@ -204,9 +204,9 @@ describe('vacancy-fetch-enrichment: enrichVacancy', () => {
     expect(vacancy.matchBreakdown.skills).toBeGreaterThan(0); // React + TypeScript match
   });
 
-  it('returns vacancy unchanged when detail is null', () => {
+  it('returns vacancy unchanged when detail is null', async () => {
     const vacancy = { id: '1', title: 'Test' };
-    const result = enrichVacancy(vacancy, null, null);
+    const result = await enrichVacancy(vacancy, null, null);
     expect(result).toBe(vacancy);
     expect(result.keySkills).toBeUndefined();
   });

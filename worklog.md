@@ -5123,3 +5123,32 @@ Stage Summary:
 - panelState.settings.matchMode updated in-memory on every change
 - Version bumped to 1.9.82.0
 ---
+
+---
+Task ID: 11
+Agent: opencode
+Task: Integrate semantic score into match-scorer (v1.9.84.0)
+
+Work Log:
+- Found match-scorer.js already had computeSemanticSimilarity import and async logic (from Task 10)
+- Found all 7 production callers already used await computeMatchScore
+- Found 1 critical bug: vacancy-list-helpers.js applyStatusAndScore() called computeMatchScore() WITHOUT await
+  - This meant list-parsed vacancies never got semantic scoring (score.total was a Promise, not a number)
+  - Fixed: made applyStatusAndScore async + added await before computeMatchScore
+  - Fixed callers: vacancy-list.js and vacancy-list-votd.js now await applyStatusAndScore
+- Fixed all test files that did not await async computeMatchScore:
+  - match-scorer.test.js: 6 orchestrator tests needed async/await
+  - vacancy-fetch.test.js: 3 enrichVacancy tests needed async/await (function is async since it calls computeMatchScore)
+  - cover-letter.test.js: 9 generateCoverLetter tests needed async/await
+- Bumped version 1.9.83.0 -> 1.9.84.0 in all 5 files
+- Build: v1.9.84.0 OK, dist/content.js 801.2kb
+- Tests: 650/651 pass (1 pre-existing failure in ai-service.test.js timeout clamp test, unrelated)
+- Lint: 0 new errors (1 pre-existing error in ai-service.js file size)
+
+Stage Summary:
+- Fixed critical bug: applyStatusAndScore missing await (list vacancies got Promise instead of score number)
+- All callers of computeMatchScore now properly await
+- All tests updated for async API
+- Version 1.9.84.0 synchronized across 5 files
+- Source code: 4 files modified (vacancy-list-helpers.js, vacancy-list.js, vacancy-list-votd.js, 3 test files)
+- 1 pre-existing test failure (ai-service.test.js: timeout clamp expects 180000 but code allows 600000)

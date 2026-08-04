@@ -57,19 +57,19 @@ function makeVacancy(overrides = {}) {
 // ============================================================
 
 describe('computeMatchScore -- orchestrator', () => {
-  it('returns 0/0/0/0/0 breakdown for null inputs', () => {
-    const r = computeMatchScore(null, {});
+  it('returns 0/0/0/0/0 breakdown for null inputs', async () => {
+    const r = await computeMatchScore(null, {});
     expect(r.total).toBe(0);
-    expect(r.breakdown).toEqual({ skills: 0, title: 0, salary: 0, experience: 0, location: 0 });
+    expect(r.breakdown).toEqual({ skills: 0, title: 0, salary: 0, experience: 0, location: 0, semantic: 0 });
   });
 
-  it('returns 0 for null vacancy', () => {
-    const r = computeMatchScore(makeResume(), null);
+  it('returns 0 for null vacancy', async () => {
+    const r = await computeMatchScore(makeResume(), null);
     expect(r.total).toBe(0);
   });
 
-  it('returns details with all expected keys including locationMatch', () => {
-    const r = computeMatchScore(makeResume({ skills: ['CRM'] }), makeVacancy({ keySkills: ['CRM'] }));
+  it('returns details with all expected keys including locationMatch', async () => {
+    const r = await computeMatchScore(makeResume({ skills: ['CRM'] }), makeVacancy({ keySkills: ['CRM'] }));
     expect(r.details).toHaveProperty('matchingSkills');
     expect(r.details).toHaveProperty('missingSkills');
     expect(r.details).toHaveProperty('extraSkills');
@@ -80,15 +80,16 @@ describe('computeMatchScore -- orchestrator', () => {
     expect(r.details).toHaveProperty('salaryMatch');
     expect(r.details).toHaveProperty('experienceMatch');
     expect(r.details).toHaveProperty('locationMatch');
+    expect(r.details).toHaveProperty('semanticScore');
   });
 
-  it('breakdown includes location dimension', () => {
-    const r = computeMatchScore(makeResume({ address: 'Москва' }), makeVacancy({ location: 'Москва' }));
+  it('breakdown includes location dimension', async () => {
+    const r = await computeMatchScore(makeResume({ address: 'Москва' }), makeVacancy({ location: 'Москва' }));
     expect(r.breakdown).toHaveProperty('location');
     expect(r.breakdown.location).toBe(15);
   });
 
-  it('total is sum of all 5 dimensions (capped at 100)', () => {
+  it('total is sum of all 5 dimensions (capped at 100)', async () => {
     const resume = makeResume({
       title: 'Senior Python Developer',
       skills: ['Python', 'Docker', 'SQL', 'Git'],
@@ -103,12 +104,12 @@ describe('computeMatchScore -- orchestrator', () => {
       experience: { min: 3, max: 7 },
       location: 'Москва',
     });
-    const r = computeMatchScore(resume, vacancy);
+    const r = await computeMatchScore(resume, vacancy);
     expect(r.total).toBeGreaterThan(60);
     expect(r.total).toBeLessThanOrEqual(100);
   });
 
-  it('caps total at 25 when title similarity is 0 (role mismatch)', () => {
+  it('caps total at 25 when title similarity is 0 (role mismatch)', async () => {
     const resume = makeResume({
       title: 'Курьер',
       skills: ['работа с клиентами'],
@@ -119,14 +120,14 @@ describe('computeMatchScore -- orchestrator', () => {
       keySkills: ['работа с клиентами', 'переговоры', 'CRM', 'B2B продажи', 'управление командой'],
       salary: { min: 150000, max: 250000 },
     });
-    const r = computeMatchScore(resume, vacancy);
+    const r = await computeMatchScore(resume, vacancy);
     expect(r.total).toBeLessThanOrEqual(25);
   });
 
-  it('caps total at 40 when title similarity is barely >0 (<0.15)', () => {
+  it('caps total at 40 when title similarity is barely >0 (<0.15)', async () => {
     const resume = makeResume({ title: 'Менеджер по закупкам' });
     const vacancy = makeVacancy({ title: 'Менеджер по рекламе' });
-    const r = computeMatchScore(resume, vacancy);
+    const r = await computeMatchScore(resume, vacancy);
     expect(r.details.titleSimilarity).toBeGreaterThanOrEqual(0);
     if (r.details.titleSimilarity > 0 && r.details.titleSimilarity < 0.15) {
       expect(r.total).toBeLessThanOrEqual(40);
