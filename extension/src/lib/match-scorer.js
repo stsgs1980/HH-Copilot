@@ -37,7 +37,7 @@ const scoreLog = createLogger('Scorer');
 
 const WEIGHT_PROFILES = {
   precise: { skills: 35, title: 25, salary: 15, experience: 10, location: 15 },
-  flexible: { semantic: 45, experience: 20, salary: 15, skills: 15, location: 5 }
+  flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 }
 };
 
 export function computeMatchScore(resume, vacancy, mode = 'precise') {
