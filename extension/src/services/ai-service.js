@@ -158,6 +158,8 @@ export async function sendMessage(params) {
     if (cfg.chatId) headers['X-Chat-Id'] = cfg.chatId;
     if (cfg.userId) headers['X-User-Id'] = cfg.userId;
     if (cfg.token) headers['X-Token'] = cfg.token;
+  } else if (cfg.provider === PROVIDER_OLLAMA) {
+    headers['Authorization'] = 'Bearer ollama';
   } else if (cfg.provider === PROVIDER_CUSTOM) {
     headers['Authorization'] = 'Bearer ' + cfg.apiKey;
   }
