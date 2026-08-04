@@ -9,6 +9,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.86.0] — 2026-08-04
+
+### Fixed
+- **Analytics never renders** -- `updateVacancies()` now calls `renderAnalytics()` after setting vacancies.
+- **Initial render gap** -- analytics now populate when the panel opens with vacancies already loaded.
+
+### Added
+- `tests/analytics-render.test.js` -- 10 unit tests for `renderAnalytics()` covering empty state, null matchScore, mixed skill formats, top-10 sorting, and graceful DOM-missing fallback.
+
+### Changed
+- Version bumped 1.9.85.0 -> 1.9.86.0 (Rule 13: MANDATORY on every code/config change).
+- `extension/src/ui/panel/index.js` -- `updateVacancies()` now calls `renderAnalytics()`; `toggleSidebar()` renders analytics on panel open.
+
+---
+
 ## [1.9.85.0] — 2026-08-04
 
 ### Added

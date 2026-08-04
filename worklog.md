@@ -5170,3 +5170,33 @@ Stage Summary:
 - Market analytics dashboard implemented: avg score, vacancy count, top skill, top-10 in-demand skills
 - 2 new files created, 2 files modified, 5 version files updated
 - Version 1.9.85.0 synchronized across all references
+
+---
+Task ID: task-12-fix
+Agent: main
+Task: Fix analytics rendering bug + add tests (v1.9.86.0)
+
+Work Log:
+- Root cause: updateVacancies() in panel/index.js did NOT call renderAnalytics()
+- The hh-ar-vacancies-updated event was never dispatched anywhere in the codebase
+- Initial render gap: analytics never populated on first panel open
+- Fix 1: Added renderAnalytics(vacancies, panelState.resume) to updateVacancies()
+- Fix 2: Added renderAnalytics() call in toggleSidebar() when panel opens with vacancies
+- Created tests/analytics-render.test.js with 10 tests covering:
+  - Empty array / null vacancies (empty state)
+  - Vacancies with null matchScore
+  - Mixed string/{name} skill formats
+  - Top-10 sorting
+  - Missing DOM elements (graceful no-op)
+- Version bumped: 1.9.85.0 -> 1.9.86.0 in all 5 files
+
+Verification:
+- Tests: 669/669 pass (1 pre-existing ai-service.test.js failure)
+- Lint: 0 new errors (1 pre-existing ai-service.js >250 lines)
+- Build: v1.9.86.0 OK
+
+Stage Summary:
+- Analytics dashboard now renders when vacancies load
+- Initial render works on panel open
+- 10 new tests for renderAnalytics()
+- Version 1.9.86.0

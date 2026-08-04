@@ -126,6 +126,11 @@ export function toggleSidebar() {
     const firstFocusable = refs.shadowRoot?.querySelector('button:not([disabled]), [tabindex="0"]');
     if (firstFocusable) setTimeout(() => firstFocusable.focus(), 350);
 
+    // v1.9.86.0: Render analytics on panel open if vacancies already loaded
+    if (panelState.vacancies.length > 0) {
+      renderAnalytics(panelState.vacancies, panelState.resume);
+    }
+
     // v1.9.40.0: Auto-load negotiations in background when sidebar opens
     loadNegotiationsInBackground();
   } else {
@@ -142,7 +147,7 @@ export function updateVacancies(vacancies) {
   setVacancies(vacancies);
   renderVacancyList();
   updateVacancyCounts();
-  // Re-run Skill Gap Analysis when vacancies change
+  renderAnalytics(vacancies, panelState.resume);
   if (panelState.resume) updateSkillGapSection(panelState.resume);
 }
 
