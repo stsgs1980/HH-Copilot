@@ -65,17 +65,20 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
   set('vac-match-title', b.title + '/25');
   set('vac-match-salary', b.salary + '/15');
   set('vac-match-exp', b.experience + '/10');
+  set('vac-match-loc', (b.location || 0) + '/15');
 
   // Stacked bar -- fill 100% width proportionally
-  const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
+  const total = Math.max(1, b.skills + b.title + b.salary + b.experience + (b.location || 0));
   const barSkills = el('vac-match-bar-skills');
   const barTitle = el('vac-match-bar-title');
   const barSalary = el('vac-match-bar-salary');
   const barExp = el('vac-match-bar-exp');
+  const barLoc = el('vac-match-bar-loc');
   if (barSkills) barSkills.style.width = ((b.skills / total) * 100).toFixed(1) + '%';
   if (barTitle) barTitle.style.width = ((b.title / total) * 100).toFixed(1) + '%';
   if (barSalary) barSalary.style.width = ((b.salary / total) * 100).toFixed(1) + '%';
   if (barExp) barExp.style.width = ((b.experience / total) * 100).toFixed(1) + '%';
+  if (barLoc) barLoc.style.width = (((b.location || 0) / total) * 100).toFixed(1) + '%';
 
   // Matching/missing skills details
   const detailsSection = el('vac-match-details');

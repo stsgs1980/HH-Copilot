@@ -97,12 +97,17 @@ export function getVacanciesSection() {
           <div id="vac-match-exp" style="font-size:16px;font-weight:700;color:#7C3AED;">0</div>
           <div style="font-size:12px;color:#52525b;margin-top:1px;">Опыт</div>
         </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-loc" style="font-size:16px;font-weight:700;color:#0EA5E9;">0</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">Локация</div>
+        </div>
       </div>
       <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:#f4f4f5;">
         <div id="vac-match-bar-skills" style="width:0%;background:linear-gradient(90deg,#059669,#34D399);border-radius:4px 0 0 4px;"></div>
         <div id="vac-match-bar-title" style="width:0%;background:linear-gradient(90deg,#2563EB,#60A5FA);"></div>
         <div id="vac-match-bar-salary" style="width:0%;background:linear-gradient(90deg,#D97706,#FBBF24);"></div>
-        <div id="vac-match-bar-exp" style="width:0%;background:linear-gradient(90deg,#7C3AED,#A78BFA);border-radius:0 4px 4px 0;"></div>
+        <div id="vac-match-bar-exp" style="width:0%;background:linear-gradient(90deg,#7C3AED,#A78BFA);"></div>
+        <div id="vac-match-bar-loc" style="width:0%;background:linear-gradient(90deg,#0EA5E9,#38BDF8);border-radius:0 4px 4px 0;"></div>
       </div>
       <div id="vac-match-details" style="margin-top:10px;display:none;">
         <div id="vac-match-matching-skills" style="margin-bottom:6px;display:none;">
@@ -145,6 +150,7 @@ export function getVacanciesSection() {
           <label for="cover-letter-text" style="font-size:11px;font-weight:500;">Шаблон сопроводительного</label>
           <div style="display:flex;align-items:center;gap:4px;">
             <button id="cover-letter-ai-btn" type="button" aria-label="Сгенерировать сопроводительное с AI" style="font-size:11px;padding:3px 10px;background:#7c3aed;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:500;">Сгенерировать с AI</button>
+            <button id="cover-letter-clear-btn" type="button" aria-label="Очистить сопроводительное" style="font-size:11px;padding:3px 8px;background:#f4f4f5;color:#52525b;border:1px solid #e4e4e7;border-radius:6px;cursor:pointer;">Очистить</button>
             <span style="font-size:11px;color:#52525b;">Тон:</span>
             <select id="s-letter-tone" aria-label="Тон сопроводительного письма" style="font-size:11px;padding:3px 6px;border:1px solid #e4e4e7;border-radius:6px;background:#fff;">
               <option value="formal">Формальный</option>
