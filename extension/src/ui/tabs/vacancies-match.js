@@ -61,10 +61,10 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
   const el = (id) => refs.shadowRoot?.getElementById(id);
   const b = breakdown || { skills: 0, title: 0, salary: 0, experience: 0 };
   const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
-  set('vac-match-skills', b.skills + '/40');
-  set('vac-match-title', b.title + '/30');
+  set('vac-match-skills', b.skills + '/35');
+  set('vac-match-title', b.title + '/25');
   set('vac-match-salary', b.salary + '/15');
-  set('vac-match-exp', b.experience + '/15');
+  set('vac-match-exp', b.experience + '/10');
 
   // Stacked bar -- fill 100% width proportionally
   const total = Math.max(1, b.skills + b.title + b.salary + b.experience);

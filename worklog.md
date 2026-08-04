@@ -4952,3 +4952,17 @@ Stage Summary:
 ---
 ---
 ---
+Task ID: task-1
+Agent: opencode
+Task: Fix incorrect maximums in vacancies-match.js
+
+Work Log:
+- Read extension/src/ui/tabs/vacancies-match.js:64-67
+- Fixed maximums: skills 40->35, title 30->25, experience 15->10 (salary stays 15)
+- Lint passed (npm run lint): 1 error (pre-existing ai-service.js >250 lines), 73 warnings (pre-existing)
+- No new errors or warnings introduced
+
+Stage Summary:
+- Match score UI labels corrected to reflect actual weights
+- Ready to commit
+---
