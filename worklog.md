@@ -4906,4 +4906,18 @@ Work Log:
 Stage Summary:
 - Ollama integration complete: provider dropdown in Settings, auto-fill Base URL, model fetch from /api/tags
 - Z.ai remains default (works out of the box), Ollama requires local `ollama serve`
+
+---
+Task ID: version-bump-1.9.78.0
+Agent: main
+Task: Bump version to 1.9.78.0 for Ollama release
+
+Work Log:
+- Updated version in 5 files: manifest.json, package.json, version.js, popup/index.html (dynamic), README.md
+- Version synced: 1.9.77.0 -> 1.9.78.0
+- Rebuilt dist: content.js, page-world.js, background/index.js all at v1.9.78.0
+
+Stage Summary:
+- Version bumped to 1.9.78.0 for Ollama provider feature
+---
 ---
