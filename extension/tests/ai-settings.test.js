@@ -370,8 +370,9 @@ describe('F5.6 -- internal helpers', () => {
     expect(_internal.getFieldValue(sr, 'nope')).toBe('');
   });
 
-  it('AI_FIELD_IDS has exactly 7 ids (baseUrl, apiKey, token, chatId, userId, model, timeout)', () => {
-    expect(_internal.AI_FIELD_IDS).toHaveLength(7);
+  it('AI_FIELD_IDS has exactly 8 ids (provider, baseUrl, apiKey, token, chatId, userId, model, timeout)', () => {
+    expect(_internal.AI_FIELD_IDS).toHaveLength(8);
+    expect(_internal.AI_FIELD_IDS).toContain('s-ai-provider');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-base-url');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-api-key');
     expect(_internal.AI_FIELD_IDS).toContain('s-ai-token');

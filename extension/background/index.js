@@ -17,6 +17,7 @@ import {
   setAiConfig,
   isAiAvailable,
 } from '../src/services/ai-service.js';
+import { fetchOllamaModels } from '../src/services/ai-providers.js';
 import {
   generateCoverLetterAI,
   generateChatReply,
@@ -182,6 +183,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'ai-available':
       isAiAvailable().then(sendResponse);
+      return true;
+
+    case 'ai-fetch-ollama-models':
+      fetchOllamaModels(message.baseUrl)
+        .then((models) => sendResponse({ ok: true, models }))
+        .catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
       return true;
   }
 });

@@ -4875,3 +4875,35 @@ Work Log:
 
 Stage Summary:
 - Skill definition updated to v2.5.0
+
+---
+Task ID: node-update-and-push
+Agent: main
+Task: Update system Node to v24 (fix vitest/rolldown), commit and push
+
+Work Log:
+- Diagnosed: OpenCode uses Node 20.11.1 (system), fnm has v22.22.3 as default
+- Root cause: rolldown (vitest 4.x dep) requires Node 20.19.0+, system Node 20.11.1 too old
+- Fixed: updated system Node via winget install OpenJS.NodeJS.LTS to v24.18.1
+- Reinstalled node_modules under Node 24, all 651 tests pass
+- Committed: vitest bump, .gitattributes, docs table rewrite, new test files
+
+---
+Task ID: ollama-provider
+Agent: main
+Task: Add Ollama provider support for local LLM inference
+
+Work Log:
+- Created src/services/ai-providers.js: provider detection (Z.ai/Ollama/Custom), fetchOllamaModels()
+- Modified src/services/ai-service.js: import from ai-providers, provider-specific auth headers, skip Z.ai X-Token for Ollama
+- Created src/ui/panel/ai-settings-handlers.js: provider change auto-fill, model fetch button handler
+- Modified src/ui/panel/ai-settings.js: added s-ai-provider field, delegated handlers to ai-settings-handlers.js
+- Modified src/ui/html/tabs/settings.js: dropdown provider selector, "Загрузить" button for Ollama models
+- Modified background/index.js: added ai-fetch-ollama-models message handler
+- Modified tests/ai-settings.test.js: updated AI_FIELD_IDS count from 7 to 8
+- All 651 tests pass, build OK, no lint errors (only soft AHG warnings)
+
+Stage Summary:
+- Ollama integration complete: provider dropdown in Settings, auto-fill Base URL, model fetch from /api/tags
+- Z.ai remains default (works out of the box), Ollama requires local `ollama serve`
+---
