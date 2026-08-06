@@ -38,9 +38,14 @@ export function getVacanciesSection() {
         </select>
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:11px;color:#52525b;white-space:nowrap;">Мин. совпадение:</span>
-        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="flex:1;">
+        <span style="font-size:11px;color:#52525b;white-space:nowrap;">Мин. совпадение (показ):</span>
+        <input type="range" id="vac-score-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения для показа в релевантных" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="flex:1;">
         <span id="vac-score-label" style="font-size:11px;font-weight:600;color:#52525b;min-width:32px;text-align:right;">0%</span>
+      </div>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:#52525b;white-space:nowrap;">Мин. совпадение (скрыть):</span>
+        <input type="range" id="vac-show-range" min="0" max="100" value="0" aria-label="Минимальный процент совпадения для любого показа" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="flex:1;">
+        <span id="vac-show-label" style="font-size:11px;font-weight:600;color:#52525b;min-width:32px;text-align:right;">0%</span>
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <span style="font-size:11px;color:#52525b;">График:</span>

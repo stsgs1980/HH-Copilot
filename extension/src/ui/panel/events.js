@@ -118,13 +118,24 @@ export function bindTabClicks(container) {
 }
 
 function bindInputChanges(container) {
-  /* Score range slider */
+  /* Score range slider (minMatchScore - relevant threshold) */
   const scoreRange = container.querySelector('#vac-score-range');
   const scoreLabel = container.querySelector('#vac-score-label');
   if (scoreRange && scoreLabel) {
     scoreRange.addEventListener('input', () => {
       scoreLabel.textContent = scoreRange.value + '%';
       scoreRange.setAttribute('aria-valuenow', scoreRange.value);
+      filterVacancies();
+    });
+  }
+
+  /* Show range slider (minShowScore - hide completely threshold) */
+  const showRange = container.querySelector('#vac-show-range');
+  const showLabel = container.querySelector('#vac-show-label');
+  if (showRange && showLabel) {
+    showRange.addEventListener('input', () => {
+      showLabel.textContent = showRange.value + '%';
+      showRange.setAttribute('aria-valuenow', showRange.value);
       filterVacancies();
     });
   }

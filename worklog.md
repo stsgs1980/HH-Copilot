@@ -5348,3 +5348,21 @@ Stage Summary:
 - 1 file modified: extension/src/ui/tabs/vacancies.js
 - Build successful: v1.9.86.0, 811.6kb
 - Next: enrichment pipeline for keySkills fetching
+---
+Task ID: enrichment-pipeline-minShowScore-setting
+Agent: main
+Task: Add minShowScore setting for vacancy filtering (enrichment pipeline step 1)
+
+Work Log:
+- Added minShowScore default (30) to storage-settings.js
+- Added second slider "Мин. совпадение (скрыть)" in vacancies tab HTML
+- Updated render.js to initialize both sliders (minMatchScore + minShowScore)
+- Updated events.js to bind event listener for minShowScore slider
+- Vacancies with matchScore < minShowScore (default 30%) are completely hidden in vacancies.js render
+- Filter functions (events-a11y.js, helpers.js) work on already-filtered set (>= minShowScore)
+
+Stage Summary:
+- Settings: minMatchScore (60) = relevant threshold, minShowScore (30) = hide completely threshold
+- UI: Two sliders in Vacancies tab with labels
+- Build: v1.9.86.0, 813.4kb
+- Next: Trigger enrichment pipeline automatically and re-render after enrichment

@@ -102,15 +102,26 @@ export function renderInitialData() {
   renderMyResumesPanel();
 
   // v1.9.36.0: Initialize score range slider from settings minMatchScore
+  // v1.9.87.0: Initialize minShowScore slider
   const scoreRange = refs.shadowRoot?.getElementById('vac-score-range');
   const scoreLabel = refs.shadowRoot?.getElementById('vac-score-label');
+  const showRange = refs.shadowRoot?.getElementById('vac-show-range');
+  const showLabel = refs.shadowRoot?.getElementById('vac-show-label');
   const minMatch = panelState.settings?.minMatchScore || 60;
+  const minShow = panelState.settings?.minShowScore || 30;
   if (scoreRange) {
     scoreRange.value = minMatch;
     scoreRange.setAttribute('aria-valuenow', minMatch);
   }
   if (scoreLabel) {
     scoreLabel.textContent = minMatch + '%';
+  }
+  if (showRange) {
+    showRange.value = minShow;
+    showRange.setAttribute('aria-valuenow', minShow);
+  }
+  if (showLabel) {
+    showLabel.textContent = minShow + '%';
   }
 
   // Show match score card if we're on a vacancy detail page with parsed data

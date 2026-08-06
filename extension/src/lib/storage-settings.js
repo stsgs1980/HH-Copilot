@@ -10,7 +10,7 @@
 // ===============================================
 
 export const DEFAULT_SETTINGS = {
-  mode: 'manual', dailyLimit: 200, minMatchScore: 60,
+  mode: 'manual', dailyLimit: 200, minMatchScore: 60, minShowScore: 30,
   letterTone: 'formal', searchInterval: 300,
   autoScroll: true, showMatchScore: true, confirmBeforeApply: true
 };
