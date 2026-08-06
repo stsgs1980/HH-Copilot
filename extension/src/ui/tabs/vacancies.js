@@ -29,20 +29,30 @@ export function renderVacancyList() {
   }
 
   // v1.9.36.0: Use minMatchScore from settings to separate relevant vs irrelevant vacancies
+  // v1.9.87.0: Add minShowScore to completely hide very low matches (default 30)
   const minMatch = panelState.settings?.minMatchScore || 60;
+  const minShow = panelState.settings?.minShowScore || 30;
   const allVacancies = panelState.vacancies.slice(0, 50);
   const relevant = allVacancies.filter(v => (v.matchScore != null ? v.matchScore : 0) >= minMatch);
-  const irrelevant = allVacancies.filter(v => (v.matchScore != null ? v.matchScore : 0) < minMatch);
+  const irrelevant = allVacancies.filter(v => {
+    const s = v.matchScore != null ? v.matchScore : 0;
+    return s < minMatch && s >= minShow;
+  });
 
   // Render relevant vacancies (full list)
   let html = relevant.map((v, idx) => renderVacancyItem(v, idx, false)).join('');
 
   // Render irrelevant vacancies (collapsed, hidden by default)
   if (irrelevant.length > 0) {
+    const hiddenCount = allVacancies.filter(v => {
+      const s = v.matchScore != null ? v.matchScore : 0;
+      return s < minShow;
+    }).length;
+    
     html += '<div style="margin-top:8px;padding:8px 10px;background:#F4F4F5;border-radius:8px;border:1px solid #E4E4E7;">';
     html += '<button data-action="toggle-irrelevant" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;cursor:pointer;font-size:11px;color:#71717A;padding:0;">';
     html += '<span class="icon"><svg class="irrelevant-chevron" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.15s;transform:rotate(180deg);" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span>';
-    html += '<span>Низкое совпадение (' + irrelevant.length + ')</span>';
+    html += '<span>Низкое совпадение ' + minShow + '–' + (minMatch - 1) + '% (' + irrelevant.length + ')' + (hiddenCount ? ' · скрыто < ' + minShow + '%: ' + hiddenCount : '') + '</span>';
     html += '</button>';
     html += '<div class="irrelevant-list" style="margin-top:6px;">';
     html += irrelevant.map((v, idx) => renderVacancyItem(v, relevant.length + idx, true)).join('');

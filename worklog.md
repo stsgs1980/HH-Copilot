@@ -5283,3 +5283,68 @@ Stage Summary:
 - cascade sync works: auto-updated 0 tasks, validate passed (43 tasks, 8 phases)
 
 ---
+---
+Task ID: cleanup-repo-artifacts
+Agent: main
+Task: Cleanup tracked artifacts and duplicate scripts from repository
+
+Work Log:
+- Removed extension/dist/ from git tracking (9 build artifact files)
+- Removed duplicate AHG scripts from root scripts/ (10 scripts: validate.sh, co-change-check.sh, line-count-check.sh, check-hooks-lib.sh, check-hooks-snapshot.sh, check-hooks-verify.sh, check-agent.sh, audit.sh, ahg.sh, ahg-bump-safe.sh) -- use submodule versions instead
+- Removed docs/worklog-temp.md (temporary file)
+- Removed tools/verify-docs/ (11 files, AHG internal tooling not used in HH-Copilot)
+- Removed skills/ (2 skill files: anti-hallucination-guard, anti-monolith -- AI agent skills, not project source)
+- Updated .gitignore already has dist/ ignored, now enforced
+
+Stage Summary:
+- Repository cleaned of build artifacts and duplicate tooling
+- AHG submodule remains as single source of truth for hooks/scripts
+- Ready to commit cleanup
+---
+Task ID: cleanup-unused-submodule-scripts
+Agent: main
+Task: Remove unused submodule and standalone scripts
+
+Work Log:
+- Removed .superpowers-zai submodule (not initialized, not used in HH-Copilot)
+- Removed validate_html.py (standalone W3C validator, not integrated in CI/build)
+- Removed qodana.yaml (not used)
+- Updated .gitmodules (submodule entry auto-removed by git rm)
+
+Stage Summary:
+- Repository cleaned of unused submodule and orphan scripts
+- Only active submodules remain: anti-hallucination-guard, FabInspector
+- Ready to commit cleanup
+---
+Task ID: cleanup-fabinspector-submodule
+Agent: main
+Task: Remove unused FabInspector submodule (Next.js dev tool, not used in Chrome Extension)
+
+Work Log:
+- FabInspector is a visual DOM inspector for Next.js 15 + React 19 (requires framer-motion, react-syntax-highlighter)
+- HH-Copilot is a Vanilla JS Chrome Extension (no React/Next runtime)
+- Submodule was added "for reference" only — code never integrated, never built, never used
+- Caused Windows git pull issues (pack file lock + submodule access problems per AGENTS.md)
+- Removed submodule: git submodule deinit -f FabInspector && git rm FabInspector
+- .gitmodules automatically cleaned (only anti-hallucination-guard remains)
+
+Stage Summary:
+- Repository cleaned of unused Next.js dev tool submodule
+- Only active submodule remains: anti-hallucination-guard (pre-commit hooks)
+- Reduced clone size and eliminated git pull friction on Windows
+---
+Task ID: fix-vacancy-filter-low-match
+Agent: main
+Task: Fix low match vacancy filter - hide matchScore < 30 completely
+
+Work Log:
+- Added minShowScore threshold (default 30) to completely hide very low match vacancies
+- Previously: relevant >= 60, irrelevant < 60 (collapsed grey section)
+- Now: relevant >= 60, irrelevant 30-59 (collapsed), hidden < 30 (not rendered)
+- Updated "Низкое совпадение" button label to show range "30-59%" and count of hidden < 30%
+- Vacancies with 20% match score will no longer appear in UI
+
+Stage Summary:
+- 1 file modified: extension/src/ui/tabs/vacancies.js
+- Build successful: v1.9.86.0, 811.6kb
+- Next: enrichment pipeline for keySkills fetching
