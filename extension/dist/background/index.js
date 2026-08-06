@@ -54,6 +54,70 @@ var init_ai_providers = __esm({
   }
 });
 
+// src/services/ai-service-ollama.js
+async function sendOllamaNative(messages, model, temperature, timeoutMs, fetchImpl, baseUrl) {
+  const base = (baseUrl || "http://localhost:11434").replace(/\/v1\/?$/, "").replace(/\/$/, "");
+  const url = base + "/api/chat";
+  const body = {
+    model,
+    messages,
+    stream: false,
+    options: typeof temperature === "number" ? { temperature } : void 0
+  };
+  ollamaLog.info("Ollama request: url=" + url + ", model=" + model + ", msgs=" + messages.length);
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const response = await fetchImpl(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Origin": "http://localhost:11434"
+      },
+      body: JSON.stringify(body),
+      signal: controller ? controller.signal : void 0
+    });
+    ollamaLog.info("Ollama response: status=" + response.status + ", ok=" + response.ok);
+    if (!response.ok) {
+      const code = response.status === 429 ? "RATE_LIMIT" : "HTTP_" + response.status;
+      let errBody = "";
+      try {
+        errBody = await response.text();
+      } catch (_e) {
+      }
+      ollamaLog.warn("Ollama HTTP " + response.status + ": " + errBody.slice(0, 500));
+      return { ok: false, error: "HTTP " + response.status + ": " + errBody.slice(0, 200), code, httpBody: errBody.slice(0, 500) };
+    }
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      return { ok: false, error: "Invalid JSON from Ollama: " + e.message, code: "BAD_JSON" };
+    }
+    const text = data?.message?.content;
+    if (!text || typeof text !== "string" || text.trim().length === 0) {
+      return { ok: false, error: "Ollama returned empty content", code: "EMPTY", raw: data };
+    }
+    return { ok: true, text: text.trim() };
+  } catch (err) {
+    const isAbort = err && (err.name === "AbortError" || /aborted/i.test(err.message || ""));
+    if (isAbort) {
+      return { ok: false, error: "Ollama timeout after " + timeoutMs + "ms", code: "TIMEOUT" };
+    }
+    ollamaLog.warn("Ollama network error: " + (err.message || String(err)));
+    return { ok: false, error: err.message || String(err), code: "NETWORK" };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+var ollamaLog;
+var init_ai_service_ollama = __esm({
+  "src/services/ai-service-ollama.js"() {
+    init_anti_hallucination();
+    ollamaLog = createLogger("AI-Ollama");
+  }
+});
+
 // src/services/ai-service.js
 async function getAiConfig() {
   try {
@@ -189,66 +253,12 @@ async function sendMessage(params) {
     if (timer) clearTimeout(timer);
   }
 }
-async function sendOllamaNative(messages, model, temperature, timeoutMs, fetchImpl, baseUrl) {
-  const base = (baseUrl || "http://localhost:11434").replace(/\/v1\/?$/, "").replace(/\/$/, "");
-  const url = base + "/api/chat";
-  const body = {
-    model,
-    messages,
-    stream: false,
-    options: typeof temperature === "number" ? { temperature } : void 0
-  };
-  aiLog.info("Ollama request: url=" + url + ", model=" + model + ", msgs=" + messages.length);
-  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
-  try {
-    const response = await fetchImpl(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Origin": "http://localhost:11434"
-      },
-      body: JSON.stringify(body),
-      signal: controller ? controller.signal : void 0
-    });
-    aiLog.info("Ollama response: status=" + response.status + ", ok=" + response.ok);
-    if (!response.ok) {
-      const code = response.status === 429 ? "RATE_LIMIT" : "HTTP_" + response.status;
-      let errBody = "";
-      try {
-        errBody = await response.text();
-      } catch (_e) {
-      }
-      aiLog.warn("Ollama HTTP " + response.status + ": " + errBody.slice(0, 500));
-      return { ok: false, error: "HTTP " + response.status + ": " + errBody.slice(0, 200), code, httpBody: errBody.slice(0, 500) };
-    }
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      return { ok: false, error: "Invalid JSON from Ollama: " + e.message, code: "BAD_JSON" };
-    }
-    const text = data?.message?.content;
-    if (!text || typeof text !== "string" || text.trim().length === 0) {
-      return { ok: false, error: "Ollama returned empty content", code: "EMPTY", raw: data };
-    }
-    return { ok: true, text: text.trim() };
-  } catch (err) {
-    const isAbort = err && (err.name === "AbortError" || /aborted/i.test(err.message || ""));
-    if (isAbort) {
-      return { ok: false, error: "Ollama timeout after " + timeoutMs + "ms", code: "TIMEOUT" };
-    }
-    aiLog.warn("Ollama network error: " + (err.message || String(err)));
-    return { ok: false, error: err.message || String(err), code: "NETWORK" };
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
 var aiLog, DEFAULT_BASE_URL, DEFAULT_TIMEOUT_MS, DEFAULT_MODEL, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, BUILTIN_DEFAULTS, OLLAMA_DEFAULTS, AI_CONFIG_KEY;
 var init_ai_service = __esm({
   "src/services/ai-service.js"() {
     init_anti_hallucination();
     init_ai_providers();
+    init_ai_service_ollama();
     aiLog = createLogger("AIService");
     DEFAULT_BASE_URL = "https://internal-api.z.ai/v1";
     DEFAULT_TIMEOUT_MS = 6e4;
@@ -632,7 +642,7 @@ var init_cover_letter_evidence = __esm({
 function buildPrompt(scorecard, evidence, tone) {
   const toneDesc = TONE_DESCRIPTIONS[tone] || TONE_DESCRIPTIONS.formal;
   const system = SYSTEM_PROMPT_TEMPLATE.replace("{tone}", toneDesc);
-  const outcomes = (scorecard.outcomes || []).map((o, i) => "    - " + o).join("\n");
+  const outcomes = (scorecard.outcomes || []).map((o, _i) => "    - " + o).join("\n");
   const evidenceLines = (evidence || []).map((e) => "  [" + e.competency + "]: " + e.evidenceText + "  [\u0443\u0432\u0435\u0440\u0435\u043D\u043D\u043E\u0441\u0442\u044C: " + e.confidence + "]").join("\n");
   const user = `\u0412\u0410\u041A\u0410\u041D\u0421\u0418\u042F:
   \u041F\u043E\u0437\u0438\u0446\u0438\u044F: ${scorecard.position || "(\u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430)"}
@@ -2037,10 +2047,66 @@ var init_match_scorer_location = __esm({
   }
 });
 
+// src/lib/ai-semantic.js
+async function computeSemanticSimilarity(resume, vacancy) {
+  if (!resume || !vacancy) return 0;
+  const prompt = `Compare this resume to this job vacancy. Return a single number 0-1 indicating how well they match.
+
+Resume title: ${resume.title || "N/A"}
+Resume skills: ${(resume.skills || []).join(", ")}
+Resume experience: ${resume.experienceTotal || "N/A"}
+
+Vacancy title: ${vacancy.title || "N/A"}
+Vacancy skills: ${(vacancy.keySkills || []).join(", ")}
+Vacancy requirements: ${vacancy.description?.text?.substring(0, 500) || "N/A"}
+
+Return ONLY a number between 0 and 1, like 0.75`;
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${await getApiKey()}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1,
+        max_tokens: 10
+      })
+    });
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim() || "0";
+    const score = parseFloat(content) || 0;
+    const clamped = Math.max(0, Math.min(1, score));
+    semanticLog.info("Semantic score: " + clamped);
+    return clamped;
+  } catch (err) {
+    semanticLog.error("Semantic comparison failed: " + err.message);
+    return 0;
+  }
+}
+async function getApiKey() {
+  const data = await chrome.storage.local.get("aiApiKey");
+  return data.aiApiKey || "";
+}
+var semanticLog;
+var init_ai_semantic = __esm({
+  "src/lib/ai-semantic.js"() {
+    init_anti_hallucination();
+    semanticLog = createLogger("Semantic");
+  }
+});
+
 // src/lib/match-scorer.js
-function computeMatchScore(resume, vacancy) {
+async function computeMatchScore(resume, vacancy, mode = "precise") {
   if (!resume || !vacancy) {
-    return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0 }, details: {} };
+    return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0, semantic: 0 }, details: {} };
+  }
+  const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
+  let semanticScore = 0;
+  if (mode === "flexible") {
+    semanticScore = await computeSemanticSimilarity(resume, vacancy);
   }
   const skillResult = scoreSkills(resume, vacancy);
   const titleResult = scoreTitle(resume, vacancy);
@@ -2048,17 +2114,20 @@ function computeMatchScore(resume, vacancy) {
   const expResult = scoreExperience(resume, vacancy);
   const locResult = scoreLocation(resume, vacancy);
   const breakdown = {
-    skills: Math.round(skillResult.score * W_SKILLS),
-    title: Math.round(titleResult.score * W_TITLE),
-    salary: Math.round(salaryResult.score * W_SALARY),
-    experience: Math.round(expResult.score * W_EXP),
-    location: locResult.score
+    skills: Math.round(skillResult.score * (profile.skills / 40)),
+    title: Math.round(titleResult.score * (profile.title / 30)),
+    salary: Math.round(salaryResult.score * (profile.salary / 15)),
+    experience: Math.round(expResult.score * (profile.experience / 15)),
+    location: locResult.score,
+    semantic: mode === "flexible" ? Math.round(semanticScore * 45) : 0
   };
-  let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location);
-  if (titleResult.score === 0 && titleResult.similarity === 0) {
-    total = Math.min(total, 25);
-  } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
-    total = Math.min(total, 40);
+  let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location + breakdown.semantic);
+  if (mode === "precise") {
+    if (titleResult.score === 0 && titleResult.similarity === 0) {
+      total = Math.min(total, 25);
+    } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
+      total = Math.min(total, 40);
+    }
   }
   const details = {
     matchingSkills: skillResult.matching,
@@ -2070,12 +2139,13 @@ function computeMatchScore(resume, vacancy) {
     titleSimilarity: titleResult.similarity,
     salaryMatch: salaryResult.reason,
     experienceMatch: expResult.reason,
-    locationMatch: locResult.reason
+    locationMatch: locResult.reason,
+    semanticScore
   };
-  scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience + " loc=" + breakdown.location);
+  scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience + " loc=" + breakdown.location + " semantic=" + breakdown.semantic);
   return { total, breakdown, details };
 }
-var scoreLog, W_SKILLS, W_TITLE, W_SALARY, W_EXP;
+var scoreLog, WEIGHT_PROFILES;
 var init_match_scorer = __esm({
   "src/lib/match-scorer.js"() {
     init_anti_hallucination();
@@ -2084,11 +2154,12 @@ var init_match_scorer = __esm({
     init_match_scorer_salary();
     init_match_scorer_experience();
     init_match_scorer_location();
+    init_ai_semantic();
     scoreLog = createLogger("Scorer");
-    W_SKILLS = 35 / 40;
-    W_TITLE = 25 / 30;
-    W_SALARY = 15 / 15;
-    W_EXP = 10 / 15;
+    WEIGHT_PROFILES = {
+      precise: { skills: 35, title: 25, salary: 15, experience: 10, location: 15 },
+      flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 }
+    };
   }
 });
 
@@ -2112,7 +2183,7 @@ async function generateAICoverLetter(vacancy, resume, opts) {
   scorecard.position = vacancy.title || "";
   scorecard.company = vacancy.company || "";
   aiLetterLog.info("Scorecard: " + scorecard.mission + " | " + scorecard.outcomes.length + " outcomes | " + scorecard.competencies.length + " competencies");
-  const matchResult = computeMatchScore(resume, vacancy);
+  const matchResult = await computeMatchScore(resume, vacancy);
   aiLetterLog.info("Match: " + matchResult.total + "% | matching=" + (matchResult.details.matchingSkills || []).length);
   const evidence = mapEvidence(scorecard, resume, matchResult);
   if (evidence.length === 0) {

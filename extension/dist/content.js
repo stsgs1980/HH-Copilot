@@ -628,6 +628,46 @@
     }
     return [];
   }
+  function testSelector(name, root = document) {
+    const selectors = getSelectors(name);
+    for (const sel of selectors) {
+      try {
+        const els = root.querySelectorAll(sel);
+        if (els && els.length > 0) {
+          return { matched: true, selector: sel, count: els.length, elements: Array.from(els) };
+        }
+      } catch (_e) {
+      }
+    }
+    return { matched: false, selector: null, count: 0, elements: [] };
+  }
+  function validateAllSelectors(root = document) {
+    const results = { working: [], failing: [], details: {} };
+    for (const name of Object.keys(HH_SELECTORS)) {
+      const test = testSelector(name, root);
+      results.details[name] = test;
+      if (test.matched) {
+        results.working.push(name);
+      } else {
+        results.failing.push(name);
+      }
+    }
+    return results;
+  }
+  function logSelectorValidation(root = document) {
+    const results = validateAllSelectors(root);
+    console.group("[HH-AR][Selectors] Validation Results");
+    console.log(`Working: ${results.working.length} | Failing: ${results.failing.length}`);
+    if (results.failing.length > 0) {
+      console.warn("Failing selectors:", results.failing);
+      for (const name of results.failing) {
+        const detail = results.details[name];
+        console.warn(`  ${name}: tried ${detail.selector ? "last: " + detail.selector : "none"} (${HH_SELECTORS[name].length} in chain)`);
+      }
+    }
+    console.groupEnd();
+    return results;
+  }
   var HH_SELECTORS;
   var init_selectors = __esm({
     "src/lib/selectors.js"() {
@@ -1391,7 +1431,7 @@
   function crudeStem2(word) {
     return word.length >= STEM_MIN_LEN ? word.substring(0, STEM_LEN2) : word;
   }
-  function buildStemMap(words) {
+  function _buildStemMap(words) {
     const map = /* @__PURE__ */ new Map();
     for (const w of words) {
       const s = crudeStem2(w);
@@ -1936,10 +1976,66 @@
     }
   });
 
+  // src/lib/ai-semantic.js
+  async function computeSemanticSimilarity(resume, vacancy) {
+    if (!resume || !vacancy) return 0;
+    const prompt = `Compare this resume to this job vacancy. Return a single number 0-1 indicating how well they match.
+
+Resume title: ${resume.title || "N/A"}
+Resume skills: ${(resume.skills || []).join(", ")}
+Resume experience: ${resume.experienceTotal || "N/A"}
+
+Vacancy title: ${vacancy.title || "N/A"}
+Vacancy skills: ${(vacancy.keySkills || []).join(", ")}
+Vacancy requirements: ${vacancy.description?.text?.substring(0, 500) || "N/A"}
+
+Return ONLY a number between 0 and 1, like 0.75`;
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${await getApiKey()}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.1,
+          max_tokens: 10
+        })
+      });
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content?.trim() || "0";
+      const score = parseFloat(content) || 0;
+      const clamped = Math.max(0, Math.min(1, score));
+      semanticLog.info("Semantic score: " + clamped);
+      return clamped;
+    } catch (err) {
+      semanticLog.error("Semantic comparison failed: " + err.message);
+      return 0;
+    }
+  }
+  async function getApiKey() {
+    const data = await chrome.storage.local.get("aiApiKey");
+    return data.aiApiKey || "";
+  }
+  var semanticLog;
+  var init_ai_semantic = __esm({
+    "src/lib/ai-semantic.js"() {
+      init_anti_hallucination();
+      semanticLog = createLogger("Semantic");
+    }
+  });
+
   // src/lib/match-scorer.js
-  function computeMatchScore(resume, vacancy) {
+  async function computeMatchScore(resume, vacancy, mode = "precise") {
     if (!resume || !vacancy) {
-      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0 }, details: {} };
+      return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0, semantic: 0 }, details: {} };
+    }
+    const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
+    let semanticScore = 0;
+    if (mode === "flexible") {
+      semanticScore = await computeSemanticSimilarity(resume, vacancy);
     }
     const skillResult = scoreSkills(resume, vacancy);
     const titleResult = scoreTitle(resume, vacancy);
@@ -1947,17 +2043,20 @@
     const expResult = scoreExperience(resume, vacancy);
     const locResult = scoreLocation(resume, vacancy);
     const breakdown = {
-      skills: Math.round(skillResult.score * W_SKILLS),
-      title: Math.round(titleResult.score * W_TITLE),
-      salary: Math.round(salaryResult.score * W_SALARY),
-      experience: Math.round(expResult.score * W_EXP),
-      location: locResult.score
+      skills: Math.round(skillResult.score * (profile.skills / 40)),
+      title: Math.round(titleResult.score * (profile.title / 30)),
+      salary: Math.round(salaryResult.score * (profile.salary / 15)),
+      experience: Math.round(expResult.score * (profile.experience / 15)),
+      location: locResult.score,
+      semantic: mode === "flexible" ? Math.round(semanticScore * 45) : 0
     };
-    let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location);
-    if (titleResult.score === 0 && titleResult.similarity === 0) {
-      total = Math.min(total, 25);
-    } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
-      total = Math.min(total, 40);
+    let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location + breakdown.semantic);
+    if (mode === "precise") {
+      if (titleResult.score === 0 && titleResult.similarity === 0) {
+        total = Math.min(total, 25);
+      } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
+        total = Math.min(total, 40);
+      }
     }
     const details = {
       matchingSkills: skillResult.matching,
@@ -1969,12 +2068,13 @@
       titleSimilarity: titleResult.similarity,
       salaryMatch: salaryResult.reason,
       experienceMatch: expResult.reason,
-      locationMatch: locResult.reason
+      locationMatch: locResult.reason,
+      semanticScore
     };
-    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience + " loc=" + breakdown.location);
+    scoreLog.info("Score " + total + "%: skills=" + breakdown.skills + " title=" + breakdown.title + " salary=" + breakdown.salary + " exp=" + breakdown.experience + " loc=" + breakdown.location + " semantic=" + breakdown.semantic);
     return { total, breakdown, details };
   }
-  var scoreLog, W_SKILLS, W_TITLE, W_SALARY, W_EXP;
+  var scoreLog, WEIGHT_PROFILES;
   var init_match_scorer = __esm({
     "src/lib/match-scorer.js"() {
       init_anti_hallucination();
@@ -1983,11 +2083,12 @@
       init_match_scorer_salary();
       init_match_scorer_experience();
       init_match_scorer_location();
+      init_ai_semantic();
       scoreLog = createLogger("Scorer");
-      W_SKILLS = 35 / 40;
-      W_TITLE = 25 / 30;
-      W_SALARY = 15 / 15;
-      W_EXP = 10 / 15;
+      WEIGHT_PROFILES = {
+        precise: { skills: 35, title: 25, salary: 15, experience: 10, location: 15 },
+        flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 }
+      };
     }
   });
 
@@ -2046,12 +2147,12 @@
   });
 
   // src/lib/cover-letter-placeholders.js
-  function extractPlaceholders(vacancy, resume) {
+  async function extractPlaceholders(vacancy, resume) {
     const p = {};
     p.position = vacancy.title || "\u044D\u0442\u0443 \u043F\u043E\u0437\u0438\u0446\u0438\u044E";
     p.company = vacancy.company || "\u0432\u0430\u0448\u0443 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044E";
     p.experience = extractExperienceText(resume);
-    const matchResult = resume ? computeMatchScore(resume, vacancy) : null;
+    const matchResult = resume ? await computeMatchScore(resume, vacancy) : null;
     const matchingSkills = matchResult ? matchResult.details.matchingSkills || [] : [];
     const derivedMatches = matchResult ? matchResult.details.derivedMatchSkills || [] : [];
     const matchingOriginal = restoreOriginalCase(matchingSkills, vacancy, resume);
@@ -2189,13 +2290,13 @@
     const hasMatching = resume.skills && resume.skills.length > 0;
     return (hasKeySkills || hasDescription) && hasMatching;
   }
-  function generateRichLetter(vacancy, resume, placeholders) {
+  async function generateRichLetter(vacancy, resume, placeholders) {
     const parts = [];
     const company = placeholders.company !== "\u0432\u0430\u0448\u0443 \u043A\u043E\u043C\u043F\u0430\u043D\u0438\u044E" ? " \u0432 " + placeholders.company : "";
     parts.push('\u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435! \u041C\u0435\u043D\u044F \u0437\u0430\u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043E\u0432\u0430\u043B\u0430 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u044F "' + placeholders.position + '"' + company + ".");
     const expText = placeholders.experience !== "relevant" ? " \u0418\u043C\u0435\u044E " + placeholders.experience + " \u043E\u043F\u044B\u0442\u0430." : "";
     if (expText) parts.push(expText);
-    const matchResult = computeMatchScore(resume, vacancy);
+    const matchResult = await computeMatchScore(resume, vacancy);
     const matchingSkills = restoreOriginalCase(matchResult.details.matchingSkills || [], vacancy, resume);
     const derivedMatches = restoreOriginalCase(matchResult.details.derivedMatchSkills || [], vacancy, resume);
     if (matchingSkills.length > 0 || derivedMatches.length > 0) {
@@ -2319,7 +2420,7 @@
   });
 
   // src/lib/cover-letter-generator.js
-  function generateCoverLetter(vacancy, resume, options) {
+  async function generateCoverLetter(vacancy, resume, options) {
     if (!vacancy) {
       clLog.warn("No vacancy provided -- returning empty letter");
       return { text: "", placeholders: {}, method: "none", tone: "formal" };
@@ -2328,10 +2429,10 @@
     const tone = validateTone(opts.tone);
     const template = opts.template || getTemplateForTone(tone);
     const maxLength = opts.maxLength || MAX_LETTER_LENGTH;
-    const placeholders = extractPlaceholders(vacancy, resume);
+    const placeholders = await extractPlaceholders(vacancy, resume);
     let text = fillTemplate(template, placeholders);
     if (!opts.template && hasRichData(vacancy, resume)) {
-      const richLetter = generateRichLetter(vacancy, resume, placeholders);
+      const richLetter = await generateRichLetter(vacancy, resume, placeholders);
       if (richLetter) {
         text = richLetter;
         clLog.info("Generated rich cover letter (" + text.length + " chars)");
@@ -2370,7 +2471,7 @@
     }
     return null;
   }
-  var clLog, DEFAULT_TEMPLATE, MAX_LETTER_LENGTH;
+  var clLog, _DEFAULT_TEMPLATE, MAX_LETTER_LENGTH;
   var init_cover_letter_generator = __esm({
     "src/lib/cover-letter-generator.js"() {
       init_anti_hallucination();
@@ -2378,7 +2479,7 @@
       init_cover_letter_rich();
       init_cover_letter_tone();
       clLog = createLogger("CoverLetter");
-      DEFAULT_TEMPLATE = getTemplateForTone("formal");
+      _DEFAULT_TEMPLATE = getTemplateForTone("formal");
       MAX_LETTER_LENGTH = 5e3;
     }
   });
@@ -4878,7 +4979,8 @@
           autoAuthCheck: true,
           notifications: true,
           logging: true,
-          shadowDOM: true
+          shadowDOM: true,
+          matchMode: "precise"
         },
         logs: [],
         dailyStats: {
@@ -5657,6 +5759,40 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     }
   });
 
+  // src/ui/html/tabs/analytics.js
+  function getAnalyticsSection() {
+    return `<div class="card fade-in" style="margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">\u0410\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430 \u0440\u044B\u043D\u043A\u0430</div>
+    <div id="analytics-content" style="display:none;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
+          <div style="font-size:11px;color:#52525b;">\u0421\u0440\u0435\u0434\u043D\u0438\u0439 score</div>
+          <div id="analytics-avg-score" style="font-size:16px;font-weight:700;">0%</div>
+        </div>
+        <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
+          <div style="font-size:11px;color:#52525b;">\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u0439</div>
+          <div id="analytics-total" style="font-size:16px;font-weight:700;">0</div>
+        </div>
+        <div style="flex:1;background:#FAFAFA;border-radius:8px;padding:8px 10px;">
+          <div style="font-size:11px;color:#52525b;">\u0422\u043E\u043F \u043D\u0430\u0432\u044B\u043A</div>
+          <div id="analytics-top-skill" style="font-size:12px;font-weight:700;color:#059669;">--</div>
+        </div>
+      </div>
+      <div id="analytics-skills-demand" style="margin-top:8px;">
+        <div style="font-size:11px;font-weight:600;color:#52525b;margin-bottom:4px;">\u0412\u043E\u0441\u0442\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043D\u0430\u0432\u044B\u043A\u0438:</div>
+        <div id="analytics-skills-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+      </div>
+    </div>
+    <div id="analytics-empty" style="padding:16px;text-align:center;font-size:12px;color:#71717A;">
+      \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0438
+    </div>
+  </div>`;
+  }
+  var init_analytics = __esm({
+    "src/ui/html/tabs/analytics.js"() {
+    }
+  });
+
   // src/ui/html/tabs/vacancies.js
   function getVacanciesSection() {
     return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies" tabindex="0">
@@ -5731,7 +5867,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
           <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#52525b;">0%</div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u0441 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0435\u0439</div>
+          <div style="font-size:13px;font-weight:600;">\u041E\u0446\u0435\u043D\u043A\u0430 \u0434\u043B\u044F \u044D\u0442\u043E\u0439 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438</div>
           <div id="vac-match-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">\u041E\u0446\u0435\u043D\u0438\u0442\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435</div>
         </div>
       </div>
@@ -5752,12 +5888,17 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
           <div id="vac-match-exp" style="font-size:16px;font-weight:700;color:#7C3AED;">0</div>
           <div style="font-size:12px;color:#52525b;margin-top:1px;">\u041E\u043F\u044B\u0442</div>
         </div>
+        <div style="flex:1;text-align:center;">
+          <div id="vac-match-loc" style="font-size:16px;font-weight:700;color:#0EA5E9;">0</div>
+          <div style="font-size:12px;color:#52525b;margin-top:1px;">\u041B\u043E\u043A\u0430\u0446\u0438\u044F</div>
+        </div>
       </div>
       <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:#f4f4f5;">
         <div id="vac-match-bar-skills" style="width:0%;background:linear-gradient(90deg,#059669,#34D399);border-radius:4px 0 0 4px;"></div>
         <div id="vac-match-bar-title" style="width:0%;background:linear-gradient(90deg,#2563EB,#60A5FA);"></div>
         <div id="vac-match-bar-salary" style="width:0%;background:linear-gradient(90deg,#D97706,#FBBF24);"></div>
-        <div id="vac-match-bar-exp" style="width:0%;background:linear-gradient(90deg,#7C3AED,#A78BFA);border-radius:0 4px 4px 0;"></div>
+        <div id="vac-match-bar-exp" style="width:0%;background:linear-gradient(90deg,#7C3AED,#A78BFA);"></div>
+        <div id="vac-match-bar-loc" style="width:0%;background:linear-gradient(90deg,#0EA5E9,#38BDF8);border-radius:0 4px 4px 0;"></div>
       </div>
       <div id="vac-match-details" style="margin-top:10px;display:none;">
         <div id="vac-match-matching-skills" style="margin-bottom:6px;display:none;">
@@ -5770,14 +5911,14 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         <div id="vac-match-derived-skills" style="margin-bottom:6px;display:none;">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span style="width:7px;height:7px;border-radius:50%;background:#B45309;flex-shrink:0;"></span>
-            <span style="font-size:11px;font-weight:600;color:#B45309;">\u0418\u0437 \u043E\u043F\u044B\u0442\u0430 \u0440\u0430\u0431\u043E\u0442\u044B</span>
+            <span style="font-size:11px;font-weight:600;color:#B45309;" title="\u041D\u0430\u0432\u044B\u043A\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435 AI \u0438\u0437\u0432\u043B\u0435\u043A \u0438\u0437 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043E\u043F\u044B\u0442\u0430">\u0418\u0437 \u043E\u043F\u044B\u0442\u0430 \u0440\u0430\u0431\u043E\u0442\u044B</span>
           </div>
           <div id="vac-match-derived-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
         </div>
         <div id="vac-match-missing-skills" style="margin-bottom:6px;display:none;">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;"></span>
-            <span style="font-size:11px;font-weight:600;color:#DC2626;">\u041D\u0435 \u0445\u0432\u0430\u0442\u0430\u0435\u0442</span>
+          <span style="font-size:11px;font-weight:600;color:#DC2626;" title="\u041D\u0430\u0432\u044B\u043A\u0438 \u0438\u0437 \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0445 \u043D\u0435\u0442 \u0432 \u0432\u0430\u0448\u0435\u043C \u0440\u0435\u0437\u044E\u043C\u0435">\u041D\u0435 \u0445\u0432\u0430\u0442\u0430\u0435\u0442</span>
           </div>
           <div id="vac-match-missing-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
         </div>
@@ -5827,11 +5968,11 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
           <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#059669;">0%</div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">\u0421\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435 \u043D\u0430\u0432\u044B\u043A\u043E\u0432</div>
+          <div style="font-size:13px;font-weight:600;">\u0410\u043D\u0430\u043B\u0438\u0437 \u043D\u0430\u0432\u044B\u043A\u043E\u0432 \u0440\u044B\u043D\u043A\u0430</div>
           <div id="res-gap-subtitle" style="font-size:11px;color:#52525b;margin-top:1px;">\u0420\u0435\u0437\u044E\u043C\u0435 vs \u0432\u0430\u043A\u0430\u043D\u0441\u0438\u0438</div>
         </div>
-        <button class="btn btn-outline btn-sm" data-action="analyze-skills">
-          ${ICONS.ai} \u0410\u043D\u0430\u043B\u0438\u0437
+        <button class="btn btn-primary btn-sm" data-action="analyze-skills" style="background:#7c3aed;color:#fff;">
+          ${ICONS.ai} \u0410\u043D\u0430\u043B\u0438\u0437 \u043D\u0430\u0432\u044B\u043A\u043E\u0432
         </button>
       </div>
       <!-- Stacked bar -->
@@ -5853,7 +5994,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       <div id="res-gap-synonym-row" style="margin-bottom:8px;display:none;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
           <span style="width:7px;height:7px;border-radius:50%;background:#D97706;flex-shrink:0;"></span>
-          <span style="font-size:11px;font-weight:600;color:#D97706;">\u0421\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435</span>
+          <span style="font-size:11px;font-weight:600;color:#D97706;" title="\u041D\u0430\u0432\u044B\u043A\u0438, \u043F\u043E\u0445\u043E\u0436\u0438\u0435 \u043F\u043E \u0441\u043C\u044B\u0441\u043B\u0443 (\u0441\u0438\u043D\u043E\u043D\u0438\u043C\u044B)">\u0421\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435</span>
           <span class="badge badge-amber" id="res-gap-synonym-count" style="font-size:11px;padding:1px 6px;">0</span>
         </div>
         <div id="res-gap-synonym-list" style="display:flex;flex-wrap:wrap;gap:4px;padding-left:13px;"></div>
@@ -5886,11 +6027,13 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       <div style="font-size:12px;font-weight:600;margin-bottom:10px;">\u0412\u0430\u043A\u0430\u043D\u0441\u0438\u0438 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435</div>
       <div id="har-vlist"><div style="padding:24px;text-align:center;color:#52525b;font-size:12px;line-height:1.6;">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430...</div></div>
     </div>
+    ${getAnalyticsSection()}
   </div>`;
   }
   var init_vacancies = __esm({
     "src/ui/html/tabs/vacancies.js"() {
       init_icons();
+      init_analytics();
     }
   });
 
@@ -6089,6 +6232,14 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     return `<div class="card fade-in">
     <div style="font-size:13px;font-weight:600;margin-bottom:10px;">\u041E\u0431\u0449\u0438\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;font-weight:500;margin-bottom:4px;">\u0420\u0435\u0436\u0438\u043C \u043C\u0430\u0442\u0447\u0438\u043D\u0433\u0430</label>
+        <select id="s-match-mode" style="width:100%;padding:8px 12px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;background:#FAFAFA;">
+          <option value="precise">\u0422\u043E\u0447\u043D\u044B\u0439 (\u043D\u0430\u0432\u044B\u043A\u0438 + \u0434\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044C)</option>
+          <option value="flexible">\u0413\u0438\u0431\u043A\u0438\u0439 (\u0441\u0435\u043C\u0430\u043D\u0442\u0438\u043A\u0430 + \u043E\u043F\u044B\u0442)</option>
+        </select>
+        <div style="font-size:10px;color:#71717A;margin-top:4px;">\u0422\u043E\u0447\u043D\u044B\u0439: \u043D\u0430\u0432\u044B\u043A\u0438 35%, \u0434\u043E\u043B\u0436\u043D\u043E\u0441\u0442\u044C 25%. \u0413\u0438\u0431\u043A\u0438\u0439: \u0441\u0435\u043C\u0430\u043D\u0442\u0438\u043A\u0430 45%, \u043E\u043F\u044B\u0442 20%.</div>
+      </div>
       ${settingToggle("\u0410\u0432\u0442\u043E-\u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438", "", "s-auth-check", true)}
       ${settingToggle("\u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F", "", "s-notifications", true)}
       ${settingToggle("\u041B\u043E\u0433\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439", "", "s-logging", true)}
@@ -6200,7 +6351,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       </div>
     </div>
     <div class="har-footer">
-      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.78.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.86.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
         <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
@@ -6219,7 +6370,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     ${getSettingsSection()}
     ${getStatsSection()}
     <div class="har-footer">
-      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.78.0"}</span>
+      <span style="font-size:12px;color:#52525b;">HH Copilot v${"1.9.86.0"}</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="width:6px;height:6px;background:#10B981;border-radius:50%;" aria-hidden="true"></span>
         <span style="font-size:12px;color:#52525b;">\u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E</span>
@@ -7279,19 +7430,22 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       const e2 = el(id);
       if (e2) e2.textContent = val;
     };
-    set("vac-match-skills", b.skills + "/40");
-    set("vac-match-title", b.title + "/30");
+    set("vac-match-skills", b.skills + "/35");
+    set("vac-match-title", b.title + "/25");
     set("vac-match-salary", b.salary + "/15");
-    set("vac-match-exp", b.experience + "/15");
-    const total = Math.max(1, b.skills + b.title + b.salary + b.experience);
+    set("vac-match-exp", b.experience + "/10");
+    set("vac-match-loc", (b.location || 0) + "/15");
+    const total = Math.max(1, b.skills + b.title + b.salary + b.experience + (b.location || 0));
     const barSkills = el("vac-match-bar-skills");
     const barTitle = el("vac-match-bar-title");
     const barSalary = el("vac-match-bar-salary");
     const barExp = el("vac-match-bar-exp");
+    const barLoc = el("vac-match-bar-loc");
     if (barSkills) barSkills.style.width = (b.skills / total * 100).toFixed(1) + "%";
     if (barTitle) barTitle.style.width = (b.title / total * 100).toFixed(1) + "%";
     if (barSalary) barSalary.style.width = (b.salary / total * 100).toFixed(1) + "%";
     if (barExp) barExp.style.width = (b.experience / total * 100).toFixed(1) + "%";
+    if (barLoc) barLoc.style.width = ((b.location || 0) / total * 100).toFixed(1) + "%";
     const detailsSection = el("vac-match-details");
     if (detailsSection && details) {
       const matching = details.matchingSkills || [];
@@ -7331,12 +7485,12 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       }
     }
   }
-  function tryShowVacancyMatch() {
+  async function tryShowVacancyMatch() {
     const detail = window.__hhVacDetail;
     if (!detail || detail.matchScore === void 0) return;
     const resume = panelState.resume;
     if (resume) {
-      const score = computeMatchScore(resume, detail);
+      const score = await computeMatchScore(resume, detail);
       renderVacancyMatchScore(detail.id, score.total, score.breakdown, score.details);
     } else {
       renderVacancyMatchScore(detail.id, detail.matchScore, detail.matchBreakdown, null);
@@ -7428,6 +7582,55 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       init_html2();
       init_resume_helpers();
       init_vacancies_match();
+    }
+  });
+
+  // src/ui/tabs/analytics-render.js
+  function renderAnalytics(vacancies, _resume) {
+    const content = refs.shadowRoot?.getElementById("analytics-content");
+    const empty = refs.shadowRoot?.getElementById("analytics-empty");
+    if (!content || !empty) return;
+    if (!vacancies || vacancies.length === 0) {
+      content.style.display = "none";
+      empty.style.display = "";
+      return;
+    }
+    content.style.display = "";
+    empty.style.display = "none";
+    const scores = vacancies.filter((v) => v.matchScore != null).map((v) => v.matchScore);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const avgEl = refs.shadowRoot?.getElementById("analytics-avg-score");
+    if (avgEl) avgEl.textContent = avgScore + "%";
+    const totalEl = refs.shadowRoot?.getElementById("analytics-total");
+    if (totalEl) totalEl.textContent = vacancies.length;
+    const skillCounts = /* @__PURE__ */ new Map();
+    for (const v of vacancies) {
+      const skills = v.keySkills || [];
+      for (const s of skills) {
+        const name = typeof s === "string" ? s : s.name || "";
+        if (name) {
+          skillCounts.set(name, (skillCounts.get(name) || 0) + 1);
+        }
+      }
+    }
+    const sorted = [...skillCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const topSkill = sorted[0];
+    const topSkillEl = refs.shadowRoot?.getElementById("analytics-top-skill");
+    if (topSkillEl && topSkill) {
+      topSkillEl.textContent = topSkill[0];
+    }
+    const skillsList = refs.shadowRoot?.getElementById("analytics-skills-list");
+    if (skillsList) {
+      const top10 = sorted.slice(0, 10);
+      skillsList.innerHTML = top10.map(
+        ([name, count]) => '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#F0FDF4;color:#059669;border:1px solid #BBF7D0;">' + esc(name) + " (" + count + ")</span>"
+      ).join("");
+    }
+  }
+  var init_analytics_render = __esm({
+    "src/ui/tabs/analytics-render.js"() {
+      init_state();
+      init_html2();
     }
   });
 
@@ -9205,7 +9408,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   async function requestAiReply(conv, tone, impls) {
     const threadRoot = impls && impls.threadRoot || document;
     const msgImpl = impls && impls.msgImpl;
-    let history2 = [];
+    let history2;
     try {
       const msgs = parseChatThread(threadRoot);
       history2 = extractThreadForAI(msgs);
@@ -12491,6 +12694,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     chk("s-notifications", panelState.settings.notifications);
     chk("s-logging", panelState.settings.logging);
     chk("s-shadow-dom", panelState.settings.shadowDOM);
+    set("s-match-mode", panelState.settings.matchMode || "precise");
   }
   function declension2(n, forms) {
     const abs = Math.abs(n) % 100;
@@ -14148,6 +14352,18 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         setAiTone(aiToneSelect.value);
       });
     }
+    const matchModeSelect = container.querySelector("#s-match-mode");
+    if (matchModeSelect) {
+      matchModeSelect.addEventListener("change", async (e2) => {
+        const mode = e2.target.value;
+        const data = await chrome.storage.local.get("settings");
+        const settings = data.settings || {};
+        settings.matchMode = mode;
+        await chrome.storage.local.set({ settings });
+        panelState.settings.matchMode = mode;
+        window.dispatchEvent(new CustomEvent("hh-ar-match-mode-changed", { detail: { mode } }));
+      });
+    }
   }
   var init_events = __esm({
     "src/ui/panel/events.js"() {
@@ -14383,6 +14599,165 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     }
   });
 
+  // src/lib/captcha-detector.js
+  function detectCaptcha(root) {
+    root = root || (typeof document !== "undefined" ? document : null);
+    if (!root || !root.querySelectorAll) return { found: false, type: null, source: null };
+    for (const { sel, type } of CAPTCHA_SELECTORS) {
+      try {
+        const el = root.querySelector(sel);
+        if (el) {
+          const style = typeof getComputedStyle === "function" ? getComputedStyle(el) : el.style;
+          const display = style.display;
+          const visibility = style.visibility;
+          if (display === "none" || visibility === "hidden") continue;
+          return { found: true, type, source: sel };
+        }
+      } catch (_e) {
+      }
+    }
+    return { found: false, type: null, source: null };
+  }
+  function getCaptchaState() {
+    return { ..._state };
+  }
+  function isAutoPaused() {
+    return _state.paused === true;
+  }
+  async function pauseForCaptcha(type, reason) {
+    _state = {
+      paused: true,
+      reason: reason || "CAPTCHA detected: " + (type || "unknown"),
+      detectedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      type: type || null
+    };
+    try {
+      await chrome.storage.local.set({ [CAPTCHA_STATE_KEY]: _state });
+      captchaLog.warn("AUTO-PAUSE: " + _state.reason);
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+  async function resumeFromCaptcha() {
+    _state = { paused: false, reason: null, detectedAt: null, type: null };
+    try {
+      await chrome.storage.local.remove(CAPTCHA_STATE_KEY);
+      captchaLog.info("Manual resume: CAPTCHA pause cleared");
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+  async function loadCaptchaState() {
+    try {
+      const data = await chrome.storage.local.get(CAPTCHA_STATE_KEY);
+      if (data && data[CAPTCHA_STATE_KEY]) {
+        _state = { ..._state, ...data[CAPTCHA_STATE_KEY] };
+      }
+    } catch (_e) {
+    }
+  }
+  async function getCaptchaStats() {
+    try {
+      const data = await chrome.storage.local.get("captchaStats");
+      return data.captchaStats || { total: 0, lastDetected: null, types: {} };
+    } catch (_e) {
+      return { total: 0, lastDetected: null, types: {} };
+    }
+  }
+  async function recordCaptchaDetection(type) {
+    try {
+      const stats = await getCaptchaStats();
+      stats.total = (stats.total || 0) + 1;
+      stats.lastDetected = (/* @__PURE__ */ new Date()).toISOString();
+      stats.types = stats.types || {};
+      stats.types[type] = (stats.types[type] || 0) + 1;
+      const _cutoff = Date.now() - 30 * 24 * 60 * 60 * 1e3;
+      if (Object.keys(stats.types).length > 20) {
+        const sorted = Object.entries(stats.types).sort((a, b) => b[1] - a[1]);
+        stats.types = Object.fromEntries(sorted.slice(0, 15));
+      }
+      await chrome.storage.local.set({ captchaStats: stats });
+    } catch (_e) {
+    }
+  }
+  async function checkAndPause(root, settings) {
+    const detection = detectCaptcha(root);
+    if (!detection.found) {
+      return { found: false, paused: false, type: null };
+    }
+    await recordCaptchaDetection(detection.type);
+    const shouldPause = settings ? settings.captchaAutoPause !== false : true;
+    if (shouldPause && !isAutoPaused()) {
+      await pauseForCaptcha(detection.type, "CAPTCHA detected: " + detection.type);
+    } else {
+      captchaLog.info("CAPTCHA detected but auto-pause disabled or already paused");
+    }
+    return { found: true, paused: shouldPause, type: detection.type };
+  }
+  var captchaLog, CAPTCHA_SELECTORS, CAPTCHA_STATE_KEY, _state, _internal7;
+  var init_captcha_detector = __esm({
+    "src/lib/captcha-detector.js"() {
+      init_anti_hallucination();
+      captchaLog = createLogger("Captcha");
+      CAPTCHA_SELECTORS = [
+        { sel: 'img[src*="captcha"]', type: "image" },
+        { sel: ".g-recaptcha", type: "recaptcha" },
+        { sel: '[data-qa*="captcha"]', type: "data-qa" },
+        { sel: 'iframe[src*="recaptcha"]', type: "recaptcha-iframe" },
+        { sel: "#captcha", type: "captcha-id" },
+        { sel: ".captcha", type: "captcha-class" },
+        { sel: "textarea#g-recaptcha-response", type: "recaptcha-response" }
+      ];
+      CAPTCHA_STATE_KEY = "captchaState";
+      _state = { paused: false, reason: null, detectedAt: null, type: null };
+      _internal7 = {
+        CAPTCHA_SELECTORS,
+        CAPTCHA_STATE_KEY,
+        _resetState: () => {
+          _state = { paused: false, reason: null, detectedAt: null, type: null };
+        }
+      };
+    }
+  });
+
+  // src/ui/panel/captcha-notifications.js
+  function showCaptchaNotification(refs2, log, type, paused) {
+    if (!refs2.shadowRoot) return;
+    let banner = refs2.shadowRoot.getElementById("captcha-banner");
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "captcha-banner";
+      banner.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:1000000;background:#FEF3C7;border-bottom:1px solid #F59E0B;padding:8px 12px;font-size:12px;color:#92400E;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);";
+      const panel = refs2.shadowRoot.querySelector(".fab-panel");
+      if (panel) panel.prepend(banner);
+    }
+    banner.innerHTML = `
+    <span>[!] CAPTCHA \u043E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u0430 (${type}) -- ${paused ? "\u0430\u0432\u0442\u043E\u043F\u0430\u0443\u0437\u0430 \u0430\u043A\u0442\u0438\u0432\u043D\u0430" : "\u0430\u0432\u0442\u043E\u043F\u0430\u0443\u0437\u0430 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445"}</span>
+    <button data-action="captcha-resume" style="background:#F59E0B;color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;">\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u0440\u0430\u0431\u043E\u0442\u0443</button>
+  `;
+    banner.style.display = "flex";
+    const resumeBtn = banner.querySelector('[data-action="captcha-resume"]');
+    if (resumeBtn) {
+      resumeBtn.onclick = async () => {
+        await resumeFromCaptcha();
+        hideCaptchaNotification(refs2);
+        window.dispatchEvent(new CustomEvent("hh-ar-captcha-resume"));
+      };
+    }
+  }
+  function hideCaptchaNotification(refs2) {
+    if (!refs2.shadowRoot) return;
+    const banner = refs2.shadowRoot.getElementById("captcha-banner");
+    if (banner) banner.style.display = "none";
+  }
+  var init_captcha_notifications = __esm({
+    "src/ui/panel/captcha-notifications.js"() {
+      init_captcha_detector();
+    }
+  });
+
   // src/ui/panel/index.js
   function createSidebar() {
     if (refs.sidebarEl) return;
@@ -14456,6 +14831,9 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     if (panelState.isOpen) {
       const firstFocusable = refs.shadowRoot?.querySelector('button:not([disabled]), [tabindex="0"]');
       if (firstFocusable) setTimeout(() => firstFocusable.focus(), 350);
+      if (panelState.vacancies.length > 0) {
+        renderAnalytics(panelState.vacancies, panelState.resume);
+      }
       loadNegotiationsInBackground();
     } else {
       if (refs.fabEl) setTimeout(() => refs.fabEl.focus(), 350);
@@ -14465,6 +14843,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     setVacancies(vacancies);
     renderVacancyList();
     updateVacancyCounts();
+    renderAnalytics(vacancies, panelState.resume);
     if (panelState.resume) updateSkillGapSection(panelState.resume);
   }
   function updateStats2(stats) {
@@ -14487,12 +14866,28 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       e2.stopPropagation();
       toggleInspector(btn);
     }, true);
+    window.addEventListener("hh-ar-vacancies-updated", (e2) => {
+      const vacancies = e2.detail?.vacancies || panelState.vacancies;
+      renderAnalytics(vacancies, panelState.resume);
+    });
     window.addEventListener("hh-ar-match-updated", (e2) => {
       const { vacancyId, score, breakdown, details } = e2.detail || {};
       if (score !== void 0) {
         renderVacancyMatchScore(vacancyId, score, breakdown, details);
         panelLog.info("Match UI updated: " + score + "% for vacancy " + vacancyId);
       }
+    });
+    window.addEventListener("hh-ar-captcha-detected", async (e2) => {
+      const { type, found, paused } = e2.detail || {};
+      if (found) {
+        panelLog.warn("CAPTCHA detected in content script: " + type);
+        showCaptchaNotification(refs, panelLog, type, paused);
+      }
+    });
+    window.addEventListener("hh-ar-captcha-resume", async () => {
+      await resumeFromCaptcha();
+      hideCaptchaNotification(refs);
+      panelLog.info("CAPTCHA pause manually cleared");
     });
   }
   function updateVacancyCounts() {
@@ -14516,11 +14911,14 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       init_fab();
       init_dom_inspector();
       init_vacancies2();
+      init_analytics_render();
       init_resume_helpers();
       init_overview2();
       init_events();
       init_tour_engine();
       init_auth_and_bg();
+      init_captcha_detector();
+      init_captcha_notifications();
       init_auth_and_bg();
       panelLog = createLogger("Panel");
     }
@@ -14561,12 +14959,12 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       return { appliedIds: [], blacklisted: [] };
     }
   }
-  function applyStatusAndScore(vacancy, appliedIds, blacklisted, resume) {
+  async function applyStatusAndScore(vacancy, appliedIds, blacklisted, resume) {
     if (appliedIds.includes(vacancy.id)) vacancy.status = "applied";
     if (blacklisted.includes(vacancy.company)) vacancy.status = "blacklisted";
     if (resume) {
       try {
-        const score = computeMatchScore(resume, vacancy);
+        const score = await computeMatchScore(resume, vacancy);
         vacancy.matchScore = score.total;
       } catch (_e) {
       }
@@ -14657,7 +15055,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         parsedAt: (/* @__PURE__ */ new Date()).toISOString(),
         matchScore: null
       };
-      applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
+      await applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
       vacancies.push(vacancy);
     }
     votdLog.info("Parsed " + vacancies.length + "/" + titleEls.length + ' "Vacancy of the Day" items');
@@ -14716,7 +15114,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         parserLog.warn("Card #" + i + " invalid: " + validation.errors.join(", "));
         continue;
       }
-      applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
+      await applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
       vacancies.push(vacancy);
     }
     sortVacanciesByScore(vacancies);
@@ -15345,7 +15743,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   init_match_scorer();
   var enrichLog = createLogger("VacEnrich");
   var CACHE_TTL_MS2 = 24 * 60 * 60 * 1e3;
-  function enrichVacancy(vacancy, detail, resume) {
+  async function enrichVacancy(vacancy, detail, resume) {
     if (!vacancy || !detail) return vacancy;
     if (detail.keySkills && detail.keySkills.length > 0) {
       vacancy.keySkills = detail.keySkills;
@@ -15381,7 +15779,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     if (resume) {
       try {
         const scoreVacancy = buildScoringVacancy(vacancy);
-        const score = computeMatchScore(resume, scoreVacancy);
+        const score = await computeMatchScore(resume, scoreVacancy);
         vacancy.matchScore = score.total;
         vacancy.matchBreakdown = score.breakdown;
         vacancy.matchDetails = score.details;
@@ -15537,7 +15935,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         if (detail) {
           saveVacancyDetail(detail).catch(() => {
           });
-          enrichVacancy(vacancy, detail, resume);
+          await enrichVacancy(vacancy, detail, resume);
           if (vacancy.matchScore != null) {
             saveVacancyScore(vacancy.id, vacancy.matchScore, vacancy.matchBreakdown, vacancy.matchDetails).catch(() => {
             });
@@ -15621,7 +16019,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       if (detail) {
         const resume = panelState.resume;
         if (resume) {
-          const score = computeMatchScore(resume, detail);
+          const score = await computeMatchScore(resume, detail);
           detail.matchScore = score.total;
           detail.matchBreakdown = score.breakdown;
           pageLog.info("Match score: " + score.total + "% (skills=" + score.breakdown.skills + ", title=" + score.breakdown.title + ", salary=" + score.breakdown.salary + ", exp=" + score.breakdown.experience + ")");
@@ -16198,99 +16596,6 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
     }
   }
 
-  // src/lib/captcha-detector.js
-  init_anti_hallucination();
-  var captchaLog = createLogger("Captcha");
-  var CAPTCHA_SELECTORS = [
-    { sel: 'img[src*="captcha"]', type: "image" },
-    { sel: ".g-recaptcha", type: "recaptcha" },
-    { sel: '[data-qa*="captcha"]', type: "data-qa" },
-    { sel: 'iframe[src*="recaptcha"]', type: "recaptcha-iframe" },
-    { sel: "#captcha", type: "captcha-id" },
-    { sel: ".captcha", type: "captcha-class" },
-    { sel: "textarea#g-recaptcha-response", type: "recaptcha-response" }
-  ];
-  var CAPTCHA_STATE_KEY = "captchaState";
-  var _state = { paused: false, reason: null, detectedAt: null, type: null };
-  function detectCaptcha(root) {
-    root = root || (typeof document !== "undefined" ? document : null);
-    if (!root || !root.querySelectorAll) return { found: false, type: null, source: null };
-    for (const { sel, type } of CAPTCHA_SELECTORS) {
-      try {
-        const el = root.querySelector(sel);
-        if (el) {
-          const style = typeof getComputedStyle === "function" ? getComputedStyle(el) : el.style;
-          const display = style.display;
-          const visibility = style.visibility;
-          if (display === "none" || visibility === "hidden") continue;
-          return { found: true, type, source: sel };
-        }
-      } catch (_e) {
-      }
-    }
-    return { found: false, type: null, source: null };
-  }
-  function getCaptchaState() {
-    return { ..._state };
-  }
-  function isAutoPaused() {
-    return _state.paused === true;
-  }
-  async function pauseForCaptcha(type, reason) {
-    _state = {
-      paused: true,
-      reason: reason || "CAPTCHA detected: " + (type || "unknown"),
-      detectedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      type: type || null
-    };
-    try {
-      await chrome.storage.local.set({ [CAPTCHA_STATE_KEY]: _state });
-      captchaLog.warn("AUTO-PAUSE: " + _state.reason);
-      return true;
-    } catch (_e) {
-      return false;
-    }
-  }
-  async function resumeFromCaptcha() {
-    _state = { paused: false, reason: null, detectedAt: null, type: null };
-    try {
-      await chrome.storage.local.remove(CAPTCHA_STATE_KEY);
-      captchaLog.info("Manual resume: CAPTCHA pause cleared");
-      return true;
-    } catch (_e) {
-      return false;
-    }
-  }
-  async function loadCaptchaState() {
-    try {
-      const data = await chrome.storage.local.get(CAPTCHA_STATE_KEY);
-      if (data && data[CAPTCHA_STATE_KEY]) {
-        _state = { ..._state, ...data[CAPTCHA_STATE_KEY] };
-      }
-    } catch (_e) {
-    }
-  }
-  async function checkAndPause(root, settings) {
-    const detection = detectCaptcha(root);
-    if (!detection.found) {
-      return { found: false, paused: false, type: null };
-    }
-    const shouldPause = settings ? settings.captchaAutoPause !== false : true;
-    if (shouldPause && !isAutoPaused()) {
-      await pauseForCaptcha(detection.type, "CAPTCHA detected: " + detection.type);
-    } else {
-      captchaLog.info("CAPTCHA detected but auto-pause disabled or already paused");
-    }
-    return { found: true, paused: shouldPause, type: detection.type };
-  }
-  var _internal7 = {
-    CAPTCHA_SELECTORS,
-    CAPTCHA_STATE_KEY,
-    _resetState: () => {
-      _state = { paused: false, reason: null, detectedAt: null, type: null };
-    }
-  };
-
   // src/content/main.js
   init_anti_hallucination();
   init_storage();
@@ -16298,6 +16603,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
   init_match_scorer();
   init_storage();
   init_state();
+  init_captcha_detector();
   init_dom_inspector();
   init_fab();
   var mainLog = createLogger("Main");
@@ -16322,6 +16628,9 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       const captchaRes = await checkAndPause(document, settings);
       if (captchaRes.found) {
         mainLog.warn("CAPTCHA detected on page load: " + captchaRes.type);
+        window.dispatchEvent(new CustomEvent("hh-ar-captcha-detected", {
+          detail: { type: captchaRes.type, found: true, paused: captchaRes.paused }
+        }));
         if (chrome.action && chrome.action.setBadgeText) {
           chrome.action.setBadgeText({ text: "!" });
           chrome.action.setBadgeBackgroundColor({ color: "#D97706" });
@@ -16374,7 +16683,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
         initPageLogic();
       }, 3e3);
     }
-    window.addEventListener("hh-ar-resume-loaded", (e2) => {
+    window.addEventListener("hh-ar-resume-loaded", async (e2) => {
       const resume = e2.detail?.resume || panelState.resume;
       if (!resume) return;
       if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
@@ -16382,7 +16691,7 @@ html { font-size: 14px; font-variant-numeric: tabular-nums; }
       try {
         const detail = parseVacancyDetail();
         if (detail) {
-          const score = computeMatchScore(resume, detail);
+          const score = await computeMatchScore(resume, detail);
           detail.matchScore = score.total;
           detail.matchBreakdown = score.breakdown;
           mainLog.info("Re-score: " + score.total + "% (skills=" + score.breakdown.skills + ", title=" + score.breakdown.title + ", salary=" + score.breakdown.salary + ", exp=" + score.breakdown.experience + ")");

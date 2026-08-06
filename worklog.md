@@ -5240,3 +5240,46 @@ Stage Summary:
 - All 118 tests pass, no commits needed (test file already existed)
 
 ---
+
+---
+2026-08-04 18:47:15 — refactor: split ai-service.js (288 lines) into ai-service.js (217) + ai-service-ollama.js (83) to comply with AHG Rule 12 (250-line cap). All 5 files under limit.
+
+---
+
+Task ID: fix-all-deficiencies
+Agent: opencode
+Task: Fix all project deficiencies: failing tests, lint warnings, CI/CD, match-scorer integration tests, selectors abstraction, CAPTCHA handling
+
+Work Log:
+- Fixed failing test in tests/ai-service.test.js: timeout clamping expectation 180000 → 600000 (matches MAX_TIMEOUT_MS)
+- Fixed lint warnings: prefixed unused vars with _ (_DEFAULT_TEMPLATE, _i, _buildStemMap, _cutoff), removed unused imports (INSPECTOR_Z, imp, checkAndPause, getCaptchaState), replaced unicode chars (✓→[OK], –→-, ⚠️→[!], —→--)
+- Added CI/CD pipeline (.github/workflows/ci.yml, release.yml) with lint, test, build, version consistency check on Ubuntu + Windows
+- Added integration tests for match-scorer (tests/match-scorer-integration.test.js: 31 tests with realistic hh.ru resume/vacancy data)
+- Improved selectors abstraction (src/lib/selectors.js: testSelector, validateAllSelectors, logSelectorValidation + tests/selectors-validation.test.js)
+- Enhanced CAPTCHA handling: analytics (getCaptchaStats, recordCaptchaDetection), UI notification banner in sidebar with resume button, auto-dispatch events
+- Split panel/index.js into panel/index.js + panel/captcha-notifications.js to comply with AHG Rule 12 (250-line hard cap)
+- All tests pass (711), lint clean (0 errors, 33 warnings only for file length >200)
+
+Stage Summary:
+- Modified: extension/src/lib/captcha-detector.js, extension/src/lib/cover-letter-*.js, extension/src/lib/match-scorer*.js, extension/src/lib/selectors.js, extension/src/lib/vacancy-fetch*.js, extension/src/ui/panel/*.js, extension/src/ui/tabs/*.js, extension/src/content/main*.js, extension/src/ui/dom-inspector.js
+- New: extension/src/ui/panel/captcha-notifications.js, extension/tests/match-scorer-integration.test.js, extension/tests/selectors-validation.test.js
+- New: .github/workflows/ci.yml, .github/workflows/release.yml
+
+---
+
+Task ID: cascade-sync-precommit
+Agent: opencode
+Task: Add cascade sync to pre-commit hook (auto-sync + validate)
+
+Work Log:
+- Added `sync` command to scripts/cascade-task.js (Node.js implementation, cross-platform, no jq/bash dependency)
+- sync command: auto-updates task statuses based on implementationFiles existence, then runs validate
+- Updated pre-commit hook (.git/hooks/pre-commit) Phase 2.5: runs `node scripts/cascade-task.js sync` instead of bash sync-task-state.sh
+- Pre-commit now blocks on cascade sync failures (exit code 1)
+- Works on Windows without jq/bash
+
+Stage Summary:
+- Modified: scripts/cascade-task.js, .git/hooks/pre-commit
+- cascade sync works: auto-updated 0 tasks, validate passed (43 tasks, 8 phases)
+
+---

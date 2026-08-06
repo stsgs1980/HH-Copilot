@@ -18,6 +18,7 @@
  *   node scripts/cascade-task.js pending           — List all pending tasks
  *   node scripts/cascade-task.js blocked           — List all blocked tasks
  *   node scripts/cascade-task.js validate          — Validate state.json integrity
+ *   node scripts/cascade-task.js sync              — Run bash sync-task-state.sh + validate
  *   node scripts/cascade-task.js phases            — List all phases with progress
  *   node scripts/cascade-task.js functions         — List function inventory
  *   node scripts/cascade-task.js func F-OV-01      — Show function details
@@ -492,6 +493,46 @@ function cmdFunc(state, funcId) {
   }
 }
 
+async function cmdSync() {
+  console.log(colorize('[SYNC] Running sync-task-state (Node.js implementation)...', 'cyan'));
+  
+  const state = loadState();
+  let updated = 0;
+  
+  for (const phase of state.phases) {
+    for (const task of phase.tasks) {
+      if (!task.implementationFiles || !Array.isArray(task.implementationFiles) || task.implementationFiles.length === 0) {
+        continue;
+      }
+      
+      // Skip already implemented/completed tasks
+      if (['implemented', 'completed', 'done'].includes(task.status)) {
+        continue;
+      }
+      
+      // Check if ALL implementation files exist
+      const { existsSync } = await import('node:fs');
+      const allExist = task.implementationFiles.every(f => existsSync(f));
+      
+      if (allExist) {
+        console.log(colorize(`  [CHANGED] ${task.id}: ${task.status} -> implemented (${task.implementationFiles.length} files exist)`, 'green'));
+        task.status = 'implemented';
+        updated++;
+      }
+    }
+  }
+  
+  if (updated > 0) {
+    await import('node:fs').then(fs => fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2) + '\n'));
+    console.log(colorize(`[SYNC] Auto-updated ${updated} task(s) to implemented`, 'green'));
+  } else {
+    console.log('[SYNC] No tasks auto-updated');
+  }
+  
+  console.log(colorize('[SYNC] Running validate...', 'cyan'));
+  cmdValidate(state);
+}
+
 function cmdValidate(state) {
   const errors = [];
   const warnings = [];
@@ -589,23 +630,14 @@ ${colorize('COMMANDS:', 'bold')}
   ${colorize('block <id> <reason>', 'cyan')}      Mark a task as blocked
   ${colorize('pending', 'cyan')}                  List all pending tasks
   ${colorize('blocked', 'cyan')}                  List all blocked tasks
-  ${colorize('functions', 'cyan')}                List function inventory
-  ${colorize('func <id>', 'cyan')}                Show function details
   ${colorize('validate', 'cyan')}                 Validate state.json integrity
-
-${colorize('EXAMPLES:', 'bold')}
-  node scripts/cascade-task.js next-task
-  node scripts/cascade-task.js start F1.3
-  node scripts/cascade-task.js complete F1.3
-  node scripts/cascade-task.js block F4.3 "waiting on AI service"
-  node scripts/cascade-task.js validate
-
-${colorize('STATE FILE:', 'bold')}
+  ${colorize('sync', 'cyan')}                     Run bash sync-task-state.sh + validate
+  ${colorize('phases', 'cyan')}                   List all phases with progress
   ${STATE_FILE}
 `);
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
     printUsage();
@@ -658,6 +690,9 @@ function main() {
       break;
     case 'func':
       cmdFunc(state, args[1]);
+      break;
+    case 'sync':
+      await cmdSync();
       break;
     case 'validate':
       cmdValidate(state);
