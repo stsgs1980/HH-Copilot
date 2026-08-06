@@ -5366,3 +5366,17 @@ Stage Summary:
 - UI: Two sliders in Vacancies tab with labels
 - Build: v1.9.86.0, 813.4kb
 - Next: Trigger enrichment pipeline automatically and re-render after enrichment
+---
+Task ID: fix-version-sync-crlf
+Agent: main
+Task: Fix version-sync.sh CRLF line endings for Linux CI
+
+Work Log:
+- version-sync.sh had CRLF line endings which break on Linux CI (ubuntu-latest)
+- Rewrote file with LF line endings using Write tool
+- Verified: hex dump shows only 0A (LF) now
+
+Stage Summary:
+- File: extension/scripts/version-sync.sh
+- Fixed: CRLF (0D 0A) -> LF (0A)
+- Will allow bash script to run on Linux CI
