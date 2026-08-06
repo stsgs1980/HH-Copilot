@@ -38,7 +38,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
  * @param {Object|null} resume -- Active resume for re-scoring (optional)
  * @returns {Object} The enriched vacancy (mutated in place, also returned)
  */
-export function enrichVacancy(vacancy, detail, resume) {
+export async function enrichVacancy(vacancy, detail, resume) {
   if (!vacancy || !detail) return vacancy;
 
   // -- Skills enrichment (the most impactful) --
@@ -98,7 +98,7 @@ export function enrichVacancy(vacancy, detail, resume) {
       // Build a scoring-compatible vacancy object:
       // merge structured salary/experience into top-level for scorer
       const scoreVacancy = buildScoringVacancy(vacancy);
-      const score = computeMatchScore(resume, scoreVacancy);
+      const score = await computeMatchScore(resume, scoreVacancy);
       vacancy.matchScore = score.total;
       vacancy.matchBreakdown = score.breakdown;
       vacancy.matchDetails = score.details;

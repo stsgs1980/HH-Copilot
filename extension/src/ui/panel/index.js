@@ -6,6 +6,7 @@
  *
  * Auth state + background negotiations are in ./auth-and-bg.js.
  * Event binding is in ./events.js.
+ * CAPTCHA notifications are in ./captcha-notifications.js
  * Split from original 294-line file (AHG Rule 12).
  * v1.9.43.0
  */
@@ -25,6 +26,8 @@ import { renderOverviewKPI } from '../tabs/overview.js';
 import { bindTabClicks } from './events.js';
 import { bindTourEvents } from '../../lib/tour-engine.js';
 import { updateAuthState, loadNegotiationsInBackground } from './auth-and-bg.js';
+import { resumeFromCaptcha } from '../../lib/captcha-detector.js';
+import { showCaptchaNotification, hideCaptchaNotification } from './captcha-notifications.js';
 
 // Re-export auth functions for callers that import from here
 export { updateAuthState, updateAuthStateAsync } from './auth-and-bg.js';
@@ -191,6 +194,22 @@ export function createPanel() {
       renderVacancyMatchScore(vacancyId, score, breakdown, details);
       panelLog.info('Match UI updated: ' + score + '% for vacancy ' + vacancyId);
     }
+  });
+
+  // Listen for CAPTCHA detection from content script
+  window.addEventListener('hh-ar-captcha-detected', async (e) => {
+    const { type, found, paused } = e.detail || {};
+    if (found) {
+      panelLog.warn('CAPTCHA detected in content script: ' + type);
+      showCaptchaNotification(refs, panelLog, type, paused);
+    }
+  });
+
+  // Listen for manual CAPTCHA resume from popup/settings
+  window.addEventListener('hh-ar-captcha-resume', async () => {
+    await resumeFromCaptcha();
+    hideCaptchaNotification(refs);
+    panelLog.info('CAPTCHA pause manually cleared');
   });
 }
 

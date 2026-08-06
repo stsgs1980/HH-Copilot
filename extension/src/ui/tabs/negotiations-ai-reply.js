@@ -66,7 +66,7 @@ export async function requestAiReply(conv, tone, impls) {
   const msgImpl = impls && impls.msgImpl;
 
   // Read chat history from the DOM
-  let history = [];
+  let history;
   try {
     const msgs = parseChatThread(threadRoot);
     history = extractThreadForAI(msgs);

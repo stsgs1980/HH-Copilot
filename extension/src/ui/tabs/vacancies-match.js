@@ -107,13 +107,13 @@ export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
  * Reads window.__hhVacDetail and panelState.resume, recomputes score
  * with current resume to get full skill detail.
  */
-export function tryShowVacancyMatch() {
+export async function tryShowVacancyMatch() {
   const detail = window.__hhVacDetail;
   if (!detail || detail.matchScore === undefined) return;
   // Re-compute with current resume to get full details (matching/missing skills)
   const resume = panelState.resume;
   if (resume) {
-    const score = computeMatchScore(resume, detail);
+    const score = await computeMatchScore(resume, detail);
     renderVacancyMatchScore(detail.id, score.total, score.breakdown, score.details);
   } else {
     // No resume -- show score without skill details

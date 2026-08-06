@@ -185,7 +185,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
         saveVacancyDetail(detail).catch(() => {});
 
         // Enrich the shallow vacancy
-        enrichVacancy(vacancy, detail, resume);
+        await enrichVacancy(vacancy, detail, resume);
 
         // Save score to storage
         if (vacancy.matchScore != null) {

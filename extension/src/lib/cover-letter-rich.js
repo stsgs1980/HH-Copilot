@@ -42,7 +42,7 @@ export function hasRichData(vacancy, resume) {
  * @param {Object} placeholders -- pre-extracted placeholder values
  * @returns {string|null} Rich cover letter or null if not enough data
  */
-export function generateRichLetter(vacancy, resume, placeholders) {
+export async function generateRichLetter(vacancy, resume, placeholders) {
   const parts = [];
 
   // 1. Greeting
@@ -58,7 +58,7 @@ export function generateRichLetter(vacancy, resume, placeholders) {
   if (expText) parts.push(expText);
 
   // 3. Matching skills (restore original case for display)
-  const matchResult = computeMatchScore(resume, vacancy);
+  const matchResult = await computeMatchScore(resume, vacancy);
   const matchingSkills = restoreOriginalCase(matchResult.details.matchingSkills || [], vacancy, resume);
   const derivedMatches = restoreOriginalCase(matchResult.details.derivedMatchSkills || [], vacancy, resume);
 

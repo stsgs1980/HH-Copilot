@@ -24,8 +24,6 @@
  */
 
 import {
-  INSPECTOR_Z,
-  imp,
   getOverlay,
   positionOverlay,
   hideOverlay,

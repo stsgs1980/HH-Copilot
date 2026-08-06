@@ -90,7 +90,7 @@ export async function handleVacancyDetailPage(path) {
     if (detail) {
       const resume = panelState.resume;
       if (resume) {
-        const score = computeMatchScore(resume, detail);
+        const score = await computeMatchScore(resume, detail);
         detail.matchScore = score.total;
         detail.matchBreakdown = score.breakdown;
         pageLog.info('Match score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');

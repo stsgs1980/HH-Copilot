@@ -24,7 +24,7 @@ export const MAX_REQUIREMENTS_QUOTE = 3;
  * @param {Object|null} resume
  * @returns {Object}
  */
-export function extractPlaceholders(vacancy, resume) {
+export async function extractPlaceholders(vacancy, resume) {
   const p = {};
 
   // {position} -- vacancy title
@@ -37,7 +37,7 @@ export function extractPlaceholders(vacancy, resume) {
   p.experience = extractExperienceText(resume);
 
   // {skills} -- top matching skills (preserving original case from vacancy/resume)
-  const matchResult = resume ? computeMatchScore(resume, vacancy) : null;
+  const matchResult = resume ? await computeMatchScore(resume, vacancy) : null;
   const matchingSkills = matchResult ? (matchResult.details.matchingSkills || []) : [];
 
   // Also include derived matches

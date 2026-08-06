@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./extension
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Verify version sync
+        run: bash scripts/version-sync.sh
+
+  test-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./extension
+        shell: pwsh
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build extension
+        run: npm run build
+
+  version-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check version consistency across files
+        run: |
+          VERSION_MANIFEST=$(grep '"version"' extension/manifest.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          VERSION_PACKAGE=$(grep '"version"' extension/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          VERSION_LIB=$(grep 'VERSION' extension/src/lib/version.js | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          VERSION_README=$(grep -i 'version:' README.md | head -1 | sed 's/.*[Vv]ersion: *\(.*\)/\1/')
+          VERSION_POPUP=$(grep 'id="version"' extension/popup/index.html | sed 's/.*>v\(.*\)<.*/\1/')
+
+          echo "manifest.json: $VERSION_MANIFEST"
+          echo "package.json: $VERSION_PACKAGE"
+          echo "version.js: $VERSION_LIB"
+          echo "README.md: $VERSION_README"
+          echo "popup/index.html: $VERSION_POPUP"
+
+          if [ "$VERSION_MANIFEST" != "$VERSION_PACKAGE" ] || [ "$VERSION_MANIFEST" != "$VERSION_LIB" ] || [ "$VERSION_MANIFEST" != "$VERSION_README" ] || [ "$VERSION_MANIFEST" != "$VERSION_POPUP" ]; then
+            echo "ERROR: Version mismatch detected!"
+            exit 1
+          fi
+          echo "All versions match: $VERSION_MANIFEST"

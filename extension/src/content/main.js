@@ -77,6 +77,10 @@ async function init() {
     const captchaRes = await checkAndPause(document, settings);
     if (captchaRes.found) {
       mainLog.warn('CAPTCHA detected on page load: ' + captchaRes.type);
+      // Notify panel to show banner
+      window.dispatchEvent(new CustomEvent('hh-ar-captcha-detected', {
+        detail: { type: captchaRes.type, found: true, paused: captchaRes.paused }
+      }));
       // Update extension badge to signal pause
       if (chrome.action && chrome.action.setBadgeText) {
         chrome.action.setBadgeText({ text: '!' });
@@ -160,7 +164,7 @@ async function init() {
   // On vacancy detail pages, the first scoring may show skills=0 because
   // the resume hasn't been loaded from storage yet. When a resume loads
   // (either from storage at boot, or from a page parse), we re-score.
-  window.addEventListener('hh-ar-resume-loaded', (e) => {
+  window.addEventListener('hh-ar-resume-loaded', async (e) => {
     const resume = e.detail?.resume || panelState.resume;
     if (!resume) return;
     if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
@@ -168,7 +172,7 @@ async function init() {
     try {
       const detail = parseVacancyDetail();
       if (detail) {
-        const score = computeMatchScore(resume, detail);
+        const score = await computeMatchScore(resume, detail);
         detail.matchScore = score.total;
         detail.matchBreakdown = score.breakdown;
         mainLog.info('Re-score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');

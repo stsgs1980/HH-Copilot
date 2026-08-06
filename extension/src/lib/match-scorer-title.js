@@ -173,7 +173,7 @@ function crudeStem(word) {
 /**
  * Build stem map for a word set: stem -> [words with that stem].
  */
-function buildStemMap(words) {
+function _buildStemMap(words) {
   const map = new Map();
   for (const w of words) {
     const s = crudeStem(w);

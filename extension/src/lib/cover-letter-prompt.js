@@ -58,7 +58,7 @@ export function buildPrompt(scorecard, evidence, tone) {
   const system = SYSTEM_PROMPT_TEMPLATE.replace('{tone}', toneDesc);
 
   const outcomes = (scorecard.outcomes || [])
-    .map((o, i) => '    - ' + o)
+    .map((o, _i) => '    - ' + o)
     .join('\n');
 
   const evidenceLines = (evidence || [])

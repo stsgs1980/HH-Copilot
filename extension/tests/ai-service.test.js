@@ -145,10 +145,10 @@ describe('F4.2 -- config', () => {
     expect(cfg.timeoutMs).toBe(5000);
   });
 
-  it('getAiConfig clamps too-large timeoutMs to 180000', async () => {
+  it('getAiConfig clamps too-large timeoutMs to 600000', async () => {
     installChromeStub({ [AI_CONFIG_KEY]: { apiKey: 'k', token: 'jwt', timeoutMs: 999999 } });
     const cfg = await getAiConfig();
-    expect(cfg.timeoutMs).toBe(180000);
+    expect(cfg.timeoutMs).toBe(600000);
   });
 
   it('getAiConfig falls back to 60000 when timeoutMs is invalid', async () => {

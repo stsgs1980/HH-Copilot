@@ -149,6 +149,48 @@ export async function loadCaptchaState() {
   } catch (_e) { /* ignore */ }
 }
 
+/** Exported for tests. */
+export const _internal = {
+  CAPTCHA_SELECTORS,
+  CAPTCHA_STATE_KEY,
+  _resetState: () => { _state = { paused: false, reason: null, detectedAt: null, type: null }; },
+};
+
+/**
+ * Get CAPTCHA statistics from storage.
+ * @returns {Promise<{total: number, lastDetected: string|null, types: Object}>}
+ */
+export async function getCaptchaStats() {
+  try {
+    const data = await chrome.storage.local.get('captchaStats');
+    return data.captchaStats || { total: 0, lastDetected: null, types: {} };
+  } catch (_e) {
+    return { total: 0, lastDetected: null, types: {} };
+  }
+}
+
+/**
+ * Record CAPTCHA detection for analytics.
+ * @param {string} type - CAPTCHA type
+ * @returns {Promise<void>}
+ */
+async function recordCaptchaDetection(type) {
+  try {
+    const stats = await getCaptchaStats();
+    stats.total = (stats.total || 0) + 1;
+    stats.lastDetected = new Date().toISOString();
+    stats.types = stats.types || {};
+    stats.types[type] = (stats.types[type] || 0) + 1;
+    // Keep only last 30 days of types (types don't have timestamps, limit total entries)
+    const _cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    if (Object.keys(stats.types).length > 20) {
+      const sorted = Object.entries(stats.types).sort((a, b) => b[1] - a[1]);
+      stats.types = Object.fromEntries(sorted.slice(0, 15));
+    }
+    await chrome.storage.local.set({ captchaStats: stats });
+  } catch (_e) { /* ignore */ }
+}
+
 /**
  * Check page for CAPTCHA and auto-pause if found.
  * Respects settings.captchaAutoPause flag (when false, just logs).
@@ -163,6 +205,9 @@ export async function checkAndPause(root, settings) {
     return { found: false, paused: false, type: null };
   }
 
+  // Record for analytics
+  await recordCaptchaDetection(detection.type);
+
   const shouldPause = settings ? settings.captchaAutoPause !== false : true;
   if (shouldPause && !isAutoPaused()) {
     await pauseForCaptcha(detection.type, 'CAPTCHA detected: ' + detection.type);
@@ -172,10 +217,3 @@ export async function checkAndPause(root, settings) {
 
   return { found: true, paused: shouldPause, type: detection.type };
 }
-
-/** Exported for tests. */
-export const _internal = {
-  CAPTCHA_SELECTORS,
-  CAPTCHA_STATE_KEY,
-  _resetState: () => { _state = { paused: false, reason: null, detectedAt: null, type: null }; },
-};

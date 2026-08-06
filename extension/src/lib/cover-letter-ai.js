@@ -57,7 +57,7 @@ export async function generateAICoverLetter(vacancy, resume, opts) {
   aiLetterLog.info('Scorecard: ' + scorecard.mission + ' | ' + scorecard.outcomes.length + ' outcomes | ' + scorecard.competencies.length + ' competencies');
 
   // 3. Compute match score
-  const matchResult = computeMatchScore(resume, vacancy);
+  const matchResult = await computeMatchScore(resume, vacancy);
   aiLetterLog.info('Match: ' + matchResult.total + '% | matching=' + (matchResult.details.matchingSkills || []).length);
 
   // 4. Map evidence

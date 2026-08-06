@@ -32,6 +32,7 @@ import { scoreTitle } from './match-scorer-title.js';
 import { scoreSalary } from './match-scorer-salary.js';
 import { scoreExperience } from './match-scorer-experience.js';
 import { scoreLocation } from './match-scorer-location.js';
+import { computeSemanticSimilarity } from './ai-semantic.js';
 
 const scoreLog = createLogger('Scorer');
 
@@ -40,16 +41,16 @@ const WEIGHT_PROFILES = {
   flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 }
 };
 
-export function computeMatchScore(resume, vacancy, mode = 'precise') {
-  const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
-  const W_SKILLS = profile.skills / 40;
-  const W_TITLE = profile.title / 30;
-  const W_SALARY = profile.salary / 15;
-  const W_EXP = profile.experience / 15;
-// location is a new module returning 0-15 directly, no multiplier needed
-
+export async function computeMatchScore(resume, vacancy, mode = 'precise') {
   if (!resume || !vacancy) {
-    return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0 }, details: {} };
+    return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0, semantic: 0 }, details: {} };
+  }
+
+  const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
+
+  let semanticScore = 0;
+  if (mode === 'flexible') {
+    semanticScore = await computeSemanticSimilarity(resume, vacancy);
   }
 
   const skillResult = scoreSkills(resume, vacancy);
@@ -59,20 +60,23 @@ export function computeMatchScore(resume, vacancy, mode = 'precise') {
   const locResult = scoreLocation(resume, vacancy);
 
   const breakdown = {
-    skills: Math.round(skillResult.score * W_SKILLS),
-    title: Math.round(titleResult.score * W_TITLE),
-    salary: Math.round(salaryResult.score * W_SALARY),
-    experience: Math.round(expResult.score * W_EXP),
+    skills: Math.round(skillResult.score * (profile.skills / 40)),
+    title: Math.round(titleResult.score * (profile.title / 30)),
+    salary: Math.round(salaryResult.score * (profile.salary / 15)),
+    experience: Math.round(expResult.score * (profile.experience / 15)),
     location: locResult.score,
+    semantic: mode === 'flexible' ? Math.round(semanticScore * 45) : 0,
   };
 
-  let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location);
+  let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location + breakdown.semantic);
 
-  // v1.9.35.0: Role mismatch penalty
-  if (titleResult.score === 0 && titleResult.similarity === 0) {
-    total = Math.min(total, 25);
-  } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
-    total = Math.min(total, 40);
+  // Role mismatch penalty (only in precise mode)
+  if (mode === 'precise') {
+    if (titleResult.score === 0 && titleResult.similarity === 0) {
+      total = Math.min(total, 25);
+    } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
+      total = Math.min(total, 40);
+    }
   }
 
   const details = {
@@ -86,9 +90,10 @@ export function computeMatchScore(resume, vacancy, mode = 'precise') {
     salaryMatch: salaryResult.reason,
     experienceMatch: expResult.reason,
     locationMatch: locResult.reason,
+    semanticScore: semanticScore,
   };
 
-  scoreLog.info('Score ' + total + '%: skills=' + breakdown.skills + ' title=' + breakdown.title + ' salary=' + breakdown.salary + ' exp=' + breakdown.experience + ' loc=' + breakdown.location);
+  scoreLog.info('Score ' + total + '%: skills=' + breakdown.skills + ' title=' + breakdown.title + ' salary=' + breakdown.salary + ' exp=' + breakdown.experience + ' loc=' + breakdown.location + ' semantic=' + breakdown.semantic);
 
   return { total, breakdown, details };
 }
