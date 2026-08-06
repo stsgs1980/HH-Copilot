@@ -5380,3 +5380,17 @@ Stage Summary:
 - File: extension/scripts/version-sync.sh
 - Fixed: CRLF (0D 0A) -> LF (0A)
 - Will allow bash script to run on Linux CI
+---
+Task ID: fix-shell-scripts-crlf
+Agent: main
+Task: Fix all shell scripts CRLF -> LF line endings for Linux CI
+
+Work Log:
+- Fixed scripts/cascade-cli.sh (CRLF -> LF)
+- Fixed scripts/cascade-init.sh (CRLF -> LF)
+- Fixed scripts/sync-task-state.sh (CRLF -> LF)
+- Previously fixed extension/scripts/version-sync.sh and doc-consistency.sh
+
+Stage Summary:
+- All .sh files in repo now use LF line endings
+- Will allow bash scripts to run on Linux CI (ubuntu-latest)
