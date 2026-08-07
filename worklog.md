@@ -5531,3 +5531,18 @@ Stage Summary:
 - CI uses hardcoded node-version: '20' (works reliably)
 - Fixed VERSION_LIB extraction in version-consistency job
 - Should pass all 3 CI jobs
+---
+Task ID: fix-ci-cache-path-final
+Agent: main
+Task: Fix CI cache path - use extension/package-lock.json (repo-relative)
+
+Work Log:
+- Changed cache-dependency-path from package-lock.json to extension/package-lock.json
+- actions/cache searches from repo root, not working directory
+- package-lock.json is in extension/ directory
+- This fixes 'Dependencies lock file is not found' error
+
+Stage Summary:
+- File: .github/workflows/ci.yml
+- Fixed cache-dependency-path to extension/package-lock.json (repo-relative)
+- Should fix 'Dependencies lock file is not found' error

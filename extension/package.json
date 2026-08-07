@@ -4,7 +4,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.9",
-    "@vitest/coverage-v8": "^4.1.9",
     "@vitest/ui": "^4.1.9",
     "esbuild": "^0.24.0",
     "eslint": "^10.5.0",
@@ -13,7 +12,7 @@
     "vitest": "^4.1.9",
     "ws": "^8.18.0"
   },
-  "description": "HH Copilot — Chrome Extension for hh.ru (esbuild)",
+  "description": "HH Copilot - Chrome Extension for hh.ru (esbuild)",
   "private": true,
   "scripts": {
     "build": "node esbuild.config.mjs",
@@ -29,5 +28,4 @@
   "engines": {
     "node": ">=20.0.0 <21.0.0"
   }
-}
 }
