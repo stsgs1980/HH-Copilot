@@ -5500,3 +5500,18 @@ Stage Summary:
 - File: extension/package.json - added engines field
 - File: .github/workflows/ci.yml - use node-version-file
 - Should fix Node.js 20 deprecation warning and version mismatch
+---
+Task ID: fix-ci-node-version-nvmrc
+Agent: main
+Task: Fix CI Node.js version - use .nvmrc file
+
+Work Log:
+- Created extension/.nvmrc with Node.js version 20
+- Updated CI workflow to use node-version-file: '.nvmrc'
+- setup-node will now correctly read the version from .nvmrc
+- Fixes 'Unable to find Node version' error - node-version-file expects a simple version file, not package.json
+
+Stage Summary:
+- File: extension/.nvmrc created
+- File: .github/workflows/ci.yml updated to use node-version-file: '.nvmrc'
+- Should fix 'Unable to find Node version' error
