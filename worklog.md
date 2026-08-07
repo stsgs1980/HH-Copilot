@@ -5515,3 +5515,100 @@ Stage Summary:
 - File: extension/.nvmrc created
 - File: .github/workflows/ci.yml updated to use node-version-file: '.nvmrc'
 - Should fix 'Unable to find Node version' error
+---
+Task ID: fix-ci-final
+Agent: main
+Task: Final CI fix - fix .nvmrc location and version.js extraction
+
+Work Log:
+- Moved .nvmrc to repo root
+- Fixed VERSION_LIB extraction in CI to properly match VERSION = '1.9.86.0' line
+- Removed .nvmrc from CI (using hardcoded node-version: '20' instead)
+- Should fix both Node.js setup and version-consistency job
+
+Stage Summary:
+- .nvmrc at repo root (for local use)
+- CI uses hardcoded node-version: '20' (works reliably)
+- Fixed VERSION_LIB extraction in version-consistency job
+- Should pass all 3 CI jobs
+---
+Task ID: fix-ci-cache-path-final
+Agent: main
+Task: Fix CI cache path - use extension/package-lock.json (repo-relative)
+
+Work Log:
+- Changed cache-dependency-path from package-lock.json to extension/package-lock.json
+- actions/cache searches from repo root, not working directory
+- package-lock.json is in extension/ directory
+- This fixes 'Dependencies lock file is not found' error
+
+Stage Summary:
+- File: .github/workflows/ci.yml
+- Fixed cache-dependency-path to extension/package-lock.json (repo-relative)
+- Should fix 'Dependencies lock file is not found' error
+---
+Task ID: fix-ci-lockfile-final
+Agent: main
+Task: Fix CI - update package-lock.json to sync with package.json
+
+Work Log:
+- Removed node_modules and package-lock.json
+- Ran npm install to fully sync lock file with package.json
+- package-lock.json now includes esbuild@0.28.1 and all platform-specific @esbuild/* packages
+- Verified: npm ci --prefer-offline --no-audit passes
+- Verified: npm run lint passes (0 errors)
+- Verified: npm test passes (711 tests passed)
+
+Stage Summary:
+- File: extension/package-lock.json - fully synced with package.json
+- Should fix npm ci sync error in CI for both test and test-windows jobs
+---
+Task ID: fix-ci-lockfile-final
+Agent: main
+Task: Fix CI - update package-lock.json with --no-optional to exclude platform-specific deps
+
+Work Log:
+- Removed node_modules and package-lock.json
+- Ran npm install --no-optional to exclude platform-specific optional deps (openharmony-arm64 etc)
+- Verified: npm ci --prefer-offline --no-audit passes
+- Verified: npm run lint passes (0 errors)
+- Verified: npm test passes (711 tests passed)
+
+Stage Summary:
+- File: extension/package-lock.json - regenerated with --no-optional
+- Should fix npm ci EBADPLATFORM error in CI for both test and test-windows jobs
+---
+Task ID: fix-ci-omit-optional
+Agent: main
+Task: Add --omit=optional to npm ci in CI workflow and regenerate lock file
+
+Work Log:
+- CI still fails with EBADPLATFORM for @esbuild/openharmony-arm64@0.28.1
+- --no-optional did not remove optional deps from lock file (npm always records them)
+- --omit=optional on npm ci IS supported (verified via npm ci --help)
+- Updated .github/workflows/ci.yml: added --omit=optional to both test and test-windows jobs
+- Regenerated package-lock.json with npm install --omit=optional (esbuild 0.24.2 installed)
+- Lock file still has openharmony refs (npm always records optional deps) but --omit=optional at ci time skips them
+- PR #1 was closed without merge; need to push and create new PR
+
+Stage Summary:
+- File: .github/workflows/ci.yml - added --omit=optional to npm ci in both jobs
+- File: extension/package-lock.json - regenerated
+- Next: commit, push, create new PR
+---
+Task ID: fix-ci-force-npmrc
+Agent: main
+Task: Add force=true to .npmrc to bypass EBADPLATFORM in CI
+
+Work Log:
+- --omit=optional did NOT help: npm ci still validates platform for all lock file entries
+- Root cause: vitest 4.x depends on esbuild@0.28.1 (via rolldown), which has @esbuild/openharmony-arm64 as optional dep
+- npm always records optional deps in lock file; npm ci validates them even with --omit=optional
+- Solution: .npmrc with force=true — bypasses platform/engine/peer dep checks in npm ci
+- Updated .npmrc: omit=optional -> force=true
+- Reverted --omit=optional from CI workflow (now handled by .npmrc)
+- Local verification: npm ci, lint (0 errors), test (711 passed), build all pass
+
+Stage Summary:
+- File: extension/.npmrc - force=true (was omit=optional)
+- File: .github/workflows/ci.yml - reverted to plain npm ci (force=true in .npmrc)
