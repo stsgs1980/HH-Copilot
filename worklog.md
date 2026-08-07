@@ -5394,3 +5394,17 @@ Work Log:
 Stage Summary:
 - All .sh files in repo now use LF line endings
 - Will allow bash scripts to run on Linux CI (ubuntu-latest)
+---
+Task ID: fix-lint-unicode-dash
+Agent: main
+Task: Fix lint error - Unicode en dash (U+2013) in vacancies.js
+
+Work Log:
+- Lint found error: AHG Rule 15 - Unicode en dash (U+2013) in vacancies.js:55
+- Replaced '–' with '--' in "Низкое совпадение {minShow}–{minMatch-1}%"
+- Verified: lint passes (0 errors), tests pass (711), build succeeds
+
+Stage Summary:
+- File: extension/src/ui/tabs/vacancies.js line 55
+- Fix: 'minShow + '–' + (minMatch - 1)' -> 'minShow + '--' + (minMatch - 1)'
+- All CI checks should now pass locally
