@@ -5515,3 +5515,19 @@ Stage Summary:
 - File: extension/.nvmrc created
 - File: .github/workflows/ci.yml updated to use node-version-file: '.nvmrc'
 - Should fix 'Unable to find Node version' error
+---
+Task ID: fix-ci-final
+Agent: main
+Task: Final CI fix - fix .nvmrc location and version.js extraction
+
+Work Log:
+- Moved .nvmrc to repo root
+- Fixed VERSION_LIB extraction in CI to properly match VERSION = '1.9.86.0' line
+- Removed .nvmrc from CI (using hardcoded node-version: '20' instead)
+- Should fix both Node.js setup and version-consistency job
+
+Stage Summary:
+- .nvmrc at repo root (for local use)
+- CI uses hardcoded node-version: '20' (works reliably)
+- Fixed VERSION_LIB extraction in version-consistency job
+- Should pass all 3 CI jobs

@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -52,7 +52,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -85,7 +85,8 @@ jobs:
           VERSION_PACKAGE=$(grep '"version"' extension/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
           echo "package.json: $VERSION_PACKAGE"
           
-          VERSION_LIB=$(grep 'VERSION' extension/src/lib/version.js | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          # Extract VERSION from version.js - match only the version number
+          VERSION_LIB=$(grep "VERSION =" extension/src/lib/version.js | head -1 | sed 's/.*VERSION = '\''\(.*\)'\'';.*/\1/')
           echo "version.js: $VERSION_LIB"
           
           # Extract version from README - handle markdown bold
