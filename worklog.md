@@ -5486,3 +5486,17 @@ Stage Summary:
 - Added debugging output for each version extraction
 - Added validation that all versions are non-empty before comparison
 - Should help identify which version extraction is failing on CI
+---
+Task ID: fix-ci-node-version
+Agent: main
+Task: Add engines field to package.json and use node-version-file in CI
+
+Work Log:
+- Added engines field to extension/package.json: "node": ">=20.0.0 <21.0.0"
+- Updated CI workflow to use node-version-file: 'extension/package.json' instead of hardcoded version
+- This tells setup-node to install the correct Node.js version (20.x) instead of defaulting to deprecated 20 or forced 24
+
+Stage Summary:
+- File: extension/package.json - added engines field
+- File: .github/workflows/ci.yml - use node-version-file
+- Should fix Node.js 20 deprecation warning and version mismatch
