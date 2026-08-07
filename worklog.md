@@ -5595,3 +5595,20 @@ Stage Summary:
 - File: .github/workflows/ci.yml - added --omit=optional to npm ci in both jobs
 - File: extension/package-lock.json - regenerated
 - Next: commit, push, create new PR
+---
+Task ID: fix-ci-force-npmrc
+Agent: main
+Task: Add force=true to .npmrc to bypass EBADPLATFORM in CI
+
+Work Log:
+- --omit=optional did NOT help: npm ci still validates platform for all lock file entries
+- Root cause: vitest 4.x depends on esbuild@0.28.1 (via rolldown), which has @esbuild/openharmony-arm64 as optional dep
+- npm always records optional deps in lock file; npm ci validates them even with --omit=optional
+- Solution: .npmrc with force=true — bypasses platform/engine/peer dep checks in npm ci
+- Updated .npmrc: omit=optional -> force=true
+- Reverted --omit=optional from CI workflow (now handled by .npmrc)
+- Local verification: npm ci, lint (0 errors), test (711 passed), build all pass
+
+Stage Summary:
+- File: extension/.npmrc - force=true (was omit=optional)
+- File: .github/workflows/ci.yml - reverted to plain npm ci (force=true in .npmrc)
