@@ -80,7 +80,8 @@ jobs:
           VERSION_MANIFEST=$(grep '"version"' extension/manifest.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
           VERSION_PACKAGE=$(grep '"version"' extension/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
           VERSION_LIB=$(grep 'VERSION' extension/src/lib/version.js | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          VERSION_README=$(grep -i 'version:' README.md | head -1 | sed 's/.*[Vv]ersion: *\(.*\)/\1/')
+          # Extract only the version number (digits and dots) from README
+          VERSION_README=$(grep -i 'version:' README.md | head -1 | sed -E 's/.*[Vv]ersion:[^0-9]*([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/')
           VERSION_POPUP=$(grep 'id="version"' extension/popup/index.html | sed 's/.*>v\(.*\)<.*/\1/')
 
           echo "manifest.json: $VERSION_MANIFEST"

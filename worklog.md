@@ -5408,3 +5408,18 @@ Stage Summary:
 - File: extension/src/ui/tabs/vacancies.js line 55
 - Fix: 'minShow + '–' + (minMatch - 1)' -> 'minShow + '--' + (minMatch - 1)'
 - All CI checks should now pass locally
+---
+Task ID: fix-ci-version-consistency
+Agent: main
+Task: Fix CI version-consistency job - README version extraction
+
+Work Log:
+- CI version-consistency job failing due to incorrect version extraction from README
+- Old regex: `sed 's/.*[Vv]ersion: *\(.*\)/\1/'` captured entire line after "Version: "
+- New regex: `sed -E 's/.*[Vv]ersion:[^0-9]*([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/'` captures only version number
+- Fixed in .github/workflows/ci.yml
+
+Stage Summary:
+- File: .github/workflows/ci.yml
+- Fix: Version extraction regex for README
+- Should fix version-consistency job failure
