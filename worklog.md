@@ -5454,3 +5454,19 @@ Stage Summary:
 - File: .github/workflows/ci.yml
 - Targets: test, test-windows, version-consistency all 3 jobs
 - Should fix all 3 failing checks
+---
+Task ID: fix-ci-version-extraction
+Agent: main
+Task: Fix CI version-consistency - simplify README version extraction
+
+Work Log:
+- Simplified README version extraction in version-consistency job
+- Replaced complex sed -E regex with simpler grep -oE approach
+- Old: sed -E 's/.*[Vv]ersion:[^0-9]*([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/'
+- New: grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1
+- More robust, avoids sed -E complexity and escaping issues
+
+Stage Summary:
+- File: .github/workflows/ci.yml
+- Fix: version-consistency job version extraction
+- Should fix version-consistency job failure
