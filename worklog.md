@@ -5423,3 +5423,34 @@ Stage Summary:
 - File: .github/workflows/ci.yml
 - Fix: Version extraction regex for README
 - Should fix version-consistency job failure
+---
+Task ID: fix-ci-cache-package-lock
+Agent: main
+Task: Add package-lock.json to git for CI npm cache
+
+Work Log:
+- CI failing with "Some specified paths were not resolved, unable to cache dependencies"
+- Root cause: extension/package-lock.json was in .gitignore, so cache action couldn't find it
+- Added extension/package-lock.json to git (force add)
+- This enables npm cache in CI workflows
+
+Stage Summary:
+- File: extension/package-lock.json added to git
+- Should fix cache dependency resolution in CI
+---
+Task ID: fix-ci-workflow-comprehensive
+Agent: main
+Task: Fix CI workflow comprehensively
+
+Work Log:
+- Updated .github/workflows/ci.yml with comprehensive fixes:
+  - Node.js 20 -> 22 (20 deprecated, forced to 24 causing issues)
+  - Windows test: shell: bash instead of pwsh (bash scripts work, pwsh doesn't)
+  - npm ci: added --prefer-offline --no-audit for speed and reliability
+  - version-consistency: added set -euo pipefail for robustness
+  - Cache: package-lock.json now in git, cache-dependency-path should resolve
+
+Stage Summary:
+- File: .github/workflows/ci.yml
+- Targets: test, test-windows, version-consistency all 3 jobs
+- Should fix all 3 failing checks

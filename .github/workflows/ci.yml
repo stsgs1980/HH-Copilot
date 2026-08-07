@@ -20,12 +20,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: extension/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run lint
         run: npm run lint
@@ -44,7 +44,7 @@ jobs:
     defaults:
       run:
         working-directory: ./extension
-        shell: pwsh
+        shell: bash
 
     steps:
       - name: Checkout repository
@@ -53,12 +53,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: extension/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run lint
         run: npm run lint
@@ -77,6 +77,7 @@ jobs:
 
       - name: Check version consistency across files
         run: |
+          set -euo pipefail
           VERSION_MANIFEST=$(grep '"version"' extension/manifest.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
           VERSION_PACKAGE=$(grep '"version"' extension/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
           VERSION_LIB=$(grep 'VERSION' extension/src/lib/version.js | head -1 | sed 's/.*"\(.*\)".*/\1/')
