@@ -5470,3 +5470,19 @@ Stage Summary:
 - File: .github/workflows/ci.yml
 - Fix: version-consistency job version extraction
 - Should fix version-consistency job failure
+---
+Task ID: fix-ci-version-consistency-debug
+Agent: main
+Task: Add debugging to CI version-consistency job
+
+Work Log:
+- Added explicit error handling and validation in version-consistency job
+- Each version extraction now has explicit echo for debugging
+- Added validation that all versions are extracted before comparison
+- More robust error handling with set -euo pipefail
+
+Stage Summary:
+- File: .github/workflows/ci.yml
+- Added debugging output for each version extraction
+- Added validation that all versions are non-empty before comparison
+- Should help identify which version extraction is failing on CI
