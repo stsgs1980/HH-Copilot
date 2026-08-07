@@ -5612,3 +5612,28 @@ Work Log:
 Stage Summary:
 - File: extension/.npmrc - force=true (was omit=optional)
 - File: .github/workflows/ci.yml - reverted to plain npm ci (force=true in .npmrc)
+---
+Task ID: fix-match-scoring
+Agent: main
+Task: Fix 4 bugs in vacancy match scoring system
+
+Work Log:
+- Bug 1: match-scorer-skills.js — SERP card tags (skills[]) were ignored because scorer only read keySkills
+  - Added fallback: when keySkills and derivedSkills are both empty, use skills[] from SERP tags
+  - Before: SERP vacancies always scored 0 for skills dimension
+  - After: SERP tag skills are counted (with confidence factor)
+- Bug 2: match-scorer-location.js — hybrid format check ran before same-city check
+  - Resume with workFormat='гибрид' + vacancy in same city got 12 instead of 15
+  - Moved same-city/region/different-city checks before hybrid format block
+- Bug 3: SERP vacancy with 0 skills got 57% (false relevance)
+  - Fixed by Bug 1 — skills now counted, score reflects actual match
+- Bug 4: match-scorer-salary.js — missing salary gave 8/15 (same as matching salary)
+  - Reduced neutral score from 8 to 4 for no-data, resume-no-salary, vacancy-no-salary
+  - Vacancies hiding salary now get penalized
+- Added real-data-flow.test.js with realistic hh.ru data scenarios
+- Updated existing tests to match new expected values
+- All 729 tests pass, lint 0 errors, build OK
+
+Stage Summary:
+- Files: match-scorer-skills.js, match-scorer-location.js, match-scorer-salary.js
+- Files: match-scorer.test.js, match-scorer-integration.test.js, real-data-flow.test.js (new)

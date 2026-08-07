@@ -432,27 +432,27 @@ describe('scoreSalary', () => {
     expect(r.reason).toBe('within-range');
   });
 
-  it('no data on either side -> 8/15 neutral', () => {
+  it('no data on either side -> 4/15 (low neutral)', () => {
     const r = scoreSalary(makeResume(), makeVacancy());
-    expect(r.score).toBe(8);
+    expect(r.score).toBe(4);
     expect(r.reason).toBe('no-data');
   });
 
-  it('no resume salary -> 8/15 neutral', () => {
+  it('no resume salary -> 4/15 (low neutral)', () => {
     const r = scoreSalary(
       makeResume({ salary: '' }),
       makeVacancy({ salary: { min: 100000, max: 200000 } }),
     );
-    expect(r.score).toBe(8);
+    expect(r.score).toBe(4);
     expect(r.reason).toBe('resume-no-salary');
   });
 
-  it('no vacancy salary -> 8/15 neutral', () => {
+  it('no vacancy salary -> 4/15 (low neutral)', () => {
     const r = scoreSalary(
       makeResume({ salary: '150 000' }),
       makeVacancy({ salary: {} }),
     );
-    expect(r.score).toBe(8);
+    expect(r.score).toBe(4);
     expect(r.reason).toBe('vacancy-no-salary');
   });
 

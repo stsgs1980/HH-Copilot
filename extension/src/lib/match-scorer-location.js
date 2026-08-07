@@ -165,14 +165,12 @@ export function scoreLocation(resume, vacancy) {
     return { score: 8, reason: 'office-wants-remote' };
   }
 
-  // ---- Resume hybrid matches anything well ----
-  if (resumeFormat === 'hybrid') {
-    if (vacFormat === 'hybrid') return { score: 13, reason: 'hybrid-hybrid' };
-    if (vacFormat === 'office') return { score: 12, reason: 'hybrid-can-do-office' };
-    if (vacFormat === 'remote') return { score: 12, reason: 'hybrid-can-do-remote' };
-  }
-
   // ---- City-based matching (both are office or at least one unknown) ----
+
+  // v1.9.87.0: Same-city check BEFORE hybrid format check.
+  // Previously, a hybrid resume + office vacancy in the same city got 12
+  // (hybrid-can-do-office) instead of 15 (same-city). City match is more
+  // important than work format preference.
 
   // Same city
   if (resumeCity && vacCity && resumeCity === vacCity) {
@@ -187,6 +185,13 @@ export function scoreLocation(resume, vacancy) {
   // Different known cities
   if (resumeCity && vacCity) {
     return { score: 8, reason: 'different-city' };
+  }
+
+  // ---- Resume hybrid matches anything well (only when city is unknown) ----
+  if (resumeFormat === 'hybrid') {
+    if (vacFormat === 'hybrid') return { score: 13, reason: 'hybrid-hybrid' };
+    if (vacFormat === 'office') return { score: 12, reason: 'hybrid-can-do-office' };
+    if (vacFormat === 'remote') return { score: 12, reason: 'hybrid-can-do-remote' };
   }
 
   // One or both unknown -- neutral
