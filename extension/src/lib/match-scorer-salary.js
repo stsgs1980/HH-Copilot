@@ -31,17 +31,23 @@ export function scoreSalary(resume, vacancy) {
     vacSalary = parseVacancySalaryString(vacSalary);
   }
 
-  // If no salary info on either side -- neutral score
+  // v1.9.87.0: Reduced neutral score from 8 to 4 for missing salary data.
+  // Previously, a vacancy with "Не указана" salary got 8/15 — same as a
+  // vacancy with a salary that matches the resume expectation. This inflated
+  // irrelevant vacancies above the minShowScore threshold.
+  // 4/15 still contributes something (not 0) but penalizes missing info.
+
+  // If no salary info on either side -- low neutral score
   if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
-    return { score: 8, reason: 'no-data' };
+    return { score: 4, reason: 'no-data' };
   }
 
   if (!resumeSalary) {
-    return { score: 8, reason: 'resume-no-salary' };
+    return { score: 4, reason: 'resume-no-salary' };
   }
 
   if (!vacSalary.min && !vacSalary.max) {
-    return { score: 8, reason: 'vacancy-no-salary' };
+    return { score: 4, reason: 'vacancy-no-salary' };
   }
 
   // Check overlap between resume expectation and vacancy range

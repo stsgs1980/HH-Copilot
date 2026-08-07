@@ -372,7 +372,7 @@ describe('Match Scorer Integration Tests', () => {
       const resume = { ...SAMPLE_RESUME, salary: '' };
       const vacancy = { ...SAMPLE_VACANCY_HIGH_MATCH, salary: {} };
       const result = await computeMatchScore(resume, vacancy);
-      expect(result.breakdown.salary).toBe(8); // neutral
+      expect(result.breakdown.salary).toBe(4); // low neutral (no salary data)
       expect(result.details.salaryMatch).toBe('no-data');
     });
 

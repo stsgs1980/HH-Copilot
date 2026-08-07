@@ -31,10 +31,16 @@ export function scoreSkills(resume, vacancy) {
   // v1.9.32.0: Only use keySkills (employer-listed). Never fall back to
   // vacancy.skills (search card tags -- too noisy, 5-10 random pills per card).
   // derivedSkills used only when keySkills is empty.
+  // v1.9.87.0: Added vacancy.skills fallback when both keySkills and derivedSkills
+  // are empty (SERP card tags). Without this, SERP vacancies always score 0 for
+  // skills, inflating the total with false relevance (e.g. 57% with 0 matching skills).
   let vacancySkillsRaw = vacancy.keySkills || [];
   if (vacancySkillsRaw.length === 0 && vacancy.derivedSkills && vacancy.derivedSkills.length > 0) {
     skillLog.info('No vacancy keySkills -- using derivedSkills (' + vacancy.derivedSkills.length + ')');
     vacancySkillsRaw = vacancy.derivedSkills;
+  } else if (vacancySkillsRaw.length === 0 && vacancy.skills && vacancy.skills.length > 0) {
+    skillLog.info('No vacancy keySkills or derivedSkills -- using skills (' + vacancy.skills.length + ')');
+    vacancySkillsRaw = vacancy.skills;
   }
   const vacancySkills = normalizeSkillSet(vacancySkillsRaw);
 
