@@ -6366,3 +6366,116 @@ Stage Summary:
 
 - Files: match-scorer-skills.js, match-scorer-location.js, match-scorer-salary.js
 - Files: match-scorer.test.js, match-scorer-integration.test.js, real-data-flow.test.js (new)
+
+---
+
+Task ID: eslint-dead-code-cleanup
+Agent: main
+Task: Remove dead root eslint-rules/ (unicode-policy.js, code-block-language.js)
+
+Work Log:
+
+- Discovered duplicate ESLint rules: root eslint-rules/unicode-policy.js (74 lines) vs extension/eslint-rules/no-unicode-graphics.js (196 lines)
+- Root eslint-rules/ was dead code -- no eslint.config.js at root ever imported it, only extension/eslint.config.mjs used extension/eslint-rules/
+- Both files referenced only in docs/superpowers/plans/2026-09-02-migrate-to-webstorm-config.md Task 6 (unfinished plan)
+- Deleted root eslint-rules/ directory (2 files) and fixed stale ref in extension/docs/UNICODE_POLICY.md
+- Build OK, lint 0 errors, tests 729 pass
+
+Stage Summary:
+
+- Deleted: eslint-rules/unicode-policy.js, eslint-rules/code-block-language.js, eslint-rules/ dir
+- Fixed: extension/docs/UNICODE_POLICY.md file reference
+- Commit: e5f67e2
+
+---
+
+Task ID: ahg-rule12-split-14
+Agent: main (4 parallel subagents)
+Task: Split 14 files exceeding 250-line hard limit (AHG Rule 12) -- CI failing with 14 errors
+
+Work Log:
+
+- CI lint failed: 14 errors (limit 250) + 45 warnings across extension/
+- Dispatched 4 parallel agents via superpowers:dispatching-parallel-agents:
+  - Agent A (content): main-page-handlers-vacancy.js 278->216, main.js 256->168, page-world.js 297->58
+  - Agent B (lib scoring): match-scorer-title.js 274->168, role-implied-skills.js 294->75, cover-letter-placeholders.js 252->114, selectors.js 251->107
+  - Agent C (lib fetch): resume-fetch-parse.js 256->119, resume-fetch-strategy6-iframe.js 257->97, vacancy-fetch.js 254->141
+  - Agent D (UI): dom-inspector-panel.js 273->237, sidebar-events.js 256->150, negotiations-ai-reply.js 257->166, render-resume-panel.js 264->98
+- Created 15 new modules: main-listeners.js, main-page-handlers-vacancy-helpers.js, page-world-vis.js, page-world-vac.js, match-scorer-title-abbr-map.js, role-implied-skills-data.js, cover-letter-experience.js, selectors-map.js, resume-fetch-parse-contacts.js, resume-fetch-iframe-helpers.js, vacancy-fetch-batch.js, dom-inspector-icons.js, sidebar-resume-handlers.js, negotiations-ai-service.js, resumes/resume-score.js
+- Fixed missing import: sidebar-events.js now imports handleResumeClick from sidebar-resume-handlers.js
+- Fixed esbuild.config.mjs bundle:false->bundle:true for page-world IIFE (was breaking MAIN world imports)
+- Verified: lint 0 errors (was 14), tests 729 pass, build OK
+
+Stage Summary:
+
+- 14 files split, 15 new files, all <250 lines
+- Lint: 14 errors -> 0 errors, warnings 45->34
+- Build: dist 818kb OK
+- Commit: 9777850
+
+---
+
+Task ID: ci-version-fix
+Agent: main
+Task: Fix CI version-consistency check -- double-quote handling in version.js
+
+Work Log:
+
+- CI version-consistency job failed: VERSION_LIB extracted as full line `export const VERSION = "1.9.86.0";` instead of `1.9.86.0`
+- Root cause: .github/workflows/ci.yml:91 used sed with single-quote pattern `'...'` but version.js uses double quotes `"`
+- Fixed: sed -> grep -oP `VERSION\s*=\s*['\"]\K[^'\"]+` (handles both quote types, matches scripts/version-sync.sh:84)
+- Verified: bash test_version.sh shows MATCH, version 1.9.86.0 across all 5 sources
+
+Stage Summary:
+
+- File: .github/workflows/ci.yml:91
+- Commit: 35d2043
+
+---
+
+Task ID: fix-background-sw
+Agent: main
+Task: Fix service worker Status 3 -- copyStatic overwriting bundled background/index.js
+
+Work Log:
+
+- User reported Service worker registration failed Status 3 in chrome://extensions after npm run watch
+- Root cause: esbuild.config.mjs copyStatic() did cpSync("background" -> "dist/background") AFTER bundling, overwriting 125kb bundled ESM (125kb) with raw 201-line source (unresolved imports -> SW fails)
+- Watch mode: copyStatic before build -> bundled -> onEnd copyStatic again -> overwritten (broken)
+- Build mode: rmSync -> copyStatic (raw) -> build (bundled) -> OK (bundled wins, so build mode was fine)
+- Fix: removed cpSync for background/ in copyStatic() -- background/index.js is BUILT not static (comment added, future static assets should use filter)
+- Rebuilt: dist/background/index.js 125kb bundled, verified
+- Fix requires watch restart: Ctrl+C -> npm run watch -> Reload in chrome://extensions
+
+Stage Summary:
+
+- File: extension/esbuild.config.mjs:57-62
+- Commit: dc61c5d
+
+---
+
+Task ID: webstorm-migration-complete
+Agent: main
+Task: Complete migration to webstorm-config template (eslint root, lint-staged, anti-monolith)
+
+Work Log:
+
+- Audited webstorm-config vs HH-Copilot per docs/superpowers/plans/2026-09-02-migrate-to-webstorm-config.md
+- Found gaps: no root eslint.config.js, lint-staged missing eslint --fix, check-file-length used HARD_LIMIT 400 (only new files) vs template MAX 250 (all ACM), eslint-rules were deleted as dead code
+- Restored eslint-rules/code-block-language.js + unicode-policy.js from webstorm-config (exact copies)
+- Created eslint.config.js at root (adapted from webstorm-config/eslint.config.js:1):
+  - Ignores: node_modules, dist, extension/dist
+  - Markdown: @eslint/markdown + markdownSnippetsProcessor + unicode-policy + code-block-language
+  - JS: tsParser + jsdoc + unicode-policy (jsdoc warn for root, off for extension via override)
+  - Extension block: extension/src|background with chrome globals + ahg-rules (max-file-lines 200/250/400) + jsdoc off
+  - Tests block: extension/tests with max-file-lines off, no-unicode-graphics warn
+- Installed missing deps: @eslint/markdown, @typescript-eslint/parser, globals
+- Fixed package.json lint-staged: added "*.{js,ts,jsx,tsx}": "eslint --fix" (3->4 entries)
+- Fixed scripts/check-file-length.mjs: replaced HARD_LIMIT 400 (added-only) with MAX_LINES 250 for all ACM (template)
+- Verified: npx eslint . 0 errors, extension npm run lint 0 errors, build OK, tests 729 pass
+
+Stage Summary:
+
+- New: eslint.config.js, eslint-rules/ (2 files)
+- Modified: package.json, package-lock.json, scripts/check-file-length.mjs
+- Commit: 9a307b5
