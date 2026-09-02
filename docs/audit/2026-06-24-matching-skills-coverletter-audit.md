@@ -33,11 +33,11 @@ slip through (RF-J, RF-I).
 
 ### 1.1 Corrected premises (README/my earlier statements were WRONG)
 
-| Claim (README / earlier)                        | Reality (verified in code)                                                                     |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Function `calculateMatchScore(vacancy, resume)` | **`computeMatchScore(resume, vacancy)`** (`match-scorer.js:40`). Order reversed.               |
-| 5 components, weights 40/15/15/15/15            | **4 components**: skills 40 / **title 30** / salary 15 / experience 15. No location component. |
-| Jaccard for skills                              | **Weighted ratio**, not Jaccard (`match-scorer-skills.js:92-113`).                             |
+| Claim (README / earlier)               | Reality (verified in code)                                                       |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| `calculateMatchScore(vacancy, resume)` | **`computeMatchScore(resume, vacancy)`** (`match-scorer.js:40`). Order reversed. |
+| 5 components, weights 40/15/15/15/15   | **4 components**: skills 40 / title 30 / salary 15 / experience 15.              |
+| Jaccard for skills                     | **Weighted ratio**, not Jaccard (`match-scorer-skills.js:92-113`).               |
 
 ### 1.2 Signature and return shape
 
@@ -52,12 +52,12 @@ slip through (RF-J, RF-I).
 
 ### 1.3 Per-component algorithms
 
-| Component  | Weight | Algorithm                                                                  | Source                       |
-| ---------- | ------ | -------------------------------------------------------------------------- | ---------------------------- |
-| skills     | 0-40   | weighted ratio; tiers matching(1.0)/derived(0.7)/synonym(0.5)/implied(0.4) | `match-scorer-skills.js`     |
-| title      | 0-30   | token-overlap + abbreviation bonus (<=5); role-mismatch penalty            | `match-scorer-title.js`      |
-| salary     | 0-15   | numeric-range overlap; no-data -> 8                                        | `match-scorer-salary.js`     |
-| experience | 0-15   | years-range match; no-exp-required -> 15; unknown -> 8                     | `match-scorer-experience.js` |
+| Component  | Weight | Algorithm                                                            | Source                       |
+| ---------- | ------ | -------------------------------------------------------------------- | ---------------------------- |
+| skills     | 0-40   | weighted ratio; matching(1.0)/derived(0.7)/synonym(0.5)/implied(0.4) | `match-scorer-skills.js`     |
+| title      | 0-30   | token-overlap + abbreviation bonus (<=5); role-mismatch penalty      | `match-scorer-title.js`      |
+| salary     | 0-15   | numeric-range overlap; no-data -> 8                                  | `match-scorer-salary.js`     |
+| experience | 0-15   | years-range match; no-exp-required -> 15; unknown -> 8               | `match-scorer-experience.js` |
 
 ### 1.4 Anti-hallucination (POSITIVE finding)
 
@@ -342,15 +342,15 @@ clearly does NOT have the skill. This is measured output, not estimation.
 
 ### 9.2 Measured false-positives (6 of 7 cases produced wrong skills)
 
-| #   | Resume text (candidate does NOT have skill)      | Wrongly derived                                     | Triggered by                                            |
-| --- | ------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------- |
-| 1   | "не использовал CRM. Без опыта b2b."             | **B2B продажи, CRM**                                | `/B2B/i` on "b2b"; `/CRM/i` on "CRM" — negation ignored |
-| 2   | "компания ищет React и Python. ...не сам кодил." | **Python, React**                                   | role-context ignored; bare tokens match                 |
-| 3   | "пробовал 1С ... бросил. Читал про Docker."      | **аналитика, Docker, 1С**                           | past-tense / abandoned ignored                          |
-| 4   | "Организовал conference... Java-скрипт..."       | (none)                                              | the only clean case                                     |
-| 5   | "TS специалист. PM группы. BI анализ."           | **управление проектами, TypeScript, анализ данных** | 2-letter acronyms match unrelated role abbreviations    |
-| 6   | "Был стресс на работе из-за дедлайнов."          | **стрессоустойчивость**                             | `/стресс/i` — any mention of stress = skill             |
-| 7   | "внедряли микроCRM. Я к ней доступа не имел."    | **CRM**                                             | `/CRM/i` substring inside "микроCRM"                    |
+| #   | Resume text                                   | Wrongly derived               | Triggered by                          |
+| --- | --------------------------------------------- | ----------------------------- | ------------------------------------- |
+| 1   | "не использовал CRM. Без опыта b2b."          | **B2B продажи, CRM**          | `/B2B/i`, `/CRM/i` — negation ignored |
+| 2   | "компания ищет React и Python."               | **Python, React**             | role-context ignored                  |
+| 3   | "пробовал 1С ... бросил. Читал Docker."       | **аналитика, Docker, 1С**     | past-tense ignored                    |
+| 4   | "Организовал conference... Java-скрипт..."    | (none)                        | clean case                            |
+| 5   | "TS специалист. PM группы. BI анализ."        | **TypeScript, анализ данных** | 2-letter acronyms match               |
+| 6   | "Был стресс на работе."                       | **стрессоустойчивость**       | `/стресс/i` — stress = skill          |
+| 7   | "внедряли микроCRM. Я к ней доступа не имел." | **CRM**                       | `/CRM/i` substring match              |
 
 **Hit rate: 6/7 (86%) of adversarial resumes produced at least one
 fabricated skill.** Each fabricated skill earns **0.7 * 40 = 28 points**
@@ -462,8 +462,8 @@ formulations a real hh.ru vacancy used:
 | `"Навыки переговоров"`    | `"навыки переговоров"`   | **NULL -> missing** | `"переговоры"`            |
 | `"Деловая коммуникация"`  | `"деловая коммуникация"` | **NULL -> missing** | `"деловое общение"`       |
 | `"отработка возражений"`  | `"отработка возражений"` | **NULL -> missing** | `"работа с возражениями"` |
-| `"Работа с возражениями"` | (exact group member)     | MATCH               | —                         |
-| `"переговоры"`            | (exact group member)     | MATCH               | —                         |
+| `"Работа с возражениями"` | (exact member)           | MATCH               | —                         |
+| `"переговоры"`            | (exact member)           | MATCH               | —                         |
 
 **3 of 5 legitimate formulations fail.** The two that pass only pass
 because they happen to be exact members of the hardcoded synonym group.
