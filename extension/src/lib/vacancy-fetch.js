@@ -14,38 +14,26 @@
  *
  * Rate limiting:
  *   - gaussianDelay(1500, 3500) between fetches -- not to DDoS hh.ru
- *   - Max 5 concurrent iframe elements
+ *   - Max 50 concurrent per batch
  *   - Priority: vacancies with higher initial score first
  *   - Stale cache check: skip if detail was parsed < 24h ago
  *
- * Architecture mirrors resume-fetch.js but simpler:
- *   - No visibility detection
- *   - No hidden section expansion
- *   - 2 strategies (iframe + text) vs 6 for resumes
- *
+ * Batch helpers extracted to vacancy-fetch-batch.js (AHG Rule 12).
  * v1.9.29.0
  */
 
 import { createLogger } from "./anti-hallucination.js";
-import { getVacancyDetails, saveVacancyDetail, saveVacancyScore } from "./storage-vacancies.js";
-import { gaussianDelay } from "./timing.js";
-import { enrichVacanciesFromCache, enrichVacancy, isDetailFresh } from "./vacancy-fetch-enrichment.js";
-import { fetchVacancyViaIframe } from "./vacancy-fetch-iframe.js";
-import { fetchVacancyViaText } from "./vacancy-fetch-text.js";
+import { getVacancyDetails } from "./storage-vacancies.js";
+import {
+  MAX_FETCH_PER_BATCH,
+  buildDetailMap,
+  executeBatch,
+  filterVacanciesToFetch,
+  sortVacanciesByScore,
+} from "./vacancy-fetch-batch.js";
+import { enrichVacanciesFromCache } from "./vacancy-fetch-enrichment.js";
 
 const fetchLog = createLogger("VacFetch");
-
-/** Max number of vacancies to fetch per batch */
-const MAX_FETCH_PER_BATCH = 50;
-
-/** Min delay between fetches (ms) */
-const FETCH_DELAY_MIN = 1500;
-
-/** Max delay between fetches (ms) */
-const FETCH_DELAY_MAX = 3500;
-
-/** Cache TTL for stored details (24 hours) */
-const _CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Whether a fetch batch is currently running */
 let isFetching = false;
@@ -102,30 +90,14 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
   isFetching = true;
   abortFetch = false;
 
-  const onEnriched = callbacks?.onVacancyEnriched || (() => {});
   const onComplete = callbacks?.onBatchComplete || (() => {});
-  const onProgress = callbacks?.onProgress || (() => {});
 
   try {
-    // Step 1: Enrich from cache first (instant)
     const cacheResult = await enrichFromCache(vacancies, resume);
 
-    // Step 2: Identify vacancies that still need fetching
     const storedDetails = await getVacancyDetails();
-    const detailMap = new Map();
-    for (const d of storedDetails) {
-      if (d && d.id) detailMap.set(d.id, d);
-    }
-
-    const toFetch = vacancies.filter((v) => {
-      // Already have key skills from enrichment -- skip
-      if (v.keySkills && v.keySkills.length > 0) return false;
-      // Have fresh cached detail -- skip
-      const cached = detailMap.get(v.id);
-      if (cached && isDetailFresh(cached)) return false;
-      // Need to fetch
-      return true;
-    });
+    const detailMap = buildDetailMap(storedDetails);
+    const toFetch = filterVacanciesToFetch(vacancies, detailMap);
 
     fetchLog.info(
       "Fetch batch: " +
@@ -142,73 +114,10 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
       return { fetched: 0, failed: 0, cached: cacheResult.cached, total: vacancies.length };
     }
 
-    // Step 3: Sort by priority -- higher initial scores first
-    // (more likely to be relevant, so enrich them first)
-    toFetch.sort((a, b) => {
-      const sa = a.matchScore != null ? a.matchScore : -1;
-      const sb = b.matchScore != null ? b.matchScore : -1;
-      return sb - sa;
-    });
-
-    // Limit batch size
+    sortVacanciesByScore(toFetch);
     const batch = toFetch.slice(0, MAX_FETCH_PER_BATCH);
 
-    let fetched = 0;
-    let failed = 0;
-
-    // Step 4: Fetch each vacancy with rate limiting
-    for (let i = 0; i < batch.length; i++) {
-      if (abortFetch) {
-        fetchLog.info("Fetch aborted after " + fetched + " vacancies");
-        break;
-      }
-
-      const vacancy = batch[i];
-      onProgress(i + 1, batch.length, vacancy.title);
-
-      let detail = null;
-
-      // Strategy 1: iframe fetch (full JS rendering)
-      try {
-        detail = await fetchVacancyViaIframe(vacancy.url);
-      } catch (err) {
-        fetchLog.warn("Iframe failed for " + vacancy.id + ": " + err.message);
-      }
-
-      // Strategy 2: text fetch fallback (no JS rendering)
-      if (!detail) {
-        try {
-          detail = await fetchVacancyViaText(vacancy.url);
-        } catch (err) {
-          fetchLog.warn("Text fetch failed for " + vacancy.id + ": " + err.message);
-        }
-      }
-
-      if (detail) {
-        // Save detail to storage
-        saveVacancyDetail(detail).catch(() => {});
-
-        // Enrich the shallow vacancy
-        await enrichVacancy(vacancy, detail, resume);
-
-        // Save score to storage
-        if (vacancy.matchScore != null) {
-          saveVacancyScore(vacancy.id, vacancy.matchScore, vacancy.matchBreakdown, vacancy.matchDetails).catch(
-            () => {},
-          );
-        }
-
-        fetched++;
-        onEnriched(vacancy, detail);
-      } else {
-        failed++;
-      }
-
-      // Rate limit: wait between fetches (except after the last one)
-      if (i < batch.length - 1 && !abortFetch) {
-        await gaussianDelay(FETCH_DELAY_MIN, FETCH_DELAY_MAX);
-      }
-    }
+    const { fetched, failed } = await executeBatch(batch, resume, callbacks, () => abortFetch);
 
     fetchLog.info(
       "Batch complete: " +

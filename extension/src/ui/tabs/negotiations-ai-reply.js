@@ -12,9 +12,11 @@
  */
 
 import { simulateTyping } from "../../lib/timing.js";
-import { buildStarterPrompt, extractThreadForAI, parseChatThread } from "../../parsers/negotiations-thread.js";
 import { esc } from "../html.js";
 import { panelState, refs } from "../state.js";
+import { requestAiReply } from "./negotiations-ai-service.js";
+
+export { requestAiReply };
 
 const TONES = [
   { id: "formal", label: "Формальный" },
@@ -29,76 +31,6 @@ let aiState = {
   variants: [],
   tone: "formal",
 };
-
-/**
- * Send a message to the background script (wrapper around chrome.runtime.sendMessage).
- * Injectable for tests via msgImpl.
- */
-async function sendBg(msg, msgImpl) {
-  const sender = msgImpl || (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage);
-  if (!sender) {
-    return { ok: false, error: "chrome.runtime.sendMessage unavailable", code: "NO_BG" };
-  }
-  return new Promise((resolve) => {
-    try {
-      sender(msg, (resp) => {
-        if (chrome.runtime.lastError) {
-          resolve({ ok: false, error: chrome.runtime.lastError.message, code: "BG_ERR" });
-        } else {
-          resolve(resp || { ok: false, error: "No response", code: "EMPTY_RESP" });
-        }
-      });
-    } catch (e) {
-      resolve({ ok: false, error: e.message, code: "BG_THROW" });
-    }
-  });
-}
-
-/**
- * Request 3 reply variants from the AI service via background script.
- * @param {Object} conv -- conversation object
- * @param {string} tone -- formal/friendly/concise/enthusiastic
- * @param {Object} [impls] -- { msgImpl, threadRoot } for testing
- * @returns {Promise<{ok:boolean,variants?:string[],error?:string,code?:string}>}
- */
-export async function requestAiReply(conv, tone, impls) {
-  const threadRoot = (impls && impls.threadRoot) || document;
-  const msgImpl = impls && impls.msgImpl;
-
-  // Read chat history from the DOM
-  let history;
-  try {
-    const msgs = parseChatThread(threadRoot);
-    history = extractThreadForAI(msgs);
-  } catch (_e) {
-    history = [];
-  }
-
-  // Fallback: starter prompt if no history
-  const messages = history.length > 0 ? history : buildStarterPrompt(conv);
-
-  const result = await sendBg(
-    {
-      type: "ai-chat-reply",
-      history: messages,
-      opts: { tone, variants: 3 },
-    },
-    msgImpl,
-  );
-
-  if (!result.ok) return result;
-
-  // Anti-hallucination: ensure variants is always a non-empty string array
-  const variants = Array.isArray(result.variants)
-    ? result.variants.filter((v) => typeof v === "string" && v.trim().length > 0)
-    : [];
-
-  if (variants.length === 0) {
-    return { ok: false, error: "AI returned no usable variants", code: "EMPTY_VARIANTS" };
-  }
-
-  return { ok: true, variants };
-}
 
 /**
  * Insert a variant into the chat input with typing simulation.

@@ -14,6 +14,11 @@
  * v1.9.73.0: F7.3 -- Russian stem matching + expanded abbreviation map (50+)
  */
 
+import { ABBR_MAP } from "./match-scorer-title-abbr-map.js";
+
+// Re-export for backward compatibility (tests import from this file)
+export { ABBR_MAP };
+
 /**
  * Score title similarity between resume and vacancy.
  * @param {Object} resume
@@ -63,92 +68,6 @@ export function scoreTitle(resume, vacancy) {
 
   return { score, similarity: Math.round(similarity * 100) / 100 };
 }
-
-// ===============================================
-// ABBREVIATION MAP (50+ entries)
-// ===============================================
-
-/**
- * Professional abbreviation/synonym mappings.
- * Each entry: abbreviation -> canonical form(s) it maps to.
- * When one title has the abbreviation and the other has any canonical form,
- * a +5 bonus is awarded (capped at one bonus total).
- *
- * Categories: IT, Sales, Marketing, HR, Finance, General
- */
-const ABBR_MAP = [
-  // -- IT / Development --
-  { a: "роп", f: ["руководитель отдела продаж"] },
-  { a: "программист", f: ["разработчик"] },
-  { a: "devops", f: ["девопс", "инженер автоматизации", "сисадмин"] },
-  { a: "frontend", f: ["фронтенд", "front-end", "front end", "веб-разработчик"] },
-  { a: "фронтенд", f: ["frontend", "front-end", "front end", "веб-разработчик"] },
-  { a: "backend", f: ["бэкенд", "back-end", "back end", "серверный разработчик"] },
-  { a: "бэкенд", f: ["backend", "back-end", "back end", "серверный разработчик"] },
-  { a: "fullstack", f: ["фулстек", "full-stack", "full stack", "программист полного цикла"] },
-  { a: "фулстек", f: ["fullstack", "full-stack", "full stack", "программист полного цикла"] },
-  { a: "c#", f: ["csharp", "си шарп"] },
-  { a: ".net", f: ["dotnet", "дотнет"] },
-  { a: "qa", f: ["quality assurance", "тестировщик", "тестировщик по"] },
-  { a: "сисадмин", f: ["системный администратор", "администратор серверов"] },
-  { a: "android", f: ["андроид"] },
-  { a: "ios", f: ["айос", "айфоне", "iphone"] },
-  { a: "1с", f: ["1с:предприятие", "1с-битрикс"] },
-  { a: "ml", f: ["machine learning", "машинное обучение"] },
-  { a: "data scientist", f: ["дата саентист", "исследователь данных"] },
-  { a: "tech lead", f: ["техлид", "технический лид", "ведущий разработчик"] },
-  { a: "техлид", f: ["tech lead", "технический лид", "ведущий разработчик"] },
-  { a: "team lead", f: ["тимлид", "руководитель группы разработки"] },
-  { a: "тимлид", f: ["team lead", "руководитель группы разработки"] },
-  { a: "cto", f: ["технический директор"] },
-  { a: "pm", f: ["project manager", "проджект менеджер", "менеджер проектов"] },
-  { a: "sre", f: ["site reliability engineer", "инженер надежности"] },
-  { a: "dba", f: ["администратор баз данных"] },
-
-  // -- Sales --
-  { a: "менеджер по продажам", f: ["торговый представитель", "агент по продажам", "sales manager"] },
-  { a: "sales manager", f: ["менеджер по продажам"] },
-  { a: "b2b", f: ["b2b продажи"] },
-  { a: "kAM", f: ["key account manager", "менеджер по ключевым клиентам"] },
-
-  // -- Marketing --
-  { a: "smm", f: ["менеджер по соцсетям", "специалист по соцсетям", "социальные сети"] },
-  { a: "seo", f: ["поисковая оптимизация", "специалист по сео"] },
-  { a: "ppc", f: ["контекстная реклама", "специалист по рекламе"] },
-  { a: "prm", f: ["pr менеджер", "менеджер по связям с общественностью"] },
-  { a: "content manager", f: ["контент-менеджер", "контент менеджер", "менеджер по контенту"] },
-  { a: "digital", f: ["диджитал", "цифровой маркетолог"] },
-  { a: "growth hacker", f: ["гроус хакер", "специалист по росту"] },
-  { a: "targetolog", f: ["таргетолог", "специалист по таргетированной рекламе"] },
-  { a: "copywriter", f: ["копирайтер", "копирайтер"] },
-
-  // -- HR --
-  { a: "hr", f: ["кадровик", "специалист по персоналу", "hr специалист"] },
-  { a: "hrbp", f: ["hr бизнес-партнер", "бизнес-партнер по персоналу"] },
-  { a: "recruiter", f: ["рекрутер", "специалист по подбору персонала"] },
-  { a: "hr-директор", f: ["директор по персоналу", "hr director"] },
-
-  // -- Finance --
-  { a: "cfo", f: ["финансовый директор"] },
-  { a: "会计师", f: ["бухгалтер"] },
-  { a: "аудитор", f: ["аудитор"] },
-  { a: "analyst", f: ["аналитик"] },
-
-  // -- General / Admin --
-  { a: "assistant", f: ["ассистент", "помощник"] },
-  { a: "a/pm", f: ["помощник менеджера проекта"] },
-  { a: "ceo", f: ["генеральный директор"] },
-  { a: "coo", f: ["операционный директор"] },
-  { a: "cmo", f: ["директор по маркетингу"] },
-  { a: "vp", f: ["вице-президент"] },
-  { a: "head of", f: ["руководитель направления", "глава"] },
-  { a: "lead", f: ["ведущий", "лидер"] },
-  { a: "senior", f: ["старший", "сеньор"] },
-  { a: "junior", f: ["младший", "юниор"] },
-  { a: "middle", f: ["мидл", "промежуточный"] },
-  { a: "стажер", f: ["стажёр", "intern", "практикант"] },
-  { a: "intern", f: ["стажер", "стажёр", "практикант"] },
-];
 
 // ===============================================
 // HELPERS
@@ -270,4 +189,4 @@ function tokenize(text) {
 }
 
 // Exported for testing
-export { ABBR_MAP, crudeStem, stemMatchAny, tokenize };
+export { crudeStem, stemMatchAny, tokenize };

@@ -24,10 +24,10 @@ const contentOptions = {
 };
 
 // Page-world script: runs in MAIN world (not isolated) to expose console helpers.
-// No bundling needed — it's a standalone script with no imports.
+// Bundled (IIFE) -- imports page-world modules — it's a standalone script with no imports.
 const pageWorldOptions = {
   entryPoints: ["src/page-world.js"],
-  bundle: false,
+  bundle: true,
   outfile: `${DIST}/page-world.js`,
   format: "iife",
   minify: isProd,
@@ -185,3 +185,5 @@ if (isWatch) {
   );
   console.log(`[dist] Load ${DIST}/ as unpacked extension in Chrome`);
 }
+
+

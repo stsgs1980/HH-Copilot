@@ -6,6 +6,7 @@
  *   - main-page-handlers.js -- URL-based page initialization
  *   - main-resume-loader.js -- hh-ar-load-resume event handler
  *   - main-sync.js          -- hh-ar-sync-resumes event handler
+ *   - main-listeners.js     -- vacancy diag + page logic + re-score
  *
  * Auth flow:
  *   init() -> createPanel() -> updateAuthState every 5s
@@ -14,11 +15,8 @@
  */
 
 import { createLogger } from "../lib/anti-hallucination.js";
-import { computeMatchScore } from "../lib/match-scorer.js";
-import { checkDailyReset, getAllSettings, getStats, saveVacancyDetail, saveVacancyScore } from "../lib/storage.js";
+import { checkDailyReset, getAllSettings, getStats } from "../lib/storage.js";
 import { debugVisibility, diagnoseResumeDOM } from "../parsers/resume-detail.js";
-import { parseVacancyDetail } from "../parsers/vacancy-detail.js";
-import { diagnoseVacancyPage } from "../parsers/vacancy-diagnostic.js";
 import { parseVacanciesFromPage } from "../parsers/vacancy-list.js";
 import { createPanel, panelState, updateVacancies } from "../ui/panel.js";
 import { updateSettings, updateStats } from "../ui/state.js";
@@ -27,6 +25,7 @@ import { updateSettings, updateStats } from "../ui/state.js";
 import { checkAndPause, loadCaptchaState } from "../lib/captcha-detector.js";
 import { isInspectorActive, toggleInspector as toggleDomInspector } from "../ui/dom-inspector.js";
 import { setFabInspectorActive } from "../ui/fab.js";
+import { setupAllPageListeners } from "./main-listeners.js";
 import { initPageLogic } from "./main-page-handlers.js";
 import { loadSavedResumes } from "./main-resume-boot.js";
 import { handleLoadResume, handleReparseResume } from "./main-resume-loader.js";
@@ -62,7 +61,7 @@ async function init() {
     updateSettings(settings);
     mainLog.info("Boot: stats + settings loaded from storage");
   } catch (_e) {
-    mainLog.warn("Boot: failed to load stats/settings: " + e.message);
+    mainLog.warn("Boot: failed to load stats/settings: " + _e.message);
   }
 
   // F4.4: load persisted CAPTCHA pause state (survives page reloads)
@@ -121,93 +120,7 @@ async function init() {
   window.addEventListener("hh-ar-reparse-resume", handleReparseResume);
   window.addEventListener("hh-ar-sync-resumes", handleSyncResumes);
 
-  // -- Vacancy diagnostic: listen for manual trigger from page-world.js --
-  // page-world __hhVacDiag() dispatches a DOM CustomEvent which crosses
-  // the isolated-world boundary. Content script handles it and runs
-  // diagnoseVacancyPage(), then sends data back via postMessage.
-  document.addEventListener("HH-AR-RUN-VAC-DIAG", () => {
-    try {
-      const result = diagnoseVacancyPage();
-      mainLog.info("Manual vac diag: " + (result.vacancyId || "no id"));
-    } catch (_e) {
-      mainLog.warn("Manual vac diag failed: " + e.message);
-    }
-  });
-
-  // Auto-run vacancy diagnostic if we're on a vacancy detail page
-  if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
-    setTimeout(() => {
-      try {
-        diagnoseVacancyPage();
-      } catch (_e) {}
-    }, 2000);
-  }
-
-  // -- Listen for init-page-logic event from panel (replaces dynamic import) --
-  // panel/index.js dispatches 'hh-ar-init-page-logic' when auth changes to true.
-  // This avoids dynamic import() which doesn't work in esbuild IIFE bundles.
-  window.addEventListener("hh-ar-init-page-logic", () => {
-    mainLog.info("Received hh-ar-init-page-logic event -> calling initPageLogic()");
-    initPageLogic();
-  });
-
-  // -- Safety net: auto-init page logic on detail pages --
-  // If auth was already detected before the panel dispatched the event
-  // (e.g. fast page loads), we also try after a delay.
-  // Covers vacancy detail, resume detail, and applicant resume view pages.
-  const isDetailPage =
-    /^\/vacancy\/\d+/.test(window.location.pathname) ||
-    /^\/resume\/[a-f0-9]+/.test(window.location.pathname) ||
-    /^\/applicant\/resumes\/view/.test(window.location.pathname);
-  if (isDetailPage) {
-    setTimeout(() => {
-      // initPageLogic is idempotent -- it checks pageLogicInitialized to avoid duplicates
-      initPageLogic();
-    }, 3000);
-  }
-
-  // -- Re-score vacancy detail when resume becomes available --
-  // On vacancy detail pages, the first scoring may show skills=0 because
-  // the resume hasn't been loaded from storage yet. When a resume loads
-  // (either from storage at boot, or from a page parse), we re-score.
-  window.addEventListener("hh-ar-resume-loaded", async (e) => {
-    const resume = e.detail?.resume || panelState.resume;
-    if (!resume) return;
-    if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
-    mainLog.info("Resume loaded -- re-scoring vacancy detail page");
-    try {
-      const detail = parseVacancyDetail();
-      if (detail) {
-        const score = await computeMatchScore(resume, detail);
-        detail.matchScore = score.total;
-        detail.matchBreakdown = score.breakdown;
-        mainLog.info(
-          "Re-score: " +
-            score.total +
-            "% (skills=" +
-            score.breakdown.skills +
-            ", title=" +
-            score.breakdown.title +
-            ", salary=" +
-            score.breakdown.salary +
-            ", exp=" +
-            score.breakdown.experience +
-            ")",
-        );
-        saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
-        saveVacancyDetail(detail).catch(() => {});
-        window.__hhVacDetail = detail;
-        // Notify panel to update match display
-        window.dispatchEvent(
-          new CustomEvent("hh-ar-match-updated", {
-            detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details },
-          }),
-        );
-      }
-    } catch (err) {
-      mainLog.warn("Re-score failed: " + err.message);
-    }
-  });
+  setupAllPageListeners();
 }
 
 // ===============================================

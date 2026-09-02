@@ -9,11 +9,11 @@ import { restartTour } from "../../lib/tour-engine.js";
 import { getTabTourSteps, getWelcomeTourSteps } from "../../lib/tour-steps.js";
 import { diagnoseResumeDOM } from "../../parsers/resume-detail.js";
 import { resetAuthCache } from "../auth.js";
-import { panelState, refs } from "../state.js";
+import { refs } from "../state.js";
 import { clearLog } from "../tabs/stats.js";
 import { addBlacklistItem, removeBlacklistItem, selectConversation } from "./helpers.js";
 import { toggleSidebar, updateAuthStateAsync } from "./index.js";
-import { clearResumeData, dumpResumeToConsole, testParseResume } from "./panel-diagnostics.js";
+import { handleResumeClick } from "./sidebar-resume-handlers.js";
 
 /**
  * Bind sidebar click delegation -- single click handler for all panel actions.
@@ -107,94 +107,8 @@ export function bindSidebarClicks(container) {
       return;
     }
 
-    /* Resume */
-    if (t.closest('[data-action="load-resume"]')) {
-      const btn = t.closest('[data-action="load-resume"]');
-      if (btn) {
-        const origHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="btn-spinner"></span> Загрузка...';
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.innerHTML = origHTML;
-        }, 30000);
-        const onDone = () => {
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = origHTML;
-          }, 300);
-          window.removeEventListener("hh-ar-load-resume-done", onDone);
-        };
-        window.addEventListener("hh-ar-load-resume-done", onDone);
-      }
-      window.dispatchEvent(new CustomEvent("hh-ar-load-resume"));
-      return;
-    }
-    if (t.closest('[data-action="reparse-resume"]')) {
-      const btn = t.closest('[data-action="reparse-resume"]');
-      const resume = panelState.resume;
-      if (!resume || !resume.id) return;
-      const resumeUrl = resume.url || "https://hh.ru/applicant/resumes/view?resume=" + resume.id;
-      if (btn) {
-        const origHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="btn-spinner"></span>';
-        const onDone = () => {
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = origHTML;
-          }, 300);
-          window.removeEventListener("hh-ar-load-resume-done", onDone);
-        };
-        window.addEventListener("hh-ar-load-resume-done", onDone);
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.innerHTML = origHTML;
-          window.removeEventListener("hh-ar-load-resume-done", onDone);
-        }, 30000);
-      }
-      window.dispatchEvent(new CustomEvent("hh-ar-reparse-resume", { detail: { resumeUrl } }));
-      return;
-    }
-    if (t.closest('[data-action="sync-resumes"]')) {
-      const btn = t.closest('[data-action="sync-resumes"]');
-      if (btn) {
-        const origHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="btn-spinner"></span> Синхронизация...';
-        const onDone = () => {
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = origHTML;
-          }, 300);
-          window.removeEventListener("hh-ar-sync-done", onDone);
-        };
-        window.addEventListener("hh-ar-sync-done", onDone);
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.innerHTML = origHTML;
-          window.removeEventListener("hh-ar-sync-done", onDone);
-        }, 60000);
-      }
-      window.dispatchEvent(new CustomEvent("hh-ar-sync-resumes"));
-      return;
-    }
-    if (t.closest('[data-action="analyze-skills"]')) {
-      import("../tabs/resumes/resume-helpers.js").then((m) => m.updateSkillGapSection(panelState.resume));
-      return;
-    }
-    if (t.closest('[data-action="clear-resume"]')) {
-      clearResumeData();
-      return;
-    }
-    if (t.closest('[data-action="dump-resume"]')) {
-      dumpResumeToConsole();
-      return;
-    }
-    if (t.closest('[data-action="test-parse"]')) {
-      testParseResume();
-      return;
-    }
+    /* Resume -- delegated to sidebar-resume-handlers.js */
+    if (handleResumeClick(t)) return;
 
     /* Quick action tab switches */
     const tabSwitch = t.closest("[data-tab-switch]");

@@ -5,20 +5,25 @@
  * Includes background enrichment and VOTD relevance filtering.
  *
  * Split from main-page-handlers-pages.js (AHG Rule 12).
- * v1.9.43.0
+ * v1.9.43.1 -- helpers extracted to main-page-handlers-vacancy-helpers.js
  */
 
 import { continueApply } from "../engine/index.js";
 import { createLogger } from "../lib/anti-hallucination.js";
-import { scoreTitle } from "../lib/match-scorer-title.js";
 import { computeMatchScore } from "../lib/match-scorer.js";
 import { getApplyQueue, getStats, saveVacancyDetail, saveVacancyScore, setApplyQueue } from "../lib/storage.js";
-import { abortVacancyFetch, enrichFromCache, fetchVacancyDetails, isVacancyFetching } from "../lib/vacancy-fetch.js";
+import { abortVacancyFetch, enrichFromCache } from "../lib/vacancy-fetch.js";
 import { parseVacancyDetail } from "../parsers/vacancy-detail.js";
 import { diagnoseVacancyPage } from "../parsers/vacancy-diagnostic.js";
 import { parseVacanciesFromPage, parseVacanciesOfTheDay } from "../parsers/vacancy-list.js";
 import { panelState, updateStats, updateVacancies } from "../ui/panel.js";
-import { renderVacancyList } from "../ui/tabs/vacancies.js";
+import { filterVotdByRelevance, startBackgroundEnrichment } from "./main-page-handlers-vacancy-helpers.js";
+
+export {
+  filterVotdByRelevance,
+  startBackgroundEnrichment,
+  VOTD_TITLE_SIMILARITY_THRESHOLD,
+} from "./main-page-handlers-vacancy-helpers.js";
 
 const pageLog = createLogger("Main");
 
@@ -155,34 +160,6 @@ export async function handleVacancyDetailPage(path) {
 
 let mainPageObserverActive = false;
 
-// v1.9.37.0: Title similarity threshold for VOTD pre-filter.
-const VOTD_TITLE_SIMILARITY_THRESHOLD = 0.3;
-
-/**
- * Filter VOTD vacancies by title similarity to resume.
- * VOTD is paid advertising -- only show if potentially relevant.
- *
- * v1.9.37.0
- */
-function filterVotdByRelevance(votd, resume) {
-  if (!resume || !resume.title) return votd;
-  return votd.filter((v) => {
-    const titleResult = scoreTitle(resume, v);
-    const isRelevant = titleResult.similarity >= VOTD_TITLE_SIMILARITY_THRESHOLD;
-    if (!isRelevant) {
-      pageLog.info(
-        'VOTD filtered out: "' +
-          v.title +
-          '" similarity=' +
-          titleResult.similarity.toFixed(2) +
-          " < " +
-          VOTD_TITLE_SIMILARITY_THRESHOLD,
-      );
-    }
-    return isRelevant;
-  });
-}
-
 /**
  * Handle main page (/): parse recommended vacancies + VOTD, filter VOTD
  * by relevance, enrich from cache, kick off background enrichment,
@@ -235,43 +212,4 @@ export async function handleMainPage() {
     }).observe(document.body, { childList: true, subtree: true });
     pageLog.info("Main page SPA observer active");
   }
-}
-
-// -- Helper --
-
-/**
- * Start background enrichment of vacancies via iframe/text fetch.
- * Each enriched vacancy triggers a UI re-render with updated score.
- * Runs as fire-and-forget -- errors are logged but not thrown.
- *
- * @param {Object[]} vacancies -- Shallow vacancy objects to enrich
- */
-export function startBackgroundEnrichment(vacancies) {
-  if (!vacancies || vacancies.length === 0) return;
-
-  if (isVacancyFetching()) {
-    pageLog.info("Background enrichment already in progress -- skipping");
-    return;
-  }
-
-  fetchVacancyDetails(vacancies, panelState.resume, {
-    onVacancyEnriched(vacancy) {
-      try {
-        renderVacancyList();
-        pageLog.info(
-          'UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" -> ' + vacancy.matchScore + "%",
-        );
-      } catch (_e) {
-        pageLog.warn("UI update after enrichment failed");
-      }
-    },
-    onBatchComplete() {
-      pageLog.info("Background enrichment batch complete");
-    },
-    onProgress(current, total, title) {
-      pageLog.info("Enriching " + current + "/" + total + ": " + title.substring(0, 40));
-    },
-  }).catch((_e) => {
-    pageLog.error("Background enrichment error");
-  });
 }
