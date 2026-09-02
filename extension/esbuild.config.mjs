@@ -57,10 +57,11 @@ function copyStatic() {
   // manifest
   cpSync("manifest.json", `${DIST}/manifest.json`);
 
-  // background
-  if (existsSync("background")) {
-    cpSync("background", `${DIST}/background`, { recursive: true });
-  }
+  // background/index.js is BUILT via esbuild (bundled ESM), not static.
+  // Do NOT copy raw background/ → dist/background/ — it would overwrite the
+  // bundled file with unbundled source (broken imports → service worker Status 3).
+  // If background ever gets static assets (e.g. .json), copy them selectively
+  // via a filter that excludes index.js.
 
   // popup — inject version into HTML
   if (existsSync("popup")) {
@@ -185,5 +186,4 @@ if (isWatch) {
   );
   console.log(`[dist] Load ${DIST}/ as unpacked extension in Chrome`);
 }
-
 
