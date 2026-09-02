@@ -262,7 +262,7 @@ text.replace(/[^\x20-\x7E\u0400-\u04FF\-\>\<\=\|\+\^]/g, "");
 
 ### 10.1. Linting
 
-File: `eslint-rules/no-unicode-policy.js`
+File: `extension/eslint-rules/no-unicode-graphics.js`
 
 ```javascript
 module.exports = {
