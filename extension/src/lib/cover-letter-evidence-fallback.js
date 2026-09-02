@@ -14,18 +14,16 @@ export const MAX_EVIDENCE_SENTENCE_LEN = 280;
 
 /** Split text into sentences (Russian + English aware). */
 export function splitSentences(text) {
-  if (!text || typeof text !== 'string') return [];
+  if (!text || typeof text !== "string") return [];
   return text
     .split(/(?<=[.!?])\s+|\n+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 5);
+    .map((s) => s.trim())
+    .filter((s) => s.length > 5);
 }
 
 /** Truncate to MAX_EVIDENCE_SENTENCE_LEN with an ellipsis. */
 function truncate(text) {
-  return text.length > MAX_EVIDENCE_SENTENCE_LEN
-    ? text.substring(0, MAX_EVIDENCE_SENTENCE_LEN) + '...'
-    : text;
+  return text.length > MAX_EVIDENCE_SENTENCE_LEN ? text.substring(0, MAX_EVIDENCE_SENTENCE_LEN) + "..." : text;
 }
 
 /**
@@ -46,20 +44,20 @@ export function buildExperienceFallback(experience, max) {
     const exp = experience[i];
     if (!exp) continue;
     const sentences = exp.description ? splitSentences(exp.description) : [];
-    const sentence = sentences[0] || exp.position || exp.company || '';
+    const sentence = sentences[0] || exp.position || exp.company || "";
     if (!sentence) continue;
     out.push({
-      competency: '(опыт из резюме)',
+      competency: "(опыт из резюме)",
       evidenceText: truncate(sentence),
       source: {
-        type: 'experience_fallback',
+        type: "experience_fallback",
         index: i,
         sentence,
-        company: exp.company || '',
-        position: exp.position || '',
-        period: exp.period || '',
+        company: exp.company || "",
+        position: exp.position || "",
+        period: exp.period || "",
       },
-      confidence: 'low',
+      confidence: "low",
     });
   }
   return out;

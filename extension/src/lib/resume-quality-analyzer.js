@@ -8,10 +8,10 @@
  * v1.9.21.0: Added vacancySkills parameter for vacancy-skill-gap recommendations.
  */
 
-import { analyzeATS } from './quality-ats.js';
-import { analyzeExperience } from './quality-experience.js';
-import { detectRedFlags, detectStrengths } from './quality-flags.js';
-import { buildRecommendations } from './quality-recommendations.js';
+import { analyzeATS } from "./quality-ats.js";
+import { analyzeExperience } from "./quality-experience.js";
+import { detectRedFlags, detectStrengths } from "./quality-flags.js";
+import { buildRecommendations } from "./quality-recommendations.js";
 
 /**
  * Полный анализ качества резюме.
@@ -21,11 +21,16 @@ import { buildRecommendations } from './quality-recommendations.js';
  * @param {Set<string>} [vacancySkills] -- Normalized vacancy skills (from vacancy-skills-collector)
  */
 export function analyzeResumeQuality(r, vacancySkills) {
-  if (!r || !r.id) return {
-    totalScore: 0, atsScore: 0, experienceScore: 0,
-    redFlags: [], strengths: [], recommendations: [],
-    details: { ats: { score: 0, checks: [] }, experience: { score: 0, checks: [], metrics: {} } }
-  };
+  if (!r || !r.id)
+    return {
+      totalScore: 0,
+      atsScore: 0,
+      experienceScore: 0,
+      redFlags: [],
+      strengths: [],
+      recommendations: [],
+      details: { ats: { score: 0, checks: [] }, experience: { score: 0, checks: [], metrics: {} } },
+    };
 
   const ats = analyzeATS(r);
   const exp = analyzeExperience(r);
@@ -34,9 +39,7 @@ export function analyzeResumeQuality(r, vacancySkills) {
   const recommendations = buildRecommendations(ats, exp, flags, r, vacancySkills);
 
   const flagPenalty = Math.min(30, flags.length * 7);
-  const totalScore = Math.max(0, Math.round(
-    ats.score * 0.4 + exp.score * 0.4 + 100 * 0.2 - flagPenalty
-  ));
+  const totalScore = Math.max(0, Math.round(ats.score * 0.4 + exp.score * 0.4 + 100 * 0.2 - flagPenalty));
 
   return {
     totalScore,
@@ -45,6 +48,6 @@ export function analyzeResumeQuality(r, vacancySkills) {
     redFlags: flags,
     strengths,
     recommendations,
-    details: { ats, experience: exp }
+    details: { ats, experience: exp },
   };
 }

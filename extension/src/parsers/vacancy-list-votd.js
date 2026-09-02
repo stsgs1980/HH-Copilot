@@ -17,12 +17,12 @@
  * v1.9.43.0
  */
 
-import { findAllElements } from '../lib/selectors.js';
-import { extractVacancyId, createLogger } from '../lib/anti-hallucination.js';
-import { parseExperienceString } from '../lib/parse-experience.js';
-import { loadAppliedAndBlacklisted, applyStatusAndScore } from './vacancy-list-helpers.js';
+import { createLogger, extractVacancyId } from "../lib/anti-hallucination.js";
+import { parseExperienceString } from "../lib/parse-experience.js";
+import { findAllElements } from "../lib/selectors.js";
+import { applyStatusAndScore, loadAppliedAndBlacklisted } from "./vacancy-list-helpers.js";
 
-const votdLog = createLogger('VotD');
+const votdLog = createLogger("VotD");
 
 /**
  * Parse "Vacancy of the Day" cards from hh.ru main page.
@@ -31,8 +31,8 @@ const votdLog = createLogger('VotD');
  * @returns {Promise<Object[]>}
  */
 export async function parseVacanciesOfTheDay(resume) {
-  const titleEls = findAllElements('vacancyOfTheDayTitle');
-  votdLog.info('Found ' + titleEls.length + ' "Vacancy of the Day" items');
+  const titleEls = findAllElements("vacancyOfTheDayTitle");
+  votdLog.info("Found " + titleEls.length + ' "Vacancy of the Day" items');
   if (titleEls.length === 0) return [];
 
   const vacancies = [];
@@ -40,27 +40,33 @@ export async function parseVacanciesOfTheDay(resume) {
 
   for (let i = 0; i < titleEls.length; i++) {
     const titleEl = titleEls[i];
-    const title = (titleEl.textContent || '').trim();
+    const title = (titleEl.textContent || "").trim();
     if (!title) continue;
 
     // -- Extract vacancy ID from the tracking click-URL --
     // The title <div> is inside an <a> with tracking href like:
     //   content.hh.ru/api/v1/vacancy_of_the_day/click?vacancyId=132537734&...
     // Or for sponsored: adsrv.hh.ru/click?...vacancyId=... (encoded in meta param)
-    let vacancyId = '';
-    const clickLink = titleEl.closest('a');
+    let vacancyId = "";
+    const clickLink = titleEl.closest("a");
     if (clickLink) {
-      const clickHref = clickLink.getAttribute('href') || '';
+      const clickHref = clickLink.getAttribute("href") || "";
       vacancyId = extractVacancyId(clickHref);
     }
     // Fallback 1: walk up and find any <a> with vacancyId param
     if (!vacancyId) {
-      const parentBlock = titleEl.closest('section') || titleEl.closest('[class*="vacancy-of-the-day"]') || titleEl.parentElement?.parentElement;
+      const parentBlock =
+        titleEl.closest("section") ||
+        titleEl.closest('[class*="vacancy-of-the-day"]') ||
+        titleEl.parentElement?.parentElement;
       if (parentBlock) {
         const links = parentBlock.querySelectorAll('a[href*="vacancyId="]');
         for (const link of links) {
-          const id = extractVacancyId(link.getAttribute('href') || '');
-          if (id) { vacancyId = id; break; }
+          const id = extractVacancyId(link.getAttribute("href") || "");
+          if (id) {
+            vacancyId = id;
+            break;
+          }
         }
       }
     }
@@ -70,7 +76,7 @@ export async function parseVacanciesOfTheDay(resume) {
     if (!vacancyId) {
       let ancestor = titleEl.parentElement;
       while (ancestor && ancestor !== document.body) {
-        const attrId = ancestor.getAttribute('id');
+        const attrId = ancestor.getAttribute("id");
         if (attrId && /^\d{6,12}$/.test(attrId)) {
           vacancyId = attrId;
           break;
@@ -80,43 +86,55 @@ export async function parseVacanciesOfTheDay(resume) {
     }
 
     if (!vacancyId) {
-      votdLog.warn('VotD #' + i + ': could not extract vacancy ID -- skipping');
+      votdLog.warn("VotD #" + i + ": could not extract vacancy ID -- skipping");
       continue;
     }
 
     // -- Find compensation and company --
     // They are siblings near the title, walk up to their common parent
-    const container = titleEl.closest('div[class]') || titleEl.parentElement;
+    const container = titleEl.closest("div[class]") || titleEl.parentElement;
     const searchRoot = container?.parentElement || container;
 
-    const compEl = searchRoot?.querySelector('[data-qa="vacancy_of_the_day_compensation"]')
-      || container?.querySelector('[data-qa="vacancy_of_the_day_compensation"]');
-    const companyEl = searchRoot?.querySelector('[data-qa="vacancy_of_the_day_company"]')
-      || container?.querySelector('[data-qa="vacancy_of_the_day_company"]');
+    const compEl =
+      searchRoot?.querySelector('[data-qa="vacancy_of_the_day_compensation"]') ||
+      container?.querySelector('[data-qa="vacancy_of_the_day_compensation"]');
+    const companyEl =
+      searchRoot?.querySelector('[data-qa="vacancy_of_the_day_company"]') ||
+      container?.querySelector('[data-qa="vacancy_of_the_day_company"]');
 
-    const salary = compEl ? (compEl.textContent || '').trim() : 'Не указана';
-    const company = companyEl ? (companyEl.textContent || '').trim() : '';
+    const salary = compEl ? (compEl.textContent || "").trim() : "Не указана";
+    const company = companyEl ? (companyEl.textContent || "").trim() : "";
 
     // -- Check for reply/apply button --
-    const replyEl = searchRoot?.querySelector('[data-qa="vacancy-response-link-top-again"]')
-      || container?.querySelector('[data-qa="vacancy-response-link-top-again"]');
+    const replyEl =
+      searchRoot?.querySelector('[data-qa="vacancy-response-link-top-again"]') ||
+      container?.querySelector('[data-qa="vacancy-response-link-top-again"]');
 
     // -- Build vacancy object with canonical hh.ru URL --
-    const canonicalUrl = 'https://hh.ru/vacancy/' + vacancyId;
+    const canonicalUrl = "https://hh.ru/vacancy/" + vacancyId;
 
     const vacancy = {
-      id: vacancyId, title, company,
-      salary: salary || 'Не указана', location: '', schedule: 'unknown',
-      experience: parseExperienceString(''), skills: [],
+      id: vacancyId,
+      title,
+      company,
+      salary: salary || "Не указана",
+      location: "",
+      schedule: "unknown",
+      experience: parseExperienceString(""),
+      skills: [],
       url: canonicalUrl,
-      hasReply: !!replyEl, status: 'new', source: 'votd', isAd: true,
-      parsedAt: new Date().toISOString(), matchScore: null
+      hasReply: !!replyEl,
+      status: "new",
+      source: "votd",
+      isAd: true,
+      parsedAt: new Date().toISOString(),
+      matchScore: null,
     };
 
     await applyStatusAndScore(vacancy, appliedIds, blacklisted, resume);
     vacancies.push(vacancy);
   }
 
-  votdLog.info('Parsed ' + vacancies.length + '/' + titleEls.length + ' "Vacancy of the Day" items');
+  votdLog.info("Parsed " + vacancies.length + "/" + titleEls.length + ' "Vacancy of the Day" items');
   return vacancies;
 }

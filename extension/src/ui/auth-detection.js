@@ -33,7 +33,7 @@ export function isLoggedOut() {
       const el = document.querySelector(sel);
       if (el && document.body.contains(el)) {
         const style = window.getComputedStyle(el);
-        if (style.display !== 'none' && style.visibility !== 'hidden') {
+        if (style.display !== "none" && style.visibility !== "hidden") {
           return true;
         }
       }
@@ -54,7 +54,7 @@ export function isLoggedOut() {
       const el = document.querySelector(sel);
       if (el && document.body.contains(el)) {
         const style = window.getComputedStyle(el);
-        if (style.display !== 'none' && style.visibility !== 'hidden') {
+        if (style.display !== "none" && style.visibility !== "hidden") {
           return true;
         }
       }
@@ -67,17 +67,19 @@ export function isLoggedOut() {
   for (const el of allButtons) {
     if (!document.body.contains(el)) continue;
     const style = window.getComputedStyle(el);
-    if (style.display === 'none' || style.visibility === 'hidden') continue;
+    if (style.display === "none" || style.visibility === "hidden") continue;
 
     // ONLY check elements in the header area (top 120px)
     try {
       const rect = el.getBoundingClientRect();
       if (rect.top > 120 || rect.bottom < 0) continue;
-    } catch (_e) { continue; }
+    } catch (_e) {
+      continue;
+    }
 
-    const text = (el.textContent || '').trim();
+    const text = (el.textContent || "").trim();
     // Match "Войти" as standalone text (not "Войти и создать", etc.)
-    if (text === 'Войти') {
+    if (text === "Войти") {
       return true;
     }
   }
@@ -97,9 +99,9 @@ export function isLoggedIn() {
     '[data-qa="mainmenu_applicant"]',
     '[data-qa="mainmenu_user_name"]',
     'a[data-qa="mainmenu_myResumes"]',
-    '[data-qa="mainmenu"] sup',                // Notification badge in menu
-    '.supernova-nav__item--applicant',          // React nav applicant item
-    '.mainmenu__item--applicant',               // Classic nav applicant item
+    '[data-qa="mainmenu"] sup', // Notification badge in menu
+    ".supernova-nav__item--applicant", // React nav applicant item
+    ".mainmenu__item--applicant", // Classic nav applicant item
 
     // Links to applicant pages (only accessible when logged in)
     'a[href="/applicant/resumes"]',
@@ -124,7 +126,7 @@ export function isLoggedIn() {
       if (!el) continue;
       if (!document.body.contains(el)) continue;
       const style = window.getComputedStyle(el);
-      if (style.display !== 'none' && style.visibility !== 'hidden') {
+      if (style.display !== "none" && style.visibility !== "hidden") {
         return true;
       }
     } catch (_e) {}
@@ -136,7 +138,7 @@ export function isLoggedIn() {
     for (const el of navLinks) {
       if (!document.body.contains(el)) continue;
       const style = window.getComputedStyle(el);
-      if (style.display === 'none' || style.visibility === 'hidden') continue;
+      if (style.display === "none" || style.visibility === "hidden") continue;
       const rect = el.getBoundingClientRect();
       if (rect.top > 120 || rect.bottom < 0) continue;
       return true;

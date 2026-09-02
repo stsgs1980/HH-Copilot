@@ -7,10 +7,10 @@
  *   2. Array scan (flexible [{...}] with experience fields)
  *   3. Deep scan (raw HTML -- last resort)
  */
-import { createLogger } from './anti-hallucination.js';
-import { extractJsonArray, extractJsonArrayFromHtml, buildEntryFromApiItem } from './resume-fetch-json-utils.js';
+import { createLogger } from "./anti-hallucination.js";
+import { buildEntryFromApiItem, extractJsonArray, extractJsonArrayFromHtml } from "./resume-fetch-json-utils.js";
 
-const fetchLog = createLogger('ResumeFetch');
+const fetchLog = createLogger("ResumeFetch");
 
 /**
  * Extract experience from structured JSON patterns.
@@ -23,21 +23,21 @@ export function extractExperienceFromStructuredJson(text) {
 
   const expMatch = text.match(/"experience"\s*:\s*\[/);
   if (expMatch) {
-    const startIdx = text.indexOf('[', expMatch.index + 12);
+    const startIdx = text.indexOf("[", expMatch.index + 12);
     if (startIdx !== -1) {
       const jsonStr = extractJsonArray(text, startIdx);
       if (jsonStr) {
         try {
           const expArray = JSON.parse(jsonStr);
           if (Array.isArray(expArray)) {
-            expArray.forEach(item => {
+            expArray.forEach((item) => {
               const job = buildEntryFromApiItem(item);
               if (job.position || job.company) entries.push(job);
             });
             if (entries.length > 0) return entries;
           }
         } catch (e) {
-          fetchLog.info('Strategy 5: structured JSON parse failed: ' + e.message);
+          fetchLog.info("Strategy 5: structured JSON parse failed: " + e.message);
         }
       }
     }
@@ -57,7 +57,7 @@ export function extractExperienceFromArray(text) {
 
   let searchFrom = 0;
   while (searchFrom < text.length) {
-    const arrStart = text.indexOf('[{', searchFrom);
+    const arrStart = text.indexOf("[{", searchFrom);
     if (arrStart === -1) break;
 
     const jsonStr = extractJsonArray(text, arrStart);
@@ -74,13 +74,17 @@ export function extractExperienceFromArray(text) {
       }
 
       const firstItem = arr[0];
-      if (firstItem && typeof firstItem === 'object') {
-        const hasExpFields = firstItem.position || firstItem.company ||
-          firstItem.startDate || firstItem.start || firstItem.organization ||
-          firstItem.name && (firstItem.start || firstItem.startDate);
+      if (firstItem && typeof firstItem === "object") {
+        const hasExpFields =
+          firstItem.position ||
+          firstItem.company ||
+          firstItem.startDate ||
+          firstItem.start ||
+          firstItem.organization ||
+          (firstItem.name && (firstItem.start || firstItem.startDate));
 
         if (hasExpFields) {
-          arr.forEach(item => {
+          arr.forEach((item) => {
             const job = buildEntryFromApiItem(item);
             if (job.position || job.company) entries.push(job);
           });
@@ -112,8 +116,8 @@ export function deepScanForExperience(html) {
   while ((match = yearArrayPattern.exec(html)) !== null) {
     const startIdx = match.index;
     let arrStart = startIdx;
-    while (arrStart > 0 && html[arrStart - 1] !== '[') arrStart--;
-    if (html[arrStart] !== '[') continue;
+    while (arrStart > 0 && html[arrStart - 1] !== "[") arrStart--;
+    if (html[arrStart] !== "[") continue;
 
     const jsonStr = extractJsonArrayFromHtml(html, arrStart);
     if (!jsonStr) continue;
@@ -122,19 +126,17 @@ export function deepScanForExperience(html) {
       const arr = JSON.parse(jsonStr);
       if (!Array.isArray(arr) || arr.length === 0) continue;
 
-      const hasDates = arr.some(item =>
-        item.year || item.start?.year || item.startDate?.year ||
-        item.end?.year || item.endDate?.year
+      const hasDates = arr.some(
+        (item) => item.year || item.start?.year || item.startDate?.year || item.end?.year || item.endDate?.year,
       );
       if (!hasDates) continue;
 
-      const hasExpFields = arr.some(item =>
-        item.position || item.company || item.name ||
-        item.organization || item.title
+      const hasExpFields = arr.some(
+        (item) => item.position || item.company || item.name || item.organization || item.title,
       );
       if (!hasExpFields) continue;
 
-      arr.forEach(item => {
+      arr.forEach((item) => {
         const job = buildEntryFromApiItem(item);
         if (job.position || job.company) entries.push(job);
       });

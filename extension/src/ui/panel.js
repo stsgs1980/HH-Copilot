@@ -2,5 +2,14 @@
 // UI PANEL -- barrier re-export
 // ===============================================
 
-export { panelState, updateAuthState, createSidebar, toggleSidebar, updateVacancies, updateStats, setStatus, createPanel } from './panel/index.js';
-export { renderSidebarContent } from './panel/render.js';
+export {
+  createPanel,
+  createSidebar,
+  panelState,
+  setStatus,
+  toggleSidebar,
+  updateAuthState,
+  updateStats,
+  updateVacancies,
+} from "./panel/index.js";
+export { renderSidebarContent } from "./panel/render.js";

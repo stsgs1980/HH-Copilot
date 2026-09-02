@@ -9,7 +9,7 @@
  *   sidebar-css-components.js -- badges, buttons, vacancy items, timeline, etc.
  */
 
-import { SIDEBAR_CSS_CORE } from './sidebar-css-core.js';
-import { SIDEBAR_CSS_COMPONENTS } from './sidebar-css-components.js';
+import { SIDEBAR_CSS_COMPONENTS } from "./sidebar-css-components.js";
+import { SIDEBAR_CSS_CORE } from "./sidebar-css-core.js";
 
 export const SIDEBAR_CSS = SIDEBAR_CSS_CORE + SIDEBAR_CSS_COMPONENTS;

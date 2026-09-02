@@ -18,10 +18,10 @@
  * v1.9.29.0
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { computeMatchScore } from './match-scorer.js';
+import { createLogger } from "./anti-hallucination.js";
+import { computeMatchScore } from "./match-scorer.js";
 
-const enrichLog = createLogger('VacEnrich');
+const enrichLog = createLogger("VacEnrich");
 
 /** Max age of cached detail data to use for enrichment (24 hours in ms) */
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -58,17 +58,17 @@ export async function enrichVacancy(vacancy, detail, resume) {
   }
 
   // -- Structured salary (merge into top-level salary field) --
-  if (detail.salary && typeof detail.salary === 'object' && detail.salary.raw) {
+  if (detail.salary && typeof detail.salary === "object" && detail.salary.raw) {
     // Merge: keep the display string from SERP in .raw, add structured data
-    if (typeof vacancy.salary === 'string') {
-      vacancy.salary = { raw: vacancy.salary, min: null, max: null, currency: 'RUB', period: 'month', net: true };
+    if (typeof vacancy.salary === "string") {
+      vacancy.salary = { raw: vacancy.salary, min: null, max: null, currency: "RUB", period: "month", net: true };
     }
     // Overwrite with structured data from detail (keeps .raw if already set)
     vacancy.salary = { ...vacancy.salary, ...detail.salary };
   }
 
   // -- Structured experience (merge into top-level experience field) --
-  if (detail.experience && typeof detail.experience === 'object' && detail.experience.raw) {
+  if (detail.experience && typeof detail.experience === "object" && detail.experience.raw) {
     vacancy.experience = { ...vacancy.experience, ...detail.experience };
   }
 
@@ -90,7 +90,7 @@ export async function enrichVacancy(vacancy, detail, resume) {
   vacancy.enrichedAt = new Date().toISOString();
   // If detail came from storage (no _fetchMethod), mark as 'cache';
   // otherwise use the fetch method ('iframe' or 'text')
-  vacancy.enrichmentSource = detail._fetchMethod || 'cache';
+  vacancy.enrichmentSource = detail._fetchMethod || "cache";
 
   // -- Re-compute match score with enriched data --
   if (resume) {
@@ -103,12 +103,22 @@ export async function enrichVacancy(vacancy, detail, resume) {
       vacancy.matchBreakdown = score.breakdown;
       vacancy.matchDetails = score.details;
       enrichLog.info(
-        'Re-scored "' + vacancy.title.substring(0, 30) + '": ' +
-        score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title +
-        ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')'
+        'Re-scored "' +
+          vacancy.title.substring(0, 30) +
+          '": ' +
+          score.total +
+          "% (skills=" +
+          score.breakdown.skills +
+          ", title=" +
+          score.breakdown.title +
+          ", salary=" +
+          score.breakdown.salary +
+          ", exp=" +
+          score.breakdown.experience +
+          ")",
       );
     } catch (err) {
-      enrichLog.warn('Re-scoring failed for ' + vacancy.id + ': ' + err.message);
+      enrichLog.warn("Re-scoring failed for " + vacancy.id + ": " + err.message);
     }
   }
 
@@ -146,9 +156,9 @@ function buildScoringVacancy(vacancy) {
   sv.experience = vacancy.experience;
 
   // Location & schedule -- needed by location scorer (F7.2)
-  sv.location = vacancy.location || '';
-  sv.schedule = vacancy.schedule || '';
-  sv.employment = vacancy.employment || '';
+  sv.location = vacancy.location || "";
+  sv.schedule = vacancy.schedule || "";
+  sv.employment = vacancy.employment || "";
 
   return sv;
 }
@@ -198,18 +208,18 @@ export function enrichVacanciesFromCache(vacancies, storedDetails, resume) {
     }
 
     if (!isDetailFresh(detail)) {
-      enrichLog.info('Cached detail for ' + vacancy.id + ' is stale, skipping');
+      enrichLog.info("Cached detail for " + vacancy.id + " is stale, skipping");
       skipped++;
       continue;
     }
 
     // Tag detail as cache-sourced so enrichVacancy sets enrichmentSource correctly
-    if (!detail._fetchMethod) detail._fetchMethod = 'cache';
+    if (!detail._fetchMethod) detail._fetchMethod = "cache";
     enrichVacancy(vacancy, detail, resume);
     cached++;
     enriched++;
   }
 
-  enrichLog.info('Cache enrichment: ' + enriched + ' enriched, ' + cached + ' from cache, ' + skipped + ' skipped');
+  enrichLog.info("Cache enrichment: " + enriched + " enriched, " + cached + " from cache, " + skipped + " skipped");
   return { enriched, cached, skipped };
 }

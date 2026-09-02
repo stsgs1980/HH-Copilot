@@ -12,6 +12,6 @@
  *   - auth-user.js      -- getUserName()
  */
 
-export { isLoggedOut, isLoggedIn } from './auth-detection.js';
-export { checkAuth, checkAuthAsync, resetAuthCache } from './auth-check.js';
-export { getUserName } from './auth-user.js';
+export { checkAuth, checkAuthAsync, resetAuthCache } from "./auth-check.js";
+export { isLoggedIn, isLoggedOut } from "./auth-detection.js";
+export { getUserName } from "./auth-user.js";

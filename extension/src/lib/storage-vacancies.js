@@ -19,9 +19,11 @@
  */
 export async function getVacancyDetails() {
   try {
-    const d = await chrome.storage.local.get('vacancyDetails');
+    const d = await chrome.storage.local.get("vacancyDetails");
     return d.vacancyDetails || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 /**
@@ -31,7 +33,7 @@ export async function getVacancyDetails() {
  */
 export async function getVacancyDetail(id) {
   const details = await getVacancyDetails();
-  return details.find(d => d.id === id) || null;
+  return details.find((d) => d.id === id) || null;
 }
 
 /**
@@ -42,7 +44,7 @@ export async function getVacancyDetail(id) {
 export async function saveVacancyDetail(detail) {
   if (!detail || !detail.id) return;
   const details = await getVacancyDetails();
-  const idx = details.findIndex(d => d.id === detail.id);
+  const idx = details.findIndex((d) => d.id === detail.id);
   if (idx >= 0) {
     // Merge: keep the most recent data
     details[idx] = { ...details[idx], ...detail };
@@ -51,7 +53,7 @@ export async function saveVacancyDetail(detail) {
   }
   // Keep max 200 details (LRU by parsedAt)
   if (details.length > 200) {
-    details.sort((a, b) => (b.parsedAt || '').localeCompare(a.parsedAt || ''));
+    details.sort((a, b) => (b.parsedAt || "").localeCompare(a.parsedAt || ""));
     details.length = 200;
   }
   await chrome.storage.local.set({ vacancyDetails: details });
@@ -63,7 +65,7 @@ export async function saveVacancyDetail(detail) {
  */
 export async function removeVacancyDetail(id) {
   const details = await getVacancyDetails();
-  const filtered = details.filter(d => d.id !== id);
+  const filtered = details.filter((d) => d.id !== id);
   await chrome.storage.local.set({ vacancyDetails: filtered });
 }
 
@@ -84,9 +86,11 @@ export async function clearVacancyDetails() {
  */
 export async function getVacancyScores() {
   try {
-    const d = await chrome.storage.local.get('vacancyScores');
+    const d = await chrome.storage.local.get("vacancyScores");
     return d.vacancyScores || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 /**
@@ -99,7 +103,7 @@ export async function getVacancyScores() {
 export async function saveVacancyScore(id, score, breakdown, details) {
   if (!id) return;
   const scores = await getVacancyScores();
-  const idx = scores.findIndex(s => s.id === id);
+  const idx = scores.findIndex((s) => s.id === id);
   const entry = { id, score, breakdown, details, computedAt: new Date().toISOString() };
   if (idx >= 0) {
     scores[idx] = entry;
@@ -108,7 +112,7 @@ export async function saveVacancyScore(id, score, breakdown, details) {
   }
   // Keep max 500 scores
   if (scores.length > 500) {
-    scores.sort((a, b) => (b.computedAt || '').localeCompare(a.computedAt || ''));
+    scores.sort((a, b) => (b.computedAt || "").localeCompare(a.computedAt || ""));
     scores.length = 500;
   }
   await chrome.storage.local.set({ vacancyScores: scores });
@@ -121,5 +125,5 @@ export async function saveVacancyScore(id, score, breakdown, details) {
  */
 export async function getVacancyScore(id) {
   const scores = await getVacancyScores();
-  return scores.find(s => s.id === id) || null;
+  return scores.find((s) => s.id === id) || null;
 }

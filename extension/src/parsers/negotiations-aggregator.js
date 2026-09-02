@@ -16,28 +16,28 @@
  * v1.9.43.0 -- F1.8
  */
 
-import { parseNegotiationItems } from './negotiations.js';
-import { createLogger } from '../lib/anti-hallucination.js';
+import { createLogger } from "../lib/anti-hallucination.js";
+import { parseNegotiationItems } from "./negotiations.js";
 
-const aggLog = createLogger('NegAgg');
+const aggLog = createLogger("NegAgg");
 
 /** Negotiation tabs on hh.ru. `url` uses ?status= query (hh.ru SPA convention). */
 const NEGOTIATION_TABS = [
-  { id: 'all',      label: 'Все',             url: 'https://hh.ru/applicant/negotiations?status=all' },
-  { id: 'invite',   label: 'Приглашение',     url: 'https://hh.ru/applicant/negotiations?status=invite' },
-  { id: 'consider', label: 'Собеседование',   url: 'https://hh.ru/applicant/negotiations?status=consider' },
-  { id: 'offer',    label: 'Выход на работу', url: 'https://hh.ru/applicant/negotiations?status=offer' },
-  { id: 'wait',     label: 'Ожидание',        url: 'https://hh.ru/applicant/negotiations?status=wait' },
-  { id: 'discard',  label: 'Отказ',           url: 'https://hh.ru/applicant/negotiations?status=discard' },
-  { id: 'deleted',  label: 'Удалённые',       url: 'https://hh.ru/applicant/negotiations?status=deleted' },
-  { id: 'archive',  label: 'Архив',           url: 'https://hh.ru/applicant/negotiations?status=archive' }
+  { id: "all", label: "Все", url: "https://hh.ru/applicant/negotiations?status=all" },
+  { id: "invite", label: "Приглашение", url: "https://hh.ru/applicant/negotiations?status=invite" },
+  { id: "consider", label: "Собеседование", url: "https://hh.ru/applicant/negotiations?status=consider" },
+  { id: "offer", label: "Выход на работу", url: "https://hh.ru/applicant/negotiations?status=offer" },
+  { id: "wait", label: "Ожидание", url: "https://hh.ru/applicant/negotiations?status=wait" },
+  { id: "discard", label: "Отказ", url: "https://hh.ru/applicant/negotiations?status=discard" },
+  { id: "deleted", label: "Удалённые", url: "https://hh.ru/applicant/negotiations?status=deleted" },
+  { id: "archive", label: "Архив", url: "https://hh.ru/applicant/negotiations?status=archive" },
 ];
 
-const CACHE_KEY = 'negotiations:all';
+const CACHE_KEY = "negotiations:all";
 const CACHE_TTL_MS = 30 * 1000;
 const RATE_LIMIT_MS = 1000;
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Read cached aggregated result from chrome.storage.local.
@@ -50,13 +50,13 @@ async function readCache() {
     if (!cached?.timestamp) return null;
     const age = Date.now() - cached.timestamp;
     if (age > CACHE_TTL_MS) {
-      aggLog.info('Cache expired (age=' + age + 'ms)');
+      aggLog.info("Cache expired (age=" + age + "ms)");
       return null;
     }
-    aggLog.info('Cache hit (age=' + age + 'ms)');
+    aggLog.info("Cache hit (age=" + age + "ms)");
     return cached.data;
   } catch (err) {
-    aggLog.warn('Cache read error: ' + err.message);
+    aggLog.warn("Cache read error: " + err.message);
     return null;
   }
 }
@@ -67,7 +67,7 @@ async function writeCache(data) {
   try {
     await chrome.storage.local.set({ [CACHE_KEY]: { timestamp: Date.now(), data } });
   } catch (err) {
-    aggLog.warn('Cache write error: ' + err.message);
+    aggLog.warn("Cache write error: " + err.message);
   }
 }
 
@@ -85,21 +85,21 @@ export async function fetchTab(tab, opts = {}) {
 
   try {
     const resp = await fetchImpl(tab.url, {
-      credentials: 'include',
-      headers: { 'Accept': 'text/html' }
+      credentials: "include",
+      headers: { Accept: "text/html" },
     });
     if (!resp.ok) {
-      result.error = 'HTTP ' + resp.status;
-      aggLog.warn('Tab ' + tab.id + ' fetch failed: ' + result.error);
+      result.error = "HTTP " + resp.status;
+      aggLog.warn("Tab " + tab.id + " fetch failed: " + result.error);
       return result;
     }
     const html = await resp.text();
-    const doc = new ParserCtor().parseFromString(html, 'text/html');
+    const doc = new ParserCtor().parseFromString(html, "text/html");
     result.items = parser(doc) || [];
-    aggLog.info('Tab ' + tab.id + ': ' + result.items.length + ' items');
+    aggLog.info("Tab " + tab.id + ": " + result.items.length + " items");
   } catch (err) {
     result.error = err.message || String(err);
-    aggLog.warn('Tab ' + tab.id + ' error: ' + result.error);
+    aggLog.warn("Tab " + tab.id + " error: " + result.error);
   }
   return result;
 }
@@ -109,15 +109,14 @@ export async function fetchTab(tab, opts = {}) {
  * First occurrence wins; subsequent duplicates append tabOrigin to alsoIn[].
  */
 export function deduplicateByTopic(items) {
-  if (!items || typeof items[Symbol.iterator] !== 'function') return [];
+  if (!items || typeof items[Symbol.iterator] !== "function") return [];
   const seen = new Map();
   const result = [];
 
   for (const item of items) {
     if (!item) continue;
-    const key = item.vacancyId
-      || ((item.vacancyTitle || '') + '|' + (item.company || '')).toLowerCase();
-    if (!key || key === '|') continue;
+    const key = item.vacancyId || ((item.vacancyTitle || "") + "|" + (item.company || "")).toLowerCase();
+    if (!key || key === "|") continue;
 
     if (seen.has(key)) {
       const existing = result[seen.get(key)];
@@ -154,9 +153,7 @@ export async function fetchAllNegotiations(opts = {}) {
     if (cached) return { ...cached, fromCache: true };
   }
 
-  const tabs = tabsFilter
-    ? NEGOTIATION_TABS.filter(t => tabsFilter.includes(t.id))
-    : NEGOTIATION_TABS;
+  const tabs = tabsFilter ? NEGOTIATION_TABS.filter((t) => tabsFilter.includes(t.id)) : NEGOTIATION_TABS;
 
   const perTab = {};
   const errors = [];
@@ -168,7 +165,7 @@ export async function fetchAllNegotiations(opts = {}) {
     perTab[res.tab] = { count: res.items.length };
     if (res.error) {
       perTab[res.tab].error = res.error;
-      errors.push(res.tab + ': ' + res.error);
+      errors.push(res.tab + ": " + res.error);
     }
     for (const item of res.items) {
       if (item) item.tabOrigin = res.tab;
@@ -184,12 +181,18 @@ export async function fetchAllNegotiations(opts = {}) {
     fromCache: false,
     fetchedAt: new Date().toISOString(),
     totalCount: merged.length,
-    rawCount: allItems.filter(Boolean).length
+    rawCount: allItems.filter(Boolean).length,
   };
 
-  aggLog.info('Aggregated: ' + merged.length + ' unique / '
-    + allItems.filter(Boolean).length + ' raw, '
-    + errors.length + ' errors');
+  aggLog.info(
+    "Aggregated: " +
+      merged.length +
+      " unique / " +
+      allItems.filter(Boolean).length +
+      " raw, " +
+      errors.length +
+      " errors",
+  );
 
   await writeCache(result);
   return result;
@@ -200,11 +203,10 @@ export async function invalidateNegotiationsCache() {
   if (!chrome?.storage?.local) return;
   try {
     await chrome.storage.local.remove(CACHE_KEY);
-    aggLog.info('Cache invalidated');
+    aggLog.info("Cache invalidated");
   } catch (err) {
-    aggLog.warn('Cache invalidate error: ' + err.message);
+    aggLog.warn("Cache invalidate error: " + err.message);
   }
 }
 
-export { NEGOTIATION_TABS, CACHE_KEY, CACHE_TTL_MS };
-
+export { CACHE_KEY, CACHE_TTL_MS, NEGOTIATION_TABS };

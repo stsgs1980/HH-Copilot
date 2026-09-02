@@ -1,12 +1,11 @@
 # HH Copilot -- Extension Architecture
 
-**Version:** 1.9.41.0
+**Version:** 1.9.86.0
 **Type:** Chrome Extension (Manifest V3)
 **Target Platform:** hh.ru (Magritte design system)
 **Build:** esbuild (single IIFE bundle from ES modules)
-**Tests:** 151 passing (Vitest + jsdom, 9 test files)
-**Lint:** ESLint with custom AHG rules (Rule 12 anti-monolith, Rule 15 no-unicode-graphics)
-
+**Tests:** 729 passing (Vitest + jsdom, 27 test files)
+**Lint:** ESLint with custom rules (anti-monolith, no-unicode-graphics)
 
 ## 1. Component Diagram
 
@@ -77,7 +76,6 @@
 ```
 
 Three execution contexts: Content Script (runs on hh.ru pages), Page-World Script (runs in MAIN world for SPA navigation), Service Worker (extension background process), Popup (UI on icon click). Communication between them: chrome.storage.local for data and chrome.runtime.sendMessage for commands.
-
 
 ## 2. Data Flows
 
@@ -217,7 +215,6 @@ renderSidebarContent()
 updateAuthState() --> checkAuth() --> updateFabIcon()
 ```
 
-
 ## 3. Selector Strategy
 
 ### 3.1 Why data-qa
@@ -237,12 +234,13 @@ Each selector in the HH_SELECTORS object is an array of strings. The findElement
 
 ```javascript
 vacancyCard: [
-    '[data-qa="vacancy-serp__vacancy"]',     // priority 1: data-qa
-    '[class*="vacancy-serp-item"]'            // priority 2: partial class
-]
+  '[data-qa="vacancy-serp__vacancy"]', // priority 1: data-qa
+  '[class*="vacancy-serp-item"]', // priority 2: partial class
+];
 ```
 
 findElement() for each selector:
+
 1. Attempts querySelector -- on error (invalid selector) moves to the next one
 2. Checks that the element exists (not null)
 3. Checks that the element belongs to the document (document.body.contains)
@@ -263,7 +261,6 @@ findElement() for each selector:
 
 It is strictly forbidden to use Magritte CSS classes with hashes (containing ___, e.g. magritte-card___bhGKz). It is also forbidden to rely on h2/h3 headings for resume sections -- Magritte does not use semantic headings for sections.
 
-
 ## 4. Shadow DOM Isolation
 
 ### 4.1 Why
@@ -273,8 +270,8 @@ hh.ru includes many CSS libraries (Bloko, Magritte). If the panel HTML is insert
 ### 4.2 How It Works
 
 ```javascript
-panelEl = document.createElement('div');
-const shadowRoot = panelEl.attachShadow({ mode: 'closed' });
+panelEl = document.createElement("div");
+const shadowRoot = panelEl.attachShadow({ mode: "closed" });
 // All panel styles and DOM exist inside shadowRoot
 // External document.body only sees panelEl (empty div)
 ```
@@ -288,7 +285,6 @@ hh.ru CSS does not penetrate into the panel. Panel CSS does not affect hh.ru. hh
 ### 4.4 Exceptions
 
 The extension's content script creates the Shadow DOM, but itself runs in the page context. content.js variables (findElement, safeGetText, etc.) are global to the page, but this is acceptable since function names have prefixes and do not conflict with hh.ru. The diagnoseResumeDOM() function is exported to window.__hhDiagnose for debugging convenience from the console.
-
 
 ## 5. chrome.storage.local Schema
 
@@ -357,7 +353,6 @@ checkDailyReset() -- compares dailyResetDate with the current date. If they don'
 
 When the extension is installed (reason === 'install'), the Service Worker writes all keys with default values to chrome.storage.local. On update (reason === 'update'), existing data is preserved -- the Service Worker only creates/recreates the dailyReset alarm.
 
-
 ## 6. Message Passing
 
 ### 6.1 Directions
@@ -375,7 +370,7 @@ Content Script cannot send a message directly to Popup (Popup may be closed). Po
 
 **get-settings.** Popup requests settings. Service Worker reads chrome.storage.local.get('settings') and sends them back.
 
-**apply-vacancy.** Popup requests applying to a vacancy. Service Worker forwards the message to the Content Script of the active hh.ru tab (chrome.tabs.query with url filter: 'https://hh.ru/*'). Content Script executes the application logic.
+**apply-vacancy.** Popup requests applying to a vacancy. Service Worker forwards the message to the Content Script of the active hh.ru tab (chrome.tabs.query with url filter: '<https://hh.ru/>*'). Content Script executes the application logic.
 
 **log.** Content Script or Popup sends a log entry. Service Worker adds it to the logs array in chrome.storage.local (maximum 500 entries, oldest are removed).
 
@@ -389,7 +384,6 @@ For get-stats and get-settings, the Service Worker returns true from the onMessa
 
 The Service Worker exports the updateBadge() function, which reads appliedToday from storage and sets the badge text (number on the extension icon) via chrome.action.setBadgeText. The function is called on initialization and can be called after each application (although currently Content Script updates the badge directly via chrome.runtime.sendMessage).
 
-
 ## 7. Anti-Hallucination Verification
 
 ### 7.1 Definition
@@ -401,6 +395,7 @@ A "hallucination" in the context of the extension is a situation where the code 
 Principle: never access the DOM without checking existence and visibility.
 
 safeGetText(el, fallback) performs 5 checks:
+
 1. el !== null
 2. el instanceof Element
 3. el.offsetParent !== null OR el is not in body (for fixed/transform)
@@ -408,11 +403,13 @@ safeGetText(el, fallback) performs 5 checks:
 5. textContent is not empty and not whitespace-only
 
 safeGetAttr(el, attr, fallback) checks:
+
 1. el !== null
 2. el instanceof Element
 3. getAttribute returns not null (returns fallback if null)
 
 safeClick(el, label) checks:
+
 1. el !== null
 2. el instanceof Element
 3. el.disabled === false
@@ -424,17 +421,20 @@ safeClick(el, label) checks:
 Principle: never use data without validating type, format, and content.
 
 validateVacancyData(v) checks:
+
 - title: exists, type string, length >= 3
 - company: exists, type string
-- url: exists, starts with "https://hh.ru/"
+- url: exists, starts with "<https://hh.ru/>"
 - id: exists, type string, not empty
 
 extractVacancyId(url) checks:
+
 - url exists, type string
 - regex /\/vacancy\/(\d+)/ matched
 - on mismatch returns '' (empty string, not null/undefined)
 
 waitForElement(selectors, timeout) checks:
+
 - Instant check (0ms) before starting observer
 - MutationObserver with timeout (default 10s)
 - On timeout returns null (does not hang)
@@ -445,6 +445,7 @@ waitForElement(selectors, timeout) checks:
 Principle: never perform an action without checking preconditions AND result.
 
 safeInput(el, text, label) checks:
+
 1. el !== null
 2. el instanceof HTMLElement
 3. el.disabled === false, el.readOnly === false
@@ -452,6 +453,7 @@ safeInput(el, text, label) checks:
 5. React native value setter + dispatchEvent(input, change)
 
 simulateTyping(el, text) checks:
+
 1. el and text exist
 2. Character-by-character insertion with input event after each character
 3. Random delay 30-120ms between characters (simulates live typing)
@@ -478,7 +480,6 @@ Rule 9. Do not trust data from chrome.storage blindly. Check type and structure 
 
 Rule 10. Provide fallbacks. Selector fallback chains, fallback values, fallback actions.
 
-
 ## 8. SPA Navigation
 
 ### 8.1 The Problem
@@ -491,22 +492,22 @@ MutationObserver monitors changes in the DOM tree:
 
 ```javascript
 const observer = new MutationObserver((mutations) => {
-    // Filter: only interested in changes within vacancy cards
-    let relevantChange = false;
-    for (const m of mutations) {
-        if (m.target.closest('[data-qa="vacancy-serp__vacancy"]')) {
-            relevantChange = true;
-            break;
-        }
+  // Filter: only interested in changes within vacancy cards
+  let relevantChange = false;
+  for (const m of mutations) {
+    if (m.target.closest('[data-qa="vacancy-serp__vacancy"]')) {
+      relevantChange = true;
+      break;
     }
-    if (!relevantChange) return;
+  }
+  if (!relevantChange) return;
 
-    // 1 second debounce (wait for DOM to fully update)
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        const vacancies = parseVacanciesFromPage();
-        updateVacancies(vacancies);
-    }, 1000);
+  // 1 second debounce (wait for DOM to fully update)
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const vacancies = parseVacanciesFromPage();
+    updateVacancies(vacancies);
+  }, 1000);
 });
 observer.observe(document.body, { childList: true, subtree: true });
 ```
@@ -519,20 +520,19 @@ Without debounce, every DOM change (including React's intermediate render states
 
 When clicking "Apply" in the panel on the search page, you need to navigate to /vacancy/{id}. This causes a full page reload and re-loading of content.js. To preserve state between pages, chrome.storage.local is used: pendingApply is saved with a timestamp; when the vacancy page loads, pendingApply is checked and the application process continues. If pendingApply is older than 2 minutes, it is ignored (protection against stale state).
 
-
 ## 9. Skill Matching Pipeline
 
 ### 9.1 Skill Match Categories
 
 When comparing vacancy skills against resume skills, the system uses a 5-tier hierarchy:
 
-| Category | Weight | Description | Source |
-|----------|--------|-------------|--------|
-| Explicit | 100% | Skill directly declared in resume skills section | `match-scorer-skills.js` |
-| Derived | 70% | Skill inferred from experience descriptions | `derive-skills.js` → `match-scorer-skills.js` |
-| Synonym | 50% | Related skill from same synonym group | `skill-synonyms.js` → `match-scorer-skills.js` |
-| Implied | 40% | Skill self-evident from position title | `role-implied-skills.js` → `match-scorer-skills.js` |
-| Missing | 0% | Skill not found anywhere | — |
+| Category | Weight | Description                                      | Source                                              |
+| -------- | ------ | ------------------------------------------------ | --------------------------------------------------- |
+| Explicit | 100%   | Skill directly declared in resume skills section | `match-scorer-skills.js`                            |
+| Derived  | 70%    | Skill inferred from experience descriptions      | `derive-skills.js` → `match-scorer-skills.js`       |
+| Synonym  | 50%    | Related skill from same synonym group            | `skill-synonyms.js` → `match-scorer-skills.js`      |
+| Implied  | 40%    | Skill self-evident from position title           | `role-implied-skills.js` → `match-scorer-skills.js` |
+| Missing  | 0%     | Skill not found anywhere                         | —                                                   |
 
 ### 9.2 Role-Implied Skills (v1.9.31.0)
 
@@ -541,11 +541,13 @@ When comparing vacancy skills against resume skills, the system uses a 5-tier hi
 **Solution:** `role-implied-skills.js` maps position title keywords to a set of implied skills. Based on ESCO's essential/optional skills concept.
 
 **How it works:**
+
 1. `getRoleImpliedSkills(title)` returns Set of normalized skill names implied by the position
 2. In `quality-recommendations.js`: implied skills are filtered from "missing" and shown with priority "low"
 3. In `match-scorer-skills.js`: implied skills get 40% partial credit (future integration)
 
 **Key mappings:**
+
 - Руководитель/Директор/Начальник → управление командой, делегирование, мотивация персонала, стратегическое планирование, etc.
 - Менеджер по продажам → переговоры, воронка продаж, работа с клиентами, etc.
 - Руководитель отдела продаж → combined (leadership + sales) implied skills
@@ -564,41 +566,27 @@ Example: "переговоры" matches "работа с возражениям�
 
 `derive-skills.js` + `skill-dictionary.js` automatically extract skills from work experience descriptions. 50+ Russian skill keyword patterns. Integrated into both resume parsing paths (DOM and fetch).
 
-
 ## 10. Documentation Structure
 
 ```
 HH-Copilot-repo/
-├── AGENT_RULES.md          -- Agent work rules (MUST read before every session)
 ├── README.md               -- Project overview
-├── CHANGELOG.md            -- Root-level changelog (high-level summary)
-├── cascade/                -- Task cascade (single source of truth)
-│   └── state.json          -- 40 tasks across 8 phases, progress tracking
-├── scripts/                -- Cross-project scripts
-│   ├── cascade-task.js     -- Cascade CLI (Node.js, 13 commands)
-│   └── cascade-cli.sh      -- Thin backward-compat wrapper for cascade-task.js
 ├── worklog.md              -- Root-level worklog (shared multi-agent log)
 │
-├── anti-hallucination-guard/ -- AHG submodule (immutable, Rule 16-17)
-│
 ├── docs/
-│   ├── diagrams/           -- Architecture diagrams (PlantUML)
-│   ├── wireframes/         -- UI wireframes
-│   └── worklog.md          -- Root docs worklog
+│   └── diagrams/           -- Architecture diagrams (PlantUML)
 │
-└── extension/              -- Chrome extension source (v1.9.41.0+)
-    ├── package.json        -- npm scripts: build, watch, test, lint, cascade
+└── extension/              -- Chrome extension source (v1.9.86.0+)
+    ├── package.json        -- npm scripts: build, watch, test, lint
     ├── esbuild.config.mjs  -- Build configuration
-    ├── eslint.config.mjs   -- ESLint flat config (AHG Rule 12 + Rule 15)
+    ├── eslint.config.mjs   -- ESLint flat config (anti-monolith + no-unicode-graphics)
     ├── eslint-rules/       -- Custom ESLint rules (no-unicode-graphics, max-file-lines)
     ├── manifest.json       -- Manifest V3 (single source of truth for version)
     ├── CHANGELOG.md        -- Detailed per-version changelog (1.9.15.5 → current)
-    ├── worklog.md          -- Extension-level worklog
     │
     ├── docs/
     │   ├── ARCHITECTURE.md         -- This file (extension architecture)
     │   ├── TASK-CASCADE.md         -- Task breakdown and status
-    │   ├── UNICODE_POLICY.md       -- Unicode handling rules
     │   ├── PLANTUML-REFERENCE.md   -- Diagram syntax reference
     │   └── research/               -- Research documents
     │       ├── INDEX.md            -- Research index with conclusions
@@ -628,25 +616,15 @@ HH-Copilot-repo/
     │
     ├── icons/              -- Extension icons (16x16, 48x48, 128x128 PNG)
     │
-    ├── tests/              -- Vitest + jsdom, 9 files / 151 tests
-    │   ├── anti-hallucination.test.js
-    │   ├── cover-letter.test.js
-    │   ├── negotiations.test.js
-    │   ├── parse-experience.test.js
-    │   ├── routing.test.js
-    │   ├── selectors.test.js
-    │   ├── timing.test.js
-    │   ├── vacancy-fetch.test.js
-    │   └── vacancy-list.test.js
+    ├── tests/              -- Vitest + jsdom, 27 test files / 729 tests
     │
     └── dist/               -- Build output (content.js, page-world.js)
 ```
 
 Key cross-references:
-- `AGENT_RULES.md` (repo root) → referenced by all scripts, setup.sh, audit.sh, pre-commit hook
-- `cascade/state.json` → read by `scripts/cascade-task.js` (40 tasks, 8 phases, progress tracking)
+
 - `docs/research/` → referenced by `role-implied-skills.js`, `negotiations.js`, future AI modules
-- `TASK-CASCADE.md` → tracks all implementation tasks (mirror of `cascade/state.json`)
+- `TASK-CASCADE.md` → tracks all implementation tasks
 - `ARCHITECTURE.md` → this file, describes all modules and data flows
 - `manifest.json` → single source of truth for version (read by esbuild, popup, package.json sync)
 
@@ -659,7 +637,7 @@ were updated. 192 files moved in commit `c70d47f`.
 
 ### 10.2 ESLint Integration (v1.9.41.0)
 
-ESLint is integrated with two custom AHG-aware rules:
+ESLint is integrated with two custom rules:
 
 - `ahg-rules/max-file-lines` (WARN at 200 lines)
 - `ahg-rules/max-file-lines-hard` (ERROR at 250 lines, HARD CAP 400)
@@ -679,7 +657,6 @@ existing docs or aliases.
 Commands: `next-task`, `ready-tasks`, `status`, `phases`, `task`, `deps`,
 `start`, `complete`, `block`, `pending`, `blocked`, `functions`, `validate`.
 
-
 ## 11. Module Decomposition (v1.9.41.0)
 
 The original `content.js` monolith (single 8000+ line file) has been decomposed
@@ -689,14 +666,14 @@ the cascade phases P0–P0.5.
 
 ### 11.1 Layer Sizes
 
-| Layer | Files | Purpose |
-|---|---|---|
-| `src/lib/` | 75 | Pure-function libraries: selectors, anti-hallucination, storage, timing, rate-limiter, resume-fetch-*, match-scorer-*, quality-*, cover-letter-*, role-implied-skills, derive-skills |
-| `src/parsers/` | 10 | Page parsers: vacancy-list, vacancy-detail, resume-detail (8 submodules), negotiations + negotiations-diagnostic, vacancy-diagnostic |
-| `src/engine/` | 5 | Business logic: apply-orchestrator, apply-queue, apply-actions, apply-actions-cover-letter, index |
-| `src/ui/` | 15 | UI: shell, sidebar, 6 tab panels, tour engine, FAB button |
-| `src/content/` | 7 | Content script entry: main, page-handlers, SPA sync, resume-loader |
-| **Total** | **112** | Built by esbuild into a single IIFE `dist/content.js` (~655 KB) |
+| Layer          | Files   | Purpose                                                                                                                                                                              |
+| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/lib/`     | 75      | Pure-function libraries: selectors, anti-hallucination, storage, timing, rate-limiter, resume-fetch-_, match-scorer-_, quality-_, cover-letter-_, role-implied-skills, derive-skills |
+| `src/parsers/` | 10      | Page parsers: vacancy-list, vacancy-detail, resume-detail (8 submodules), negotiations + negotiations-diagnostic, vacancy-diagnostic                                                 |
+| `src/engine/`  | 5       | Business logic: apply-orchestrator, apply-queue, apply-actions, apply-actions-cover-letter, index                                                                                    |
+| `src/ui/`      | 15      | UI: shell, sidebar, 6 tab panels, tour engine, FAB button                                                                                                                            |
+| `src/content/` | 7       | Content script entry: main, page-handlers, SPA sync, resume-loader                                                                                                                   |
+| **Total**      | **112** | Built by esbuild into a single IIFE `dist/content.js` (~655 KB)                                                                                                                      |
 
 ### 11.2 Key Module Splits (B1+B2+B3, commits 750a7b0 + cd59d45)
 
@@ -724,17 +701,17 @@ statuses, unique IDs).
 
 ### 11.4 Test Coverage by Module (151 tests, 9 files)
 
-| Test file | Tests | Module covered |
-|---|---|---|
-| `anti-hallucination.test.js` | 21 | `lib/anti-hallucination.js` |
-| `cover-letter.test.js` | 17 | `lib/cover-letter-*.js` |
-| `negotiations.test.js` | 34 | `parsers/negotiations.js` + `parsers/negotiations-diagnostic.js` + `lib/selectors.js` (negotiations keys) |
-| `parse-experience.test.js` | 13 | `lib/parse-experience.js` |
-| `routing.test.js` | 11 | `content/main-page-handlers-pages.js` |
-| `selectors.test.js` | 9 | `lib/selectors.js` |
-| `timing.test.js` | 13 | `lib/timing.js` (simulateTyping with native setter) |
-| `vacancy-fetch.test.js` | ? | `lib/vacancy-fetch.js` |
-| `vacancy-list.test.js` | ? | `parsers/vacancy-list.js` + `parsers/vacancy-list-helpers.js` + `parsers/vacancy-list-votd.js` |
+| Test file                    | Tests | Module covered                                                                                            |
+| ---------------------------- | ----- | --------------------------------------------------------------------------------------------------------- |
+| `anti-hallucination.test.js` | 21    | `lib/anti-hallucination.js`                                                                               |
+| `cover-letter.test.js`       | 17    | `lib/cover-letter-*.js`                                                                                   |
+| `negotiations.test.js`       | 34    | `parsers/negotiations.js` + `parsers/negotiations-diagnostic.js` + `lib/selectors.js` (negotiations keys) |
+| `parse-experience.test.js`   | 13    | `lib/parse-experience.js`                                                                                 |
+| `routing.test.js`            | 11    | `content/main-page-handlers-pages.js`                                                                     |
+| `selectors.test.js`          | 9     | `lib/selectors.js`                                                                                        |
+| `timing.test.js`             | 13    | `lib/timing.js` (simulateTyping with native setter)                                                       |
+| `vacancy-fetch.test.js`      | ?     | `lib/vacancy-fetch.js`                                                                                    |
+| `vacancy-list.test.js`       | ?     | `parsers/vacancy-list.js` + `parsers/vacancy-list-helpers.js` + `parsers/vacancy-list-votd.js`            |
 
 Run: `npm test` (or `npm run test:watch` for watch mode). All 151 tests passing
 as of v1.9.41.0.

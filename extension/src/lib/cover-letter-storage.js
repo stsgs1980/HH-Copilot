@@ -17,10 +17,10 @@
  * v1.9.46.0
  */
 
-import { getAllSettings } from './storage-settings.js';
-import { validateTone, getTemplateForTone } from './cover-letter-tone.js';
+import { getTemplateForTone, validateTone } from "./cover-letter-tone.js";
+import { getAllSettings } from "./storage-settings.js";
 
-const STORAGE_KEY = 'settings';
+const STORAGE_KEY = "settings";
 
 /** Read current settings object (with defaults applied). */
 async function readSettings() {
@@ -51,10 +51,10 @@ async function writeSettings(partial) {
 export async function getCoverLetterTemplate() {
   const settings = await readSettings();
   const tmpl = settings.coverLetterTemplate;
-  if (typeof tmpl === 'string' && tmpl.trim().length > 0) {
+  if (typeof tmpl === "string" && tmpl.trim().length > 0) {
     return tmpl;
   }
-  return getTemplateForTone('formal');
+  return getTemplateForTone("formal");
 }
 
 /**
@@ -63,7 +63,7 @@ export async function getCoverLetterTemplate() {
  * @returns {Promise<boolean>}
  */
 export async function setCoverLetterTemplate(text) {
-  if (typeof text !== 'string') return false;
+  if (typeof text !== "string") return false;
   const result = await writeSettings({ coverLetterTemplate: text });
   return result !== null;
 }
@@ -96,9 +96,9 @@ export async function setLetterTone(tone) {
 export async function getCoverLetterConfig() {
   const settings = await readSettings();
   const tone = validateTone(settings.letterTone);
-  const tmpl = (typeof settings.coverLetterTemplate === 'string' &&
-                settings.coverLetterTemplate.trim().length > 0)
-    ? settings.coverLetterTemplate
-    : getTemplateForTone(tone);
+  const tmpl =
+    typeof settings.coverLetterTemplate === "string" && settings.coverLetterTemplate.trim().length > 0
+      ? settings.coverLetterTemplate
+      : getTemplateForTone(tone);
   return { template: tmpl, tone };
 }

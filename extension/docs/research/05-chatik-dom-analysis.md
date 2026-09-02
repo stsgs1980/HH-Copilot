@@ -10,10 +10,10 @@
 
 В дополнение к странице переговоров `/applicant/negotiations` (исследована в 04-negotiations-dom-analysis.md), hh.ru имеет отдельный мессенджер по адресу `/chat` (Chatik). Это разные интерфейсы:
 
-| Страница | URL | Суть | data-qa prefix |
-|----------|-----|------|----------------|
+| Страница     | URL                       | Суть                                | data-qa prefix   |
+| ------------ | ------------------------- | ----------------------------------- | ---------------- |
 | Negotiations | `/applicant/negotiations` | Список откликов/приглашений/отказов | `negotiations-*` |
-| Chatik | `/chat` | Мессенджер с работодателями | `chatik-*` |
+| Chatik       | `/chat`                   | Мессенджер с работодателями         | `chatik-*`       |
 
 Chatik — более современный интерфейс, где работодатель может написать первым. Необходимо понять его DOM-структуру для возможного парсинга.
 
@@ -36,6 +36,7 @@ Chatik — более современный интерфейс, где рабо
 Полный список data-qa на странице `/chat`, сгруппированный по функциональным блокам:
 
 ### 3.1 Шапка и навигация
+
 ```
 supernova-logo
 supernova-search
@@ -57,6 +58,7 @@ mainmenu_* (desktop/mobile menu items)
 ```
 
 ### 3.2 Chatik-специфичные
+
 ```
 chatik-layout                          — корневой контейнер чатика
 chatik-no-chats                        — пустое состояние (нет чатов)
@@ -69,6 +71,7 @@ chats-list-skeleton-wrapper            — обёртка скелетона с�
 ```
 
 ### 3.3 Отдельные чаты (ключевая секция!)
+
 ```
 chatik-open-chat-5289736329            — ссылка на чат (ID = chat ID)
 chatik-open-chat-5328127671
@@ -86,18 +89,21 @@ chatik-open-chat-5408248148
 ```
 
 ### 3.4 Структура ячейки чата
+
 ```
 chat-cell-creation-time                — время последнего сообщения
 chat-cell-meta                         — мета-информация (статус доставки)
 ```
 
 ### 3.5 Статусы доставки сообщений
+
 ```
 status-icon-delivered                  — доставлено
 status-icon-read                       — прочитано
 ```
 
 ### 3.6 UI-элементы (не чатик)
+
 ```
 cell / cell-left-side / cell-text / cell-text-content
 checkbox / checkbox-container
@@ -139,13 +145,13 @@ chatik-layout
 
 ### 5.1 Первые 5 чатов (data-qa + tagName + text)
 
-| data-qa | tagName | Text (first 50 chars) |
-|---------|---------|----------------------|
-| `chatik-layout` | DIV | ЧатыТолько непрочитанныеРуководитель отдела продаж |
-| `chatik-support-chat-button` | BUTTON | (иконка) |
-| `chatik-support-chat-button-svg` | svg | (иконка) |
-| `chatik-checkbox-only-unread` | INPUT | (checkbox) |
-| `chatik-open-chat-5408248148` | A | Руководитель отдела продаж12:03КарнизоффБлагодарю |
+| data-qa                          | tagName | Text (first 50 chars)                              |
+| -------------------------------- | ------- | -------------------------------------------------- |
+| `chatik-layout`                  | DIV     | ЧатыТолько непрочитанныеРуководитель отдела продаж |
+| `chatik-support-chat-button`     | BUTTON  | (иконка)                                           |
+| `chatik-support-chat-button-svg` | svg     | (иконка)                                           |
+| `chatik-checkbox-only-unread`    | INPUT   | (checkbox)                                         |
+| `chatik-open-chat-5408248148`    | A       | Руководитель отдела продаж12:03КарнизоффБлагодарю  |
 
 ### 5.2 Структура текста в chat cell
 
@@ -153,16 +159,17 @@ chatik-layout
 
 Паттерн: `{vacancy_title}{time}{company_name}{last_message_preview}`
 
-| Поле | Значение | Примечание |
-|------|----------|------------|
-| Vacancy title | Руководитель отдела продаж | Название вакансии |
-| Time | 12:03 | Время последнего сообщения |
-| Company | Карнизофф | Имя работодателя |
-| Message preview | Благодарю | Начало последнего сообщения |
+| Поле            | Значение                   | Примечание                  |
+| --------------- | -------------------------- | --------------------------- |
+| Vacancy title   | Руководитель отдела продаж | Название вакансии           |
+| Time            | 12:03                      | Время последнего сообщения  |
+| Company         | Карнизофф                  | Имя работодателя            |
+| Message preview | Благодарю                  | Начало последнего сообщения |
 
 ### 5.3 Chat IDs
 
 Числа в `chatik-open-chat-{ID}` — это ID чатов, НЕ vacancy IDs:
+
 - 5289736329, 5328127671, 5342695893, 5342696805, 5342697594, 5342698505
 - 5342699286, 5358919797, 5361248038, 5386612383, 5392621506, 5395731584, 5408248148
 
@@ -172,23 +179,24 @@ chatik-layout
 
 ## 6. Chatik vs Negotiations — Key Differences
 
-| Aspect | Negotiations (`/applicant/negotiations`) | Chatik (`/chat`) |
-|--------|------------------------------------------|-------------------|
-| **data-qa prefix** | `negotiations-*` | `chatik-*` |
-| **Item identifier** | `negotiations-item` (no ID in data-qa) | `chatik-open-chat-{CHAT_ID}` |
-| **Status** | Явный статус (not-viewed, viewed, discard, invite) | Статус доставки (delivered, read) |
-| **Vacancy link** | Прямая ссылка на вакансию (с ID) | Только название вакансии (нет ссылки) |
-| **Company** | `negotiations-item-company` | В тексте ячейки (без data-qa) |
-| **Date** | `negotiations-item-date` | `chat-cell-creation-time` |
-| **Message preview** | Нет | Есть (текст ячейки) |
-| **Фильтр** | Нет встроенного | «Только непрочитанные» чекбокс |
-| **Поддержка** | Статусы откликов (отказ/приглашение) | Мессенджер (живое общение) |
+| Aspect              | Negotiations (`/applicant/negotiations`)           | Chatik (`/chat`)                      |
+| ------------------- | -------------------------------------------------- | ------------------------------------- |
+| **data-qa prefix**  | `negotiations-*`                                   | `chatik-*`                            |
+| **Item identifier** | `negotiations-item` (no ID in data-qa)             | `chatik-open-chat-{CHAT_ID}`          |
+| **Status**          | Явный статус (not-viewed, viewed, discard, invite) | Статус доставки (delivered, read)     |
+| **Vacancy link**    | Прямая ссылка на вакансию (с ID)                   | Только название вакансии (нет ссылки) |
+| **Company**         | `negotiations-item-company`                        | В тексте ячейки (без data-qa)         |
+| **Date**            | `negotiations-item-date`                           | `chat-cell-creation-time`             |
+| **Message preview** | Нет                                                | Есть (текст ячейки)                   |
+| **Фильтр**          | Нет встроенного                                    | «Только непрочитанные» чекбокс        |
+| **Поддержка**       | Статусы откликов (отказ/приглашение)               | Мессенджер (живое общение)            |
 
 ---
 
 ## 7. Selectors to Add
 
 Current selectors in `selectors.js`:
+
 ```js
 negotiationsChatItem:   ['[data-qa="negotiations-chat-item"]', '[class*="negotiations-chat"]'],
 negotiationsChatUnread: ['[data-qa="negotiations-chat-unread"]', '[class*="unread"]'],
@@ -230,27 +238,31 @@ statusIconRead:            ['[data-qa="status-icon-read"]'],
 ## 9. Challenges and Open Questions
 
 ### 9.1 Нет прямого vacancy ID
+
 В отличие от Negotiations (где ссылка содержит vacancy ID), Chatik показывает только название вакансии. Связка с matchScore возможна только по названию (неточная) или через открытие чата (дорого).
 
 ### 9.2 Текст ячейки — неструктурированный
+
 Текст вида `Руководитель отдела продаж12:03КарнизоффБлагодарю` не имеет data-qa для отдельных полей. Парсинг по тексту хрупкий — зависит от локализации, длины названия, наличия спецсимволов.
 
 ### 9.3 Два интерфейса — дублирование данных
+
 Некоторые отклики отображаются и в Negotiations, и в Chatik. Но статусы разные: Negotiations показывает статус отклика (отказ/приглашение), а Chatik — статус доставки сообщения.
 
 ### 9.4 Chatik — живой мессенджер
+
 В отличие от Negotiations (статичный список), Chatik может обновляться в реальном времени (WebSocket?). Это требует другой модели парсинга — возможно, MutationObserver вместо однократного парсинга.
 
 ---
 
 ## 10. Implementation Priority
 
-| Priority | Feature | Complexity | Value |
-|----------|---------|------------|-------|
-| P0 | Parse Negotiations list (04-negotiations-dom-analysis.md) | Low | High — статусы откликов |
-| P1 | Chatik: parse chat list for unread count | Medium | Medium — быстрый обзор |
-| P2 | Chatik: extract vacancy ID from opened chat | Medium | High — связка с matchScore |
-| P3 | Chatik: parse individual chat messages | High | High — AI-auto-respond |
+| Priority | Feature                                                   | Complexity | Value                      |
+| -------- | --------------------------------------------------------- | ---------- | -------------------------- |
+| P0       | Parse Negotiations list (04-negotiations-dom-analysis.md) | Low        | High — статусы откликов    |
+| P1       | Chatik: parse chat list for unread count                  | Medium     | Medium — быстрый обзор     |
+| P2       | Chatik: extract vacancy ID from opened chat               | Medium     | High — связка с matchScore |
+| P3       | Chatik: parse individual chat messages                    | High       | High — AI-auto-respond     |
 
 **Рекомендация:** Сначала реализовать Phase 1 из 04-negotiations-dom-analysis.md (парсинг Negotiations). Chatik — фаза 2+, потому что требует более сложного подхода к извлечению данных.
 

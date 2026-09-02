@@ -28,27 +28,31 @@ const logBuffer = [];
  * @returns {string}
  */
 function safeStringify(data) {
-  if (data === undefined) return 'undefined';
-  if (data === null) return 'null';
-  if (typeof data === 'string') {
-    return data.length > 500 ? data.slice(0, 500) + '...(truncated)' : data;
+  if (data === undefined) return "undefined";
+  if (data === null) return "null";
+  if (typeof data === "string") {
+    return data.length > 500 ? data.slice(0, 500) + "...(truncated)" : data;
   }
-  if (typeof data !== 'object') return String(data);
+  if (typeof data !== "object") return String(data);
   try {
     const seen = new WeakSet();
-    const s = JSON.stringify(data, (key, val) => {
-      if (typeof val === 'object' && val !== null) {
-        if (seen.has(val)) return '[Circular]';
-        seen.add(val);
-      }
-      if (typeof val === 'string' && val.length > 300) {
-        return val.slice(0, 300) + '...(truncated)';
-      }
-      return val;
-    }, 0);
+    const s = JSON.stringify(
+      data,
+      (key, val) => {
+        if (typeof val === "object" && val !== null) {
+          if (seen.has(val)) return "[Circular]";
+          seen.add(val);
+        }
+        if (typeof val === "string" && val.length > 300) {
+          return val.slice(0, 300) + "...(truncated)";
+        }
+        return val;
+      },
+      0,
+    );
     return s;
   } catch (e) {
-    return '[unserializable: ' + (e.message || String(e)) + ']';
+    return "[unserializable: " + (e.message || String(e)) + "]";
   }
 }
 
@@ -59,8 +63,8 @@ function safeStringify(data) {
  */
 function formatEntry(entry) {
   const ts = entry.ts;
-  const dataStr = entry.data === undefined ? '' : ' ' + safeStringify(entry.data);
-  return '[' + ts + '] [AI-BTN] ' + entry.step + dataStr;
+  const dataStr = entry.data === undefined ? "" : " " + safeStringify(entry.data);
+  return "[" + ts + "] [AI-BTN] " + entry.step + dataStr;
 }
 
 /**
@@ -82,7 +86,7 @@ export function aiBtnLog(step, data) {
   }
 
   // 2. window global (for DevTools console access)
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     if (!Array.isArray(window.__hhCopilotAIBtnLog)) {
       window.__hhCopilotAIBtnLog = [];
     }
@@ -91,18 +95,18 @@ export function aiBtnLog(step, data) {
       window.__hhCopilotAIBtnLog.splice(0, window.__hhCopilotAIBtnLog.length - LOG_MAX);
     }
     // Helpers on window for easy DevTools access
-    if (typeof window.__hhCopilotAIBtnDump !== 'function') {
+    if (typeof window.__hhCopilotAIBtnDump !== "function") {
       window.__hhCopilotAIBtnDump = () => {
         const lines = (window.__hhCopilotAIBtnLog || []).map(formatEntry);
-        console.log(lines.join('\n'));
-        return lines.join('\n');
+        console.log(lines.join("\n"));
+        return lines.join("\n");
       };
     }
-    if (typeof window.__hhCopilotAIBtnClear !== 'function') {
+    if (typeof window.__hhCopilotAIBtnClear !== "function") {
       window.__hhCopilotAIBtnClear = () => {
         window.__hhCopilotAIBtnLog = [];
         logBuffer.length = 0;
-        console.log('[AI-BTN] log cleared');
+        console.log("[AI-BTN] log cleared");
       };
     }
   }
@@ -110,12 +114,14 @@ export function aiBtnLog(step, data) {
   // 3. Console (always)
   try {
     console.log(formatEntry(entry));
-  } catch (_e) { /* ignore */ }
+  } catch (_e) {
+    /* ignore */
+  }
 
   // 4. chrome.storage.local (best-effort, async, fire-and-forget)
   try {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get('aiBtnLog', (res) => {
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get("aiBtnLog", (res) => {
         const arr = Array.isArray(res && res.aiBtnLog) ? res.aiBtnLog : [];
         arr.push(entry);
         if (arr.length > LOG_MAX) {
@@ -126,7 +132,9 @@ export function aiBtnLog(step, data) {
         });
       });
     }
-  } catch (_e) { /* ignore */ }
+  } catch (_e) {
+    /* ignore */
+  }
 }
 
 /**
@@ -135,7 +143,7 @@ export function aiBtnLog(step, data) {
  * @returns {string}
  */
 export function getAiBtnLogText() {
-  return logBuffer.map(formatEntry).join('\n');
+  return logBuffer.map(formatEntry).join("\n");
 }
 
 /**
@@ -143,12 +151,14 @@ export function getAiBtnLogText() {
  */
 export function clearAiBtnLog() {
   logBuffer.length = 0;
-  if (typeof window !== 'undefined' && Array.isArray(window.__hhCopilotAIBtnLog)) {
+  if (typeof window !== "undefined" && Array.isArray(window.__hhCopilotAIBtnLog)) {
     window.__hhCopilotAIBtnLog.length = 0;
   }
   try {
-    console.log('[AI-BTN] log cleared');
-  } catch (_e) { /* ignore */ }
+    console.log("[AI-BTN] log cleared");
+  } catch (_e) {
+    /* ignore */
+  }
 }
 
 /** Exports for tests. */

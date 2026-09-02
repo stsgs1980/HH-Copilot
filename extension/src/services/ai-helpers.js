@@ -9,7 +9,7 @@
  * v1.9.65.0
  */
 
-import { sendMessage } from './ai-service.js';
+import { sendMessage } from "./ai-service.js";
 
 /**
  * Generate a cover letter via AI based on vacancy + resume context.
@@ -25,7 +25,7 @@ import { sendMessage } from './ai-service.js';
  */
 export async function generateCoverLetterAI(vacancy, resume, opts) {
   // Lazy import to avoid circular dep at module load
-  const { generateAICoverLetter } = await import('../lib/cover-letter-ai.js');
+  const { generateAICoverLetter } = await import("../lib/cover-letter-ai.js");
   return generateAICoverLetter(vacancy, resume, opts);
 }
 
@@ -38,17 +38,22 @@ export async function generateCoverLetterAI(vacancy, resume, opts) {
  */
 export async function generateChatReply(history, opts) {
   if (!Array.isArray(history) || history.length === 0) {
-    return { ok: false, error: 'history must be a non-empty array', code: 'BAD_INPUT' };
+    return { ok: false, error: "history must be a non-empty array", code: "BAD_INPUT" };
   }
-  const tone = (opts && opts.tone) || 'formal';
+  const tone = (opts && opts.tone) || "formal";
   const variants = Math.min(Math.max((opts && opts.variants) || 3, 1), 3);
 
-  const sys = 'You are an assistant helping a job seeker reply to an employer on hh.ru. ' +
-    'Write in Russian. Tone: ' + tone + '. ' +
-    'Generate ' + variants + ' distinct reply variants, separated by a line containing only "---VARIANT---". ' +
-    'Each variant should be 1-3 short sentences. Do not include greetings unless the employer greeted first.';
+  const sys =
+    "You are an assistant helping a job seeker reply to an employer on hh.ru. " +
+    "Write in Russian. Tone: " +
+    tone +
+    ". " +
+    "Generate " +
+    variants +
+    ' distinct reply variants, separated by a line containing only "---VARIANT---". ' +
+    "Each variant should be 1-3 short sentences. Do not include greetings unless the employer greeted first.";
 
-  const messages = [{ role: 'assistant', content: sys }, ...history];
+  const messages = [{ role: "assistant", content: sys }, ...history];
 
   const result = await sendMessage({
     messages,
@@ -57,9 +62,10 @@ export async function generateChatReply(history, opts) {
   });
   if (!result.ok) return result;
 
-  const parts = result.text.split(/^---VARIANT---$/m)
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
+  const parts = result.text
+    .split(/^---VARIANT---$/m)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 
   // Use split parts; if AI ignored separator entirely, parts === [text]
   const list = parts.length > 0 ? parts.slice(0, variants) : [result.text];

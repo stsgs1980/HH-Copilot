@@ -13,30 +13,29 @@
  *   When auth changes to false -> panel shows "Log in to hh.ru"
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
-import { checkDailyReset, getStats, getAllSettings } from '../lib/storage.js';
-import { parseVacanciesFromPage } from '../parsers/vacancy-list.js';
-import { diagnoseResumeDOM, debugVisibility } from '../parsers/resume-detail.js';
-import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
-import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
-import { computeMatchScore } from '../lib/match-scorer.js';
-import { saveVacancyScore, saveVacancyDetail } from '../lib/storage.js';
-import { panelState, createPanel, updateVacancies } from '../ui/panel.js';
-import { updateStats, updateSettings } from '../ui/state.js';
+import { createLogger } from "../lib/anti-hallucination.js";
+import { computeMatchScore } from "../lib/match-scorer.js";
+import { checkDailyReset, getAllSettings, getStats, saveVacancyDetail, saveVacancyScore } from "../lib/storage.js";
+import { debugVisibility, diagnoseResumeDOM } from "../parsers/resume-detail.js";
+import { parseVacancyDetail } from "../parsers/vacancy-detail.js";
+import { diagnoseVacancyPage } from "../parsers/vacancy-diagnostic.js";
+import { parseVacanciesFromPage } from "../parsers/vacancy-list.js";
+import { createPanel, panelState, updateVacancies } from "../ui/panel.js";
+import { updateSettings, updateStats } from "../ui/state.js";
 
 // Split modules
-import { initPageLogic } from './main-page-handlers.js';
-import { handleLoadResume, handleReparseResume } from './main-resume-loader.js';
-import { handleSyncResumes } from './main-sync.js';
-import { loadSavedResumes } from './main-resume-boot.js';
-import { loadCaptchaState, checkAndPause } from '../lib/captcha-detector.js';
-import { toggleInspector as toggleDomInspector, isInspectorActive } from '../ui/dom-inspector.js';
-import { setFabInspectorActive } from '../ui/fab.js';
+import { checkAndPause, loadCaptchaState } from "../lib/captcha-detector.js";
+import { isInspectorActive, toggleInspector as toggleDomInspector } from "../ui/dom-inspector.js";
+import { setFabInspectorActive } from "../ui/fab.js";
+import { initPageLogic } from "./main-page-handlers.js";
+import { loadSavedResumes } from "./main-resume-boot.js";
+import { handleLoadResume, handleReparseResume } from "./main-resume-loader.js";
+import { handleSyncResumes } from "./main-sync.js";
 
 // Re-export for dynamic import from panel (ui/panel/index.js)
 export { initPageLogic };
 
-const mainLog = createLogger('Main');
+const mainLog = createLogger("Main");
 
 // Expose diagnostic functions globally for console access
 // NOTE: Content scripts run in an isolated world -- window.X set here is NOT
@@ -53,7 +52,7 @@ window.__hhVisDiag = null;
 // ===============================================
 
 async function init() {
-  mainLog.info('Loaded: ' + window.location.href);
+  mainLog.info("Loaded: " + window.location.href);
   await checkDailyReset();
 
   // Load stats + settings into panelState at boot
@@ -61,9 +60,9 @@ async function init() {
     const [stats, settings] = await Promise.all([getStats(), getAllSettings()]);
     updateStats(stats);
     updateSettings(settings);
-    mainLog.info('Boot: stats + settings loaded from storage');
+    mainLog.info("Boot: stats + settings loaded from storage");
   } catch (_e) {
-    mainLog.warn('Boot: failed to load stats/settings: ' + e.message);
+    mainLog.warn("Boot: failed to load stats/settings: " + e.message);
   }
 
   // F4.4: load persisted CAPTCHA pause state (survives page reloads)
@@ -76,18 +75,22 @@ async function init() {
     const settings = panelState.settings || {};
     const captchaRes = await checkAndPause(document, settings);
     if (captchaRes.found) {
-      mainLog.warn('CAPTCHA detected on page load: ' + captchaRes.type);
+      mainLog.warn("CAPTCHA detected on page load: " + captchaRes.type);
       // Notify panel to show banner
-      window.dispatchEvent(new CustomEvent('hh-ar-captcha-detected', {
-        detail: { type: captchaRes.type, found: true, paused: captchaRes.paused }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("hh-ar-captcha-detected", {
+          detail: { type: captchaRes.type, found: true, paused: captchaRes.paused },
+        }),
+      );
       // Update extension badge to signal pause
       if (chrome.action && chrome.action.setBadgeText) {
-        chrome.action.setBadgeText({ text: '!' });
-        chrome.action.setBadgeBackgroundColor({ color: '#D97706' });
+        chrome.action.setBadgeText({ text: "!" });
+        chrome.action.setBadgeBackgroundColor({ color: "#D97706" });
       }
     }
-  } catch (_e) { /* ignore */ }
+  } catch (_e) {
+    /* ignore */
+  }
 
   // Load saved resumes from storage + migrate old data
   await loadSavedResumes();
@@ -96,53 +99,55 @@ async function init() {
   // When auth changes to true, updateAuthState calls initPageLogic
 
   // -- Event listeners --
-  window.addEventListener('hh-ar-apply', async (e) => {
+  window.addEventListener("hh-ar-apply", async (e) => {
     if (!panelState.isLoggedIn) return;
-    const { applyToVacancy } = await import('../engine/index.js');
+    const { applyToVacancy } = await import("../engine/index.js");
     await applyToVacancy(e.detail.vacancyId, panelState.resume);
   });
 
-  window.addEventListener('hh-ar-apply-all', async () => {
+  window.addEventListener("hh-ar-apply-all", async () => {
     if (!panelState.isLoggedIn) return;
-    const { applyToAll } = await import('../engine/index.js');
+    const { applyToAll } = await import("../engine/index.js");
     await applyToAll(panelState.vacancies, undefined, panelState.resume);
   });
 
-  window.addEventListener('hh-ar-refresh', async () => {
+  window.addEventListener("hh-ar-refresh", async () => {
     if (!panelState.isLoggedIn) return;
     const v = await parseVacanciesFromPage(panelState.resume);
     updateVacancies(v);
   });
 
-  window.addEventListener('hh-ar-load-resume', handleLoadResume);
-  window.addEventListener('hh-ar-reparse-resume', handleReparseResume);
-  window.addEventListener('hh-ar-sync-resumes', handleSyncResumes);
+  window.addEventListener("hh-ar-load-resume", handleLoadResume);
+  window.addEventListener("hh-ar-reparse-resume", handleReparseResume);
+  window.addEventListener("hh-ar-sync-resumes", handleSyncResumes);
 
   // -- Vacancy diagnostic: listen for manual trigger from page-world.js --
   // page-world __hhVacDiag() dispatches a DOM CustomEvent which crosses
   // the isolated-world boundary. Content script handles it and runs
   // diagnoseVacancyPage(), then sends data back via postMessage.
-  document.addEventListener('HH-AR-RUN-VAC-DIAG', () => {
+  document.addEventListener("HH-AR-RUN-VAC-DIAG", () => {
     try {
       const result = diagnoseVacancyPage();
-      mainLog.info('Manual vac diag: ' + (result.vacancyId || 'no id'));
+      mainLog.info("Manual vac diag: " + (result.vacancyId || "no id"));
     } catch (_e) {
-      mainLog.warn('Manual vac diag failed: ' + e.message);
+      mainLog.warn("Manual vac diag failed: " + e.message);
     }
   });
 
   // Auto-run vacancy diagnostic if we're on a vacancy detail page
   if (/^\/vacancy\/\d+/.test(window.location.pathname)) {
     setTimeout(() => {
-      try { diagnoseVacancyPage(); } catch (_e) {}
+      try {
+        diagnoseVacancyPage();
+      } catch (_e) {}
     }, 2000);
   }
 
   // -- Listen for init-page-logic event from panel (replaces dynamic import) --
   // panel/index.js dispatches 'hh-ar-init-page-logic' when auth changes to true.
   // This avoids dynamic import() which doesn't work in esbuild IIFE bundles.
-  window.addEventListener('hh-ar-init-page-logic', () => {
-    mainLog.info('Received hh-ar-init-page-logic event -> calling initPageLogic()');
+  window.addEventListener("hh-ar-init-page-logic", () => {
+    mainLog.info("Received hh-ar-init-page-logic event -> calling initPageLogic()");
     initPageLogic();
   });
 
@@ -150,9 +155,10 @@ async function init() {
   // If auth was already detected before the panel dispatched the event
   // (e.g. fast page loads), we also try after a delay.
   // Covers vacancy detail, resume detail, and applicant resume view pages.
-  const isDetailPage = /^\/vacancy\/\d+/.test(window.location.pathname)
-    || /^\/resume\/[a-f0-9]+/.test(window.location.pathname)
-    || /^\/applicant\/resumes\/view/.test(window.location.pathname);
+  const isDetailPage =
+    /^\/vacancy\/\d+/.test(window.location.pathname) ||
+    /^\/resume\/[a-f0-9]+/.test(window.location.pathname) ||
+    /^\/applicant\/resumes\/view/.test(window.location.pathname);
   if (isDetailPage) {
     setTimeout(() => {
       // initPageLogic is idempotent -- it checks pageLogicInitialized to avoid duplicates
@@ -164,26 +170,42 @@ async function init() {
   // On vacancy detail pages, the first scoring may show skills=0 because
   // the resume hasn't been loaded from storage yet. When a resume loads
   // (either from storage at boot, or from a page parse), we re-score.
-  window.addEventListener('hh-ar-resume-loaded', async (e) => {
+  window.addEventListener("hh-ar-resume-loaded", async (e) => {
     const resume = e.detail?.resume || panelState.resume;
     if (!resume) return;
     if (!/^\/vacancy\/\d+/.test(window.location.pathname)) return;
-    mainLog.info('Resume loaded -- re-scoring vacancy detail page');
+    mainLog.info("Resume loaded -- re-scoring vacancy detail page");
     try {
       const detail = parseVacancyDetail();
       if (detail) {
         const score = await computeMatchScore(resume, detail);
         detail.matchScore = score.total;
         detail.matchBreakdown = score.breakdown;
-        mainLog.info('Re-score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');
+        mainLog.info(
+          "Re-score: " +
+            score.total +
+            "% (skills=" +
+            score.breakdown.skills +
+            ", title=" +
+            score.breakdown.title +
+            ", salary=" +
+            score.breakdown.salary +
+            ", exp=" +
+            score.breakdown.experience +
+            ")",
+        );
         saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
         saveVacancyDetail(detail).catch(() => {});
         window.__hhVacDetail = detail;
         // Notify panel to update match display
-        window.dispatchEvent(new CustomEvent('hh-ar-match-updated', { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
+        window.dispatchEvent(
+          new CustomEvent("hh-ar-match-updated", {
+            detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details },
+          }),
+        );
       }
     } catch (err) {
-      mainLog.warn('Re-score failed: ' + err.message);
+      mainLog.warn("Re-score failed: " + err.message);
     }
   });
 }
@@ -192,7 +214,7 @@ async function init() {
 // Message listener (from popup / background)
 // ===============================================
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === 'toggle-inspector') {
+  if (message.type === "toggle-inspector") {
     toggleDomInspector();
     setFabInspectorActive(isInspectorActive());
     sendResponse({ active: isInspectorActive() });
@@ -211,23 +233,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // Zero overhead in production.
 // ===============================================
 
-if (!('update_url' in chrome.runtime.getManifest())) {
+if (!("update_url" in chrome.runtime.getManifest())) {
   try {
-    const hmr = new WebSocket('ws://localhost:35729');
+    const hmr = new WebSocket("ws://localhost:35729");
     hmr.onmessage = (e) => {
-      if (e.data === 'reload') {
-        mainLog.info('[hmr] Reload signal received -- reloading extension');
+      if (e.data === "reload") {
+        mainLog.info("[hmr] Reload signal received -- reloading extension");
         chrome.runtime.reload();
       }
     };
-    hmr.onopen = () => mainLog.info('[hmr] Connected to dev server');
+    hmr.onopen = () => mainLog.info("[hmr] Connected to dev server");
     hmr.onerror = () => {}; // server not running -- that's fine
-    hmr.onclose = () => mainLog.info('[hmr] Disconnected from dev server');
+    hmr.onclose = () => mainLog.info("[hmr] Disconnected from dev server");
   } catch (_e) {
     // WebSocket not available -- ignore
   }
 }
 
 // BOOT
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
 else init();

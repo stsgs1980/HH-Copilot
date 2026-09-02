@@ -5,23 +5,24 @@
  * Wireframe: 6 accordion sections + skills card + gap analysis card.
  */
 
-import { panelState, refs, setActiveResumeState } from '../../state.js';
-import { esc } from '../../html.js';
-import { ICONS } from '../../html/icons.js';
-import { getResumePageType } from '../../../parsers/resume-detail.js';
+import { analyzeResumeQuality } from "../../../lib/resume-quality-analyzer.js";
+import { setActiveResume } from "../../../lib/storage.js";
+import { collectDetailVacancySkills } from "../../../lib/vacancy-skills-collector.js";
+import { getResumePageType } from "../../../parsers/resume-detail.js";
+import { esc } from "../../html.js";
+import { ICONS } from "../../html/icons.js";
+import { panelState, refs, setActiveResumeState } from "../../state.js";
+import { renderMyResumesPanel, renderResumeListPanel } from "./render-my-resumes.js";
+import { updateAccordionHeader } from "./resume-accordion-header.js";
+import { attachSubToggle, updateSkillsSection } from "./resume-helpers.js";
 import {
-  attachSubToggle, updateSkillsSection
-} from './resume-helpers.js';
-import { renderMyResumesPanel, renderResumeListPanel } from './render-my-resumes.js';
-import {
-  buildPersonalSection, buildSalarySection,
-  buildExperienceSection, buildEducationSection,
-  buildLanguagesSection, buildContactsSection
-} from './section-builders.js';
-import { setActiveResume } from '../../../lib/storage.js';
-import { updateAccordionHeader } from './resume-accordion-header.js';
-import { analyzeResumeQuality } from '../../../lib/resume-quality-analyzer.js';
-import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collector.js';
+  buildContactsSection,
+  buildEducationSection,
+  buildExperienceSection,
+  buildLanguagesSection,
+  buildPersonalSection,
+  buildSalarySection,
+} from "./section-builders.js";
 
 // ===============================================
 // MAIN RESUME PANEL RENDER
@@ -39,7 +40,7 @@ import { collectDetailVacancySkills } from '../../../lib/vacancy-skills-collecto
  * Also triggers rendering of the "My Resumes" sync section.
  */
 export function renderResumePanel() {
-  const container = refs.shadowRoot?.getElementById('res-parsed-data');
+  const container = refs.shadowRoot?.getElementById("res-parsed-data");
   if (!container) return;
 
   const r = panelState.resume;
@@ -56,13 +57,13 @@ export function renderResumePanel() {
       return;
     }
     const pageType = getResumePageType();
-    let hint = 'Выберите резюме ниже или перейдите на страницу резюме.';
-    if (pageType === 'resume-list') {
+    let hint = "Выберите резюме ниже или перейдите на страницу резюме.";
+    if (pageType === "resume-list") {
       hint = 'Нажмите "Синхронизировать все" ниже.';
-    } else if (pageType === 'resume-detail') {
+    } else if (pageType === "resume-detail") {
       hint = 'Нажмите "Взять со страницы" ниже.';
     }
-    container.innerHTML = '<div class="har-empty">Действующее резюме не выбрано.<br>' + hint + '</div>';
+    container.innerHTML = '<div class="har-empty">Действующее резюме не выбрано.<br>' + hint + "</div>";
     updateAccordionHeader(null);
     return;
   }
@@ -70,25 +71,37 @@ export function renderResumePanel() {
   updateAccordionHeader(r);
 
   // Build 6 accordion sections matching wireframe
-  const vis = r.visibility || (r.hidden ? 'hidden' : 'unknown');
+  const vis = r.visibility || (r.hidden ? "hidden" : "unknown");
   container.innerHTML =
-    '<div class="tl-item">' + buildPersonalSection(r) + '</div>' +
-    '<div class="tl-item">' + buildSalarySection(r) + '</div>' +
-    '<div class="tl-item">' + buildExperienceSection(r) + '</div>' +
-    '<div class="tl-item">' + buildEducationSection(r) + '</div>' +
-    '<div class="tl-item">' + buildLanguagesSection(r) + '</div>' +
-    '<div class="tl-item">' + buildContactsSection(r) + '</div>' +
-    (vis === 'hidden'
+    '<div class="tl-item">' +
+    buildPersonalSection(r) +
+    "</div>" +
+    '<div class="tl-item">' +
+    buildSalarySection(r) +
+    "</div>" +
+    '<div class="tl-item">' +
+    buildExperienceSection(r) +
+    "</div>" +
+    '<div class="tl-item">' +
+    buildEducationSection(r) +
+    "</div>" +
+    '<div class="tl-item">' +
+    buildLanguagesSection(r) +
+    "</div>" +
+    '<div class="tl-item">' +
+    buildContactsSection(r) +
+    "</div>" +
+    (vis === "hidden"
       ? '<div style="font-size:10px;color:#92400e;padding:6px 4px 0 28px;">Скрытое резюме не видно работодателям -- мэтчинг недоступен</div>'
-      : '');
+      : "");
 
   // Attach sub-accordion toggle listeners
-  attachSubToggle('subPersonal', 'chevPersonal');
-  attachSubToggle('subSalary', 'chevSalary');
-  attachSubToggle('subExp', 'chevExp');
-  attachSubToggle('subEdu', 'chevEdu');
-  attachSubToggle('subLang', 'chevLang');
-  attachSubToggle('subContacts', 'chevContacts');
+  attachSubToggle("subPersonal", "chevPersonal");
+  attachSubToggle("subSalary", "chevSalary");
+  attachSubToggle("subExp", "chevExp");
+  attachSubToggle("subEdu", "chevEdu");
+  attachSubToggle("subLang", "chevLang");
+  attachSubToggle("subContacts", "chevContacts");
 
   updateSkillsSection(r);
   updateResumeScore(r);
@@ -100,11 +113,14 @@ export function renderResumePanel() {
 // ===============================================
 
 function updateResumeScore(r) {
-  const section = refs.shadowRoot?.getElementById('res-score-section');
+  const section = refs.shadowRoot?.getElementById("res-score-section");
   if (!section) return;
 
-  if (!r || !r.id) { section.style.display = 'none'; return; }
-  section.style.display = '';
+  if (!r || !r.id) {
+    section.style.display = "none";
+    return;
+  }
+  section.style.display = "";
 
   // v1.9.32.0: Use detail-only skills -- collecting from ALL search results
   // merged skills from unrelated vacancies (cashier, merchandiser, etc.)
@@ -113,97 +129,135 @@ function updateResumeScore(r) {
   const pct = result.totalScore;
 
   // -- Ring chart --
-  const ring = refs.shadowRoot?.getElementById('res-score-ring');
+  const ring = refs.shadowRoot?.getElementById("res-score-ring");
   if (ring) {
     const deg = Math.round(pct * 3.6);
-    const color = pct >= 70 ? '#059669' : pct >= 40 ? '#D97706' : '#DC2626';
-    ring.style.background = 'conic-gradient(' + color + ' 0deg ' + deg + 'deg, #e4e4e7 ' + deg + 'deg 360deg)';
-    const inner = ring.querySelector('div');
+    const color = pct >= 70 ? "#059669" : pct >= 40 ? "#D97706" : "#DC2626";
+    ring.style.background = "conic-gradient(" + color + " 0deg " + deg + "deg, #e4e4e7 " + deg + "deg 360deg)";
+    const inner = ring.querySelector("div");
     if (inner) {
-      inner.textContent = pct + '%';
+      inner.textContent = pct + "%";
       inner.style.color = color;
     }
   }
 
   // -- Verdict subtitle --
-  const subtitle = refs.shadowRoot?.getElementById('res-score-subtitle');
+  const subtitle = refs.shadowRoot?.getElementById("res-score-subtitle");
   if (subtitle) {
-    if (pct >= 80) subtitle.textContent = 'Сильное резюме -- ATS пропустит, HR заметит';
-    else if (pct >= 60) subtitle.textContent = 'Хорошее резюме -- есть что усилить';
-    else if (pct >= 40) subtitle.textContent = 'Среднее -- ATS может отсеять, HR не увидит ценности';
-    else subtitle.textContent = 'Слабое -- высокая вероятность отсева на этапе ATS';
+    if (pct >= 80) subtitle.textContent = "Сильное резюме -- ATS пропустит, HR заметит";
+    else if (pct >= 60) subtitle.textContent = "Хорошее резюме -- есть что усилить";
+    else if (pct >= 40) subtitle.textContent = "Среднее -- ATS может отсеять, HR не увидит ценности";
+    else subtitle.textContent = "Слабое -- высокая вероятность отсева на этапе ATS";
   }
 
   // -- ATS + Experience mini-scores --
-  const atsScoreEl = refs.shadowRoot?.getElementById('res-ats-score');
-  const atsBar = refs.shadowRoot?.getElementById('res-ats-bar');
+  const atsScoreEl = refs.shadowRoot?.getElementById("res-ats-score");
+  const atsBar = refs.shadowRoot?.getElementById("res-ats-bar");
   if (atsScoreEl) {
-    const atsColor = result.atsScore >= 70 ? '#059669' : result.atsScore >= 40 ? '#D97706' : '#DC2626';
-    atsScoreEl.textContent = result.atsScore + '%';
+    const atsColor = result.atsScore >= 70 ? "#059669" : result.atsScore >= 40 ? "#D97706" : "#DC2626";
+    atsScoreEl.textContent = result.atsScore + "%";
     atsScoreEl.style.color = atsColor;
   }
-  if (atsBar) atsBar.style.width = result.atsScore + '%';
+  if (atsBar) atsBar.style.width = result.atsScore + "%";
 
-  const expScoreEl = refs.shadowRoot?.getElementById('res-exp-score');
-  const expBar = refs.shadowRoot?.getElementById('res-exp-bar');
+  const expScoreEl = refs.shadowRoot?.getElementById("res-exp-score");
+  const expBar = refs.shadowRoot?.getElementById("res-exp-bar");
   if (expScoreEl) {
-    const expColor = result.experienceScore >= 70 ? '#2563EB' : result.experienceScore >= 40 ? '#D97706' : '#DC2626';
-    expScoreEl.textContent = result.experienceScore + '%';
+    const expColor = result.experienceScore >= 70 ? "#2563EB" : result.experienceScore >= 40 ? "#D97706" : "#DC2626";
+    expScoreEl.textContent = result.experienceScore + "%";
     expScoreEl.style.color = expColor;
   }
-  if (expBar) expBar.style.width = result.experienceScore + '%';
+  if (expBar) expBar.style.width = result.experienceScore + "%";
 
   // -- Red flags --
-  const redFlagsContainer = refs.shadowRoot?.getElementById('res-red-flags');
-  const redFlagsList = refs.shadowRoot?.getElementById('res-red-flags-list');
+  const redFlagsContainer = refs.shadowRoot?.getElementById("res-red-flags");
+  const redFlagsList = refs.shadowRoot?.getElementById("res-red-flags-list");
   if (redFlagsContainer && redFlagsList) {
     if (result.redFlags.length > 0) {
-      redFlagsContainer.style.display = '';
-      redFlagsList.innerHTML = result.redFlags.map(f =>
-        '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;">' +
-        '<span style="color:#DC2626;flex-shrink:0;margin-top:1px;">' + ICONS.alertCircle + '</span>' +
-        '<span style="color:#991B1B;line-height:1.4;">' + esc(f) + '</span></div>'
-      ).join('');
+      redFlagsContainer.style.display = "";
+      redFlagsList.innerHTML = result.redFlags
+        .map(
+          (f) =>
+            '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;">' +
+            '<span style="color:#DC2626;flex-shrink:0;margin-top:1px;">' +
+            ICONS.alertCircle +
+            "</span>" +
+            '<span style="color:#991B1B;line-height:1.4;">' +
+            esc(f) +
+            "</span></div>",
+        )
+        .join("");
     } else {
-      redFlagsContainer.style.display = 'none';
+      redFlagsContainer.style.display = "none";
     }
   }
 
   // -- Strengths --
-  const strengthsContainer = refs.shadowRoot?.getElementById('res-strengths');
-  const strengthsList = refs.shadowRoot?.getElementById('res-strengths-list');
+  const strengthsContainer = refs.shadowRoot?.getElementById("res-strengths");
+  const strengthsList = refs.shadowRoot?.getElementById("res-strengths-list");
   if (strengthsContainer && strengthsList) {
     if (result.strengths.length > 0) {
-      strengthsContainer.style.display = '';
-      strengthsList.innerHTML = result.strengths.map(s =>
-        '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#F0FDF4;border-radius:6px;">' +
-        '<span style="color:#059669;flex-shrink:0;margin-top:1px;">' + ICONS.checkCircle + '</span>' +
-        '<span style="color:#166534;line-height:1.4;">' + esc(s) + '</span></div>'
-      ).join('');
+      strengthsContainer.style.display = "";
+      strengthsList.innerHTML = result.strengths
+        .map(
+          (s) =>
+            '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:#F0FDF4;border-radius:6px;">' +
+            '<span style="color:#059669;flex-shrink:0;margin-top:1px;">' +
+            ICONS.checkCircle +
+            "</span>" +
+            '<span style="color:#166534;line-height:1.4;">' +
+            esc(s) +
+            "</span></div>",
+        )
+        .join("");
     } else {
-      strengthsContainer.style.display = 'none';
+      strengthsContainer.style.display = "none";
     }
   }
 
   // -- Recommendations --
-  const recsContainer = refs.shadowRoot?.getElementById('res-recommendations');
-  const recsList = refs.shadowRoot?.getElementById('res-recommendations-list');
+  const recsContainer = refs.shadowRoot?.getElementById("res-recommendations");
+  const recsList = refs.shadowRoot?.getElementById("res-recommendations-list");
   if (recsContainer && recsList) {
     if (result.recommendations.length > 0) {
-      recsContainer.style.display = '';
-      recsList.innerHTML = result.recommendations.map(rec => {
-        const priorityColor = rec.priority === 'critical' ? '#991B1B' : rec.priority === 'high' ? '#92400E' : '#71717a';
-        const priorityBg = rec.priority === 'critical' ? '#FEF2F2' : rec.priority === 'high' ? '#FFFBEB' : '#FAFAFA';
-        const priorityBorder = rec.priority === 'critical' ? '1px solid rgba(220,38,38,0.15)' : rec.priority === 'high' ? '1px solid rgba(217,119,6,0.15)' : '1px solid #e4e4e7';
-        const textSpan = rec.tooltip
-          ? '<span title="' + esc(rec.tooltip) + '" style="cursor:help;border-bottom:1px dashed #a1a1aa;line-height:1.4;">' + esc(rec.text) + '</span>'
-          : '<span style="line-height:1.4;">' + esc(rec.text) + '</span>';
-        return '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:' + priorityBg + ';border:' + priorityBorder + ';border-radius:6px;">' +
-          '<span style="color:#D97706;flex-shrink:0;margin-top:1px;">' + ICONS.lightbulb + '</span>' +
-          '<span style="color:' + priorityColor + ';">' + textSpan + '</span></div>';
-      }).join('');
+      recsContainer.style.display = "";
+      recsList.innerHTML = result.recommendations
+        .map((rec) => {
+          const priorityColor =
+            rec.priority === "critical" ? "#991B1B" : rec.priority === "high" ? "#92400E" : "#71717a";
+          const priorityBg = rec.priority === "critical" ? "#FEF2F2" : rec.priority === "high" ? "#FFFBEB" : "#FAFAFA";
+          const priorityBorder =
+            rec.priority === "critical"
+              ? "1px solid rgba(220,38,38,0.15)"
+              : rec.priority === "high"
+                ? "1px solid rgba(217,119,6,0.15)"
+                : "1px solid #e4e4e7";
+          const textSpan = rec.tooltip
+            ? '<span title="' +
+              esc(rec.tooltip) +
+              '" style="cursor:help;border-bottom:1px dashed #a1a1aa;line-height:1.4;">' +
+              esc(rec.text) +
+              "</span>"
+            : '<span style="line-height:1.4;">' + esc(rec.text) + "</span>";
+          return (
+            '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:5px 8px;background:' +
+            priorityBg +
+            ";border:" +
+            priorityBorder +
+            ';border-radius:6px;">' +
+            '<span style="color:#D97706;flex-shrink:0;margin-top:1px;">' +
+            ICONS.lightbulb +
+            "</span>" +
+            '<span style="color:' +
+            priorityColor +
+            ';">' +
+            textSpan +
+            "</span></div>"
+          );
+        })
+        .join("");
     } else {
-      recsContainer.style.display = 'none';
+      recsContainer.style.display = "none";
     }
   }
 }

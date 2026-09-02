@@ -18,7 +18,7 @@ layers)** and **AI-pattern validation (too lenient)**. Documentation drift is
 significant (weights, pattern count, file pointers).
 
 **Confidence on the core question "is scoring done correctly?":** the arithmetic
-is correct and guarded; the *semantics* have three bias sources (RF-1/2/7 below)
+is correct and guarded; the _semantics_ have three bias sources (RF-1/2/7 below)
 that inflate scores for data-poor and inference-heavy inputs.
 
 **Confidence on "is the cover letter grounded?":** the evidence pipeline is
@@ -31,11 +31,11 @@ through (RF-J, RF-I).
 
 ### 1.1 Corrected premises (README/my earlier statements were WRONG)
 
-| Claim (README / earlier) | Reality (verified in code) |
-|--------------------------|----------------------------|
-| Function `calculateMatchScore(vacancy, resume)` | **`computeMatchScore(resume, vacancy)`** (`match-scorer.js:40`). Order is reversed vs. the claim. |
-| 5 components, weights 40/15/15/15/15 | **4 components**: skills 40 / **title 30** / salary 15 / experience 15. **No location component** and no `match-scorer-location.js`. |
-| Jaccard for skills | **Weighted ratio**, not Jaccard (`match-scorer-skills.js:92-113`). |
+| Claim (README / earlier)                        | Reality (verified in code)                                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Function `calculateMatchScore(vacancy, resume)` | **`computeMatchScore(resume, vacancy)`** (`match-scorer.js:40`). Order is reversed vs. the claim.                                    |
+| 5 components, weights 40/15/15/15/15            | **4 components**: skills 40 / **title 30** / salary 15 / experience 15. **No location component** and no `match-scorer-location.js`. |
+| Jaccard for skills                              | **Weighted ratio**, not Jaccard (`match-scorer-skills.js:92-113`).                                                                   |
 
 ### 1.2 Signature & return shape
 
@@ -47,16 +47,17 @@ through (RF-J, RF-I).
 
 ### 1.3 Per-component algorithms
 
-| Component | Weight | Algorithm | Source |
-|-----------|-------|-----------|--------|
-| skills | 0–40 | weighted ratio of matched vacancy skills; tiers matching(1.0)/derived(0.7)/synonym(0.5)/implied(0.4); confidence factor scales by skill count | `match-scorer-skills.js` |
-| title | 0–30 | token-overlap ratio vs vacancy tokens + abbreviation bonus (≤5); role-mismatch penalty | `match-scorer-title.js` |
-| salary | 0–15 | numeric-range overlap with tolerance bands; no-data → 8 | `match-scorer-salary.js` |
-| experience | 0–15 | years-range match; no-exp-required → 15; unknown → 8 | `match-scorer-experience.js` |
+| Component  | Weight | Algorithm                                                                                                                                     | Source                       |
+| ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| skills     | 0–40   | weighted ratio of matched vacancy skills; tiers matching(1.0)/derived(0.7)/synonym(0.5)/implied(0.4); confidence factor scales by skill count | `match-scorer-skills.js`     |
+| title      | 0–30   | token-overlap ratio vs vacancy tokens + abbreviation bonus (≤5); role-mismatch penalty                                                        | `match-scorer-title.js`      |
+| salary     | 0–15   | numeric-range overlap with tolerance bands; no-data → 8                                                                                       | `match-scorer-salary.js`     |
+| experience | 0–15   | years-range match; no-exp-required → 15; unknown → 8                                                                                          | `match-scorer-experience.js` |
 
 ### 1.4 Anti-hallucination (POSITIVE finding)
 
 **No NaN/Infinity hazard.** Verified all division paths:
+
 - skills: early-return on empty vacancy skills (`match-scorer-skills.js:44`) + `size>0` guard at `:112`
 - title: guards empty title (`:25`)
 - salary: `|| Infinity` / `|| 0` defaults (`:48-49`)
@@ -121,6 +122,7 @@ validateLetter(letter, evidence, resumeSkills) -> { ok, text, warnings }
 ```
 [<competency>]: <evidenceText>  [уверенность: <confidence>]
 ```
+
 System prompt has 6 hard rules: "use ONLY facts from Доказательства", "do not
 invent skills/dates/numbers", "if no evidence for a competency — don't mention it".
 
@@ -165,7 +167,7 @@ Large hole.
 
 **RF-7 — Double inference compounding.** When a vacancy has no `keySkills`, its
 `derivedSkills` (regex-inferred from description) becomes the requirement set
-(`vacancy-skills-collector.js:74-80`). Combined with RF-1, *both sides* are
+(`vacancy-skills-collector.js:74-80`). Combined with RF-1, _both sides_ are
 keyword guesses → two layers of inference stack.
 
 **RF-9 — No-data bias.** Salary "no-data" → 8/15, experience "unknown" → 8/15
@@ -221,17 +223,20 @@ hallucination surface.
 ## 5. Concrete failure scenarios (traced end-to-end)
 
 ### Scenario 1 — Inflated score via inference stacking (RF-1 + RF-7 + RF-9)
+
 Vacancy with no `keySkills` and no salary → requirements inferred from description
 (RF-7), resume "derived skills" inferred from prose (RF-1), no-data salary
-+8 (RF-9). A candidate whose resume merely *mentions* keywords gets a
++8 (RF-9). A candidate whose resume merely _mentions_ keywords gets a
 high-looking score with little real overlap.
 
 ### Scenario 2 — Hallucinated skill ships unflagged (RF-J + RF-I)
+
 LLM writes "Также работал с Vue.js" (Vue not in evidence). Validator whitelist
 excludes Vue → not flagged → `ok:true`. No regenerate loop (RF-I). Letter ships
 with a fabricated skill.
 
 ### Scenario 3 — Confusing 25% (RF-4 + RF-5)
+
 Different profession title (zero token overlap) but strong skill/salary/exp
 match → components show 40+15+15=70, but total silently capped at 25. User sees
 "25% match, components look high" → confusion (not a bug, but needs UI note).
@@ -299,15 +304,15 @@ This is measured output, not estimation.
 
 ### 9.2 Measured false-positives (6 of 7 cases produced wrong skills)
 
-| # | Resume text (candidate does NOT have skill) | Wrongly derived | Triggered by |
-|---|---------------------------------------------|-----------------|--------------|
-| 1 | "не использовал CRM. Без опыта b2b. Подчинённых не было." | **B2B продажи, CRM** | `/B2B/i` on "b2b"; `/CRM/i` on "CRM" — negation ignored |
-| 2 | "компания ищет React и Python разработчиков. ...не сам кодил." | **Python, React** | role-context ignored; bare tokens match |
-| 3 | "пробовал 1С ... бросил. Читал про Docker, не применял." | **аналитика, Docker, 1С** | past-tense / abandoned ignored; `/аналитик/` matched "аналитик" elsewhere; `/1[СCсc]/` matched |
-| 4 | "Организовал conference... Использовал Java-скрипт... опечатка" | (none) | the only clean case |
-| 5 | "TS специалист. PM группы. BI анализ. AI отдел." | **управление проектами, TypeScript, анализ данных** | `/\bPM\b/` on "PM"; `/\bTS\b/` on "TS"; `/\bBI\b/` on "BI" — 2-letter acronyms match unrelated role abbreviations |
-| 6 | "Был стресс на работе из-за дедлайнов." | **стрессоустойчивость** | `/стресс/i` (the only pattern for this skill) — any mention of stress = skill |
-| 7 | "внедряли микроCRM. Я к ней доступа не имел." | **CRM** | `/CRM/i` substring inside "микроCRM"; access denied ignored |
+| #   | Resume text (candidate does NOT have skill)                     | Wrongly derived                                     | Triggered by                                                                                                      |
+| --- | --------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1   | "не использовал CRM. Без опыта b2b. Подчинённых не было."       | **B2B продажи, CRM**                                | `/B2B/i` on "b2b"; `/CRM/i` on "CRM" — negation ignored                                                           |
+| 2   | "компания ищет React и Python разработчиков. ...не сам кодил."  | **Python, React**                                   | role-context ignored; bare tokens match                                                                           |
+| 3   | "пробовал 1С ... бросил. Читал про Docker, не применял."        | **аналитика, Docker, 1С**                           | past-tense / abandoned ignored; `/аналитик/` matched "аналитик" elsewhere; `/1[СCсc]/` matched                    |
+| 4   | "Организовал conference... Использовал Java-скрипт... опечатка" | (none)                                              | the only clean case                                                                                               |
+| 5   | "TS специалист. PM группы. BI анализ. AI отдел."                | **управление проектами, TypeScript, анализ данных** | `/\bPM\b/` on "PM"; `/\bTS\b/` on "TS"; `/\bBI\b/` on "BI" — 2-letter acronyms match unrelated role abbreviations |
+| 6   | "Был стресс на работе из-за дедлайнов."                         | **стрессоустойчивость**                             | `/стресс/i` (the only pattern for this skill) — any mention of stress = skill                                     |
+| 7   | "внедряли микроCRM. Я к ней доступа не имел."                   | **CRM**                                             | `/CRM/i` substring inside "микроCRM"; access denied ignored                                                       |
 
 **Hit rate: 6/7 (86%) of adversarial resumes produced at least one fabricated skill.**
 Each fabricated skill earns **0.7 × 40 = 28 points** of skill-component credit
@@ -317,6 +322,7 @@ candidate does not have.
 ### 9.3 Root causes (from reading the patterns)
 
 **RC-1 — Bare substring / acronym patterns without context.** Worst offenders:
+
 - `/B2B/i`, `/B2C/i`, `/CRM/i`, `/SMM/i`, `/digital/i`, `/KPI/i` — match anywhere
 - `/стресс/i` (sole pattern for "стрессоустойчивость") — any stress mention = skill
 - `/\bPM\b/`, `/\bTS\b/`, `/\bJS\b/`, `/\bBI\b/`, `/\bGTM\b/` — 2-letter tokens match
@@ -339,6 +345,7 @@ A single substring hit anywhere in the entire resume text corpus commits the ski
 RF-1 is **HIGH and confirmed by measurement**, not just theoretical. The 86%
 adversarial hit rate means the derived-skills bucket is systematically unreliable.
 Combined with:
+
 - `derivedWeight = 0.7` (heavy credit, `match-scorer-skills.js:91`)
 - RF-7 (vacancy requirements also inferred when no keySkills → double inference)
 - RF-J (cover-letter validator doesn't catch non-whitelisted fabricated skills)
@@ -379,7 +386,7 @@ EXACT normalized key in the synonym index:
 
 ```js
 const synonyms = _synonymIndex.get(normalize(skillA));
-if (!synonyms) return null;          // <-- dead end for "навыки переговоров"
+if (!synonyms) return null; // <-- dead end for "навыки переговоров"
 ```
 
 `normalize()` (`skill-synonyms.js:65-71`) only does lowercase / trim /
@@ -396,13 +403,13 @@ NOT exist in the index → `null` → skill dumped into `missingSkills`.
 Ran `findSynonymMatch` with a resume skill set `{переговоры, деловое общение,
 работа с возражениями}` against formulations a real hh.ru vacancy used:
 
-| Vacancy skill | normalize → | Result | Should match |
-|---------------|-------------|--------|--------------|
-| `"Навыки переговоров"` | `"навыки переговоров"` | **NULL → missing** | `"переговоры"` |
-| `"Деловая коммуникация"` | `"деловая коммуникация"` | **NULL → missing** | `"деловое общение"` |
-| `"отработка возражений"` | `"отработка возражений"` | **NULL → missing** | `"работа с возражениями"` |
-| `"Работа с возражениями"` | (exact group member) | MATCH ✅ | — |
-| `"переговоры"` | (exact group member) | MATCH ✅ | — |
+| Vacancy skill             | normalize →              | Result             | Should match              |
+| ------------------------- | ------------------------ | ------------------ | ------------------------- |
+| `"Навыки переговоров"`    | `"навыки переговоров"`   | **NULL → missing** | `"переговоры"`            |
+| `"Деловая коммуникация"`  | `"деловая коммуникация"` | **NULL → missing** | `"деловое общение"`       |
+| `"отработка возражений"`  | `"отработка возражений"` | **NULL → missing** | `"работа с возражениями"` |
+| `"Работа с возражениями"` | (exact group member)     | MATCH ✅           | —                         |
+| `"переговоры"`            | (exact group member)     | MATCH ✅           | —                         |
 
 **3 of 5 legitimate formulations fail.** The two that pass only pass because
 they happen to be exact members of the hardcoded synonym group.
@@ -442,8 +449,8 @@ synonym lookup.
 
 ### 10.5 Mitigation (planned, not executed — awaiting user OK)
 
-1. **Strip service prefixes/suffixes** before lookup: `навыки? `, `навык `,
-   `умение `, `работа с `, `ведение `, trailing `-навыки` / ` навыки`.
+1. **Strip service prefixes/suffixes** before lookup: `навыки?`, `навык`,
+   `умение`, `работа с`, `ведение`, trailing `-навыки` / `навыки`.
 2. **Stem fallback** in `findSynonymMatch`: if exact lookup returns null,
    check whether any group member shares a stem-prefix with `skillA`
    (reuse `mentionsSkillStem` from `skill-stem-match.js`).
@@ -455,4 +462,3 @@ synonym lookup.
 Confirmed: no `skill-synonyms.test.js` exists and `findSynonymMatch` is not
 referenced in any test file. Same blind spot as `derive-skills` had before §9.
 A characterization test suite will be added alongside the fix.
-

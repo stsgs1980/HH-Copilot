@@ -18,7 +18,7 @@
  */
 
 /** Strings hh.ru already renders as human relative labels -- pass through. */
-const HUMAN_PASS_THROUGH = new Set(['вчера', 'сегодня']);
+const HUMAN_PASS_THROUGH = new Set(["вчера", "сегодня"]);
 
 /**
  * Heuristic: does the string already look like a relative time label?
@@ -45,17 +45,17 @@ function looksRelative(s) {
  * @returns {string} relative label or '' if unrecognized
  */
 export function formatRelativeTime(dateStr, _now = new Date()) {
-  if (dateStr === undefined || dateStr === null) return '';
+  if (dateStr === undefined || dateStr === null) return "";
   const s = String(dateStr).trim();
-  if (s === '') return '';
+  if (s === "") return "";
 
   // Bare clock time with no calendar date -> we can't anchor "ago", so omit.
-  if (/^\d{1,2}:\d{2}$/.test(s)) return '';
+  if (/^\d{1,2}:\d{2}$/.test(s)) return "";
 
   if (HUMAN_PASS_THROUGH.has(s.toLowerCase())) return s;
   if (looksRelative(s)) return s;
 
   // Anything else (calendar strings like "9 июня", "5 июня 2025", garbage):
   // we do not have enough to compute a safe relative label -> omit.
-  return '';
+  return "";
 }

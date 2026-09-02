@@ -6,14 +6,14 @@
  *
  * Split from resume-fetch-resume.js for anti-monolith compliance.
  */
-import { createLogger } from './anti-hallucination.js';
-import { VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN } from './resume-constants.js';
-import { parseExperienceFromDocStrategies1to3 } from './resume-fetch-experience.js';
-import { parseExperienceFromHtmlText } from './resume-fetch-strategy4-text.js';
-import { parseExperienceFromScripts } from './resume-fetch-strategy5-scripts.js';
-import { fetchExpandedExperience } from './resume-fetch-strategy6-expand.js';
+import { createLogger } from "./anti-hallucination.js";
+import { VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE } from "./resume-constants.js";
+import { parseExperienceFromDocStrategies1to3 } from "./resume-fetch-experience.js";
+import { parseExperienceFromHtmlText } from "./resume-fetch-strategy4-text.js";
+import { parseExperienceFromScripts } from "./resume-fetch-strategy5-scripts.js";
+import { fetchExpandedExperience } from "./resume-fetch-strategy6-expand.js";
 
-const expLog = createLogger('ResumeFetch');
+const expLog = createLogger("ResumeFetch");
 
 /**
  * Orchestrate experience parsing using all 6 strategies in sequence.
@@ -35,8 +35,10 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
   if (html && entries.length > 0) {
     const textParsed = parseExperienceFromHtmlText(html, entries.length);
     if (textParsed.length > entries.length) {
-      expLog.info('Strategy 4 (text patterns): found ' + textParsed.length + ' experiences (was ' + entries.length + ')');
-      resume._debug.found.push('experience (text pattern supplement): ' + textParsed.length);
+      expLog.info(
+        "Strategy 4 (text patterns): found " + textParsed.length + " experiences (was " + entries.length + ")",
+      );
+      resume._debug.found.push("experience (text pattern supplement): " + textParsed.length);
       entries.length = 0;
       entries.push(...textParsed);
     }
@@ -46,12 +48,20 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
   if (html) {
     const scriptParsed = parseExperienceFromScripts(doc, html);
     if (scriptParsed.length > entries.length) {
-      expLog.info('Strategy 5 (script JSON): found ' + scriptParsed.length + ' experiences (was ' + entries.length + ')');
-      resume._debug.found.push('experience (script JSON): ' + scriptParsed.length);
+      expLog.info(
+        "Strategy 5 (script JSON): found " + scriptParsed.length + " experiences (was " + entries.length + ")",
+      );
+      resume._debug.found.push("experience (script JSON): " + scriptParsed.length);
       entries.length = 0;
       entries.push(...scriptParsed);
     } else if (scriptParsed.length > 0) {
-      expLog.info('Strategy 5 (script JSON): found ' + scriptParsed.length + ' experiences (not more than ' + entries.length + ', skipping)');
+      expLog.info(
+        "Strategy 5 (script JSON): found " +
+          scriptParsed.length +
+          " experiences (not more than " +
+          entries.length +
+          ", skipping)",
+      );
     }
   }
 
@@ -70,19 +80,21 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
         iframeDiag = s6result.iframeDiag || null;
       }
       if (s6result.entries && s6result.entries.length > entries.length) {
-        expLog.info('Strategy 6 (expanded fetch): found ' + s6result.entries.length + ' experiences (was ' + entries.length + ')');
-        resume._debug.found.push('experience (expanded fetch): ' + s6result.entries.length);
+        expLog.info(
+          "Strategy 6 (expanded fetch): found " + s6result.entries.length + " experiences (was " + entries.length + ")",
+        );
+        resume._debug.found.push("experience (expanded fetch): " + s6result.entries.length);
         entries.length = 0;
         entries.push(...s6result.entries);
       }
     } catch (err) {
-      expLog.warn('Strategy 6 failed: ' + err.message);
+      expLog.warn("Strategy 6 failed: " + err.message);
     }
   }
 
   resume.experience = entries;
-  if (entries.length > 0) resume._debug.found.push('experience: ' + entries.length);
-  else resume._debug.missing.push('experience (0 entries)');
+  if (entries.length > 0) resume._debug.found.push("experience: " + entries.length);
+  else resume._debug.missing.push("experience (0 entries)");
 
   // === IFRAME VISIBILITY OVERRIDE ===
   // The iframe loaded the fully-hydrated React DOM, which contains visibility
@@ -99,31 +111,46 @@ function applyIframeVisibilityOverride(resume, iframeVis, iframeVisTrace, iframe
   if (!iframeVis) return;
 
   const prevVis = resume.visibility;
-  const prevReason = resume._visDiag?.decisionReason || '';
+  const prevReason = resume._visDiag?.decisionReason || "";
 
   if (iframeVis === VISIBILITY_HIDDEN && prevVis !== VISIBILITY_HIDDEN) {
-    expLog.info('[VIS-DIAG] iframe OVERRIDE: ' + (resume.id ? resume.id.substring(0, 8) : '?') +
-      ' was ' + prevVis + ', iframe says HIDDEN -> overriding');
+    expLog.info(
+      "[VIS-DIAG] iframe OVERRIDE: " +
+        (resume.id ? resume.id.substring(0, 8) : "?") +
+        " was " +
+        prevVis +
+        ", iframe says HIDDEN -> overriding",
+    );
     resume.visibility = VISIBILITY_HIDDEN;
     resume.hidden = true;
     if (resume._visDiag) {
       resume._visDiag.decision = VISIBILITY_HIDDEN;
-      resume._visDiag.decisionReason = 'iframe-detected-hidden (overrode ' + prevVis + ', was: ' + prevReason + ')';
+      resume._visDiag.decisionReason = "iframe-detected-hidden (overrode " + prevVis + ", was: " + prevReason + ")";
       resume._visDiag.pageTrace = (resume._visDiag.pageTrace || []).concat(iframeVisTrace || []);
     }
   } else if (iframeVis === VISIBILITY_VISIBLE && prevVis === VISIBILITY_UNKNOWN) {
-    expLog.info('[VIS-DIAG] iframe OVERRIDE: ' + (resume.id ? resume.id.substring(0, 8) : '?') +
-      ' was UNKNOWN, iframe says VISIBLE -> overriding');
+    expLog.info(
+      "[VIS-DIAG] iframe OVERRIDE: " +
+        (resume.id ? resume.id.substring(0, 8) : "?") +
+        " was UNKNOWN, iframe says VISIBLE -> overriding",
+    );
     resume.visibility = VISIBILITY_VISIBLE;
     resume.hidden = false;
     if (resume._visDiag) {
       resume._visDiag.decision = VISIBILITY_VISIBLE;
-      resume._visDiag.decisionReason = 'iframe-detected-visible (overrode UNKNOWN, was: ' + prevReason + ')';
+      resume._visDiag.decisionReason = "iframe-detected-visible (overrode UNKNOWN, was: " + prevReason + ")";
       resume._visDiag.pageTrace = (resume._visDiag.pageTrace || []).concat(iframeVisTrace || []);
     }
   } else {
-    expLog.info('[VIS-DIAG] iframe CONFIRMED: ' + (resume.id ? resume.id.substring(0, 8) : '?') +
-      ' is ' + prevVis + ', iframe agrees (' + iframeVis + ')');
+    expLog.info(
+      "[VIS-DIAG] iframe CONFIRMED: " +
+        (resume.id ? resume.id.substring(0, 8) : "?") +
+        " is " +
+        prevVis +
+        ", iframe agrees (" +
+        iframeVis +
+        ")",
+    );
     if (resume._visDiag && iframeVisTrace) {
       resume._visDiag.pageTrace = (resume._visDiag.pageTrace || []).concat(iframeVisTrace);
     }

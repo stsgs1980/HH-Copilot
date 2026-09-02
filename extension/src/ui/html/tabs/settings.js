@@ -1,8 +1,8 @@
 /**
  * TAB 5: SETTINGS
  */
-import { ICONS } from '../icons.js';
-import { settingRow, settingToggle } from '../helpers.js';
+import { settingRow, settingToggle } from "../helpers.js";
+import { ICONS } from "../icons.js";
 
 export function getSettingsSection() {
   return `<div class="tab-section" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings" tabindex="0">
@@ -76,11 +76,11 @@ function settingsRateLimits() {
   return `<div class="card fade-in" style="margin-bottom:12px;">
     <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Лимиты и рейт-лимитинг</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      ${settingRow('Дневной лимит', 'Макс. откликов в день', 'number', 's-daily-limit', 200, '/ день')}
-      ${settingRow('Часовой лимит', 'Макс. откликов в час', 'number', 's-hourly-limit', 30, '/ час')}
-      ${settingRow('Мин. интервал', 'Между откликами', 'number', 's-min-interval', 30, 'сек')}
-      ${settingToggle('Детекция всплесков', 'Остановка при всплеске 429', 's-burst', true)}
-      ${settingToggle('Адаптивное замедление', 'Увеличение интервала при 429/CAPTCHA', 's-adaptive', true)}
+      ${settingRow("Дневной лимит", "Макс. откликов в день", "number", "s-daily-limit", 200, "/ день")}
+      ${settingRow("Часовой лимит", "Макс. откликов в час", "number", "s-hourly-limit", 30, "/ час")}
+      ${settingRow("Мин. интервал", "Между откликами", "number", "s-min-interval", 30, "сек")}
+      ${settingToggle("Детекция всплесков", "Остановка при всплеске 429", "s-burst", true)}
+      ${settingToggle("Адаптивное замедление", "Увеличение интервала при 429/CAPTCHA", "s-adaptive", true)}
     </div>
   </div>`;
 }
@@ -89,8 +89,8 @@ function settingsCaptcha() {
   return `<div class="card fade-in" style="margin-bottom:12px;">
     <div style="font-size:13px;font-weight:600;margin-bottom:10px;">CAPTCHA обработка</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      ${settingToggle('Авто-пауза при CAPTCHA', 'Остановить отклики и уведомить', 's-captcha', true)}
-      ${settingRow('Время паузы', 'Перед продолжением', 'number', 's-captcha-time', 5, 'мин')}
+      ${settingToggle("Авто-пауза при CAPTCHA", "Остановить отклики и уведомить", "s-captcha", true)}
+      ${settingRow("Время паузы", "Перед продолжением", "number", "s-captcha-time", 5, "мин")}
     </div>
   </div>`;
 }
@@ -147,10 +147,10 @@ function settingsGeneral() {
         </select>
         <div style="font-size:10px;color:#71717A;margin-top:4px;">Точный: навыки 35%, должность 25%. Гибкий: семантика 45%, опыт 20%.</div>
       </div>
-      ${settingToggle('Авто-проверка авторизации', '', 's-auth-check', true)}
-      ${settingToggle('Уведомления', '', 's-notifications', true)}
-      ${settingToggle('Логирование действий', '', 's-logging', true)}
-      ${settingToggle('Shadow DOM изоляция', '', 's-shadow-dom', true)}
+      ${settingToggle("Авто-проверка авторизации", "", "s-auth-check", true)}
+      ${settingToggle("Уведомления", "", "s-notifications", true)}
+      ${settingToggle("Логирование действий", "", "s-logging", true)}
+      ${settingToggle("Shadow DOM изоляция", "", "s-shadow-dom", true)}
     </div>
   </div>`;
 }

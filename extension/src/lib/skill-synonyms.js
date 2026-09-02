@@ -20,9 +20,9 @@
  * v1.9.69.0: RF-SYN fix -- prefix stripping + OR-semantic stem fallback
  */
 
-import { SALES_MANAGEMENT_SYNONYM_GROUPS } from './skill-synonyms-data-sales.js';
-import { MARKETING_FINANCE_SYNONYM_GROUPS } from './skill-synonyms-data-marketing-finance.js';
-import { PRODUCT_HR_IT_SYNONYM_GROUPS } from './skill-synonyms-data-product-hr-it.js';
+import { MARKETING_FINANCE_SYNONYM_GROUPS } from "./skill-synonyms-data-marketing-finance.js";
+import { PRODUCT_HR_IT_SYNONYM_GROUPS } from "./skill-synonyms-data-product-hr-it.js";
+import { SALES_MANAGEMENT_SYNONYM_GROUPS } from "./skill-synonyms-data-sales.js";
 
 const SYNONYM_GROUPS = [
   ...SALES_MANAGEMENT_SYNONYM_GROUPS,
@@ -46,7 +46,7 @@ function buildSynonymIndex() {
   const allMembers = new Set();
   for (const group of SYNONYM_GROUPS) {
     // Normalize all members
-    const normalizedGroup = group.map(s => normalize(s));
+    const normalizedGroup = group.map((s) => normalize(s));
     for (const skill of normalizedGroup) {
       allMembers.add(skill);
       if (!index.has(skill)) {
@@ -68,11 +68,12 @@ function buildSynonymIndex() {
  * Same rules as match-scorer.normalizeSkillSet.
  */
 function normalize(name) {
-  return (name || '')
-    .toLowerCase().trim()
-    .replace(/[-\u2013\u2014]/g, ' ')
-    .replace(/ё/g, 'е')
-    .replace(/\s+/g, ' ');
+  return (name || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[-\u2013\u2014]/g, " ")
+    .replace(/ё/g, "е")
+    .replace(/\s+/g, " ");
 }
 
 // ===============================================
@@ -87,12 +88,7 @@ function normalize(name) {
  * Kept minimal to avoid false positives. Only prefixes that carry zero
  * semantic content and merely restate "this is a skill".
  */
-const SKILL_PREFIXES = [
-  'навыки ',
-  'навык ',
-  'умение ',
-  'знание ',
-];
+const SKILL_PREFIXES = ["навыки ", "навык ", "умение ", "знание "];
 
 /**
  * Strip a known service prefix from a normalized skill name.
@@ -123,9 +119,7 @@ const STEM_LEN = 4;
  * Filters out prepositions ("с", "и", "в", "на", "по", "для", "от", etc.).
  */
 function contentWords(normalized) {
-  return normalized
-    .split(/\s+/)
-    .filter(w => w.length >= STEM_MIN_WORD);
+  return normalized.split(/\s+/).filter((w) => w.length >= STEM_MIN_WORD);
 }
 
 /** Crude stem: first STEM_LEN chars. Matches Russian inflection variants. */

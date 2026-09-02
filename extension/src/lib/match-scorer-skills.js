@@ -14,11 +14,11 @@
  * v1.9.23.0: extracted from match-scorer.js
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { findSynonymMatch, SYNONYM_WEIGHT } from './skill-synonyms.js';
-import { getRoleImpliedSkills, IMPLIED_WEIGHT } from './role-implied-skills.js';
+import { createLogger } from "./anti-hallucination.js";
+import { getRoleImpliedSkills, IMPLIED_WEIGHT } from "./role-implied-skills.js";
+import { findSynonymMatch, SYNONYM_WEIGHT } from "./skill-synonyms.js";
 
-const skillLog = createLogger('Scorer:Skills');
+const skillLog = createLogger("Scorer:Skills");
 
 /**
  * Score skill overlap between resume and vacancy.
@@ -36,10 +36,10 @@ export function scoreSkills(resume, vacancy) {
   // skills, inflating the total with false relevance (e.g. 57% with 0 matching skills).
   let vacancySkillsRaw = vacancy.keySkills || [];
   if (vacancySkillsRaw.length === 0 && vacancy.derivedSkills && vacancy.derivedSkills.length > 0) {
-    skillLog.info('No vacancy keySkills -- using derivedSkills (' + vacancy.derivedSkills.length + ')');
+    skillLog.info("No vacancy keySkills -- using derivedSkills (" + vacancy.derivedSkills.length + ")");
     vacancySkillsRaw = vacancy.derivedSkills;
   } else if (vacancySkillsRaw.length === 0 && vacancy.skills && vacancy.skills.length > 0) {
-    skillLog.info('No vacancy keySkills or derivedSkills -- using skills (' + vacancy.skills.length + ')');
+    skillLog.info("No vacancy keySkills or derivedSkills -- using skills (" + vacancy.skills.length + ")");
     vacancySkillsRaw = vacancy.skills;
   }
   const vacancySkills = normalizeSkillSet(vacancySkillsRaw);
@@ -56,14 +56,14 @@ export function scoreSkills(resume, vacancy) {
     return { score: 0, matching: [], missing: [], extra: [], derivedMatch: [], synonymMatch: [], impliedMatch: [] };
   }
 
-  const matching = [];      // explicit skill match
-  const derivedMatch = [];  // derived skill match
-  const synonymMatch = [];  // synonym group match (v1.9.22.0)
-  const impliedMatch = [];  // role-implied match (v1.9.31.0)
+  const matching = []; // explicit skill match
+  const derivedMatch = []; // derived skill match
+  const synonymMatch = []; // synonym group match (v1.9.22.0)
+  const impliedMatch = []; // role-implied match (v1.9.31.0)
   const missing = [];
 
   // v1.9.31.0: Role-implied skills from position title
-  const roleImplied = getRoleImpliedSkills(resume.title || '');
+  const roleImplied = getRoleImpliedSkills(resume.title || "");
 
   // All resume skills combined for synonym lookup
   const allResume = new Set([...resumeSkills, ...derivedSkills]);
@@ -77,7 +77,7 @@ export function scoreSkills(resume, vacancy) {
       // v1.9.22.0: Check synonym groups -- "переговоры" matches "работа с возражениями"
       const synMatch = findSynonymMatch(skill, allResume);
       if (synMatch) {
-        synonymMatch.push(skill + ' ~ ' + synMatch);
+        synonymMatch.push(skill + " ~ " + synMatch);
       } else if (roleImplied.has(skill)) {
         // v1.9.31.0: Role-implied -- skill self-evident from position title
         impliedMatch.push(skill);
@@ -95,7 +95,8 @@ export function scoreSkills(resume, vacancy) {
   // Score: explicit 100%, derived 70%, synonyms 50%, implied 40%
   const explicitWeight = 1.0;
   const derivedWeight = 0.7;
-  const effectiveMatches = matching.length * explicitWeight +
+  const effectiveMatches =
+    matching.length * explicitWeight +
     derivedMatch.length * derivedWeight +
     synonymMatch.length * SYNONYM_WEIGHT +
     impliedMatch.length * IMPLIED_WEIGHT;
@@ -107,20 +108,32 @@ export function scoreSkills(resume, vacancy) {
   const vacSkillCount = vacancySkills.size;
   let confidenceFactor = 1.0;
   if (vacSkillCount === 1) {
-    confidenceFactor = 0.3;  // 1 skill -> max 12/40 from skills
+    confidenceFactor = 0.3; // 1 skill -> max 12/40 from skills
   } else if (vacSkillCount === 2) {
-    confidenceFactor = 0.5;  // 2 skills -> max 20/40
+    confidenceFactor = 0.5; // 2 skills -> max 20/40
   } else if (vacSkillCount <= 4) {
-    confidenceFactor = 0.7;  // 3-4 skills -> max 28/40
+    confidenceFactor = 0.7; // 3-4 skills -> max 28/40
   }
   // 5+ skills: full weight (1.0)
 
   const ratio = vacancySkills.size > 0 ? effectiveMatches / vacancySkills.size : 0;
   const score = Math.min(40, Math.round(ratio * 40 * confidenceFactor));
 
-  skillLog.info('explicit=' + matching.length + ' derived=' + derivedMatch.length +
-    ' synonym=' + synonymMatch.length + ' implied=' + impliedMatch.length +
-    ' missing=' + missing.length + ' -> ' + score + '/40');
+  skillLog.info(
+    "explicit=" +
+      matching.length +
+      " derived=" +
+      derivedMatch.length +
+      " synonym=" +
+      synonymMatch.length +
+      " implied=" +
+      impliedMatch.length +
+      " missing=" +
+      missing.length +
+      " -> " +
+      score +
+      "/40",
+  );
 
   return { score, matching, missing, extra, derivedMatch, synonymMatch, impliedMatch };
 }
@@ -139,13 +152,15 @@ export function scoreSkills(resume, vacancy) {
 export function normalizeSkillSet(skills) {
   const set = new Set();
   for (const s of skills) {
-    const name = typeof s === 'string' ? s : (s.name || '');
+    const name = typeof s === "string" ? s : s.name || "";
     if (name) {
       set.add(
-        name.toLowerCase().trim()
-          .replace(/[-\u2013\u2014]/g, ' ')   // hyphens/dashes -> space
-          .replace(/ё/g, 'е')       // ё -> е
-          .replace(/\s+/g, ' ')     // collapse multiple spaces
+        name
+          .toLowerCase()
+          .trim()
+          .replace(/[-\u2013\u2014]/g, " ") // hyphens/dashes -> space
+          .replace(/ё/g, "е") // ё -> е
+          .replace(/\s+/g, " "), // collapse multiple spaces
       );
     }
   }

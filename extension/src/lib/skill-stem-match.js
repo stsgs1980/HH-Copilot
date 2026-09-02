@@ -18,11 +18,11 @@ export const MIN_STEM_LEN = 4; // words shorter than this require exact match
 
 /** Escape a string for safe insertion into a RegExp. */
 export function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /** Word boundary char class (Unicode-aware: Latin + Cyrillic + digits). */
-const BOUND = '[^a-zа-яё0-9]';
+const BOUND = "[^a-zа-яё0-9]";
 
 // Suffix list used by Gap 1 hardening: when a short skill stem (<=6 chars)
 // matches the prefix of a longer sentence word, we only accept it if the
@@ -31,10 +31,38 @@ const BOUND = '[^a-zа-яё0-9]';
 // still allowing legitimate inflections ("react"+"ом", "react"+"s").
 const SHORT_STEM_SUFFIXES = [
   // Russian case endings (nominal + adjectival)
-  'а', 'я', 'у', 'ю', 'ом', 'ой', 'ей', 'е', 'ы', 'и', 'ам', 'ям',
-  'ах', 'ях', 'ов', 'ев', 'ами', 'ями', 'ь', 'ого', 'его', 'ому', 'ему',
+  "а",
+  "я",
+  "у",
+  "ю",
+  "ом",
+  "ой",
+  "ей",
+  "е",
+  "ы",
+  "и",
+  "ам",
+  "ям",
+  "ах",
+  "ях",
+  "ов",
+  "ев",
+  "ами",
+  "ями",
+  "ь",
+  "ого",
+  "его",
+  "ому",
+  "ему",
   // Common English inflections
-  's', 'es', 'ed', 'ing', 'er', 'or', 'ly', 'tion',
+  "s",
+  "es",
+  "ed",
+  "ing",
+  "er",
+  "or",
+  "ly",
+  "tion",
 ];
 
 /**
@@ -47,14 +75,11 @@ const SHORT_STEM_SUFFIXES = [
 function shortStemMatches(sentence, word) {
   const escaped = escapeRegex(word);
   for (const suffix of SHORT_STEM_SUFFIXES) {
-    const re = new RegExp(
-      '(^|' + BOUND + ')' + escaped + escapeRegex(suffix) + '(' + BOUND + '|$)',
-      'i'
-    );
+    const re = new RegExp("(^|" + BOUND + ")" + escaped + escapeRegex(suffix) + "(" + BOUND + "|$)", "i");
     if (re.test(sentence)) return true;
   }
   // Exact standalone word (no suffix)
-  const exactRe = new RegExp('(^|' + BOUND + ')' + escaped + '(' + BOUND + '|$)', 'i');
+  const exactRe = new RegExp("(^|" + BOUND + ")" + escaped + "(" + BOUND + "|$)", "i");
   return exactRe.test(sentence);
 }
 
@@ -84,17 +109,17 @@ export function mentionsSkillStem(sentence, skill) {
   const allSkillWords = String(skill)
     .toLowerCase()
     .split(/[\s-]+/)
-    .map(w => w.trim())
-    .filter(w => w.length > 0);
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0);
 
   if (allSkillWords.length === 0) return false;
 
-  const shortWords = allSkillWords.filter(w => w.length < MIN_STEM_LEN);
-  const longWords = allSkillWords.filter(w => w.length >= MIN_STEM_LEN);
+  const shortWords = allSkillWords.filter((w) => w.length < MIN_STEM_LEN);
+  const longWords = allSkillWords.filter((w) => w.length >= MIN_STEM_LEN);
 
   // Gap 2: every short token must appear EXACTLY (case-insensitive, word-bounded).
   for (const sw of shortWords) {
-    const re = new RegExp('(^|' + BOUND + ')' + escapeRegex(sw) + '(' + BOUND + '|$)', 'i');
+    const re = new RegExp("(^|" + BOUND + ")" + escapeRegex(sw) + "(" + BOUND + "|$)", "i");
     if (!re.test(s)) return false;
   }
 
@@ -108,7 +133,7 @@ export function mentionsSkillStem(sentence, skill) {
     } else {
       // Long stem: prefix match (first 6 chars).
       const stem = lw.substring(0, 6);
-      const re = new RegExp('(^|' + BOUND + ')' + escapeRegex(stem), 'i');
+      const re = new RegExp("(^|" + BOUND + ")" + escapeRegex(stem), "i");
       if (!re.test(s)) return false;
     }
   }

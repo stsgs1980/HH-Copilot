@@ -10,23 +10,27 @@
 
 // Core constants and utilities
 export {
-  MIN_HASH_LEN, normalizeWs,
-  VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN,
-  HIDDEN_INDICATORS, VISIBLE_INDICATORS,
-  hasVisibleIndicator, hasHiddenIndicator,
-  RESUME_CARD_SELECTORS, VISIBILITY_HIDDEN_DATA_QA,
-  stripScripts, findCardForLink
-} from './resume-constants-core.js';
+  HIDDEN_INDICATORS,
+  MIN_HASH_LEN,
+  RESUME_CARD_SELECTORS,
+  VISIBILITY_HIDDEN,
+  VISIBILITY_HIDDEN_DATA_QA,
+  VISIBILITY_UNKNOWN,
+  VISIBILITY_VISIBLE,
+  VISIBLE_INDICATORS,
+  findCardForLink,
+  hasHiddenIndicator,
+  hasVisibleIndicator,
+  normalizeWs,
+  stripScripts,
+} from "./resume-constants-core.js";
 
 // Title cleaning utilities
-export {
-  UI_NOISE, TITLE_SUFFIX_NOISE, LINE_BREAK_INJECTORS,
-  cleanResumeTitle
-} from './resume-constants-title.js';
+export { LINE_BREAK_INJECTORS, TITLE_SUFFIX_NOISE, UI_NOISE, cleanResumeTitle } from "./resume-constants-title.js";
 
 // Visibility detection utilities
 export {
-  detectVisibilityFromLinkText,
+  detectVisibilityFromCard,
   detectVisibilityFromCardText,
-  detectVisibilityFromCard
-} from './resume-constants-visibility.js';
+  detectVisibilityFromLinkText,
+} from "./resume-constants-visibility.js";

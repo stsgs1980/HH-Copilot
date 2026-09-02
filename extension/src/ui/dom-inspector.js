@@ -24,21 +24,21 @@
  */
 
 import {
+  flashToast,
   getOverlay,
-  positionOverlay,
   hideOverlay,
+  positionOverlay,
   renderPanel,
   renderPanelPlaceholder,
-  flashToast,
-} from './dom-inspector-panel.js';
-import { buildCssPath } from './dom-inspector-report.js';
+} from "./dom-inspector-panel.js";
+import { buildCssPath } from "./dom-inspector-report.js";
 
 const inspectorState = {
-  active: false,        // hover-highlight mode ON
-  frozen: false,        // user clicked an element, highlight is locked
-  overlayEl: null,      // purple outline box
-  panelEl: null,        // info panel
-  currentEl: null,      // element currently hovered/clicked
+  active: false, // hover-highlight mode ON
+  frozen: false, // user clicked an element, highlight is locked
+  overlayEl: null, // purple outline box
+  panelEl: null, // info panel
+  currentEl: null, // element currently hovered/clicked
   moveHandler: null,
   clickHandler: null,
   keyHandler: null,
@@ -49,17 +49,17 @@ const inspectorState = {
 /** Should we ignore this element during hover? (e.g. our own UI) */
 function shouldIgnore(el) {
   if (!el) return true;
-  const id = el.id || '';
-  if (id === 'hh-ar-inspector-overlay') return true;
-  if (id === 'hh-ar-inspector-panel') return true;
-  if (id === 'hh-ar-inspector-toast') return true;
-  if (id === 'hh-ar-inspector-fab') return true;
-  if (id === 'hh-ar-fab') return true;
+  const id = el.id || "";
+  if (id === "hh-ar-inspector-overlay") return true;
+  if (id === "hh-ar-inspector-panel") return true;
+  if (id === "hh-ar-inspector-toast") return true;
+  if (id === "hh-ar-inspector-fab") return true;
+  if (id === "hh-ar-fab") return true;
   let p = el;
   while (p) {
-    if (p.id === 'hh-ar-inspector-panel') return true;
-    if (p.id === 'hh-ar-inspector-fab') return true;
-    if (p.id === 'hh-ar-fab') return true;
+    if (p.id === "hh-ar-inspector-panel") return true;
+    if (p.id === "hh-ar-inspector-fab") return true;
+    if (p.id === "hh-ar-fab") return true;
     p = p.parentElement;
   }
   return false;
@@ -82,11 +82,11 @@ function onClick(e) {
   inspectorState.currentEl = el;
   positionOverlay(inspectorState, el);
   renderPanel(inspectorState, el, stopInspector);
-  console.log('[DOM-Inspector] element picked:', buildCssPath(el));
+  console.log("[DOM-Inspector] element picked:", buildCssPath(el));
 }
 
 function onKey(e) {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     if (inspectorState.frozen) {
       inspectorState.frozen = false;
       if (inspectorState.panelEl) {
@@ -111,12 +111,12 @@ export function startInspector() {
   inspectorState.clickHandler = onClick;
   inspectorState.keyHandler = onKey;
 
-  document.addEventListener('mousemove', inspectorState.moveHandler, true);
-  document.addEventListener('click', inspectorState.clickHandler, true);
-  document.addEventListener('keydown', inspectorState.keyHandler, true);
+  document.addEventListener("mousemove", inspectorState.moveHandler, true);
+  document.addEventListener("click", inspectorState.clickHandler, true);
+  document.addEventListener("keydown", inspectorState.keyHandler, true);
 
-  console.log('[DOM-Inspector] ON -- hover any element, click to freeze, Esc to exit');
-  flashToast('Inspector ON -- click any element on the page');
+  console.log("[DOM-Inspector] ON -- hover any element, click to freeze, Esc to exit");
+  flashToast("Inspector ON -- click any element on the page");
 }
 
 /** Turn inspector OFF. */
@@ -127,13 +127,13 @@ export function stopInspector() {
   inspectorState.currentEl = null;
 
   if (inspectorState.moveHandler) {
-    document.removeEventListener('mousemove', inspectorState.moveHandler, true);
+    document.removeEventListener("mousemove", inspectorState.moveHandler, true);
   }
   if (inspectorState.clickHandler) {
-    document.removeEventListener('click', inspectorState.clickHandler, true);
+    document.removeEventListener("click", inspectorState.clickHandler, true);
   }
   if (inspectorState.keyHandler) {
-    document.removeEventListener('keydown', inspectorState.keyHandler, true);
+    document.removeEventListener("keydown", inspectorState.keyHandler, true);
   }
   inspectorState.moveHandler = null;
   inspectorState.clickHandler = null;
@@ -147,13 +147,13 @@ export function stopInspector() {
 
   // Reset external toggle button (header) visual state
   if (inspectorState.toggleBtn) {
-    inspectorState.toggleBtn.setAttribute('aria-pressed', 'false');
-    inspectorState.toggleBtn.style.background = 'transparent';
-    inspectorState.toggleBtn.style.color = '#52525b';
+    inspectorState.toggleBtn.setAttribute("aria-pressed", "false");
+    inspectorState.toggleBtn.style.background = "transparent";
+    inspectorState.toggleBtn.style.color = "#52525b";
   }
 
-  console.log('[DOM-Inspector] OFF');
-  flashToast('Inspector OFF');
+  console.log("[DOM-Inspector] OFF");
+  flashToast("Inspector OFF");
 }
 
 export function isInspectorActive() {
@@ -173,9 +173,9 @@ export function toggleInspector(btn) {
   }
   startInspector();
   if (btn) {
-    btn.setAttribute('aria-pressed', 'true');
-    btn.style.background = '#7c3aed';
-    btn.style.color = '#fff';
+    btn.setAttribute("aria-pressed", "true");
+    btn.style.background = "#7c3aed";
+    btn.style.color = "#fff";
   }
   return true;
 }

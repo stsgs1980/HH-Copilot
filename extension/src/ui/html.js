@@ -4,4 +4,4 @@
  * Barrier file -- delegates to the html/ module tree.
  * All consumers that used to import from ./ui/html.js continue to work unchanged.
  */
-export { getSidebarHTML, getLoggedInHTML, esc, scoreClass } from './html/index.js';
+export { esc, getLoggedInHTML, getSidebarHTML, scoreClass } from "./html/index.js";

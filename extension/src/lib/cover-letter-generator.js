@@ -14,15 +14,15 @@
  * v1.9.46.0
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { extractPlaceholders } from './cover-letter-placeholders.js';
-import { hasRichData, generateRichLetter } from './cover-letter-rich.js';
-import { validateTone, applyTone, getTemplateForTone } from './cover-letter-tone.js';
+import { createLogger } from "./anti-hallucination.js";
+import { extractPlaceholders } from "./cover-letter-placeholders.js";
+import { generateRichLetter, hasRichData } from "./cover-letter-rich.js";
+import { applyTone, getTemplateForTone, validateTone } from "./cover-letter-tone.js";
 
-const clLog = createLogger('CoverLetter');
+const clLog = createLogger("CoverLetter");
 
 /** Default template when no custom template is set (formal tone). */
-const _DEFAULT_TEMPLATE = getTemplateForTone('formal');
+const _DEFAULT_TEMPLATE = getTemplateForTone("formal");
 
 /** Maximum cover letter length (hh.ru limit) */
 const MAX_LETTER_LENGTH = 5000;
@@ -41,8 +41,8 @@ const MAX_LETTER_LENGTH = 5000;
  */
 export async function generateCoverLetter(vacancy, resume, options) {
   if (!vacancy) {
-    clLog.warn('No vacancy provided -- returning empty letter');
-    return { text: '', placeholders: {}, method: 'none', tone: 'formal' };
+    clLog.warn("No vacancy provided -- returning empty letter");
+    return { text: "", placeholders: {}, method: "none", tone: "formal" };
   }
 
   const opts = options || {};
@@ -62,25 +62,25 @@ export async function generateCoverLetter(vacancy, resume, options) {
     const richLetter = await generateRichLetter(vacancy, resume, placeholders);
     if (richLetter) {
       text = richLetter;
-      clLog.info('Generated rich cover letter (' + text.length + ' chars)');
+      clLog.info("Generated rich cover letter (" + text.length + " chars)");
     }
   }
 
   // Step 4: Apply tone adjustments (greeting + closing swap)
-  if (tone !== 'formal' || !opts.template) {
+  if (tone !== "formal" || !opts.template) {
     text = applyTone(text, tone);
   }
 
   // Step 5: Truncate if needed
   if (text.length > maxLength) {
-    text = text.substring(0, maxLength - 3) + '...';
-    clLog.info('Truncated cover letter to ' + maxLength + ' chars');
+    text = text.substring(0, maxLength - 3) + "...";
+    clLog.info("Truncated cover letter to " + maxLength + " chars");
   }
 
   return {
     text,
     placeholders,
-    method: hasRichData(vacancy, resume) ? 'rich' : 'template',
+    method: hasRichData(vacancy, resume) ? "rich" : "template",
     tone,
   };
 }
@@ -95,12 +95,12 @@ export async function generateCoverLetter(vacancy, resume, options) {
  * @returns {string}
  */
 export function fillTemplate(template, values) {
-  if (!template) return '';
+  if (!template) return "";
   let result = template;
   for (const [key, value] of Object.entries(values)) {
-    const placeholder = '{' + key + '}';
+    const placeholder = "{" + key + "}";
     // Replace all occurrences
-    result = result.split(placeholder).join(value || '');
+    result = result.split(placeholder).join(value || "");
   }
   return result;
 }
@@ -116,7 +116,7 @@ export function fillTemplate(template, values) {
 export function findVacancyData(vacancyId, vacancies) {
   // Try panelState vacancies first
   if (Array.isArray(vacancies)) {
-    const found = vacancies.find(v => v.id === vacancyId);
+    const found = vacancies.find((v) => v.id === vacancyId);
     if (found) return found;
   }
 

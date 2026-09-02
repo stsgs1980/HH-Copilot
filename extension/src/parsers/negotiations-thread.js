@@ -23,14 +23,10 @@
  * v1.9.45.0
  */
 
-import { safeGetText } from '../lib/anti-hallucination.js';
+import { safeGetText } from "../lib/anti-hallucination.js";
 
 /** Selectors for a single chat message bubble. */
-const MSG_SELECTORS = [
-  '[data-qa^="chat-cell-"]',
-  '[class*="chat-message"]',
-  '[class*="msg-item"]',
-];
+const MSG_SELECTORS = ['[data-qa^="chat-cell-"]', '[class*="chat-message"]', '[class*="msg-item"]'];
 
 /** Selectors that indicate the message is from the user (applicant). */
 const USER_FLAG_SELECTORS = [
@@ -55,7 +51,7 @@ const TEXT_SELECTORS = [
 const TIME_SELECTORS = [
   '[data-qa="chat-cell-creation-time"]',
   '[data-qa*="creation-time"]',
-  'time',
+  "time",
   '[class*="msg-time"]',
 ];
 
@@ -72,7 +68,7 @@ function isUserMessage(cell) {
   // Fallback: aligned-right heuristic (hh.ru typically right-aligns user msgs)
   if (cell.classList) {
     for (const cls of cell.classList) {
-      if (typeof cls === 'string' && /right|outgoing|self|me/.test(cls)) return true;
+      if (typeof cls === "string" && /right|outgoing|self|me/.test(cls)) return true;
     }
   }
   return false;
@@ -86,12 +82,12 @@ function extractMessageText(cell) {
   for (const sel of TEXT_SELECTORS) {
     const el = cell.querySelector ? cell.querySelector(sel) : null;
     if (el) {
-      const text = safeGetText(el, '');
+      const text = safeGetText(el, "");
       if (text) return text;
     }
   }
   // Fallback: whole cell text (minus time)
-  return safeGetText(cell, '').trim();
+  return safeGetText(cell, "").trim();
 }
 
 /**
@@ -101,11 +97,11 @@ function extractMessageTime(cell) {
   for (const sel of TIME_SELECTORS) {
     const el = cell.querySelector ? cell.querySelector(sel) : null;
     if (el) {
-      const t = safeGetText(el, '') || el.getAttribute?.('datetime') || '';
+      const t = safeGetText(el, "") || el.getAttribute?.("datetime") || "";
       if (t) return t;
     }
   }
-  return '';
+  return "";
 }
 
 /**
@@ -115,10 +111,14 @@ function extractMessageTime(cell) {
 function isSubElement(el) {
   if (!el || !el.matches) return false;
   for (const sel of TEXT_SELECTORS) {
-    try { if (el.matches(sel)) return true; } catch (_e) {}
+    try {
+      if (el.matches(sel)) return true;
+    } catch (_e) {}
   }
   for (const sel of TIME_SELECTORS) {
-    try { if (el.matches(sel)) return true; } catch (_e) {}
+    try {
+      if (el.matches(sel)) return true;
+    } catch (_e) {}
   }
   return false;
 }
@@ -135,9 +135,11 @@ function queryFirstMatch(root, selectors) {
     try {
       const els = root.querySelectorAll(sel);
       if (els && els.length > 0) {
-        return Array.from(els).filter(el => el && !isSubElement(el));
+        return Array.from(els).filter((el) => el && !isSubElement(el));
       }
-    } catch (_e) { /* invalid selector */ }
+    } catch (_e) {
+      /* invalid selector */
+    }
   }
   return [];
 }
@@ -160,7 +162,7 @@ export function parseChatThread(root) {
     const text = extractMessageText(cell);
     if (!text) continue; // anti-ghost
     const time = extractMessageTime(cell);
-    const from = isUserMessage(cell) ? 'user' : 'employer';
+    const from = isUserMessage(cell) ? "user" : "employer";
     messages.push({ from, text, time });
   }
 
@@ -181,9 +183,9 @@ export function parseChatThread(root) {
 export function extractThreadForAI(messages) {
   if (!Array.isArray(messages)) return [];
   return messages
-    .filter(m => m && m.text && typeof m.text === 'string')
-    .map(m => ({
-      role: m.from === 'user' ? 'user' : 'assistant',
+    .filter((m) => m && m.text && typeof m.text === "string")
+    .map((m) => ({
+      role: m.from === "user" ? "user" : "assistant",
       content: m.text,
     }));
 }
@@ -196,13 +198,17 @@ export function extractThreadForAI(messages) {
  * @returns {Array<{role:string,content:string}>}
  */
 export function buildStarterPrompt(conv) {
-  const vac = (conv && conv.vacancyTitle) || 'вакансия';
-  const comp = (conv && conv.company) || 'компания';
+  const vac = (conv && conv.vacancyTitle) || "вакансия";
+  const comp = (conv && conv.company) || "компания";
   return [
     {
-      role: 'user',
-      content: 'Здравствуйте! Пишу по поводу вакансии "' + vac + '" в ' + comp +
-        '. Хотел бы узнать, актуальна ли ещё позиция и какие дальнейшие шаги?',
+      role: "user",
+      content:
+        'Здравствуйте! Пишу по поводу вакансии "' +
+        vac +
+        '" в ' +
+        comp +
+        ". Хотел бы узнать, актуальна ли ещё позиция и какие дальнейшие шаги?",
     },
   ];
 }

@@ -8,9 +8,9 @@
  *
  * Strategy: find date ranges -> extract surrounding text -> build experience entries
  */
-import { createLogger } from './anti-hallucination.js';
+import { createLogger } from "./anti-hallucination.js";
 
-const fetchLog = createLogger('ResumeFetch');
+const fetchLog = createLogger("ResumeFetch");
 
 /**
  * Parse experience entries from raw HTML using date-range text patterns.
@@ -20,10 +20,15 @@ const fetchLog = createLogger('ResumeFetch');
  */
 export function parseExperienceFromHtmlText(html, alreadyFound) {
   // Russian month names used by hh.ru in date ranges
-  const MONTHS = 'январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья]';
+  const MONTHS =
+    "январ[ьея]|феврал[ьья]|март[ае]?|апрел[ьья]|ма[йия]|июн[ьья]|июл[ьья]|август[ае]?|сентябр[ьья]|октябр[ьья]|ноябр[ьья]|декабр[ьья]";
   const DATE_RANGE_RE = new RegExp(
-    '(' + MONTHS + ')\\s*\\d{4}\\s*[\\u2013\\u2014-]\\s*(?:(' + MONTHS + ')\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)',
-    'gi'
+    "(" +
+      MONTHS +
+      ")\\s*\\d{4}\\s*[\\u2013\\u2014-]\\s*(?:(" +
+      MONTHS +
+      ")\\s*\\d{4}|настоящее\\s*время|по\\s+настоящее\\s+время)",
+    "gi",
   );
 
   // Also try numeric date patterns: "01.2020 -- настоящее время"
@@ -40,10 +45,10 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
     allDateRanges.push({ index: match.index, text: match[0] });
   }
 
-  fetchLog.info('Text pattern: found ' + allDateRanges.length + ' date ranges in FULL HTML');
+  fetchLog.info("Text pattern: found " + allDateRanges.length + " date ranges in FULL HTML");
 
   if (allDateRanges.length <= alreadyFound) {
-    fetchLog.info('Text pattern: no more date ranges than already found (' + alreadyFound + ')');
+    fetchLog.info("Text pattern: no more date ranges than already found (" + alreadyFound + ")");
     return [];
   }
 
@@ -64,7 +69,10 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
   let expStart = -1;
   for (const pat of expStartPatterns) {
     const m = html.match(pat);
-    if (m) { expStart = m.index; break; }
+    if (m) {
+      expStart = m.index;
+      break;
+    }
   }
 
   let expEnd = html.length;
@@ -77,15 +85,15 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
     }
   }
 
-  fetchLog.info('Text pattern: experience section ' + expStart + '-' + expEnd);
+  fetchLog.info("Text pattern: experience section " + expStart + "-" + expEnd);
 
   // Filter date ranges that are within the experience section (or near it)
-  const expDateRanges = allDateRanges.filter(dr => {
+  const expDateRanges = allDateRanges.filter((dr) => {
     if (expStart === -1) return true;
     return dr.index >= expStart - 200 && dr.index <= expEnd + 200;
   });
 
-  fetchLog.info('Text pattern: ' + expDateRanges.length + ' date ranges in experience section');
+  fetchLog.info("Text pattern: " + expDateRanges.length + " date ranges in experience section");
 
   if (expDateRanges.length <= alreadyFound) {
     return [];
@@ -95,13 +103,16 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
   const entries = [];
   for (let i = 0; i < expDateRanges.length; i++) {
     const dr = expDateRanges[i];
-    const searchBase = (expStart !== -1) ? html.substring(expStart, expEnd) : html;
-    const searchOffset = (expStart !== -1) ? expStart : 0;
+    const searchBase = expStart !== -1 ? html.substring(expStart, expEnd) : html;
+    const searchOffset = expStart !== -1 ? expStart : 0;
     const relIndex = dr.index - searchOffset;
 
     const lookBack = searchBase.substring(Math.max(0, relIndex - 800), relIndex);
-    const nextIdx = (i + 1 < expDateRanges.length) ? expDateRanges[i + 1].index - searchOffset : searchBase.length;
-    const lookForward = searchBase.substring(relIndex + dr.text.length, Math.min(nextIdx, relIndex + dr.text.length + 800));
+    const nextIdx = i + 1 < expDateRanges.length ? expDateRanges[i + 1].index - searchOffset : searchBase.length;
+    const lookForward = searchBase.substring(
+      relIndex + dr.text.length,
+      Math.min(nextIdx, relIndex + dr.text.length + 800),
+    );
 
     const textBefore = stripHtmlTags(lookBack);
     const textAfter = stripHtmlTags(lookForward);
@@ -110,7 +121,10 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
     job.period = dr.text;
 
     // Try to find position: last meaningful text before the date
-    const linesBefore = textBefore.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);
+    const linesBefore = textBefore
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 3);
     for (let j = linesBefore.length - 1; j >= 0; j--) {
       const line = linesBefore[j];
       if (/^\d{4}/.test(line) || /\d+\s*(год|лет|мес)/.test(line)) continue;
@@ -135,7 +149,10 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
     }
 
     // Description: text after the date range
-    const linesAfter = textAfter.split(/\n/).map(l => l.trim()).filter(l => l.length > 10);
+    const linesAfter = textAfter
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 10);
     if (linesAfter.length > 0 && linesAfter[0].length > 20) {
       job.description = linesAfter[0].substring(0, 300);
     }
@@ -153,17 +170,17 @@ export function parseExperienceFromHtmlText(html, alreadyFound) {
  */
 export function stripHtmlTags(html) {
   return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, " ")
     .trim();
 }

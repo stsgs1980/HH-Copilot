@@ -30,28 +30,27 @@ function hasException(sourceCode) {
 
 module.exports = {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
-      description: 'AHG Rule 12 (blocking tier): no file over 250 lines (or 400 hard cap)',
-      category: 'AHG Rules',
+      description: "AHG Rule 12 (blocking tier): no file over 250 lines (or 400 hard cap)",
+      category: "AHG Rules",
       recommended: true,
     },
     fixable: null,
     schema: [
       {
-        type: 'object',
+        type: "object",
         properties: {
-          errorLimit: { type: 'number', minimum: 50 },
-          hardCap: { type: 'number', minimum: 50 },
+          errorLimit: { type: "number", minimum: 50 },
+          hardCap: { type: "number", minimum: 50 },
         },
         additionalProperties: false,
       },
     ],
     messages: {
-      overError:
-        'AHG Rule 12 [C]: File has {{ count }} lines (limit {{ limit }}). Split this file immediately.',
+      overError: "AHG Rule 12 [C]: File has {{ count }} lines (limit {{ limit }}). Split this file immediately.",
       overHardCap:
-        'AHG Rule 12 [C]: File has {{ count }} lines (HARD CAP {{ limit }}). No exceptions allowed. Decompose NOW.',
+        "AHG Rule 12 [C]: File has {{ count }} lines (HARD CAP {{ limit }}). No exceptions allowed. Decompose NOW.",
     },
   },
 
@@ -71,7 +70,7 @@ module.exports = {
         if (lineCount > hardCap) {
           context.report({
             node,
-            messageId: 'overHardCap',
+            messageId: "overHardCap",
             data: { count: lineCount, limit: hardCap },
           });
           return;
@@ -81,7 +80,7 @@ module.exports = {
         if (lineCount > errorLimit && !exempted) {
           context.report({
             node,
-            messageId: 'overError',
+            messageId: "overError",
             data: { count: lineCount, limit: errorLimit },
           });
         }

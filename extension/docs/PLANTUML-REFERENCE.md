@@ -67,6 +67,7 @@ DA --> DB
 ```
 
 **Key Elements:**
+
 - `component [Name] as ALIAS` -- rectangular component
 - `package "Name" { ... }` -- grouping
 - `interface "Name" as ALIAS` -- provided/required interfaces
@@ -77,6 +78,7 @@ DA --> DB
 - `[Name]` -- shorthand component
 
 **Component connections:**
+
 - `A --> B` -- dependency
 - `A ..> B` -- dependency (dashed)
 - `A -- B` -- link (solid)
@@ -85,6 +87,7 @@ DA --> DB
 - `A --> B : label` -- labeled arrow
 
 **Interfaces:**
+
 ```plantuml
 component WebApp
 interface "HTTP" as HTTP
@@ -109,6 +112,7 @@ note right of Alice: This is a note
 **Participants**: `participant`, `actor`, `boundary`, `control`, `entity`, `database`, `collections`, `queue`
 
 **Arrows:**
+
 - `->` solid, `-->` dashed
 - `->>` thin, `->o` circle
 - `-x` lost
@@ -139,6 +143,7 @@ end
 ```
 
 **Control Structures:**
+
 - Conditionals: `if`/`then`/`else`/`endif`
 - Switches: `switch`/`case`/`endswitch`
 - Loops: `repeat`/`repeatwhile`, `while`/`endwhile`
@@ -185,6 +190,7 @@ skinparam {
 ```
 
 **Common skinparam categories:**
+
 - `skinparam componentStyle rectangle` -- force rectangle style
 - `skinparam packageStyle rectangle` -- rectangle packages
 - `skinparam package { BackgroundColor ... BorderColor ... }`
@@ -248,6 +254,7 @@ title $header("System Architecture")
 ### 5.1 Approach Strategy
 
 **Start Simple, Add Complexity:**
+
 1. Phase 1: Basic structure (nodes + connections)
 2. Phase 2: Add details (labels, notes, grouping)
 3. Phase 3: Add styling and colors
@@ -255,6 +262,7 @@ title $header("System Architecture")
 ### 5.2 Error Prevention Patterns
 
 **Safe Naming:**
+
 ```plantuml
 ' GOOD: Use aliases for complex names
 component "Complex-System_Name (v2.1)" as CSN
@@ -265,6 +273,7 @@ database "User Database Server" as UDB
 ```
 
 **Quote Management:**
+
 ```plantuml
 ' Always quote names with spaces or special chars
 participant "User with spaces" as User
@@ -312,32 +321,32 @@ participant "Long Service Name" as LSN
 
 ## 6. Quick Reference: Arrow Types
 
-| From/To | Solid | Dashed | Note |
-|---------|-------|--------|------|
-| General | `-->` | `..>` | Dependency |
-| Sequence | `->` | `-->` | Message |
-| Component | `-->` | `..>` | Connection |
-| Class | `-->` | `..>` | Dependency |
-| Use Case | `-->` | `..>` | Association |
+| From/To   | Solid | Dashed | Note        |
+| --------- | ----- | ------ | ----------- |
+| General   | `-->` | `..>`  | Dependency  |
+| Sequence  | `->`  | `-->`  | Message     |
+| Component | `-->` | `..>`  | Connection  |
+| Class     | `-->` | `..>`  | Dependency  |
+| Use Case  | `-->` | `..>`  | Association |
 
 ## 7. Quick Reference: Color Notation
 
-| Method | Example | Usage |
-|--------|---------|-------|
-| Hex | `#FF0000` | Precise colors |
-| Named | `red`, `lightblue` | Common colors |
-| Gradient | `#red\|blue` | Background gradients |
-| Inline | `#back:color;line:color` | Complex styling |
+| Method   | Example                  | Usage                |
+| -------- | ------------------------ | -------------------- |
+| Hex      | `#FF0000`                | Precise colors       |
+| Named    | `red`, `lightblue`       | Common colors        |
+| Gradient | `#red\|blue`             | Background gradients |
+| Inline   | `#back:color;line:color` | Complex styling      |
 
 ## 8. Quick Reference: Diagram Type Keywords
 
-| Type | Start | End | Purpose |
-|------|-------|-----|---------|
-| UML | `@startuml` | `@enduml` | General UML diagrams |
-| Gantt | `@startgantt` | `@endgantt` | Project schedules |
-| MindMap | `@startmindmap` | `@endmindmap` | Mind mapping |
-| JSON | `@startjson` | `@endjson` | Data display |
-| YAML | `@startyaml` | `@endyaml` | Data display |
+| Type    | Start           | End           | Purpose              |
+| ------- | --------------- | ------------- | -------------------- |
+| UML     | `@startuml`     | `@enduml`     | General UML diagrams |
+| Gantt   | `@startgantt`   | `@endgantt`   | Project schedules    |
+| MindMap | `@startmindmap` | `@endmindmap` | Mind mapping         |
+| JSON    | `@startjson`    | `@endjson`    | Data display         |
+| YAML    | `@startyaml`    | `@endyaml`    | Data display         |
 
 ---
 
@@ -345,16 +354,17 @@ participant "Long Service Name" as LSN
 
 ### Common Syntax Issues
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Parsing error | Unclosed quotes | Close all `"quotes"` properly |
-| Invalid characters | Hyphens/parens in names | Use `"quotes"` or `as` aliases |
-| Poor layout | Auto-layout fails | Use `left to right direction`, hidden arrows |
-| Text overflow | Long labels | Set `skinparam wrapWidth 150` |
+| Issue              | Cause                   | Fix                                          |
+| ------------------ | ----------------------- | -------------------------------------------- |
+| Parsing error      | Unclosed quotes         | Close all `"quotes"` properly                |
+| Invalid characters | Hyphens/parens in names | Use `"quotes"` or `as` aliases               |
+| Poor layout        | Auto-layout fails       | Use `left to right direction`, hidden arrows |
+| Text overflow      | Long labels             | Set `skinparam wrapWidth 150`                |
 
 ### Verification Checklist
 
 Before committing any `.puml` file:
+
 1. Every `@startuml` has matching `@enduml`
 2. All quotes are properly closed
 3. No unquoted names with spaces/special chars
@@ -385,5 +395,5 @@ Before committing any `.puml` file:
 
 ---
 
-*Source: PlantUML Comprehensive LLM Cheat Sheet (github.com/jacobh/e4f49c01ebc465483fcce7187c06e114)*
-*Last updated: 2026-06-13*
+_Source: PlantUML Comprehensive LLM Cheat Sheet (github.com/jacobh/e4f49c01ebc465483fcce7187c06e114)_
+_Last updated: 2026-06-13_

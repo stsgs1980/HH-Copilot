@@ -8,23 +8,23 @@
  * BEFORE looking at resume.
  */
 
-import { describe, it, expect } from 'vitest';
-import { extractScorecard } from '../src/lib/cover-letter-scorecard.js';
+import { describe, expect, it } from "vitest";
+import { extractScorecard } from "../src/lib/cover-letter-scorecard.js";
 
-describe('F-CR-02 -- extractScorecard', () => {
-  it('returns full scorecard from rich vacancy', () => {
+describe("F-CR-02 -- extractScorecard", () => {
+  it("returns full scorecard from rich vacancy", () => {
     const vacancy = {
-      title: 'Senior Frontend Developer',
-      company: 'Yandex',
-      keySkills: ['React', 'TypeScript', 'CSS'],
+      title: "Senior Frontend Developer",
+      company: "Yandex",
+      keySkills: ["React", "TypeScript", "CSS"],
       description: {
-        text: 'some text',
+        text: "some text",
         sections: {
-          responsibilities: 'Разработка интерфейсов. Оптимизация производительности. Code review.',
-          requirements: 'Знание React. Опыт с TypeScript. Понимание сборщиков.',
-          advantages: '',
-          conditions: '',
-          other: '',
+          responsibilities: "Разработка интерфейсов. Оптимизация производительности. Code review.",
+          requirements: "Знание React. Опыт с TypeScript. Понимание сборщиков.",
+          advantages: "",
+          conditions: "",
+          other: "",
         },
       },
     };
@@ -41,15 +41,18 @@ describe('F-CR-02 -- extractScorecard', () => {
     expect(sc.source).toBeDefined();
   });
 
-  it('mission derived from title + first sentence of responsibilities', () => {
+  it("mission derived from title + first sentence of responsibilities", () => {
     const vacancy = {
-      title: 'Backend Engineer',
+      title: "Backend Engineer",
       keySkills: [],
       description: {
-        text: '',
+        text: "",
         sections: {
-          responsibilities: 'Поддержка микросервисной архитектуры. Мониторинг инцидентов.',
-          requirements: '', advantages: '', conditions: '', other: '',
+          responsibilities: "Поддержка микросервисной архитектуры. Мониторинг инцидентов.",
+          requirements: "",
+          advantages: "",
+          conditions: "",
+          other: "",
         },
       },
     };
@@ -59,15 +62,19 @@ describe('F-CR-02 -- extractScorecard', () => {
     expect(sc.mission).toMatch(/Backend Engineer/i);
   });
 
-  it('outcomes: top 3-5 concrete sentences from responsibilities', () => {
+  it("outcomes: top 3-5 concrete sentences from responsibilities", () => {
     const vacancy = {
-      title: 'DevOps',
+      title: "DevOps",
       keySkills: [],
       description: {
-        text: '',
+        text: "",
         sections: {
-          responsibilities: 'Развернуть CI/CD. Настроить мониторинг. Автоматизировать деплои. Поддержать Kubernetes. Дежурства.',
-          requirements: '', advantages: '', conditions: '', other: '',
+          responsibilities:
+            "Развернуть CI/CD. Настроить мониторинг. Автоматизировать деплои. Поддержать Kubernetes. Дежурства.",
+          requirements: "",
+          advantages: "",
+          conditions: "",
+          other: "",
         },
       },
     };
@@ -76,38 +83,40 @@ describe('F-CR-02 -- extractScorecard', () => {
     expect(sc.outcomes.length).toBeGreaterThanOrEqual(3);
     expect(sc.outcomes.length).toBeLessThanOrEqual(5);
     // Each outcome should be a sentence (not empty)
-    sc.outcomes.forEach(o => {
+    sc.outcomes.forEach((o) => {
       expect(o.length).toBeGreaterThan(5);
     });
   });
 
-  it('competencies: union of keySkills + requirements noun phrases', () => {
+  it("competencies: union of keySkills + requirements noun phrases", () => {
     const vacancy = {
-      title: 'Data Scientist',
-      keySkills: ['Python', 'SQL', 'pandas'],
+      title: "Data Scientist",
+      keySkills: ["Python", "SQL", "pandas"],
       description: {
-        text: '',
+        text: "",
         sections: {
-          responsibilities: '',
-          requirements: 'Опыт работы с ML. Знание статистики. Английский язык.',
-          advantages: '', conditions: '', other: '',
+          responsibilities: "",
+          requirements: "Опыт работы с ML. Знание статистики. Английский язык.",
+          advantages: "",
+          conditions: "",
+          other: "",
         },
       },
     };
 
     const sc = extractScorecard(vacancy);
     // keySkills preserved
-    expect(sc.competencies).toContain('Python');
-    expect(sc.competencies).toContain('SQL');
+    expect(sc.competencies).toContain("Python");
+    expect(sc.competencies).toContain("SQL");
     // Requirements parsed (noun phrases, stripped of leading "Знание"/"Опыт")
     expect(sc.competencies.length).toBeGreaterThan(3);
   });
 
-  it('empty responsibilities -> fallback mission from title', () => {
+  it("empty responsibilities -> fallback mission from title", () => {
     const vacancy = {
-      title: 'QA Engineer',
-      keySkills: ['Selenium'],
-      description: { text: '', sections: {} },
+      title: "QA Engineer",
+      keySkills: ["Selenium"],
+      description: { text: "", sections: {} },
     };
 
     const sc = extractScorecard(vacancy);
@@ -117,30 +126,32 @@ describe('F-CR-02 -- extractScorecard', () => {
     expect(sc.outcomes[0].length).toBeGreaterThan(5);
   });
 
-  it('empty keySkills -> competencies from requirements only', () => {
+  it("empty keySkills -> competencies from requirements only", () => {
     const vacancy = {
-      title: 'Product Manager',
+      title: "Product Manager",
       keySkills: [],
       description: {
-        text: '',
+        text: "",
         sections: {
-          responsibilities: '',
-          requirements: 'Управление дорожной картой. Аналитика метрик. Стейкхолдер-менеджмент.',
-          advantages: '', conditions: '', other: '',
+          responsibilities: "",
+          requirements: "Управление дорожной картой. Аналитика метрик. Стейкхолдер-менеджмент.",
+          advantages: "",
+          conditions: "",
+          other: "",
         },
       },
     };
 
     const sc = extractScorecard(vacancy);
     expect(sc.competencies.length).toBeGreaterThan(0);
-    expect(sc.competencies.some(c => /дорожной картой|метрик|стейкхолдер/i.test(c))).toBe(true);
+    expect(sc.competencies.some((c) => /дорожной картой|метрик|стейкхолдер/i.test(c))).toBe(true);
   });
 
-  it('empty requirements AND empty keySkills -> competencies = []', () => {
+  it("empty requirements AND empty keySkills -> competencies = []", () => {
     const vacancy = {
-      title: 'Intern',
+      title: "Intern",
       keySkills: [],
-      description: { text: '', sections: { responsibilities: 'Помощь команде.' } },
+      description: { text: "", sections: { responsibilities: "Помощь команде." } },
     };
 
     const sc = extractScorecard(vacancy);

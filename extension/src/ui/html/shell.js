@@ -1,14 +1,14 @@
 /**
  * Shell: header, tab bar, and top-level layout
  */
-import { ICONS } from './icons.js';
-import { esc } from './helpers.js';
-import { getOverviewSection } from './tabs/overview.js';
-import { getResumeSection } from './tabs/resume.js';
-import { getVacanciesSection } from './tabs/vacancies.js';
-import { getNegotiationsSection } from './tabs/negotiations.js';
-import { getSettingsSection } from './tabs/settings.js';
-import { getStatsSection } from './tabs/stats.js';
+import { esc } from "./helpers.js";
+import { ICONS } from "./icons.js";
+import { getNegotiationsSection } from "./tabs/negotiations.js";
+import { getOverviewSection } from "./tabs/overview.js";
+import { getResumeSection } from "./tabs/resume.js";
+import { getSettingsSection } from "./tabs/settings.js";
+import { getStatsSection } from "./tabs/stats.js";
+import { getVacanciesSection } from "./tabs/vacancies.js";
 
 /* Initial sidebar shell: header with logo + auth spinner */
 export function getSidebarHTML() {
@@ -16,7 +16,7 @@ export function getSidebarHTML() {
     <div class="har-header">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          ${ICONS.briefcase.replace('currentColor', '#fff')}
+          ${ICONS.briefcase.replace("currentColor", "#fff")}
         </div>
         <div>
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
@@ -49,7 +49,7 @@ export function getSidebarHTML() {
 
 /* Full logged-in content with 6 tabs */
 export function getLoggedInHTML(userName) {
-  const name = (userName && userName !== 'Пользователь') ? esc(userName) : '';
+  const name = userName && userName !== "Пользователь" ? esc(userName) : "";
   return `
     ${getHeaderHTML(name)}
     ${getTabBarHTML()}
@@ -70,19 +70,19 @@ export function getLoggedInHTML(userName) {
 
 /* ---- HEADER ---- */
 function getHeaderHTML(userName) {
-  const name = userName ? esc(userName) : '';
-  const badgeLabel = name ? name : 'Онлайн';
+  const name = userName ? esc(userName) : "";
+  const badgeLabel = name ? name : "Онлайн";
   return `
     <div class="har-header" lang="ru">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-          ${ICONS.briefcase.replace('currentColor', '#fff')}
+          ${ICONS.briefcase.replace("currentColor", "#fff")}
         </div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">HH Copilot</div>
           <div id="header-auth-status" style="font-size:12px;color:#52525b;display:flex;align-items:center;gap:4px;">
             <span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>
-            ${name ? name : 'Авторизован'}
+            ${name ? name : "Авторизован"}
           </div>
         </div>
       </div>
@@ -105,14 +105,17 @@ function getHeaderHTML(userName) {
 /* ---- TAB BAR (6 tabs) ---- */
 function getTabBarHTML() {
   const tabs = [
-    { id: 'overview', label: 'Обзор', icon: ICONS.briefcase },
-    { id: 'resume', label: 'Резюме', icon: ICONS.file },
-    { id: 'vacancies', label: 'Вакансии', icon: ICONS.folder },
-    { id: 'negotiations', label: 'Переговоры', icon: ICONS.chat },
-    { id: 'settings', label: 'Настройки', icon: ICONS.gear },
-    { id: 'stats', label: 'Статистика', icon: ICONS.chart },
+    { id: "overview", label: "Обзор", icon: ICONS.briefcase },
+    { id: "resume", label: "Резюме", icon: ICONS.file },
+    { id: "vacancies", label: "Вакансии", icon: ICONS.folder },
+    { id: "negotiations", label: "Переговоры", icon: ICONS.chat },
+    { id: "settings", label: "Настройки", icon: ICONS.gear },
+    { id: "stats", label: "Статистика", icon: ICONS.chart },
   ];
-  return `<div class="har-tabbar" role="tablist" aria-label="Основные разделы">${tabs.map((t, _i) =>
-    `<button class="tab-btn ${t.id === 'overview' ? 'active' : ''}" data-tab="${t.id}" role="tab" aria-selected="${t.id === 'overview'}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === 'overview' ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`
-  ).join('')}</div>`;
+  return `<div class="har-tabbar" role="tablist" aria-label="Основные разделы">${tabs
+    .map(
+      (t, _i) =>
+        `<button class="tab-btn ${t.id === "overview" ? "active" : ""}" data-tab="${t.id}" role="tab" aria-selected="${t.id === "overview"}" aria-controls="tab-${t.id}" id="tabbtn-${t.id}" tabindex="${t.id === "overview" ? 0 : -1}">${t.icon}<span>${t.label}</span></button>`,
+    )
+    .join("")}</div>`;
 }

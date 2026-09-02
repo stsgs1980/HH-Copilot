@@ -5,25 +5,25 @@
  * Event binding is handled by index.js after render to avoid circular deps.
  */
 
-import { refs, panelState } from '../state.js';
-import { getLoggedInHTML, esc } from '../html.js';
-import { ICONS } from '../html/icons.js';
-import { getUserName } from '../auth.js';
-import { renderVacancyList, renderStatsValues, tryShowVacancyMatch } from '../tabs/vacancies.js';
-import { renderOverviewKPI } from '../tabs/overview.js';
-import { renderStats } from '../tabs/stats.js';
-import { renderNegotiationList } from '../tabs/negotiations.js';
-import { renderBlacklist, renderSettingsValues } from '../tabs/settings.js';
-import { renderMyResumesPanel } from '../tabs/resumes.js';
-import { startTour, isTourDone } from '../../lib/tour-engine.js';
-import { getWelcomeTourSteps } from '../../lib/tour-steps.js';
+import { isTourDone, startTour } from "../../lib/tour-engine.js";
+import { getWelcomeTourSteps } from "../../lib/tour-steps.js";
+import { getUserName } from "../auth.js";
+import { esc, getLoggedInHTML } from "../html.js";
+import { ICONS } from "../html/icons.js";
+import { panelState, refs } from "../state.js";
+import { renderNegotiationList } from "../tabs/negotiations.js";
+import { renderOverviewKPI } from "../tabs/overview.js";
+import { renderMyResumesPanel } from "../tabs/resumes.js";
+import { renderBlacklist, renderSettingsValues } from "../tabs/settings.js";
+import { renderStats } from "../tabs/stats.js";
+import { renderStatsValues, renderVacancyList, tryShowVacancyMatch } from "../tabs/vacancies.js";
 
 // ===============================================
 // RENDER STATES
 // ===============================================
 
 export function renderSidebarContent() {
-  const content = refs.shadowRoot?.querySelector('.har-content');
+  const content = refs.shadowRoot?.querySelector(".har-content");
   if (!content) return;
 
   // Always update header status text to match auth state
@@ -49,7 +49,7 @@ export function renderSidebarContent() {
   }
 
   /* Logged in: replace entire sidebar innerHTML */
-  const container = refs.shadowRoot?.querySelector('.fab-panel');
+  const container = refs.shadowRoot?.querySelector(".fab-panel");
   if (!container) return;
   const userName = getUserName();
   container.innerHTML = getLoggedInHTML(userName);
@@ -57,13 +57,13 @@ export function renderSidebarContent() {
      updateAuthState in index.js after this function returns, to avoid
      a circular import between this module and index.js. */
   /* Update header auth status with username */
-  const headerStatus = refs.shadowRoot?.getElementById('header-auth-status');
-  if (headerStatus && userName !== 'Пользователь') {
+  const headerStatus = refs.shadowRoot?.getElementById("header-auth-status");
+  if (headerStatus && userName !== "Пользователь") {
     headerStatus.innerHTML = `<span class="pulse-dot" style="width:6px;height:6px;background:#10B981;border-radius:50%;display:inline-block;"></span>${esc(userName)}`;
   }
   /* Update FAB title with username */
-  if (refs.fabEl && userName !== 'Пользователь') {
-    refs.fabEl.setAttribute('title', 'HH Copilot: ' + userName + '. Нажмите для открытия.');
+  if (refs.fabEl && userName !== "Пользователь") {
+    refs.fabEl.setAttribute("title", "HH Copilot: " + userName + ". Нажмите для открытия.");
   }
 }
 
@@ -75,7 +75,7 @@ export function renderSidebarContent() {
  */
 function updateHeaderStatus() {
   if (!refs.shadowRoot) return;
-  const container = refs.shadowRoot?.querySelector('.fab-panel');
+  const container = refs.shadowRoot?.querySelector(".fab-panel");
   if (!container) return;
 
   // Only update if we're still using the initial shell HTML
@@ -83,7 +83,7 @@ function updateHeaderStatus() {
   if (panelState.isLoggedIn === false) {
     const headerStatus = container.querySelector('.har-header div[style*="font-size:11px"]');
     if (headerStatus) {
-      const dotColor = '#ef4444';
+      const dotColor = "#ef4444";
       headerStatus.innerHTML = `<span class="pulse-dot" style="width:6px;height:6px;background:${dotColor};border-radius:50%;display:inline-block;"></span>Не авторизован`;
     }
   }
@@ -103,25 +103,25 @@ export function renderInitialData() {
 
   // v1.9.36.0: Initialize score range slider from settings minMatchScore
   // v1.9.87.0: Initialize minShowScore slider
-  const scoreRange = refs.shadowRoot?.getElementById('vac-score-range');
-  const scoreLabel = refs.shadowRoot?.getElementById('vac-score-label');
-  const showRange = refs.shadowRoot?.getElementById('vac-show-range');
-  const showLabel = refs.shadowRoot?.getElementById('vac-show-label');
+  const scoreRange = refs.shadowRoot?.getElementById("vac-score-range");
+  const scoreLabel = refs.shadowRoot?.getElementById("vac-score-label");
+  const showRange = refs.shadowRoot?.getElementById("vac-show-range");
+  const showLabel = refs.shadowRoot?.getElementById("vac-show-label");
   const minMatch = panelState.settings?.minMatchScore || 60;
   const minShow = panelState.settings?.minShowScore || 30;
   if (scoreRange) {
     scoreRange.value = minMatch;
-    scoreRange.setAttribute('aria-valuenow', minMatch);
+    scoreRange.setAttribute("aria-valuenow", minMatch);
   }
   if (scoreLabel) {
-    scoreLabel.textContent = minMatch + '%';
+    scoreLabel.textContent = minMatch + "%";
   }
   if (showRange) {
     showRange.value = minShow;
-    showRange.setAttribute('aria-valuenow', minShow);
+    showRange.setAttribute("aria-valuenow", minShow);
   }
   if (showLabel) {
-    showLabel.textContent = minShow + '%';
+    showLabel.textContent = minShow + "%";
   }
 
   // Show match score card if we're on a vacancy detail page with parsed data
@@ -129,19 +129,22 @@ export function renderInitialData() {
 
   // Auto-expand "All resumes" accordion when no resumes synced yet
   if (!panelState.resume || !panelState.resume.id) {
-    const syncBody = refs.shadowRoot?.getElementById('res-sync-body');
+    const syncBody = refs.shadowRoot?.getElementById("res-sync-body");
     const syncToggle = syncBody?.previousElementSibling;
-    if (syncBody && !syncBody.classList.contains('open')) {
-      syncBody.classList.add('open');
-      const chevron = syncToggle?.querySelector('.timeline-chevron');
-      if (chevron) chevron.classList.add('open');
-      if (syncToggle) syncToggle.setAttribute('aria-expanded', 'true');
+    if (syncBody && !syncBody.classList.contains("open")) {
+      syncBody.classList.add("open");
+      const chevron = syncToggle?.querySelector(".timeline-chevron");
+      if (chevron) chevron.classList.add("open");
+      if (syncToggle) syncToggle.setAttribute("aria-expanded", "true");
     }
   }
 
   // Auto-start tour for first-time users (guard against duplicate calls)
   if (!isTourDone()) {
     if (_tourTimer) clearTimeout(_tourTimer);
-    _tourTimer = setTimeout(() => { _tourTimer = null; startTour(getWelcomeTourSteps()); }, 800);
+    _tourTimer = setTimeout(() => {
+      _tourTimer = null;
+      startTour(getWelcomeTourSteps());
+    }, 800);
   }
 }

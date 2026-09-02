@@ -6,7 +6,7 @@
  * preserved for backward compatibility.
  */
 
-import { SIDEBAR_CSS } from './sidebar-css.js';
+import { SIDEBAR_CSS } from "./sidebar-css.js";
 
 export function getSidebarCSS() {
   return SIDEBAR_CSS;

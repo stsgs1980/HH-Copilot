@@ -14,10 +14,10 @@
  * v1.9.29.0
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { parseVacancyDetailFromDoc } from './vacancy-fetch-text.js';
+import { createLogger } from "./anti-hallucination.js";
+import { parseVacancyDetailFromDoc } from "./vacancy-fetch-text.js";
 
-const fetchLog = createLogger('VacFetchIframe');
+const fetchLog = createLogger("VacFetchIframe");
 
 /** Max time to wait for iframe page load (ms) */
 const IFRAME_LOAD_TIMEOUT = 12000;
@@ -33,14 +33,13 @@ const HYDRATION_DELAY = 3000;
  * @returns {Promise<Object|null>}
  */
 export async function fetchVacancyViaIframe(vacancyUrl) {
-  fetchLog.info('Loading vacancy in iframe: ' + vacancyUrl);
+  fetchLog.info("Loading vacancy in iframe: " + vacancyUrl);
 
-  const iframe = document.createElement('iframe');
+  const iframe = document.createElement("iframe");
   iframe.style.cssText =
-    'position:fixed;top:-9999px;left:-9999px;width:1280px;height:800px;' +
-    'opacity:0;pointer-events:none;border:none;';
-  iframe.setAttribute('aria-hidden', 'true');
-  iframe.setAttribute('tabindex', '-1');
+    "position:fixed;top:-9999px;left:-9999px;width:1280px;height:800px;" + "opacity:0;pointer-events:none;border:none;";
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.setAttribute("tabindex", "-1");
   iframe.src = vacancyUrl;
   document.body.appendChild(iframe);
 
@@ -48,30 +47,30 @@ export async function fetchVacancyViaIframe(vacancyUrl) {
     // Wait for iframe page to fully load
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(
-        () => reject(new Error('iframe load timeout (' + IFRAME_LOAD_TIMEOUT + 'ms)')),
-        IFRAME_LOAD_TIMEOUT
+        () => reject(new Error("iframe load timeout (" + IFRAME_LOAD_TIMEOUT + "ms)")),
+        IFRAME_LOAD_TIMEOUT,
       );
-      iframe.addEventListener('load', () => {
+      iframe.addEventListener("load", () => {
         clearTimeout(timeout);
         resolve();
       });
-      iframe.addEventListener('error', () => {
+      iframe.addEventListener("error", () => {
         clearTimeout(timeout);
-        reject(new Error('iframe load error'));
+        reject(new Error("iframe load error"));
       });
     });
 
     // Wait for React/Magritte hydration
-    await new Promise(r => setTimeout(r, HYDRATION_DELAY));
+    await new Promise((r) => setTimeout(r, HYDRATION_DELAY));
 
     const iframeDoc = iframe.contentDocument;
     if (!iframeDoc) {
-      throw new Error('Cannot access iframe document (cross-origin or blocked)');
+      throw new Error("Cannot access iframe document (cross-origin or blocked)");
     }
 
     // Check that we actually loaded a vacancy page, not a login/captcha
-    const title = iframeDoc.title || '';
-    if (title.includes('Вход') || title.includes('Login') || title.includes('403') || title.includes('429')) {
+    const title = iframeDoc.title || "";
+    if (title.includes("Вход") || title.includes("Login") || title.includes("403") || title.includes("429")) {
       fetchLog.warn('Iframe loaded non-vacancy page: "' + title.substring(0, 60) + '"');
       return null;
     }
@@ -80,23 +79,32 @@ export async function fetchVacancyViaIframe(vacancyUrl) {
     const vacancy = parseVacancyDetailFromDoc(iframeDoc, vacancyUrl);
 
     if (vacancy) {
-      vacancy._fetchMethod = 'iframe';
+      vacancy._fetchMethod = "iframe";
       fetchLog.info(
-        'Iframe parsed: "' + vacancy.title.substring(0, 40) + '" | ' +
-        'skills=' + vacancy.keySkills.length + ' derived=' + vacancy.derivedSkills.length +
-        ' | desc=' + vacancy.description.text.length + ' chars'
+        'Iframe parsed: "' +
+          vacancy.title.substring(0, 40) +
+          '" | ' +
+          "skills=" +
+          vacancy.keySkills.length +
+          " derived=" +
+          vacancy.derivedSkills.length +
+          " | desc=" +
+          vacancy.description.text.length +
+          " chars",
       );
     } else {
-      fetchLog.warn('Iframe parse returned null for ' + vacancyUrl);
+      fetchLog.warn("Iframe parse returned null for " + vacancyUrl);
     }
 
     return vacancy;
   } catch (err) {
-    fetchLog.warn('Iframe failed for ' + vacancyUrl + ': ' + err.message);
+    fetchLog.warn("Iframe failed for " + vacancyUrl + ": " + err.message);
     return null;
   } finally {
     try {
       if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-    } catch (_e) { /* ignore cleanup errors */ }
+    } catch (_e) {
+      /* ignore cleanup errors */
+    }
   }
 }

@@ -8,9 +8,9 @@
  * v1.9.43.0
  */
 
-import { panelState, refs } from '../state.js';
-import { esc } from '../html.js';
-import { computeMatchScore } from '../../lib/match-scorer.js';
+import { computeMatchScore } from "../../lib/match-scorer.js";
+import { esc } from "../html.js";
+import { panelState, refs } from "../state.js";
 
 /**
  * Render vacancy match score section: ring chart, subtitle, breakdown bars,
@@ -22,82 +22,106 @@ import { computeMatchScore } from '../../lib/match-scorer.js';
  * @param {Object} details -- { matchingSkills, derivedMatchSkills, missingSkills }
  */
 export function renderVacancyMatchScore(vacancyId, score, breakdown, details) {
-  const section = refs.shadowRoot?.getElementById('vac-match-section');
+  const section = refs.shadowRoot?.getElementById("vac-match-section");
   if (!section) return;
 
   if (!score && score !== 0) {
-    section.style.display = 'none';
+    section.style.display = "none";
     return;
   }
 
-  section.style.display = '';
+  section.style.display = "";
 
   // Ring chart
-  const ring = refs.shadowRoot?.getElementById('vac-match-ring');
+  const ring = refs.shadowRoot?.getElementById("vac-match-ring");
   if (ring) {
     const deg = Math.round(score * 3.6);
-    const color = score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#DC2626';
-    ring.style.background = 'conic-gradient(' + color + ' 0deg ' + deg + 'deg, #e4e4e7 ' + deg + 'deg 360deg)';
-    const inner = ring.querySelector('div');
+    const color = score >= 70 ? "#059669" : score >= 40 ? "#D97706" : "#DC2626";
+    ring.style.background = "conic-gradient(" + color + " 0deg " + deg + "deg, #e4e4e7 " + deg + "deg 360deg)";
+    const inner = ring.querySelector("div");
     if (inner) {
-      inner.textContent = score + '%';
+      inner.textContent = score + "%";
       inner.style.color = color;
     }
   }
 
   // Subtitle
-  const subtitle = refs.shadowRoot?.getElementById('vac-match-subtitle');
+  const subtitle = refs.shadowRoot?.getElementById("vac-match-subtitle");
   if (subtitle) {
     if (score >= 70) {
-      subtitle.textContent = 'Отличное совпадение -- рекомендуем откликнуться';
+      subtitle.textContent = "Отличное совпадение -- рекомендуем откликнуться";
     } else if (score >= 40) {
-      subtitle.textContent = 'Частичное совпадение -- стоит рассмотреть';
+      subtitle.textContent = "Частичное совпадение -- стоит рассмотреть";
     } else {
-      subtitle.textContent = 'Низкое совпадение -- навыки не подходят';
+      subtitle.textContent = "Низкое совпадение -- навыки не подходят";
     }
   }
 
   // Breakdown numbers
   const el = (id) => refs.shadowRoot?.getElementById(id);
   const b = breakdown || { skills: 0, title: 0, salary: 0, experience: 0 };
-  const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
-  set('vac-match-skills', b.skills + '/35');
-  set('vac-match-title', b.title + '/25');
-  set('vac-match-salary', b.salary + '/15');
-  set('vac-match-exp', b.experience + '/10');
-  set('vac-match-loc', (b.location || 0) + '/15');
+  const set = (id, val) => {
+    const e = el(id);
+    if (e) e.textContent = val;
+  };
+  set("vac-match-skills", b.skills + "/35");
+  set("vac-match-title", b.title + "/25");
+  set("vac-match-salary", b.salary + "/15");
+  set("vac-match-exp", b.experience + "/10");
+  set("vac-match-loc", (b.location || 0) + "/15");
 
   // Stacked bar -- fill 100% width proportionally
   const total = Math.max(1, b.skills + b.title + b.salary + b.experience + (b.location || 0));
-  const barSkills = el('vac-match-bar-skills');
-  const barTitle = el('vac-match-bar-title');
-  const barSalary = el('vac-match-bar-salary');
-  const barExp = el('vac-match-bar-exp');
-  const barLoc = el('vac-match-bar-loc');
-  if (barSkills) barSkills.style.width = ((b.skills / total) * 100).toFixed(1) + '%';
-  if (barTitle) barTitle.style.width = ((b.title / total) * 100).toFixed(1) + '%';
-  if (barSalary) barSalary.style.width = ((b.salary / total) * 100).toFixed(1) + '%';
-  if (barExp) barExp.style.width = ((b.experience / total) * 100).toFixed(1) + '%';
-  if (barLoc) barLoc.style.width = (((b.location || 0) / total) * 100).toFixed(1) + '%';
+  const barSkills = el("vac-match-bar-skills");
+  const barTitle = el("vac-match-bar-title");
+  const barSalary = el("vac-match-bar-salary");
+  const barExp = el("vac-match-bar-exp");
+  const barLoc = el("vac-match-bar-loc");
+  if (barSkills) barSkills.style.width = ((b.skills / total) * 100).toFixed(1) + "%";
+  if (barTitle) barTitle.style.width = ((b.title / total) * 100).toFixed(1) + "%";
+  if (barSalary) barSalary.style.width = ((b.salary / total) * 100).toFixed(1) + "%";
+  if (barExp) barExp.style.width = ((b.experience / total) * 100).toFixed(1) + "%";
+  if (barLoc) barLoc.style.width = (((b.location || 0) / total) * 100).toFixed(1) + "%";
 
   // Matching/missing skills details
-  const detailsSection = el('vac-match-details');
+  const detailsSection = el("vac-match-details");
   if (detailsSection && details) {
     const matching = details.matchingSkills || [];
     const derived = details.derivedMatchSkills || [];
     const missing = details.missingSkills || [];
 
     if (matching.length > 0 || derived.length > 0 || missing.length > 0) {
-      detailsSection.style.display = '';
+      detailsSection.style.display = "";
 
-      renderSkillList(el, 'vac-match-matching-skills', 'vac-match-matching-list',
-        matching, '#ECFDF5', '#059669', '#A7F3D0');
-      renderSkillList(el, 'vac-match-derived-skills', 'vac-match-derived-list',
-        derived, '#FFFBEB', '#B45309', '#FDE68A');
-      renderSkillList(el, 'vac-match-missing-skills', 'vac-match-missing-list',
-        missing, '#FEF2F2', '#DC2626', '#FECACA');
+      renderSkillList(
+        el,
+        "vac-match-matching-skills",
+        "vac-match-matching-list",
+        matching,
+        "#ECFDF5",
+        "#059669",
+        "#A7F3D0",
+      );
+      renderSkillList(
+        el,
+        "vac-match-derived-skills",
+        "vac-match-derived-list",
+        derived,
+        "#FFFBEB",
+        "#B45309",
+        "#FDE68A",
+      );
+      renderSkillList(
+        el,
+        "vac-match-missing-skills",
+        "vac-match-missing-list",
+        missing,
+        "#FEF2F2",
+        "#DC2626",
+        "#FECACA",
+      );
     } else {
-      detailsSection.style.display = 'none';
+      detailsSection.style.display = "none";
     }
   }
 }
@@ -142,14 +166,26 @@ function renderSkillList(el, rowId, listId, skills, bg, fg, border) {
   if (!row || !list) return;
 
   if (skills.length > 0) {
-    row.style.display = '';
+    row.style.display = "";
     const visible = skills.slice(0, 6);
     const remainder = skills.length - visible.length;
-    list.innerHTML = visible.map(s =>
-      '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:' + bg + ';color:' + fg + ';border:1px solid ' + border + ';">' + esc(s) + '</span>'
-    ).join('') +
-      (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + '</span>' : '');
+    list.innerHTML =
+      visible
+        .map(
+          (s) =>
+            '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:' +
+            bg +
+            ";color:" +
+            fg +
+            ";border:1px solid " +
+            border +
+            ';">' +
+            esc(s) +
+            "</span>",
+        )
+        .join("") +
+      (remainder > 0 ? '<span style="font-size:11px;color:#52525b;padding:3px 0;">+' + remainder + "</span>" : "");
   } else {
-    row.style.display = 'none';
+    row.style.display = "none";
   }
 }

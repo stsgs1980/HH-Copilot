@@ -13,7 +13,7 @@ Standard for character, icon, and graphics usage. Design System / Engineering Go
 
 This standard establishes rules for using Unicode graphic characters across all product layers: interface, content, code, system communications.
 
-### Goals:
+### Goals
 
 - ensure visual consistency
 - maintain professional product level
@@ -24,10 +24,10 @@ This standard establishes rules for using Unicode graphic characters across all 
 
 ## 2. Responsibility Separation
 
-| Document | Level | Scope |
-|----------|-------|-------|
+| Document                                   | Level                               | Scope                                    |
+| ------------------------------------------ | ----------------------------------- | ---------------------------------------- |
 | **No-Unicode Policy v2.1** (this document) | [C] Critical, [W] Warning, [I] Info | UI, production code, AI-chat, prototypes |
-| **MARKDOWN_STANDARD v2.1** | [W] Warning | README.md, project documentation |
+| **MARKDOWN_STANDARD v2.1**                 | [W] Warning                         | README.md, project documentation         |
 
 ---
 
@@ -35,25 +35,25 @@ This standard establishes rules for using Unicode graphic characters across all 
 
 The standard applies a **tiered approach** instead of absolute prohibition:
 
-| Level | Notation | Context | Action |
-|-------|----------|---------|--------|
-| Critical | [C] | UI, production code | Blocks merge |
-| Warning | [W] | Documentation, README, AI-chat | Warning in review (see MARKDOWN_STANDARD) |
-| Info | [I] | Internal notes, prototypes | Recommendation |
+| Level    | Notation | Context                        | Action                                    |
+| -------- | -------- | ------------------------------ | ----------------------------------------- |
+| Critical | [C]      | UI, production code            | Blocks merge                              |
+| Warning  | [W]      | Documentation, README, AI-chat | Warning in review (see MARKDOWN_STANDARD) |
+| Info     | [I]      | Internal notes, prototypes     | Recommendation                            |
 
-### Level Application:
+### Level Application
 
-| Context | Level | Rationale |
-|---------|-------|-----------|
-| UI components | [C] Critical | Direct impact on user |
-| API responses, errors | [C] Critical | Displayed in interface |
-| Production code | [C] Critical | May reach UI |
-| Project documentation | [W] Warning | See MARKDOWN_STANDARD |
-| README files | [W] Warning | See MARKDOWN_STANDARD |
-| Internal notes | [I] Info | Developers only |
-| Prototypes / MVP | [I] Info | Temporary code |
-| Logs, debug | [I] Info | Not visible to user |
-| AI-communication (chat) | [W] Warning | Professional agent communication style |
+| Context                 | Level        | Rationale                              |
+| ----------------------- | ------------ | -------------------------------------- |
+| UI components           | [C] Critical | Direct impact on user                  |
+| API responses, errors   | [C] Critical | Displayed in interface                 |
+| Production code         | [C] Critical | May reach UI                           |
+| Project documentation   | [W] Warning  | See MARKDOWN_STANDARD                  |
+| README files            | [W] Warning  | See MARKDOWN_STANDARD                  |
+| Internal notes          | [I] Info     | Developers only                        |
+| Prototypes / MVP        | [I] Info     | Temporary code                         |
+| Logs, debug             | [I] Info     | Not visible to user                    |
+| AI-communication (chat) | [W] Warning  | Professional agent communication style |
 
 **Note for AI-communication:** AI-agent responses in chat must not contain emoji and Unicode graphics. This ensures a consistent professional style alongside code and documentation. User messages are not regulated by this standard.
 
@@ -63,32 +63,32 @@ The standard applies a **tiered approach** instead of absolute prohibition:
 
 ### 4.1. Prohibited Character Categories
 
-| Category | Examples | Level |
-|----------|----------|-------|
-| Emoji | any pictograms: emotions, objects, UI-symbols | [C] |
-| Unicode-icons | status symbols, actions, notifications | [C] |
-| Decorative symbols | pseudographics, markers, highlights | [W] |
+| Category           | Examples                                      | Level |
+| ------------------ | --------------------------------------------- | ----- |
+| Emoji              | any pictograms: emotions, objects, UI-symbols | [C]   |
+| Unicode-icons      | status symbols, actions, notifications        | [C]   |
+| Decorative symbols | pseudographics, markers, highlights           | [W]   |
 
 ### 4.2. Scope by Layers
 
-| Layer | Critical [C] | Info [I] |
-|-------|--------------|----------|
-| Interface (UI) | buttons, menus, tables, notifications | - |
-| API | responses, errors, statuses | - |
-| Content | texts in product | drafts |
-| Code | UI-strings, messages | debug-code |
-| Logging | - | console.log, trace |
+| Layer          | Critical [C]                          | Info [I]           |
+| -------------- | ------------------------------------- | ------------------ |
+| Interface (UI) | buttons, menus, tables, notifications | -                  |
+| API            | responses, errors, statuses           | -                  |
+| Content        | texts in product                      | drafts             |
+| Code           | UI-strings, messages                  | debug-code         |
+| Logging        | -                                     | console.log, trace |
 
 ---
 
 ## 5. Reasons for Restrictions
 
-| Problem | Description |
-|---------|-------------|
-| Inconsistent render | Unicode displays differently on different OS, browsers, devices |
-| Lack of control | Cannot centrally change style, manage themes |
-| No scalability | No size control, no responsiveness |
-| Professional standard violation | Reduces trust, breaks visual hierarchy |
+| Problem                         | Description                                                     |
+| ------------------------------- | --------------------------------------------------------------- |
+| Inconsistent render             | Unicode displays differently on different OS, browsers, devices |
+| Lack of control                 | Cannot centrally change style, manage themes                    |
+| No scalability                  | No size control, no responsiveness                              |
+| Professional standard violation | Reduces trust, breaks visual hierarchy                          |
 
 ---
 
@@ -96,40 +96,40 @@ The standard applies a **tiered approach** instead of absolute prohibition:
 
 ### 6.1. Basic Set
 
-| Category | Range | Examples |
-|----------|-------|----------|
-| ASCII letters | a-z, A-Z | text, TEXT |
-| Cyrillic | a-ya, A-YA | tekst, TEKST |
-| Digits | 0-9 | 123 |
-| Punctuation | . , ; : ! ? - _ | standard |
-| Whitespace | space, tab, newline | formatting |
+| Category      | Range               | Examples     |
+| ------------- | ------------------- | ------------ |
+| ASCII letters | a-z, A-Z            | text, TEXT   |
+| Cyrillic      | a-ya, A-YA          | tekst, TEKST |
+| Digits        | 0-9                 | 123          |
+| Punctuation   | . , ; : ! ? - _     | standard     |
+| Whitespace    | space, tab, newline | formatting   |
 
 ### 6.2. Whitelist for Diagrams (code [I] only)
 
 For technical diagrams in code, allowed:
 
-| Symbol | Usage |
-|--------|-------|
-| -> | right arrow |
-| <- | left arrow |
-| => | implication |
-| <= | reverse implication |
-| \| | vertical line |
-| + | line junction |
-| - | horizontal line |
-| v | down arrow |
-| ^ | up arrow |
-| > | pointer |
-| < | reverse pointer |
+| Symbol | Usage               |
+| ------ | ------------------- |
+| ->     | right arrow         |
+| <-     | left arrow          |
+| =>     | implication         |
+| <=     | reverse implication |
+| \|     | vertical line       |
+| +      | line junction       |
+| -      | horizontal line     |
+| v      | down arrow          |
+| ^      | up arrow            |
+| >      | pointer             |
+| <      | reverse pointer     |
 
 ### 6.3. Code Formatting in Comments and Documentation
 
 When formatting code in comments and embedded documentation:
 
-| Element | Format |
-|---------|--------|
-| Inline code | `` `code` `` |
-| Code block | `` ```language `` |
+| Element     | Format          |
+| ----------- | --------------- |
+| Inline code | `` `code` ``    |
+| Code block  | ` ```language ` |
 
 **Rules:**
 
@@ -170,21 +170,21 @@ Any visual symbol in UI = **SVG only**
 
 ### 7.3. Icon Libraries
 
-| Library | Status | Usage |
-|---------|--------|-------|
-| Lucide | Primary | All project icons |
+| Library     | Status   | Usage                      |
+| ----------- | -------- | -------------------------- |
+| Lucide      | Primary  | All project icons          |
 | Brand logos | Required | Technologies, integrations |
 
 ### 7.4. Brand Logos
 
 When mentioning technologies, use official SVG:
 
-| Technology | Requirement |
-|------------|-------------|
-| Next.js | Official SVG logo |
-| TypeScript | Official SVG logo |
+| Technology   | Requirement       |
+| ------------ | ----------------- |
+| Next.js      | Official SVG logo |
+| TypeScript   | Official SVG logo |
 | Tailwind CSS | Official SVG logo |
-| Prisma ORM | Official SVG logo |
+| Prisma ORM   | Official SVG logo |
 
 ---
 
@@ -203,18 +203,21 @@ Output must contain only:
 
 ```javascript
 // Remove emoji and Unicode graphics
-text.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u{2702}-\u{27B0}]/gu, '')
+text.replace(
+  /[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u{2702}-\u{27B0}]/gu,
+  "",
+);
 ```
 
 ### 8.3. Final Sanitization
 
 ```javascript
 // For [C] level (code/UI) - ASCII + Cyrillic only (typography strictly prohibited)
-text.replace(/[^\x20-\x7E\u0400-\u04FF]/g, '')
+text.replace(/[^\x20-\x7E\u0400-\u04FF]/g, "");
 
 // For [I] level - with whitelist for diagrams
 // Note: 'v' removed from explicit enumeration as it's in basic ASCII range \x20-\x7E
-text.replace(/[^\x20-\x7E\u0400-\u04FF\-\>\<\=\|\+\^]/g, '')
+text.replace(/[^\x20-\x7E\u0400-\u04FF\-\>\<\=\|\+\^]/g, "");
 
 // ATTENTION: Level [W] (documentation) is regulated by MARKDOWN_STANDARD v2.1.
 // There typographic characters (em dash, en dash, degree, copyright) ARE ALLOWED in plain text, therefore this
@@ -227,20 +230,19 @@ text.replace(/[^\x20-\x7E\u0400-\u04FF\-\>\<\=\|\+\^]/g, '')
 
 ### 9.1. When SVG Unavailable
 
-| Situation | Solution |
-|-----------|----------|
+| Situation      | Solution                              |
+| -------------- | ------------------------------------- |
 | SVG load error | Text alternative (hidden, aria-label) |
-| Email clients | Text + styled span |
-| Terminal / CLI | Text + ANSI colors |
-| Plain text | Text only |
+| Email clients  | Text + styled span                    |
+| Terminal / CLI | Text + ANSI colors                    |
+| Plain text     | Text only                             |
 
 ### 9.2. Fallback Implementation
 
 ```html
 <!-- SVG with fallback via onerror -->
 <span class="icon">
-  <svg onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
-       aria-hidden="true">
+  <svg onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" aria-hidden="true">
     <!-- icon content -->
   </svg>
   <span class="icon-fallback" style="display:none">Save</span>
@@ -265,14 +267,14 @@ File: `eslint-rules/no-unicode-policy.js`
 ```javascript
 module.exports = {
   meta: {
-    type: 'problem',
-    docs: { description: 'Enforce No-Unicode Policy' }
+    type: "problem",
+    docs: { description: "Enforce No-Unicode Policy" },
   },
   create(context) {
     const emojiPattern = /[\u{1F000}-\u{1FFFF}]/u;
     const severity = {
-      '[C]': 'error',  // UI, production code
-      '[I]': 'off'     // Internal, prototypes
+      "[C]": "error", // UI, production code
+      "[I]": "off", // Internal, prototypes
     };
 
     return {
@@ -280,7 +282,7 @@ module.exports = {
         if (emojiPattern.test(node.value)) {
           context.report({
             node,
-            message: 'Unicode graphics prohibited. Use SVG instead.'
+            message: "Unicode graphics prohibited. Use SVG instead.",
           });
         }
       },
@@ -289,7 +291,7 @@ module.exports = {
           if (emojiPattern.test(quasi.value.cooked)) {
             context.report({
               node,
-              message: 'Unicode graphics prohibited in template literals. Use SVG instead.'
+              message: "Unicode graphics prohibited in template literals. Use SVG instead.",
             });
             break;
           }
@@ -299,20 +301,20 @@ module.exports = {
         if (emojiPattern.test(node.value)) {
           context.report({
             node,
-            message: 'Unicode graphics prohibited in JSX. Use SVG instead.'
+            message: "Unicode graphics prohibited in JSX. Use SVG instead.",
           });
         }
-      }
+      },
     };
-  }
+  },
 };
 ```
 
 ### 10.2. Code Review
 
-| Level | Action |
-|-------|--------|
-| [C] violation | PR rejected |
+| Level         | Action                    |
+| ------------- | ------------------------- |
+| [C] violation | PR rejected               |
 | [I] violation | Recommendation (optional) |
 
 ### 10.3. Design Review
@@ -327,20 +329,20 @@ module.exports = {
 
 ### 11.1. Unconditionally Allowed
 
-| Category | Examples |
-|----------|----------|
-| Letters | a-z, A-Z, a-ya, A-YA |
-| Digits | 0-9 |
-| Punctuation | . , ; : ! ? - _ ( ) [ ] { } |
-| Whitelist symbols [I] | -> <- => <= \| + - v ^ > < |
+| Category              | Examples                    |
+| --------------------- | --------------------------- |
+| Letters               | a-z, A-Z, a-ya, A-YA        |
+| Digits                | 0-9                         |
+| Punctuation           | . , ; : ! ? - _ ( ) [ ] { } |
+| Whitelist symbols [I] | -> <- => <= \| + - v ^ > <  |
 
 ### 11.2. Exceptions by Agreement
 
-| Situation | Requirement |
-|-----------|-------------|
+| Situation             | Requirement                                              |
+| --------------------- | -------------------------------------------------------- |
 | External requirements | Email newsletters with emoji - coordinate with marketing |
-| Localization | Languages with non-ASCII characters (Chinese, Arabic) |
-| Accessibility | Unicode characters for screen readers |
+| Localization          | Languages with non-ASCII characters (Chinese, Arabic)    |
+| Accessibility         | Unicode characters for screen readers                    |
 
 ### 11.3. Approval Process
 
@@ -353,20 +355,20 @@ module.exports = {
 
 ## 12. Application by Project Types
 
-| Project Type | Application Level |
-|--------------|-------------------|
-| Enterprise | Full [C] everywhere |
-| B2B SaaS | [C] in UI, [W] in documentation (MARKDOWN_STANDARD) |
-| B2C product | [C] in UI, [W] in documentation (MARKDOWN_STANDARD) |
-| MVP / Prototype | [I] everywhere |
-| Internal tool | [I] in code, [W] in README (MARKDOWN_STANDARD) |
-| Open Source | [C] in UI, [W] in documentation (MARKDOWN_STANDARD) |
+| Project Type    | Application Level                                   |
+| --------------- | --------------------------------------------------- |
+| Enterprise      | Full [C] everywhere                                 |
+| B2B SaaS        | [C] in UI, [W] in documentation (MARKDOWN_STANDARD) |
+| B2C product     | [C] in UI, [W] in documentation (MARKDOWN_STANDARD) |
+| MVP / Prototype | [I] everywhere                                      |
+| Internal tool   | [I] in code, [W] in README (MARKDOWN_STANDARD)      |
+| Open Source     | [C] in UI, [W] in documentation (MARKDOWN_STANDARD) |
 
 ---
 
 ## 13. Compliance Checklist
 
-### Before merge (code [C]):
+### Before merge (code [C])
 
 - [ ] No emoji in UI components
 - [ ] No Unicode-icons in production code
@@ -375,11 +377,11 @@ module.exports = {
 - [ ] Fallback exists for critical icons
 - [ ] AI prompts use correct formulation
 
-### For documentation [W]:
+### For documentation [W]
 
 - [ ] See MARKDOWN_STANDARD v2.1
 
-### For AI-communication (chat) [W]:
+### For AI-communication (chat) [W]
 
 - [ ] No emoji in AI-agent responses
 - [ ] No Unicode-graphics in chat
@@ -400,14 +402,14 @@ module.exports = {
 
 ## 15. Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2024-Q4 | Initial version, absolute prohibition |
-| 2.0 | 2025-01 | Tiered approach, whitelist, fallback strategy, MARKDOWN_STANDARD link, code formatting rules |
-| 2.1 | 2025-01 | Sync with MARKDOWN_STANDARD v2.1 (allow typography in text for [W], fix regex for diagrams, clarify stack signature) |
-| 2.1.1 | 2025-01 | Fixed invalid CSS `:loaded` to `onerror`, added TemplateLiteral and JSXText checks to ESLint rule, removed emoji from document body, removed double separator |
-| 2.1.2 | 2025-01 | Added AI-communication (chat) as [W] level context; AI-agent responses must not contain emoji and Unicode graphics; user messages not regulated |
-| 2.1.3 | 2025-01 | Stack signature parameterized: standard defines format `Built with: <technologies>`, specific stack is project responsibility; default value moved to README_TEMPLATE |
+| Version | Date    | Changes                                                                                                                                                               |
+| ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2024-Q4 | Initial version, absolute prohibition                                                                                                                                 |
+| 2.0     | 2025-01 | Tiered approach, whitelist, fallback strategy, MARKDOWN_STANDARD link, code formatting rules                                                                          |
+| 2.1     | 2025-01 | Sync with MARKDOWN_STANDARD v2.1 (allow typography in text for [W], fix regex for diagrams, clarify stack signature)                                                  |
+| 2.1.1   | 2025-01 | Fixed invalid CSS `:loaded` to `onerror`, added TemplateLiteral and JSXText checks to ESLint rule, removed emoji from document body, removed double separator         |
+| 2.1.2   | 2025-01 | Added AI-communication (chat) as [W] level context; AI-agent responses must not contain emoji and Unicode graphics; user messages not regulated                       |
+| 2.1.3   | 2025-01 | Stack signature parameterized: standard defines format `Built with: <technologies>`, specific stack is project responsibility; default value moved to README_TEMPLATE |
 
 ---
 
@@ -417,8 +419,8 @@ module.exports = {
 
 ## 16. Cross-References
 
-| Standard | Relationship |
-|----------|-------------|
+| Standard    | Relationship                                                                                       |
+| ----------- | -------------------------------------------------------------------------------------------------- |
 | STD-DOC-002 | Markdown Standard: delegates character rules to this standard; keeps .md-specific formatting rules |
 
 ---

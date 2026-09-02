@@ -16,10 +16,10 @@
  * v1.9.70.0: RF-1 fix -- sentence-level negation/context filter
  */
 
-import { SKILL_PATTERNS } from './skill-dictionary.js';
-import { createLogger } from './anti-hallucination.js';
+import { createLogger } from "./anti-hallucination.js";
+import { SKILL_PATTERNS } from "./skill-dictionary.js";
 
-const deriveLog = createLogger('DeriveSkills');
+const deriveLog = createLogger("DeriveSkills");
 
 // ===============================================
 // NEGATION / CONTEXT FILTER (RF-1 fix, v1.9.70.0)
@@ -69,12 +69,12 @@ const NEGATION_MARKERS = [
 function buildSafeCorpus(corpus) {
   // Split on sentence terminators and newlines
   const sentences = corpus.split(/(?<=[.!?])\s+|\n/);
-  const safe = sentences.filter(s => {
+  const safe = sentences.filter((s) => {
     const trimmed = s.trim();
     if (trimmed.length < 8) return true; // truly trivial fragments ("CRM.", "B2B.") are safe
-    return !NEGATION_MARKERS.some(re => re.test(trimmed));
+    return !NEGATION_MARKERS.some((re) => re.test(trimmed));
   });
-  return safe.join('\n');
+  return safe.join("\n");
 }
 
 /**
@@ -110,10 +110,10 @@ export function deriveSkillsFromExperience(resume) {
   // About me
   if (resume.about) textParts.push(resume.about);
 
-  const corpus = textParts.join('\n');
+  const corpus = textParts.join("\n");
 
   if (!corpus || corpus.length < 10) {
-    deriveLog.info('No text corpus for skill derivation');
+    deriveLog.info("No text corpus for skill derivation");
     resume.derivedSkills = [];
     return [];
   }
@@ -122,9 +122,7 @@ export function deriveSkillsFromExperience(resume) {
   const safeCorpus = buildSafeCorpus(corpus);
 
   // Normalise existing skills for dedup
-  const existingSkills = new Set(
-    (resume.skills || []).map(s => s.toLowerCase().trim().replace(/\s+/g, ' '))
-  );
+  const existingSkills = new Set((resume.skills || []).map((s) => s.toLowerCase().trim().replace(/\s+/g, " ")));
 
   const derived = [];
 
@@ -143,10 +141,9 @@ export function deriveSkillsFromExperience(resume) {
 
   resume.derivedSkills = derived;
 
-  deriveLog.info('Derived ' + derived.length + ' skills from experience text (' +
-    corpus.length + ' chars scanned)');
+  deriveLog.info("Derived " + derived.length + " skills from experience text (" + corpus.length + " chars scanned)");
   if (derived.length > 0) {
-    deriveLog.info('Derived skills: ' + derived.join(', '));
+    deriveLog.info("Derived skills: " + derived.join(", "));
   }
 
   return derived;
@@ -175,15 +172,13 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
   }
   if (resume.additionalInfo) textParts.push(resume.additionalInfo);
 
-  const corpus = textParts.join('\n');
+  const corpus = textParts.join("\n");
   if (!corpus) return [];
 
   // RF-1 fix: same negation filter for reverse derivation
   const safeCorpus = buildSafeCorpus(corpus).toLowerCase();
 
-  const existingSkills = new Set(
-    (resume.skills || []).map(s => s.toLowerCase().trim())
-  );
+  const existingSkills = new Set((resume.skills || []).map((s) => s.toLowerCase().trim()));
 
   const matched = [];
 

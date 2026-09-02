@@ -11,21 +11,21 @@
  * Console usage (after page-world bridge): window.__hhNegDiag && window.__hhNegDiag()
  */
 
-import { findElement, HH_SELECTORS } from '../lib/selectors.js';
-import { createLogger, safeGetText, safeGetAttr } from '../lib/anti-hallucination.js';
+import { createLogger, safeGetAttr, safeGetText } from "../lib/anti-hallucination.js";
+import { findElement, HH_SELECTORS } from "../lib/selectors.js";
 
-const diagLog = createLogger('NegDiag');
+const diagLog = createLogger("NegDiag");
 
 /** Selector keys to probe, in order: container first, then per-item fields. */
 const NEGOTIATION_SELECTOR_NAMES = [
-  'negotiationsList',
-  'negotiationsItem',
-  'negotiationsItemCheckbox',
-  'negotiationsItemVacancy',
-  'negotiationsItemCompany',
-  'negotiationsItemDate',
-  'negotiationsItemTag',
-  'negotiationsEmployerStats',
+  "negotiationsList",
+  "negotiationsItem",
+  "negotiationsItemCheckbox",
+  "negotiationsItemVacancy",
+  "negotiationsItemCompany",
+  "negotiationsItemDate",
+  "negotiationsItemTag",
+  "negotiationsEmployerStats",
 ];
 
 /**
@@ -41,15 +41,22 @@ function probeSelector(name, root) {
   if (el) {
     for (const sel of chain) {
       try {
-        if (root.querySelector(sel) === el) { matchedSelector = sel; break; }
-      } catch (_e) { /* invalid selector */ }
+        if (root.querySelector(sel) === el) {
+          matchedSelector = sel;
+          break;
+        }
+      } catch (_e) {
+        /* invalid selector */
+      }
     }
   }
   let count = null;
   if (el) {
     try {
-      count = root.querySelectorAll(chain.join(', ')).length;
-    } catch (_e) { /* invalid compound selector */ }
+      count = root.querySelectorAll(chain.join(", ")).length;
+    } catch (_e) {
+      /* invalid compound selector */
+    }
   }
   return {
     found: el !== null,
@@ -57,8 +64,8 @@ function probeSelector(name, root) {
     chainLength: chain.length,
     count,
     tag: el ? el.tagName : null,
-    dataQa: el ? safeGetAttr(el, 'data-qa', '') : null,
-    text: el ? safeGetText(el, '').substring(0, 120) : null,
+    dataQa: el ? safeGetAttr(el, "data-qa", "") : null,
+    text: el ? safeGetText(el, "").substring(0, 120) : null,
   };
 }
 
@@ -86,24 +93,28 @@ export function diagnoseNegotiationsDOM(opts) {
   const root = opts.root || document;
 
   // Injectable finders/parser (avoid circular import with parsers/negotiations.js)
-  const findList = opts.findListContainer || (() => findElement('negotiationsList', root));
-  const findItems = opts.findItems || (() => {
-    const listEl = findList();
-    if (!listEl) return [];
-    const chain = HH_SELECTORS.negotiationsItem || [];
-    for (const sel of chain) {
-      try {
-        const els = listEl.querySelectorAll(sel);
-        if (els && els.length > 0) return Array.from(els);
-      } catch (_e) { /* invalid selector */ }
-    }
-    return [];
-  });
+  const findList = opts.findListContainer || (() => findElement("negotiationsList", root));
+  const findItems =
+    opts.findItems ||
+    (() => {
+      const listEl = findList();
+      if (!listEl) return [];
+      const chain = HH_SELECTORS.negotiationsItem || [];
+      for (const sel of chain) {
+        try {
+          const els = listEl.querySelectorAll(sel);
+          if (els && els.length > 0) return Array.from(els);
+        } catch (_e) {
+          /* invalid selector */
+        }
+      }
+      return [];
+    });
   const parseItem = opts.parseItem || (() => null);
 
   const result = {
-    url: typeof window !== 'undefined' ? window.location.href : '',
-    path: typeof window !== 'undefined' ? window.location.pathname : '',
+    url: typeof window !== "undefined" ? window.location.href : "",
+    path: typeof window !== "undefined" ? window.location.pathname : "",
     timestamp: new Date().toISOString(),
     selectors: {},
     listContainer: null,
@@ -123,8 +134,8 @@ export function diagnoseNegotiationsDOM(opts) {
     ? {
         found: true,
         tag: listEl.tagName,
-        dataQa: safeGetAttr(listEl, 'data-qa', ''),
-        className: (listEl.className || '').substring(0, 120),
+        dataQa: safeGetAttr(listEl, "data-qa", ""),
+        className: (listEl.className || "").substring(0, 120),
         childElementCount: listEl.childElementCount,
       }
     : { found: false };
@@ -163,7 +174,7 @@ export function diagnoseNegotiationsDOM(opts) {
       }
     } catch (err) {
       empty++;
-      diagLog.warn('diagnose: failed to parse item #' + i + ': ' + err.message);
+      diagLog.warn("diagnose: failed to parse item #" + i + ": " + err.message);
     }
   }
 
@@ -175,20 +186,24 @@ export function diagnoseNegotiationsDOM(opts) {
   // 4. Raw scan: all data-qa containing "negotiation" (for discovering new variants)
   const allQa = new Set();
   try {
-    root.querySelectorAll('[data-qa]').forEach(el => {
-      const qa = el.getAttribute('data-qa');
-      if (qa && qa.includes('negotiation')) allQa.add(qa);
+    root.querySelectorAll("[data-qa]").forEach((el) => {
+      const qa = el.getAttribute("data-qa");
+      if (qa && qa.includes("negotiation")) allQa.add(qa);
     });
-  } catch (_e) { /* DOM not available */ }
+  } catch (_e) {
+    /* DOM not available */
+  }
   result.rawScan.dataQaContainingNegotiations = Array.from(allQa).sort();
 
   // 5. Post to page-world.js for console access (mirror diagnoseVacancyPage pattern)
-  if (typeof window !== 'undefined' && window.postMessage) {
+  if (typeof window !== "undefined" && window.postMessage) {
     try {
-      window.postMessage({ type: 'HH-AR-NEG-DIAG', payload: result }, '*');
-    } catch (_e) { /* postMessage blocked */ }
+      window.postMessage({ type: "HH-AR-NEG-DIAG", payload: result }, "*");
+    } catch (_e) {
+      /* postMessage blocked */
+    }
   }
 
-  diagLog.info('Negotiations diagnostic complete -- ' + parsedOk + '/' + items.length + ' items parsed');
+  diagLog.info("Negotiations diagnostic complete -- " + parsedOk + "/" + items.length + " items parsed");
   return result;
 }

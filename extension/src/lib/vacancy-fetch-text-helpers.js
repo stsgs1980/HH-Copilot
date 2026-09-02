@@ -5,7 +5,7 @@
  * v1.9.61.0
  */
 
-import { parseExperienceString } from './parse-experience.js';
+import { parseExperienceString } from "./parse-experience.js";
 
 /**
  * Parse experience element from document into vacancy.experience.
@@ -15,10 +15,10 @@ import { parseExperienceString } from './parse-experience.js';
  */
 export function parseExperienceFromDoc(doc, vacancy) {
   const expEl = doc.querySelector(
-    '[data-qa="vacancy-experience"], [data-qa*="work-experience"], [data-qa*="experience"]'
+    '[data-qa="vacancy-experience"], [data-qa*="work-experience"], [data-qa*="experience"]',
   );
   if (!expEl) return;
-  const raw = (expEl.textContent || '').trim();
+  const raw = (expEl.textContent || "").trim();
   vacancy.experience = parseExperienceString(raw);
 }
 
@@ -43,27 +43,26 @@ export function parseExperienceFromDoc(doc, vacancy) {
  * @returns {string} -- clean company name, '' if nothing extractable
  */
 export function extractCleanCompanyName(el) {
-  if (!el) return '';
+  if (!el) return "";
   try {
     const clone = el.cloneNode(true);
     // Remove noise children from the CLONE only (page DOM untouched)
-    clone.querySelectorAll('script, style, svg, [data-qa*="reviews"], [data-qa*="rating"]')
-      .forEach(n => n.remove());
-    let text = (clone.textContent || '').trim();
+    clone.querySelectorAll('script, style, svg, [data-qa*="reviews"], [data-qa*="rating"]').forEach((n) => n.remove());
+    let text = (clone.textContent || "").trim();
     if (!text) {
       // Fallback: maybe the element itself is a link with just the name
-      text = (el.textContent || '').trim();
+      text = (el.textContent || "").trim();
     }
     // Cut at "N отзывов" / "N reviews" / "N отзыва" patterns
     // Examples: "ООО САНЛАЙФ4,935 отзывов" -> "ООО САНЛАЙФ"
     //           "Сбер 1234 отзыва"         -> "Сбер"
-    text = text.replace(/\s*\d[\d\s.,]*\s*(отзыв\w*|review\w*)\s*.*/i, '').trim();
+    text = text.replace(/\s*\d[\d\s.,]*\s*(отзыв\w*|review\w*)\s*.*/i, "").trim();
     // Also cut at " window." start (script leaked through somehow)
-    text = text.replace(/\s+window\..*$/s, '').trim();
+    text = text.replace(/\s+window\..*$/s, "").trim();
     // Trim trailing separators (em dash U+2014, hyphen, pipe, bullet, middle dot)
-    text = text.replace(/[\s\u2014\-|\u2022\u00B7]+$/, '').trim();
+    text = text.replace(/[\s\u2014\-|\u2022\u00B7]+$/, "").trim();
     return text;
   } catch (_e) {
-    return (el.textContent || '').trim();
+    return (el.textContent || "").trim();
   }
 }

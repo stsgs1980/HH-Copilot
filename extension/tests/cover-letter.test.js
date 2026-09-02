@@ -7,135 +7,133 @@
  * v1.9.30.0
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from "vitest";
 
-describe('cover-letter-generator: fillTemplate', () => {
+describe("cover-letter-generator: fillTemplate", () => {
   let fillTemplate;
 
   beforeEach(async () => {
-    const mod = await import('../src/lib/cover-letter-generator.js');
+    const mod = await import("../src/lib/cover-letter-generator.js");
     fillTemplate = mod.fillTemplate;
   });
 
-  it('replaces all placeholders in template', () => {
-    const template = 'Вакансия: {position} в {company}. Опыт: {experience}.';
-    const values = { position: 'Developer', company: 'Яндекс', experience: '5 лет' };
+  it("replaces all placeholders in template", () => {
+    const template = "Вакансия: {position} в {company}. Опыт: {experience}.";
+    const values = { position: "Developer", company: "Яндекс", experience: "5 лет" };
     const result = fillTemplate(template, values);
-    expect(result).toBe('Вакансия: Developer в Яндекс. Опыт: 5 лет.');
+    expect(result).toBe("Вакансия: Developer в Яндекс. Опыт: 5 лет.");
   });
 
-  it('replaces empty values with empty string', () => {
-    const template = 'Hello {name}!';
-    const values = { name: '' };
-    expect(fillTemplate(template, values)).toBe('Hello !');
+  it("replaces empty values with empty string", () => {
+    const template = "Hello {name}!";
+    const values = { name: "" };
+    expect(fillTemplate(template, values)).toBe("Hello !");
   });
 
-  it('leaves unknown placeholders unchanged', () => {
-    const template = 'Hello {unknown}!';
+  it("leaves unknown placeholders unchanged", () => {
+    const template = "Hello {unknown}!";
     const values = {};
-    expect(fillTemplate(template, values)).toBe('Hello {unknown}!');
+    expect(fillTemplate(template, values)).toBe("Hello {unknown}!");
   });
 
-  it('handles multiple occurrences of same placeholder', () => {
-    const template = '{position} -- это {position}';
-    const values = { position: 'Dev' };
-    expect(fillTemplate(template, values)).toBe('Dev -- это Dev');
+  it("handles multiple occurrences of same placeholder", () => {
+    const template = "{position} -- это {position}";
+    const values = { position: "Dev" };
+    expect(fillTemplate(template, values)).toBe("Dev -- это Dev");
   });
 
-  it('returns empty string for null template', () => {
-    expect(fillTemplate(null, {})).toBe('');
+  it("returns empty string for null template", () => {
+    expect(fillTemplate(null, {})).toBe("");
   });
 });
 
-describe('cover-letter-generator: generateCoverLetter', () => {
+describe("cover-letter-generator: generateCoverLetter", () => {
   let generateCoverLetter;
 
   beforeEach(async () => {
-    const mod = await import('../src/lib/cover-letter-generator.js');
+    const mod = await import("../src/lib/cover-letter-generator.js");
     generateCoverLetter = mod.generateCoverLetter;
   });
 
-  it('returns empty text when no vacancy provided', async () => {
+  it("returns empty text when no vacancy provided", async () => {
     const result = await generateCoverLetter(null, null);
-    expect(result.text).toBe('');
-    expect(result.method).toBe('none');
+    expect(result.text).toBe("");
+    expect(result.method).toBe("none");
   });
 
-  it('generates a letter with vacancy title and company', async () => {
+  it("generates a letter with vacancy title and company", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Senior Developer',
-      company: 'Яндекс',
-      skills: ['Python'],
+      id: "1",
+      title: "Senior Developer",
+      company: "Яндекс",
+      skills: ["Python"],
     };
     const resume = {
-      skills: ['Python', 'Django'],
+      skills: ["Python", "Django"],
       derivedSkills: [],
       experience: [],
     };
 
     const result = await generateCoverLetter(vacancy, resume);
-    expect(result.text).toContain('Senior Developer');
-    expect(result.text).toContain('Яндекс');
+    expect(result.text).toContain("Senior Developer");
+    expect(result.text).toContain("Яндекс");
     expect(result.text.length).toBeGreaterThan(20);
   });
 
-  it('uses custom template when provided', async () => {
+  it("uses custom template when provided", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Developer',
-      company: 'Test',
+      id: "1",
+      title: "Developer",
+      company: "Test",
     };
     const resume = null;
 
     const result = await generateCoverLetter(vacancy, resume, {
-      template: 'My custom letter for {position} at {company}',
+      template: "My custom letter for {position} at {company}",
     });
-    expect(result.text).toBe('My custom letter for Developer at Test');
-    expect(result.method).toBe('template');
+    expect(result.text).toBe("My custom letter for Developer at Test");
+    expect(result.method).toBe("template");
   });
 
-  it('generates rich letter when vacancy has keySkills and resume has skills', async () => {
+  it("generates rich letter when vacancy has keySkills and resume has skills", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Frontend Developer',
-      company: 'Google',
-      keySkills: ['React', 'TypeScript', 'CSS'],
+      id: "1",
+      title: "Frontend Developer",
+      company: "Google",
+      keySkills: ["React", "TypeScript", "CSS"],
       derivedSkills: [],
       description: {
-        text: 'We are looking for a Frontend Developer with React experience.',
-        html: '<p>We are looking for a Frontend Developer with React experience.</p>',
+        text: "We are looking for a Frontend Developer with React experience.",
+        html: "<p>We are looking for a Frontend Developer with React experience.</p>",
         headings: [],
         sections: {
-          requirements: 'Знание React и TypeScript',
-          responsibilities: 'Разработка интерфейсов',
+          requirements: "Знание React и TypeScript",
+          responsibilities: "Разработка интерфейсов",
         },
       },
     };
     const resume = {
-      title: 'Frontend Developer',
-      skills: ['React', 'TypeScript', 'JavaScript'],
-      derivedSkills: ['REST API'],
-      experience: [
-        { position: 'Frontend Dev', duration: '3 года 6 месяцев' },
-      ],
-      salary: '150 000 \u20BD',
+      title: "Frontend Developer",
+      skills: ["React", "TypeScript", "JavaScript"],
+      derivedSkills: ["REST API"],
+      experience: [{ position: "Frontend Dev", duration: "3 года 6 месяцев" }],
+      salary: "150 000 \u20BD",
     };
 
     const result = await generateCoverLetter(vacancy, resume);
-    expect(result.text).toContain('Frontend Developer');
-    expect(result.text).toContain('Google');
+    expect(result.text).toContain("Frontend Developer");
+    expect(result.text).toContain("Google");
     // Rich letter should mention matching skills
     expect(result.text.toLowerCase()).toMatch(/react|typescript/);
-    expect(result.method).toBe('rich');
+    expect(result.method).toBe("rich");
   });
 
-  it('truncates letter that exceeds maxLength', async () => {
+  it("truncates letter that exceeds maxLength", async () => {
     const vacancy = {
-      id: '1',
-      title: 'A'.repeat(100),
-      company: 'B'.repeat(100),
-      keySkills: Array.from({ length: 50 }, (_, i) => 'Skill' + i),
+      id: "1",
+      title: "A".repeat(100),
+      company: "B".repeat(100),
+      keySkills: Array.from({ length: 50 }, (_, i) => "Skill" + i),
     };
     const resume = {
       skills: vacancy.keySkills.slice(0, 10),
@@ -147,35 +145,35 @@ describe('cover-letter-generator: generateCoverLetter', () => {
     expect(result.text.length).toBeLessThanOrEqual(200);
   });
 
-  it('handles vacancy with no company name', async () => {
+  it("handles vacancy with no company name", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Developer',
-      skills: ['Python'],
+      id: "1",
+      title: "Developer",
+      skills: ["Python"],
     };
     const resume = {
-      skills: ['Python'],
+      skills: ["Python"],
       derivedSkills: [],
       experience: [],
     };
 
     const result = await generateCoverLetter(vacancy, resume);
-    expect(result.text).toContain('Developer');
+    expect(result.text).toContain("Developer");
     expect(result.text.length).toBeGreaterThan(10);
   });
 
-  it('handles resume with experience entries', async () => {
+  it("handles resume with experience entries", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Developer',
-      company: 'Test',
+      id: "1",
+      title: "Developer",
+      company: "Test",
     };
     const resume = {
-      skills: ['Python'],
+      skills: ["Python"],
       derivedSkills: [],
       experience: [
-        { position: 'Junior Dev', duration: '2 года' },
-        { position: 'Middle Dev', duration: '3 года 6 месяцев' },
+        { position: "Junior Dev", duration: "2 года" },
+        { position: "Middle Dev", duration: "3 года 6 месяцев" },
       ],
     };
 
@@ -184,16 +182,16 @@ describe('cover-letter-generator: generateCoverLetter', () => {
     expect(result.text).toMatch(/\d+\s*(лет|года)/);
   });
 
-  it('includes matching skills from score details', async () => {
+  it("includes matching skills from score details", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Backend Developer',
-      company: 'Yandex',
-      keySkills: ['Python', 'Django', 'PostgreSQL', 'Docker'],
+      id: "1",
+      title: "Backend Developer",
+      company: "Yandex",
+      keySkills: ["Python", "Django", "PostgreSQL", "Docker"],
     };
     const resume = {
-      title: 'Backend Developer',
-      skills: ['Python', 'Django', 'PostgreSQL'],
+      title: "Backend Developer",
+      skills: ["Python", "Django", "PostgreSQL"],
       derivedSkills: [],
       experience: [],
     };
@@ -203,24 +201,24 @@ describe('cover-letter-generator: generateCoverLetter', () => {
     expect(result.text).toMatch(/Python|Django|PostgreSQL/);
   });
 
-  it('references vacancy description sections when available', async () => {
+  it("references vacancy description sections when available", async () => {
     const vacancy = {
-      id: '1',
-      title: 'Developer',
-      company: 'Test',
-      keySkills: ['Python'],
+      id: "1",
+      title: "Developer",
+      company: "Test",
+      keySkills: ["Python"],
       description: {
-        text: 'Full description text with requirements and conditions',
-        html: '<p>Full</p>',
+        text: "Full description text with requirements and conditions",
+        html: "<p>Full</p>",
         headings: [],
         sections: {
-          requirements: 'Знание Python и Django',
-          conditions: 'ДМС, удаленка, гибкий график',
+          requirements: "Знание Python и Django",
+          conditions: "ДМС, удаленка, гибкий график",
         },
       },
     };
     const resume = {
-      skills: ['Python'],
+      skills: ["Python"],
       derivedSkills: [],
       experience: [],
     };
@@ -231,31 +229,31 @@ describe('cover-letter-generator: generateCoverLetter', () => {
   });
 });
 
-describe('cover-letter-generator: findVacancyData', () => {
+describe("cover-letter-generator: findVacancyData", () => {
   let findVacancyData;
 
   beforeEach(async () => {
-    const mod = await import('../src/lib/cover-letter-generator.js');
+    const mod = await import("../src/lib/cover-letter-generator.js");
     findVacancyData = mod.findVacancyData;
   });
 
-  it('finds vacancy in vacancies array by ID', () => {
+  it("finds vacancy in vacancies array by ID", () => {
     const vacancies = [
-      { id: '1', title: 'Dev A' },
-      { id: '2', title: 'Dev B' },
+      { id: "1", title: "Dev A" },
+      { id: "2", title: "Dev B" },
     ];
-    const result = findVacancyData('2', vacancies);
+    const result = findVacancyData("2", vacancies);
     expect(result).not.toBeNull();
-    expect(result.title).toBe('Dev B');
+    expect(result.title).toBe("Dev B");
   });
 
-  it('returns null when vacancy not found', () => {
-    const result = findVacancyData('999', []);
+  it("returns null when vacancy not found", () => {
+    const result = findVacancyData("999", []);
     expect(result).toBeNull();
   });
 
-  it('returns null when vacancies is null', () => {
-    const result = findVacancyData('1', null);
+  it("returns null when vacancies is null", () => {
+    const result = findVacancyData("1", null);
     expect(result).toBeNull();
   });
 });

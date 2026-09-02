@@ -19,50 +19,49 @@
 
 /** Tone IDs and their display labels. */
 export const TONES = [
-  { id: 'formal', label: 'Формальный' },
-  { id: 'friendly', label: 'Дружелюбный' },
-  { id: 'concise', label: 'Краткий' },
-  { id: 'enthusiastic', label: 'Энтузиаст' },
+  { id: "formal", label: "Формальный" },
+  { id: "friendly", label: "Дружелюбный" },
+  { id: "concise", label: "Краткий" },
+  { id: "enthusiastic", label: "Энтузиаст" },
 ];
 
 /** Map of tone id -> greeting string. */
 const GREETINGS = {
-  formal: 'Здравствуйте!',
-  friendly: 'Добрый день!',
-  concise: '',
-  enthusiastic: 'Здравствуйте! Очень рад возможности откликнуться!',
+  formal: "Здравствуйте!",
+  friendly: "Добрый день!",
+  concise: "",
+  enthusiastic: "Здравствуйте! Очень рад возможности откликнуться!",
 };
 
 /** Map of tone id -> closing string. */
 const CLOSINGS = {
-  formal: 'Буду рад обсудить детали на интервью.',
-  friendly: 'Буду очень рад пообщаться и узнать больше о позиции!',
-  concise: '',
-  enthusiastic: 'Готов начать работу в ближайшее время. Очень жду обратной связи!',
+  formal: "Буду рад обсудить детали на интервью.",
+  friendly: "Буду очень рад пообщаться и узнать больше о позиции!",
+  concise: "",
+  enthusiastic: "Готов начать работу в ближайшее время. Очень жду обратной связи!",
 };
 
 /** Default formal template (used as fallback). */
 const DEFAULT_TEMPLATE_FORMAL =
-  'Здравствуйте! Меня заинтересовала вакансия {position} в {company}. ' +
-  'Имею {experience} опыта в {skills}. {matching_sentence}' +
-  'Буду рад обсудить детали на интервью.';
+  "Здравствуйте! Меня заинтересовала вакансия {position} в {company}. " +
+  "Имею {experience} опыта в {skills}. {matching_sentence}" +
+  "Буду рад обсудить детали на интервью.";
 
 /** Friendly template variant. */
 const DEFAULT_TEMPLATE_FRIENDLY =
-  'Добрый день! Очень понравилась вакансия {position} в {company}. ' +
-  'У меня {experience} опыта в {skills}. {matching_sentence}' +
-  'Буду очень рад пообщаться и узнать больше о позиции!';
+  "Добрый день! Очень понравилась вакансия {position} в {company}. " +
+  "У меня {experience} опыта в {skills}. {matching_sentence}" +
+  "Буду очень рад пообщаться и узнать больше о позиции!";
 
 /** Concise template variant -- no greeting/closing, just the body. */
 const DEFAULT_TEMPLATE_CONCISE =
-  'Интересует вакансия {position} в {company}. ' +
-  'Опыт: {experience}. Навыки: {skills}. {matching_sentence}';
+  "Интересует вакансия {position} в {company}. " + "Опыт: {experience}. Навыки: {skills}. {matching_sentence}";
 
 /** Enthusiastic template variant. */
 const DEFAULT_TEMPLATE_ENTHUSIASTIC =
-  'Здравствуйте! Очень рад возможности откликнуться на {position} в {company}! ' +
-  'Имею {experience} опыта в {skills}. {matching_sentence}' +
-  'Готов начать работу в ближайшее время. Очень жду обратной связи!';
+  "Здравствуйте! Очень рад возможности откликнуться на {position} в {company}! " +
+  "Имею {experience} опыта в {skills}. {matching_sentence}" +
+  "Готов начать работу в ближайшее время. Очень жду обратной связи!";
 
 /** Map of tone id -> default template. */
 const TEMPLATES = {
@@ -78,8 +77,8 @@ const TEMPLATES = {
  * @returns {string}
  */
 export function validateTone(tone) {
-  if (typeof tone !== 'string') return 'formal';
-  return TONES.find(t => t.id === tone) ? tone : 'formal';
+  if (typeof tone !== "string") return "formal";
+  return TONES.find((t) => t.id === tone) ? tone : "formal";
 }
 
 /**
@@ -103,16 +102,12 @@ export function getTemplateForTone(tone) {
  * @returns {string}
  */
 export function applyTone(text, tone) {
-  if (!text || typeof text !== 'string') return '';
+  if (!text || typeof text !== "string") return "";
   const t = validateTone(tone);
   let out = text;
 
   // Replace known greetings (formal default + friendly + enthusiastic)
-  const knownGreetings = [
-    'Здравствуйте!',
-    'Добрый день!',
-    'Здравствуйте! Очень рад возможности откликнуться!',
-  ];
+  const knownGreetings = ["Здравствуйте!", "Добрый день!", "Здравствуйте! Очень рад возможности откликнуться!"];
   for (const g of knownGreetings) {
     if (out.startsWith(g)) {
       out = out.slice(g.length).trimStart();
@@ -122,14 +117,14 @@ export function applyTone(text, tone) {
   // Prepend tone greeting (if any)
   const newGreeting = GREETINGS[t];
   if (newGreeting) {
-    out = newGreeting + ' ' + out;
+    out = newGreeting + " " + out;
   }
 
   // Replace known closings
   const knownClosings = [
-    'Буду рад обсудить детали на интервью.',
-    'Буду очень рад пообщаться и узнать больше о позиции!',
-    'Готов начать работу в ближайшее время. Очень жду обратной связи!',
+    "Буду рад обсудить детали на интервью.",
+    "Буду очень рад пообщаться и узнать больше о позиции!",
+    "Готов начать работу в ближайшее время. Очень жду обратной связи!",
   ];
   for (const c of knownClosings) {
     if (out.endsWith(c)) {
@@ -140,7 +135,7 @@ export function applyTone(text, tone) {
   // Append tone closing (if any)
   const newClosing = CLOSINGS[t];
   if (newClosing) {
-    out = out + ' ' + newClosing;
+    out = out + " " + newClosing;
   }
 
   return out.trim();

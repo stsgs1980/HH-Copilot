@@ -13,10 +13,10 @@
  */
 
 const TONE_DESCRIPTIONS = {
-  formal: 'formal and respectful (формальный)',
-  friendly: 'friendly and warm (дружелюбный)',
-  concise: 'concise and to the point (краткий)',
-  enthusiastic: 'enthusiastic and motivated (энтузиазм)',
+  formal: "formal and respectful (формальный)",
+  friendly: "friendly and warm (дружелюбный)",
+  concise: "concise and to the point (краткий)",
+  enthusiastic: "enthusiastic and motivated (энтузиазм)",
 };
 
 const SYSTEM_PROMPT_TEMPLATE = `Ты -- эксперт по составлению сопроводительных писем для hh.ru.
@@ -55,25 +55,23 @@ const SYSTEM_PROMPT_TEMPLATE = `Ты -- эксперт по составлени
  */
 export function buildPrompt(scorecard, evidence, tone) {
   const toneDesc = TONE_DESCRIPTIONS[tone] || TONE_DESCRIPTIONS.formal;
-  const system = SYSTEM_PROMPT_TEMPLATE.replace('{tone}', toneDesc);
+  const system = SYSTEM_PROMPT_TEMPLATE.replace("{tone}", toneDesc);
 
-  const outcomes = (scorecard.outcomes || [])
-    .map((o, _i) => '    - ' + o)
-    .join('\n');
+  const outcomes = (scorecard.outcomes || []).map((o, _i) => "    - " + o).join("\n");
 
   const evidenceLines = (evidence || [])
-    .map(e => '  [' + e.competency + ']: ' + e.evidenceText + '  [уверенность: ' + e.confidence + ']')
-    .join('\n');
+    .map((e) => "  [" + e.competency + "]: " + e.evidenceText + "  [уверенность: " + e.confidence + "]")
+    .join("\n");
 
   const user = `ВАКАНСИЯ:
-  Позиция: ${scorecard.position || '(не указана)'}
-  Компания: ${scorecard.company || '(не указана)'}
-  Миссия роли: ${scorecard.mission || ''}
+  Позиция: ${scorecard.position || "(не указана)"}
+  Компания: ${scorecard.company || "(не указана)"}
+  Миссия роли: ${scorecard.mission || ""}
   Ожидаемые результаты за 12 мес:
-${outcomes || '    (не указаны)'}
+${outcomes || "    (не указаны)"}
 
 КОМПЕТЕНЦИИ + ДОКАЗАТЕЛЬСТВА (используй только эти):
-${evidenceLines || '  (нет доказательств)'}
+${evidenceLines || "  (нет доказательств)"}
 
 ТОН: ${tone}
 
@@ -84,8 +82,8 @@ ${evidenceLines || '  (нет доказательств)'}
 
   return {
     messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
+      { role: "system", content: system },
+      { role: "user", content: user },
     ],
     estimatedTokens,
   };

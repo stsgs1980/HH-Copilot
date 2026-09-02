@@ -7,7 +7,7 @@
 export function getUserName() {
   const nameSelectors = [
     '[data-qa="mainmenu_user_name"]',
-    '.supernova-nav__item--applicant',
+    ".supernova-nav__item--applicant",
     '[data-qa="user-name"]',
     '[data-qa="supernova-user-switcher"]',
   ];
@@ -15,7 +15,7 @@ export function getUserName() {
     try {
       const el = document.querySelector(sel);
       if (el) {
-        const name = (el.textContent || '').trim();
+        const name = (el.textContent || "").trim();
         if (name && name.length > 0 && name.length < 100) {
           return name;
         }
@@ -29,12 +29,12 @@ export function getUserName() {
     for (const el of links) {
       const rect = el.getBoundingClientRect();
       if (rect.top > 120) continue;
-      const name = (el.textContent || '').trim();
+      const name = (el.textContent || "").trim();
       if (name && name.length > 1 && name.length < 100) {
         return name;
       }
     }
   } catch (_e) {}
 
-  return 'Пользователь';
+  return "Пользователь";
 }

@@ -8,19 +8,19 @@
  * v1.9.43.0
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
-import { getStats, saveVacancyDetail, saveVacancyScore, getApplyQueue, setApplyQueue } from '../lib/storage.js';
-import { parseVacanciesFromPage, parseVacanciesOfTheDay } from '../parsers/vacancy-list.js';
-import { scoreTitle } from '../lib/match-scorer-title.js';
-import { diagnoseVacancyPage } from '../parsers/vacancy-diagnostic.js';
-import { parseVacancyDetail } from '../parsers/vacancy-detail.js';
-import { enrichFromCache, fetchVacancyDetails, abortVacancyFetch, isVacancyFetching } from '../lib/vacancy-fetch.js';
-import { continueApply } from '../engine/index.js';
-import { computeMatchScore } from '../lib/match-scorer.js';
-import { panelState, updateVacancies, updateStats } from '../ui/panel.js';
-import { renderVacancyList } from '../ui/tabs/vacancies.js';
+import { continueApply } from "../engine/index.js";
+import { createLogger } from "../lib/anti-hallucination.js";
+import { scoreTitle } from "../lib/match-scorer-title.js";
+import { computeMatchScore } from "../lib/match-scorer.js";
+import { getApplyQueue, getStats, saveVacancyDetail, saveVacancyScore, setApplyQueue } from "../lib/storage.js";
+import { abortVacancyFetch, enrichFromCache, fetchVacancyDetails, isVacancyFetching } from "../lib/vacancy-fetch.js";
+import { parseVacancyDetail } from "../parsers/vacancy-detail.js";
+import { diagnoseVacancyPage } from "../parsers/vacancy-diagnostic.js";
+import { parseVacanciesFromPage, parseVacanciesOfTheDay } from "../parsers/vacancy-list.js";
+import { panelState, updateStats, updateVacancies } from "../ui/panel.js";
+import { renderVacancyList } from "../ui/tabs/vacancies.js";
 
-const pageLog = createLogger('Main');
+const pageLog = createLogger("Main");
 
 // -- Vacancy search page --
 
@@ -50,7 +50,7 @@ export async function handleVacancySearchPage() {
     new MutationObserver(() => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        if (!window.location.pathname.startsWith('/search/vacancy')) return;
+        if (!window.location.pathname.startsWith("/search/vacancy")) return;
         abortVacancyFetch();
         const fresh = await parseVacanciesFromPage(panelState.resume);
         await enrichFromCache(fresh, panelState.resume);
@@ -58,7 +58,7 @@ export async function handleVacancySearchPage() {
         startBackgroundEnrichment(fresh);
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
-    pageLog.info('SPA observer active');
+    pageLog.info("SPA observer active");
   }
 }
 
@@ -71,17 +71,17 @@ export async function handleVacancySearchPage() {
  * @param {string} path -- current pathname
  */
 export async function handleVacancyDetailPage(path) {
-  pageLog.info('Vacancy detail page detected');
+  pageLog.info("Vacancy detail page detected");
 
   // Run vacancy page diagnostic
   try {
     const diag = diagnoseVacancyPage();
-    const fieldCount = Object.keys(diag.autoDetect || {})
-      .filter(k => diag.autoDetect[k] && (diag.autoDetect[k].value || diag.autoDetect[k].found))
-      .length;
-    pageLog.info('Vacancy diagnostic: ' + fieldCount + ' fields detected');
+    const fieldCount = Object.keys(diag.autoDetect || {}).filter(
+      (k) => diag.autoDetect[k] && (diag.autoDetect[k].value || diag.autoDetect[k].found),
+    ).length;
+    pageLog.info("Vacancy diagnostic: " + fieldCount + " fields detected");
   } catch (_e) {
-    pageLog.warn('Vacancy diagnostic failed');
+    pageLog.warn("Vacancy diagnostic failed");
   }
 
   // Parse vacancy detail
@@ -93,43 +93,61 @@ export async function handleVacancyDetailPage(path) {
         const score = await computeMatchScore(resume, detail);
         detail.matchScore = score.total;
         detail.matchBreakdown = score.breakdown;
-        pageLog.info('Match score: ' + score.total + '% (skills=' + score.breakdown.skills + ', title=' + score.breakdown.title + ', salary=' + score.breakdown.salary + ', exp=' + score.breakdown.experience + ')');
+        pageLog.info(
+          "Match score: " +
+            score.total +
+            "% (skills=" +
+            score.breakdown.skills +
+            ", title=" +
+            score.breakdown.title +
+            ", salary=" +
+            score.breakdown.salary +
+            ", exp=" +
+            score.breakdown.experience +
+            ")",
+        );
         saveVacancyScore(detail.id, score.total, score.breakdown, score.details).catch(() => {});
-        window.dispatchEvent(new CustomEvent('hh-ar-match-updated', { detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details } }));
+        window.dispatchEvent(
+          new CustomEvent("hh-ar-match-updated", {
+            detail: { vacancyId: detail.id, score: score.total, breakdown: score.breakdown, details: score.details },
+          }),
+        );
       } else {
-        pageLog.info('No active resume -- skip match scoring');
+        pageLog.info("No active resume -- skip match scoring");
       }
-      pageLog.info('Vacancy parsed: ' + detail.title + ' | skills=' + detail.keySkills.length + ' | salary=' + detail.salary.raw);
+      pageLog.info(
+        "Vacancy parsed: " + detail.title + " | skills=" + detail.keySkills.length + " | salary=" + detail.salary.raw,
+      );
       window.__hhVacDetail = detail;
       saveVacancyDetail(detail).catch(() => {});
     } else {
-      pageLog.warn('Vacancy detail parse returned null');
+      pageLog.warn("Vacancy detail parse returned null");
     }
   } catch (_e) {
-    pageLog.error('Vacancy detail parse failed');
+    pageLog.error("Vacancy detail parse failed");
   }
 
   // Process apply queue
   try {
     const queue = await getApplyQueue();
     if (queue.length > 0) {
-      const vacancyId = path.replace('/vacancy/', '').split('?')[0].split('#')[0];
-      const pending = queue.find(q => q.vacancyId === vacancyId);
+      const vacancyId = path.replace("/vacancy/", "").split("?")[0].split("#")[0];
+      const pending = queue.find((q) => q.vacancyId === vacancyId);
       if (pending) {
-        const updatedQueue = queue.filter(q => q.vacancyId !== vacancyId);
+        const updatedQueue = queue.filter((q) => q.vacancyId !== vacancyId);
         await setApplyQueue(updatedQueue);
-        pageLog.info('Processing apply for vacancy ' + vacancyId);
+        pageLog.info("Processing apply for vacancy " + vacancyId);
         setTimeout(async () => {
           await continueApply(pending);
         }, 2000);
       } else {
-        pageLog.info('Queue has items but none for current vacancy (' + vacancyId + ')');
+        pageLog.info("Queue has items but none for current vacancy (" + vacancyId + ")");
       }
     } else {
-      pageLog.info('No apply queue');
+      pageLog.info("No apply queue");
     }
   } catch (_e) {
-    pageLog.error('Error processing apply queue');
+    pageLog.error("Error processing apply queue");
   }
 }
 
@@ -148,12 +166,18 @@ const VOTD_TITLE_SIMILARITY_THRESHOLD = 0.3;
  */
 function filterVotdByRelevance(votd, resume) {
   if (!resume || !resume.title) return votd;
-  return votd.filter(v => {
+  return votd.filter((v) => {
     const titleResult = scoreTitle(resume, v);
     const isRelevant = titleResult.similarity >= VOTD_TITLE_SIMILARITY_THRESHOLD;
     if (!isRelevant) {
-      pageLog.info('VOTD filtered out: "' + v.title + '" similarity=' +
-        titleResult.similarity.toFixed(2) + ' < ' + VOTD_TITLE_SIMILARITY_THRESHOLD);
+      pageLog.info(
+        'VOTD filtered out: "' +
+          v.title +
+          '" similarity=' +
+          titleResult.similarity.toFixed(2) +
+          " < " +
+          VOTD_TITLE_SIMILARITY_THRESHOLD,
+      );
     }
     return isRelevant;
   });
@@ -178,7 +202,17 @@ export async function handleMainPage() {
   const stats = getStats();
   updateStats(stats);
 
-  pageLog.info('Main page: ' + recommended.length + ' recommended + ' + votd.length + '/' + rawVotd.length + ' VotD (filtered) = ' + allVacancies.length + ' total');
+  pageLog.info(
+    "Main page: " +
+      recommended.length +
+      " recommended + " +
+      votd.length +
+      "/" +
+      rawVotd.length +
+      " VotD (filtered) = " +
+      allVacancies.length +
+      " total",
+  );
 
   startBackgroundEnrichment(allVacancies);
 
@@ -188,7 +222,7 @@ export async function handleMainPage() {
     new MutationObserver(() => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        if (window.location.pathname !== '/' && window.location.pathname !== '') return;
+        if (window.location.pathname !== "/" && window.location.pathname !== "") return;
         abortVacancyFetch();
         const rec = await parseVacanciesFromPage(panelState.resume);
         const rawVd = await parseVacanciesOfTheDay(panelState.resume);
@@ -199,7 +233,7 @@ export async function handleMainPage() {
         startBackgroundEnrichment(fresh);
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
-    pageLog.info('Main page SPA observer active');
+    pageLog.info("Main page SPA observer active");
   }
 }
 
@@ -216,7 +250,7 @@ export function startBackgroundEnrichment(vacancies) {
   if (!vacancies || vacancies.length === 0) return;
 
   if (isVacancyFetching()) {
-    pageLog.info('Background enrichment already in progress -- skipping');
+    pageLog.info("Background enrichment already in progress -- skipping");
     return;
   }
 
@@ -224,18 +258,20 @@ export function startBackgroundEnrichment(vacancies) {
     onVacancyEnriched(vacancy) {
       try {
         renderVacancyList();
-        pageLog.info('UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" -> ' + vacancy.matchScore + '%');
+        pageLog.info(
+          'UI updated after enrichment: "' + vacancy.title.substring(0, 30) + '" -> ' + vacancy.matchScore + "%",
+        );
       } catch (_e) {
-        pageLog.warn('UI update after enrichment failed');
+        pageLog.warn("UI update after enrichment failed");
       }
     },
     onBatchComplete() {
-      pageLog.info('Background enrichment batch complete');
+      pageLog.info("Background enrichment batch complete");
     },
     onProgress(current, total, title) {
-      pageLog.info('Enriching ' + current + '/' + total + ': ' + title.substring(0, 40));
-    }
-  }).catch(_e => {
-    pageLog.error('Background enrichment error');
+      pageLog.info("Enriching " + current + "/" + total + ": " + title.substring(0, 40));
+    },
+  }).catch((_e) => {
+    pageLog.error("Background enrichment error");
   });
 }

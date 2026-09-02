@@ -11,20 +11,20 @@
  * Handler implementations are in main-page-handlers-pages.js.
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
+import { createLogger } from "../lib/anti-hallucination.js";
 import {
-  handleVacancySearchPage,
+  handleMainPage,
+  handleNegotiationsPage,
   handleResumeDetailPage,
   handleResumeListPage,
   handleVacancyDetailPage,
-  handleMainPage,
-  handleNegotiationsPage,
-} from './main-page-handlers-pages.js';
+  handleVacancySearchPage,
+} from "./main-page-handlers-pages.js";
 
-const pageLog = createLogger('Main');
+const pageLog = createLogger("Main");
 
 /** Tracks which URL path was last handled -- prevents duplicate SPA triggers */
-let lastHandledPath = '';
+let lastHandledPath = "";
 
 /** Guard: prevent duplicate initPageLogic() calls (event + safety net) */
 let pageLogicInitialized = false;
@@ -37,7 +37,7 @@ let pageLogicInitialized = false;
  */
 export async function initPageLogic() {
   if (pageLogicInitialized) {
-    pageLog.info('Page logic already initialized -- skipping duplicate');
+    pageLog.info("Page logic already initialized -- skipping duplicate");
     return;
   }
   pageLogicInitialized = true;
@@ -51,12 +51,12 @@ export async function initPageLogic() {
   // Set up SPA navigation detection
   setupSPARouting();
 
-  pageLog.info('Page logic initialized, SPA routing active');
+  pageLog.info("Page logic initialized, SPA routing active");
 }
 
 /** Reset state (for testing). */
 export function resetPageInit() {
-  lastHandledPath = '';
+  lastHandledPath = "";
   pageLogicInitialized = false;
 }
 
@@ -71,27 +71,27 @@ export function resetPageInit() {
  */
 function setupSPARouting() {
   // Browser back/forward
-  window.addEventListener('popstate', () => {
+  window.addEventListener("popstate", () => {
     onSPANavigate(window.location.pathname);
   });
 
   // Patch pushState / replaceState in content script's own context
   const origPush = history.pushState;
-  history.pushState = function() {
+  history.pushState = function () {
     origPush.apply(this, arguments);
     onSPANavigate(window.location.pathname);
   };
 
   const origReplace = history.replaceState;
-  history.replaceState = function() {
+  history.replaceState = function () {
     origReplace.apply(this, arguments);
     onSPANavigate(window.location.pathname);
   };
 
   // Listen for SPA navigations triggered from MAIN world (page-world.js)
-  document.addEventListener('hh-ar-spa-navigate', (e) => {
+  document.addEventListener("hh-ar-spa-navigate", (e) => {
     const path = e.detail?.path || window.location.pathname;
-    pageLog.info('MAIN world SPA navigate: ' + path);
+    pageLog.info("MAIN world SPA navigate: " + path);
     onSPANavigate(path);
   });
 }
@@ -106,7 +106,7 @@ function onSPANavigate(newPath) {
   spaTimer = setTimeout(async () => {
     if (window.location.pathname === lastHandledPath) return;
     const path = window.location.pathname;
-    pageLog.info('SPA navigate: ' + lastHandledPath + ' -> ' + path);
+    pageLog.info("SPA navigate: " + lastHandledPath + " -> " + path);
     await routeToHandler(path);
     lastHandledPath = path;
   }, 300);
@@ -117,22 +117,22 @@ function onSPANavigate(newPath) {
 // ===============================================
 
 async function routeToHandler(path) {
-  pageLog.info('Routing: ' + path);
+  pageLog.info("Routing: " + path);
 
-  if (path.startsWith('/search/vacancy')) {
+  if (path.startsWith("/search/vacancy")) {
     await handleVacancySearchPage();
   } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
     await handleResumeDetailPage(path);
   } else if (/\/applicant\/resumes\/view/.test(path)) {
     // Applicant's own resume view page -- treat as resume detail, not list
     await handleResumeDetailPage(path);
-  } else if (path.startsWith('/applicant/resumes')) {
+  } else if (path.startsWith("/applicant/resumes")) {
     await handleResumeListPage();
   } else if (/^\/vacancy\/\d+/.test(path)) {
     await handleVacancyDetailPage(path);
-  } else if (path.startsWith('/applicant/negotiations')) {
+  } else if (path.startsWith("/applicant/negotiations")) {
     await handleNegotiationsPage();
-  } else if (path === '/' || path === '') {
+  } else if (path === "/" || path === "") {
     await handleMainPage();
   }
 }

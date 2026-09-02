@@ -13,32 +13,30 @@
  * v1.9.43.0 -- F1.9
  */
 
-import { NEGOTIATION_TABS } from '../../parsers/negotiations-aggregator.js';
+import { NEGOTIATION_TABS } from "../../parsers/negotiations-aggregator.js";
 
 /** Russian labels for hh.ru tab origins. */
-const TAB_ORIGIN_LABELS = Object.fromEntries(
-  NEGOTIATION_TABS.map(t => [t.id, t.label])
-);
+const TAB_ORIGIN_LABELS = Object.fromEntries(NEGOTIATION_TABS.map((t) => [t.id, t.label]));
 
 /** Status -> {bg, fg, border, label} for badges. Shared with negotiations.js. */
 export const STATUS_CONFIG = {
-  'invite':     { bg: '#ECFDF5', fg: '#059669', border: '#A7F3D0', label: 'Приглашение' },
-  'not-viewed': { bg: '#FFFBEB', fg: '#D97706', border: '#FDE68A', label: 'Не просмотрен' },
-  'viewed':     { bg: '#EFF6FF', fg: '#2563EB', border: '#BFDBFE', label: 'Просмотрен' },
-  'discard':    { bg: '#FEF2F2', fg: '#DC2626', border: '#FECACA', label: 'Отказ' },
-  'unknown':    { bg: '#F4F4F5', fg: '#71717A', border: '#E4E4E7', label: 'Неизвестно' },
+  invite: { bg: "#ECFDF5", fg: "#059669", border: "#A7F3D0", label: "Приглашение" },
+  "not-viewed": { bg: "#FFFBEB", fg: "#D97706", border: "#FDE68A", label: "Не просмотрен" },
+  viewed: { bg: "#EFF6FF", fg: "#2563EB", border: "#BFDBFE", label: "Просмотрен" },
+  discard: { bg: "#FEF2F2", fg: "#DC2626", border: "#FECACA", label: "Отказ" },
+  unknown: { bg: "#F4F4F5", fg: "#71717A", border: "#E4E4E7", label: "Неизвестно" },
 };
 
 /** Tab origin -> badge color (subtle, so it does not compete with status). */
 export const TAB_ORIGIN_CONFIG = {
-  'all':      { bg: '#F8FAFC', fg: '#475569' },
-  'invite':   { bg: '#ECFDF5', fg: '#059669' },
-  'consider': { bg: '#EFF6FF', fg: '#2563EB' },
-  'offer':    { bg: '#FDF4FF', fg: '#A855F7' },
-  'wait':     { bg: '#FFFBEB', fg: '#D97706' },
-  'discard':  { bg: '#FEF2F2', fg: '#DC2626' },
-  'deleted':  { bg: '#F1F5F9', fg: '#64748B' },
-  'archive':  { bg: '#F1F5F9', fg: '#64748B' },
+  all: { bg: "#F8FAFC", fg: "#475569" },
+  invite: { bg: "#ECFDF5", fg: "#059669" },
+  consider: { bg: "#EFF6FF", fg: "#2563EB" },
+  offer: { bg: "#FDF4FF", fg: "#A855F7" },
+  wait: { bg: "#FFFBEB", fg: "#D97706" },
+  discard: { bg: "#FEF2F2", fg: "#DC2626" },
+  deleted: { bg: "#F1F5F9", fg: "#64748B" },
+  archive: { bg: "#F1F5F9", fg: "#64748B" },
 };
 
 /**
@@ -48,12 +46,12 @@ export const TAB_ORIGIN_CONFIG = {
  * @returns {Object}
  */
 export function computeStatusCounts(items) {
-  const counts = { all: 0, invite: 0, 'not-viewed': 0, viewed: 0, discard: 0, unknown: 0 };
+  const counts = { all: 0, invite: 0, "not-viewed": 0, viewed: 0, discard: 0, unknown: 0 };
   if (!items || !Array.isArray(items)) return counts;
   for (const item of items) {
-    if (!item) continue;  // anti-ghost
+    if (!item) continue; // anti-ghost
     counts.all++;
-    const s = item.status || 'unknown';
+    const s = item.status || "unknown";
     if (counts[s] === undefined) counts.unknown++;
     else counts[s]++;
   }
@@ -73,7 +71,7 @@ export function computeTabOriginCounts(items) {
   if (!items || !Array.isArray(items)) return counts;
   for (const item of items) {
     if (!item) continue;
-    const tab = item.tabOrigin || 'all';
+    const tab = item.tabOrigin || "all";
     if (counts[tab] === undefined) counts[tab] = 0;
     counts[tab]++;
   }
@@ -87,16 +85,13 @@ export function computeTabOriginCounts(items) {
  * @returns {string}
  */
 export function formatSummaryText(counts) {
-  if (!counts || counts.all === 0) return 'Нет откликов';
-  const forms = ['отклик', 'отклика', 'откликов'];
+  if (!counts || counts.all === 0) return "Нет откликов";
+  const forms = ["отклик", "отклика", "откликов"];
   const n = counts.all;
   const abs = Math.abs(n) % 100;
   const last = abs % 10;
-  const form = (abs > 10 && abs < 20) ? forms[2]
-    : (last > 1 && last < 5) ? forms[1]
-    : (last === 1) ? forms[0]
-    : forms[2];
-  return n + ' ' + form;
+  const form = abs > 10 && abs < 20 ? forms[2] : last > 1 && last < 5 ? forms[1] : last === 1 ? forms[0] : forms[2];
+  return n + " " + form;
 }
 
 /**
@@ -108,10 +103,11 @@ export function formatSummaryText(counts) {
  */
 export function renderStatusChip(status, count, isActive) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.unknown;
-  const label = status === 'all' ? 'Все' : cfg.label;
-  const cls = isActive ? 'btn-primary' : 'btn-outline';
-  const style = 'font-size:10px;padding:2px 8px;'
-    + (isActive
+  const label = status === "all" ? "Все" : cfg.label;
+  const cls = isActive ? "btn-primary" : "btn-outline";
+  const style =
+    "font-size:10px;padding:2px 8px;" +
+    (isActive
       ? `background:${cfg.fg};color:#fff;border:1px solid ${cfg.fg};`
       : `background:${cfg.bg};color:${cfg.fg};border:1px solid ${cfg.border};`);
   return `<button class="btn ${cls} btn-sm neg-status-btn" data-status="${status}" style="${style}">${label} ${count}</button>`;
@@ -127,8 +123,9 @@ export function renderStatusChip(status, count, isActive) {
 export function renderTabOriginChip(tabId, count, isActive) {
   const cfg = TAB_ORIGIN_CONFIG[tabId] || TAB_ORIGIN_CONFIG.all;
   const label = TAB_ORIGIN_LABELS[tabId] || tabId;
-  const style = 'font-size:10px;padding:2px 6px;border-radius:4px;'
-    + (isActive
+  const style =
+    "font-size:10px;padding:2px 6px;border-radius:4px;" +
+    (isActive
       ? `background:${cfg.fg};color:#fff;border:1px solid ${cfg.fg};`
       : `background:${cfg.bg};color:${cfg.fg};border:1px solid transparent;`);
   return `<button class="neg-tab-btn" data-tab-origin="${tabId}" style="${style}">${label} ${count}</button>`;

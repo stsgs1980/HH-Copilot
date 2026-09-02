@@ -8,12 +8,12 @@
  * v1.9.43.0
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
-import { generateCoverLetter } from '../lib/cover-letter-generator.js';
-import { getVacancyDetail } from '../lib/storage-vacancies.js';
-import { getCoverLetterConfig } from '../lib/cover-letter-storage.js';
+import { createLogger } from "../lib/anti-hallucination.js";
+import { generateCoverLetter } from "../lib/cover-letter-generator.js";
+import { getCoverLetterConfig } from "../lib/cover-letter-storage.js";
+import { getVacancyDetail } from "../lib/storage-vacancies.js";
 
-const coverLog = createLogger('AutoRespond');
+const coverLog = createLogger("AutoRespond");
 
 /**
  * Active resume reference -- set by the apply orchestrator
@@ -46,7 +46,7 @@ export async function fillCoverLetter(inputEl) {
     const vacancyId = urlMatch ? urlMatch[1] : null;
 
     if (!vacancyId) {
-      coverLog.info('Cannot extract vacancy ID for cover letter');
+      coverLog.info("Cannot extract vacancy ID for cover letter");
       return false;
     }
 
@@ -58,12 +58,12 @@ export async function fillCoverLetter(inputEl) {
       try {
         vacancy = await getVacancyDetail(vacancyId);
       } catch (_e) {
-        coverLog.warn('Could not load vacancy detail from storage');
+        coverLog.warn("Could not load vacancy detail from storage");
       }
     }
 
     if (!vacancy) {
-      coverLog.info('No vacancy data available for cover letter generation');
+      coverLog.info("No vacancy data available for cover letter generation");
       return false;
     }
 
@@ -84,14 +84,12 @@ export async function fillCoverLetter(inputEl) {
     const result = generateCoverLetter(vacancy, resume, { template, tone });
 
     if (!result.text || result.text.length < 10) {
-      coverLog.info('Cover letter generation returned empty text (method: ' + result.method + ')');
+      coverLog.info("Cover letter generation returned empty text (method: " + result.method + ")");
       return false;
     }
 
     // Fill the input -- use native input value setter for React compatibility
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-      window.HTMLTextAreaElement.prototype, 'value'
-    )?.set;
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
 
     if (nativeInputValueSetter) {
       nativeInputValueSetter.call(inputEl, result.text);
@@ -100,17 +98,22 @@ export async function fillCoverLetter(inputEl) {
     }
 
     // Dispatch input event so React/Magritte picks up the change
-    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    inputEl.dispatchEvent(new Event("change", { bubbles: true }));
 
     coverLog.info(
-      'Cover letter filled (' + result.text.length + ' chars, method: ' + result.method +
-      ', skills: ' + (result.placeholders.matching || 'none') + ')'
+      "Cover letter filled (" +
+        result.text.length +
+        " chars, method: " +
+        result.method +
+        ", skills: " +
+        (result.placeholders.matching || "none") +
+        ")",
     );
 
     return true;
   } catch (err) {
-    coverLog.warn('Cover letter fill failed: ' + err.message);
+    coverLog.warn("Cover letter fill failed: " + err.message);
     return false;
   }
 }
@@ -123,11 +126,11 @@ export async function fillCoverLetter(inputEl) {
  */
 function readCustomTemplateFromSidebar() {
   try {
-    const sidebarEl = document.querySelector('#hh-copilot-sidebar');
+    const sidebarEl = document.querySelector("#hh-copilot-sidebar");
     if (!sidebarEl) return null;
     const shadowRoot = sidebarEl.shadowRoot;
     if (!shadowRoot) return null;
-    const textarea = shadowRoot.getElementById('cover-letter-text');
+    const textarea = shadowRoot.getElementById("cover-letter-text");
     if (!textarea || !textarea.value) return null;
     return textarea.value;
   } catch (_e) {

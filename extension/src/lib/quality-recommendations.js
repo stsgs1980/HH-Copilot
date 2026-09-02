@@ -8,8 +8,8 @@
  * v1.9.22.0: Skills with synonym matches shown separately as "related" (lower priority).
  */
 
-import { findSynonymMatch } from './skill-synonyms.js';
-import { getRoleImpliedSkills } from './role-implied-skills.js';
+import { getRoleImpliedSkills } from "./role-implied-skills.js";
+import { findSynonymMatch } from "./skill-synonyms.js";
 
 /**
  * Build prioritized recommendations for resume improvement.
@@ -25,20 +25,20 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
   const recs = [];
 
   // Priority: ATS-critical
-  const atsFailed = ats.checks.filter(c => !c.passed).sort((a, b) => b.weight - a.weight);
+  const atsFailed = ats.checks.filter((c) => !c.passed).sort((a, b) => b.weight - a.weight);
   for (const c of atsFailed.slice(0, 2)) {
-    recs.push({ priority: 'critical', text: c.tip });
+    recs.push({ priority: "critical", text: c.tip });
   }
 
   // Experience quality
-  const expFailed = exp.checks.filter(c => !c.passed).sort((a, b) => b.weight - a.weight);
+  const expFailed = exp.checks.filter((c) => !c.passed).sort((a, b) => b.weight - a.weight);
   for (const c of expFailed.slice(0, 2)) {
-    recs.push({ priority: 'high', text: c.tip });
+    recs.push({ priority: "high", text: c.tip });
   }
 
   // Red flags
   for (const f of flags.slice(0, 2)) {
-    recs.push({ priority: 'high', text: f });
+    recs.push({ priority: "high", text: f });
   }
 
   // Vacancy skills missing from resume (v1.9.21.0, v1.9.22.0, v1.9.31.0)
@@ -46,11 +46,17 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
     const resumeExplicit = normalizeSkillSet(r.skills || []);
     const resumeDerived = normalizeSkillSet(r.derivedSkills || []);
     const allResume = new Set([...resumeExplicit, ...resumeDerived]);
-    const descText = (r.experience || []).map(e => e.description || '').join(' ').toLowerCase();
-    const descNorm = descText.replace(/[-\u2013\u2014]/g, ' ').replace(/ё/g, 'е').replace(/\s+/g, ' ');
+    const descText = (r.experience || [])
+      .map((e) => e.description || "")
+      .join(" ")
+      .toLowerCase();
+    const descNorm = descText
+      .replace(/[-\u2013\u2014]/g, " ")
+      .replace(/ё/g, "е")
+      .replace(/\s+/g, " ");
 
     // v1.9.31.0: Role-implied skills -- skills self-evident from position title
-    const roleImplied = getRoleImpliedSkills(r.title || '');
+    const roleImplied = getRoleImpliedSkills(r.title || "");
 
     const missing = [];
     const related = [];
@@ -69,40 +75,50 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
 
       const synMatch = findSynonymMatch(vs, allResume);
       if (synMatch) {
-        related.push(vs + ' ~ ' + synMatch);
+        related.push(vs + " ~ " + synMatch);
       } else {
         missing.push(vs);
       }
     }
 
     if (missing.length > 0) {
-      const sample = missing.slice(0, 5).map(s => '"' + s + '"').join(', ');
-      const suffix = missing.length > 5 ? ' и ещё ' + (missing.length - 5) : '';
+      const sample = missing
+        .slice(0, 5)
+        .map((s) => '"' + s + '"')
+        .join(", ");
+      const suffix = missing.length > 5 ? " и ещё " + (missing.length - 5) : "";
       recs.push({
-        priority: 'high',
-        text: missing.length + ' навыков вакансии нет в резюме: ' + sample + suffix + ' -- добавьте для лучшего мэтчинга',
-        tooltip: missing.map(s => '"' + s + '"').join(', ')
+        priority: "high",
+        text:
+          missing.length + " навыков вакансии нет в резюме: " + sample + suffix + " -- добавьте для лучшего мэтчинга",
+        tooltip: missing.map((s) => '"' + s + '"').join(", "),
       });
     }
 
     if (related.length > 0) {
-      const sample = related.slice(0, 3).map(s => '"' + s + '"').join(', ');
-      const suffix = related.length > 3 ? ' и ещё ' + (related.length - 3) : '';
+      const sample = related
+        .slice(0, 3)
+        .map((s) => '"' + s + '"')
+        .join(", ");
+      const suffix = related.length > 3 ? " и ещё " + (related.length - 3) : "";
       recs.push({
-        priority: 'medium',
-        text: 'Связанные навыки: ' + sample + suffix + ' -- упомяните явно для точного мэтчинга',
-        tooltip: related.map(s => '"' + s + '"').join(', ')
+        priority: "medium",
+        text: "Связанные навыки: " + sample + suffix + " -- упомяните явно для точного мэтчинга",
+        tooltip: related.map((s) => '"' + s + '"').join(", "),
       });
     }
 
     // v1.9.31.0: Skills implied by position (self-evident from role, low priority)
     if (implied.length > 0) {
-      const sample = implied.slice(0, 5).map(s => '"' + s + '"').join(', ');
-      const suffix = implied.length > 5 ? ' и ещё ' + (implied.length - 5) : '';
+      const sample = implied
+        .slice(0, 5)
+        .map((s) => '"' + s + '"')
+        .join(", ");
+      const suffix = implied.length > 5 ? " и ещё " + (implied.length - 5) : "";
       recs.push({
-        priority: 'low',
-        text: implied.length + ' навыков подразумеваются должностью: ' + sample + suffix,
-        tooltip: implied.map(s => '"' + s + '"').join(', ')
+        priority: "low",
+        text: implied.length + " навыков подразумеваются должностью: " + sample + suffix,
+        tooltip: implied.map((s) => '"' + s + '"').join(", "),
       });
     }
   }
@@ -117,13 +133,15 @@ export function buildRecommendations(ats, exp, flags, r, vacancySkills) {
 function normalizeSkillSet(skills) {
   const set = new Set();
   for (const s of skills) {
-    const name = typeof s === 'string' ? s : (s.name || '');
+    const name = typeof s === "string" ? s : s.name || "";
     if (name) {
       set.add(
-        name.toLowerCase().trim()
-          .replace(/[-\u2013\u2014]/g, ' ')
-          .replace(/ё/g, 'е')
-          .replace(/\s+/g, ' ')
+        name
+          .toLowerCase()
+          .trim()
+          .replace(/[-\u2013\u2014]/g, " ")
+          .replace(/ё/g, "е")
+          .replace(/\s+/g, " "),
       );
     }
   }

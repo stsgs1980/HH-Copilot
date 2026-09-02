@@ -22,11 +22,12 @@
  * @returns {string}
  */
 function normalizeSkillName(name) {
-  return (name || '')
-    .toLowerCase().trim()
-    .replace(/[-\u2013\u2014]/g, ' ')   // hyphens/dashes -> space ("B2B-Продажи" -> "b2b продажи")
-    .replace(/ё/g, 'е')       // ё -> е
-    .replace(/\s+/g, ' ');    // collapse multiple spaces
+  return (name || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[-\u2013\u2014]/g, " ") // hyphens/dashes -> space ("B2B-Продажи" -> "b2b продажи")
+    .replace(/ё/g, "е") // ё -> е
+    .replace(/\s+/g, " "); // collapse multiple spaces
 }
 
 /**
@@ -37,7 +38,7 @@ function normalizeSkillName(name) {
 function addNormalized(arr, target) {
   if (!Array.isArray(arr)) return;
   for (const item of arr) {
-    const name = typeof item === 'string' ? item : (item?.name || '');
+    const name = typeof item === "string" ? item : item?.name || "";
     const norm = normalizeSkillName(name);
     if (norm && norm.length > 1) target.add(norm);
   }

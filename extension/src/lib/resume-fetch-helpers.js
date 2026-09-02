@@ -8,10 +8,15 @@
  *   - data-qa attributes are stable; CSS classes are hashed and unreliable
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { MIN_HASH_LEN, cleanResumeTitle, VISIBILITY_UNKNOWN, detectVisibilityFromLinkText } from './resume-constants.js';
+import { createLogger } from "./anti-hallucination.js";
+import {
+  MIN_HASH_LEN,
+  VISIBILITY_UNKNOWN,
+  cleanResumeTitle,
+  detectVisibilityFromLinkText,
+} from "./resume-constants.js";
 
-const helperLog = createLogger('ResumeFetchH');
+const helperLog = createLogger("ResumeFetchH");
 
 // ===============================================
 // FETCH HELPERS
@@ -24,10 +29,10 @@ const helperLog = createLogger('ResumeFetchH');
  */
 export async function fetchHtml(url) {
   const resp = await fetch(url, {
-    credentials: 'include',
-    headers: { 'Accept': 'text/html' }
+    credentials: "include",
+    headers: { Accept: "text/html" },
   });
-  if (!resp.ok) throw new Error('fetch ' + url + ' -> ' + resp.status);
+  if (!resp.ok) throw new Error("fetch " + url + " -> " + resp.status);
   return resp.text();
 }
 
@@ -38,7 +43,7 @@ export async function fetchHtml(url) {
  */
 export function htmlToDoc(html) {
   const parser = new DOMParser();
-  return parser.parseFromString(html, 'text/html');
+  return parser.parseFromString(html, "text/html");
 }
 
 /**
@@ -48,12 +53,12 @@ export function htmlToDoc(html) {
  * @returns {string} Trimmed text content or fallback
  */
 export function safeGetText(el, fallback) {
-  fallback = fallback || '';
+  fallback = fallback || "";
   if (!el || !(el instanceof Element)) return fallback;
   // textContent converts HTML entities (\u00A0 for &nbsp;) to chars.
   // Also normalize any remaining non-breaking spaces to regular spaces.
-  let text = (el.textContent || '').trim();
-  text = text.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
+  let text = (el.textContent || "").trim();
+  text = text.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ");
   return text.length > 0 ? text : fallback;
 }
 
@@ -72,8 +77,8 @@ export function safeGetText(el, fallback) {
 export function extractResumeLinks(anchorList) {
   const resumes = [];
 
-  anchorList.forEach(link => {
-    const href = link.getAttribute('href') || '';
+  anchorList.forEach((link) => {
+    const href = link.getAttribute("href") || "";
 
     // /resume/{hex} (public/employer view)
     let hashMatch = href.match(/\/resume\/([a-f0-9]+)/);
@@ -83,20 +88,29 @@ export function extractResumeLinks(anchorList) {
 
     const id = hashMatch[1];
     if (id.length < MIN_HASH_LEN) return;
-    if (resumes.find(r => r.id === id)) return;
+    if (resumes.find((r) => r.id === id)) return;
 
-    const rawLinkText = link.textContent || '';
+    const rawLinkText = link.textContent || "";
 
     // Strategy 0: Detect visibility from the link's raw textContent.
     const vis = detectVisibilityFromLinkText(rawLinkText);
     const title = cleanResumeTitle(rawLinkText);
-    const resumeUrl = 'https://hh.ru/applicant/resumes/view?resume=' + id;
+    const resumeUrl = "https://hh.ru/applicant/resumes/view?resume=" + id;
 
     resumes.push({ id, title, url: resumeUrl, visibility: vis.visibility, hidden: vis.hidden });
 
     if (vis.visibility !== VISIBILITY_UNKNOWN) {
-      helperLog.info('LinkText visibility: ' + id.substring(0, 8) + '=' + vis.visibility +
-        ' (method=' + vis.method + ', title="' + title.substring(0, 30) + '")');
+      helperLog.info(
+        "LinkText visibility: " +
+          id.substring(0, 8) +
+          "=" +
+          vis.visibility +
+          " (method=" +
+          vis.method +
+          ', title="' +
+          title.substring(0, 30) +
+          '")',
+      );
     }
   });
   return resumes;
@@ -110,17 +124,17 @@ export function extractResumeLinks(anchorList) {
  */
 export function extractFromScripts(doc, html) {
   const resumes = [];
-  const scripts = doc.querySelectorAll('script');
-  scripts.forEach(script => {
-    const text = script.textContent || '';
+  const scripts = doc.querySelectorAll("script");
+  scripts.forEach((script) => {
+    const text = script.textContent || "";
     const matches = text.matchAll(/resume[=/]\\?"?([a-f0-9]{32,})/g);
     for (const m of matches) {
       const id = m[1];
-      if (!resumes.find(r => r.id === id)) {
+      if (!resumes.find((r) => r.id === id)) {
         resumes.push({
           id,
-          title: 'Resume ' + id.substring(0, 8),
-          url: 'https://hh.ru/applicant/resumes/view?resume=' + id
+          title: "Resume " + id.substring(0, 8),
+          url: "https://hh.ru/applicant/resumes/view?resume=" + id,
         });
       }
     }
@@ -130,17 +144,17 @@ export function extractFromScripts(doc, html) {
     const jsonMatches = html.matchAll(/"resumeId"\s*:\s*"([a-f0-9]+)"/g);
     for (const m of jsonMatches) {
       const id = m[1];
-      if (!resumes.find(r => r.id === id)) {
+      if (!resumes.find((r) => r.id === id)) {
         resumes.push({
           id,
-          title: 'Resume ' + id.substring(0, 8),
-          url: 'https://hh.ru/applicant/resumes/view?resume=' + id
+          title: "Resume " + id.substring(0, 8),
+          url: "https://hh.ru/applicant/resumes/view?resume=" + id,
         });
       }
     }
   }
   if (resumes.length > 0) {
-    helperLog.info('Found ' + resumes.length + ' resumes from script/JSON data');
+    helperLog.info("Found " + resumes.length + " resumes from script/JSON data");
   }
   return resumes;
 }

@@ -8,15 +8,15 @@
  * Skill gap analysis is in ./resume-helpers-gap.js
  */
 
-import { refs } from '../../state.js';
-import { esc } from '../../html.js';
+import { esc } from "../../html.js";
+import { refs } from "../../state.js";
 
 // ===============================================
 // INITIALS FROM NAME
 // ===============================================
 
 export function getInitials(text) {
-  if (!text) return '?';
+  if (!text) return "?";
   const words = text.trim().split(/\s+/);
   if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   return text.substring(0, 2).toUpperCase();
@@ -30,8 +30,8 @@ export function toggleSub(sectionId, chevronId) {
   const body = refs.shadowRoot?.getElementById(sectionId);
   const chev = refs.shadowRoot?.getElementById(chevronId);
   if (!body) return;
-  body.classList.toggle('open');
-  if (chev) chev.classList.toggle('open');
+  body.classList.toggle("open");
+  if (chev) chev.classList.toggle("open");
 }
 
 // ===============================================
@@ -39,16 +39,36 @@ export function toggleSub(sectionId, chevronId) {
 // ===============================================
 
 export function buildSubAccordion(bodyId, chevronId, title, count, dotColor, contentHtml) {
-  return '' +
-    '<div class="tl-dot" style="background:' + dotColor + ';"></div>' +
-    '<div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' + bodyId + '" data-sub-chev="' + chevronId + '">' +
-      '<div style="display:flex;align-items:center;gap:6px;">' +
-        '<span style="font-size:11px;font-weight:600;color:' + dotColor + ';">' + esc(title) + '</span>' +
-        '<span style="font-size:11px;color:#52525b;">' + esc(count) + '</span>' +
-      '</div>' +
-      '<span class="icon"><svg class="sub-chevron" id="' + chevronId + '" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span>' +
-    '</div>' +
-    '<div class="sub-body" id="' + bodyId + '">' + contentHtml + '</div>';
+  return (
+    "" +
+    '<div class="tl-dot" style="background:' +
+    dotColor +
+    ';"></div>' +
+    '<div class="sub-toggle" tabindex="0" role="button" data-sub-toggle="' +
+    bodyId +
+    '" data-sub-chev="' +
+    chevronId +
+    '">' +
+    '<div style="display:flex;align-items:center;gap:6px;">' +
+    '<span style="font-size:11px;font-weight:600;color:' +
+    dotColor +
+    ';">' +
+    esc(title) +
+    "</span>" +
+    '<span style="font-size:11px;color:#52525b;">' +
+    esc(count) +
+    "</span>" +
+    "</div>" +
+    '<span class="icon"><svg class="sub-chevron" id="' +
+    chevronId +
+    '" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><path d="m6 9 6 6 6-6"/></svg><span class="icon-fallback" style="display:none">v</span></span>' +
+    "</div>" +
+    '<div class="sub-body" id="' +
+    bodyId +
+    '">' +
+    contentHtml +
+    "</div>"
+  );
 }
 
 // ===============================================
@@ -58,12 +78,18 @@ export function buildSubAccordion(bodyId, chevronId, title, count, dotColor, con
 export function buildGrid(pairs) {
   const rows = pairs
     .filter(([, val]) => val)
-    .map(([label, val]) =>
-      '<span style="color:#52525b;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + '</span>'
-    ).join('');
+    .map(
+      ([label, val]) =>
+        '<span style="color:#52525b;">' + esc(label) + '</span><span style="font-weight:500;">' + esc(val) + "</span>",
+    )
+    .join("");
   if (!rows) return '<div style="padding:8px;font-size:11px;color:#52525b;">Данные не найдены</div>';
-  return '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;">' +
-    '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' + rows + '</div></div>';
+  return (
+    '<div style="background:#FAFAFA;border-radius:8px;padding:8px 10px;font-size:11px;">' +
+    '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;">' +
+    rows +
+    "</div></div>"
+  );
 }
 
 // ===============================================
@@ -73,11 +99,11 @@ export function buildGrid(pairs) {
 export function attachSubToggle(bodyId, chevronId) {
   const toggleEl = refs.shadowRoot?.querySelector('[data-sub-toggle="' + bodyId + '"]');
   if (!toggleEl) return;
-  toggleEl.addEventListener('click', () => {
+  toggleEl.addEventListener("click", () => {
     toggleSub(bodyId, chevronId);
   });
-  toggleEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+  toggleEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       toggleSub(bodyId, chevronId);
     }
@@ -89,36 +115,39 @@ export function attachSubToggle(bodyId, chevronId) {
 // ===============================================
 
 export function updateSkillsSection(r) {
-  const section = refs.shadowRoot?.getElementById('res-skills-section');
-  const list = refs.shadowRoot?.getElementById('res-skills-list');
-  const count = refs.shadowRoot?.getElementById('res-skills-count');
+  const section = refs.shadowRoot?.getElementById("res-skills-section");
+  const list = refs.shadowRoot?.getElementById("res-skills-list");
+  const count = refs.shadowRoot?.getElementById("res-skills-count");
   if (!section || !list) return;
 
-  const explicit = (r && r.skills) ? r.skills : [];
-  const derived = (r && r.derivedSkills) ? r.derivedSkills : [];
+  const explicit = r && r.skills ? r.skills : [];
+  const derived = r && r.derivedSkills ? r.derivedSkills : [];
 
   if (explicit.length === 0 && derived.length === 0) {
-    section.style.display = 'none';
+    section.style.display = "none";
     return;
   }
 
-  section.style.display = '';
+  section.style.display = "";
   const totalCount = explicit.length + derived.length;
-  if (count) count.textContent = totalCount + ' навыков';
+  if (count) count.textContent = totalCount + " навыков";
 
-  let html = explicit.map(s =>
-    '<span class="skill-tag skill-match">' + esc(s) + '</span>'
-  ).join('');
+  let html = explicit.map((s) => '<span class="skill-tag skill-match">' + esc(s) + "</span>").join("");
 
   if (derived.length > 0) {
     html += '<div style="font-size:10px;color:#B45309;margin:6px 0 2px 0;font-weight:500;">Из опыта работы:</div>';
-    html += derived.map(s =>
-      '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' + esc(s) + '</span>'
-    ).join('');
+    html += derived
+      .map(
+        (s) =>
+          '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">' +
+          esc(s) +
+          "</span>",
+      )
+      .join("");
   }
 
   list.innerHTML = html;
 }
 
 // Re-export from gap module
-export { updateSkillGapSection } from './resume-helpers-gap.js';
+export { updateSkillGapSection } from "./resume-helpers-gap.js";

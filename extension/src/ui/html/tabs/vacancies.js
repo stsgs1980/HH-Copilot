@@ -1,8 +1,8 @@
 /**
  * TAB 3: VACANCIES
  */
-import { ICONS } from '../icons.js';
-import { getAnalyticsSection } from './analytics.js';
+import { ICONS } from "../icons.js";
+import { getAnalyticsSection } from "./analytics.js";
 
 export function getVacanciesSection() {
   return `<div class="tab-section" id="tab-vacancies" role="tabpanel" aria-labelledby="tabbtn-vacancies" tabindex="0">

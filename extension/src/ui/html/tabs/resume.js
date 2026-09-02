@@ -1,7 +1,7 @@
 /**
  * TAB 2: RESUME
  */
-import { ICONS } from '../icons.js';
+import { ICONS } from "../icons.js";
 
 export function getResumeSection() {
   return `<div class="tab-section" id="tab-resume" role="tabpanel" aria-labelledby="tabbtn-resume" tabindex="0">

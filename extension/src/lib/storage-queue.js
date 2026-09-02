@@ -11,9 +11,11 @@
 
 export async function getAppliedVacancies() {
   try {
-    const d = await chrome.storage.local.get('appliedVacancies');
+    const d = await chrome.storage.local.get("appliedVacancies");
     return d.appliedVacancies || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 export async function isAlreadyApplied(id) {
@@ -23,9 +25,12 @@ export async function isAlreadyApplied(id) {
 
 export async function markAsApplied(id) {
   try {
-    const d = await chrome.storage.local.get('appliedVacancies');
+    const d = await chrome.storage.local.get("appliedVacancies");
     const arr = d.appliedVacancies || [];
-    if (!arr.includes(id)) { arr.push(id); await chrome.storage.local.set({ appliedVacancies: arr }); }
+    if (!arr.includes(id)) {
+      arr.push(id);
+      await chrome.storage.local.set({ appliedVacancies: arr });
+    }
   } catch (_e) {}
 }
 
@@ -35,15 +40,17 @@ export async function markAsApplied(id) {
 
 export async function getMyResumes() {
   try {
-    const d = await chrome.storage.local.get('myResumes');
+    const d = await chrome.storage.local.get("myResumes");
     return d.myResumes || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 export async function saveMyResume(resume) {
   if (!resume || !resume.id) return;
   const resumes = await getMyResumes();
-  const idx = resumes.findIndex(r => r.id === resume.id);
+  const idx = resumes.findIndex((r) => r.id === resume.id);
   if (idx >= 0) {
     resumes[idx] = resume;
   } else {
@@ -67,9 +74,11 @@ export async function clearMyResumes() {
 
 export async function getSyncQueue() {
   try {
-    const d = await chrome.storage.local.get('syncQueue');
+    const d = await chrome.storage.local.get("syncQueue");
     return d.syncQueue || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 export async function setSyncQueue(queue) {
@@ -85,7 +94,7 @@ export async function dequeueSyncItem() {
 }
 
 export async function clearSyncQueue() {
-  await chrome.storage.local.remove('syncQueue');
+  await chrome.storage.local.remove("syncQueue");
 }
 
 // ===============================================
@@ -94,9 +103,11 @@ export async function clearSyncQueue() {
 
 export async function getActiveResume() {
   try {
-    const d = await chrome.storage.local.get('myResume');
+    const d = await chrome.storage.local.get("myResume");
     return d.myResume || null;
-  } catch (_e) { return null; }
+  } catch (_e) {
+    return null;
+  }
 }
 
 export async function setActiveResume(resume) {
@@ -104,7 +115,7 @@ export async function setActiveResume(resume) {
 }
 
 export async function clearActiveResume() {
-  await chrome.storage.local.remove('myResume');
+  await chrome.storage.local.remove("myResume");
 }
 
 // ===============================================
@@ -113,9 +124,11 @@ export async function clearActiveResume() {
 
 export async function getApplyQueue() {
   try {
-    const d = await chrome.storage.local.get('applyQueue');
+    const d = await chrome.storage.local.get("applyQueue");
     return d.applyQueue || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 export async function setApplyQueue(queue) {
@@ -128,9 +141,11 @@ export async function setApplyQueue(queue) {
 
 export async function getBlacklistedCompanies() {
   try {
-    const d = await chrome.storage.local.get('blacklistedCompanies');
+    const d = await chrome.storage.local.get("blacklistedCompanies");
     return d.blacklistedCompanies || [];
-  } catch (_e) { return []; }
+  } catch (_e) {
+    return [];
+  }
 }
 
 export async function setBlacklistedCompanies(list) {
@@ -147,6 +162,6 @@ export async function addBlacklistedCompany(name) {
 
 export async function removeBlacklistedCompany(name) {
   const list = await getBlacklistedCompanies();
-  const filtered = list.filter(n => n !== name);
+  const filtered = list.filter((n) => n !== name);
   await setBlacklistedCompanies(filtered);
 }

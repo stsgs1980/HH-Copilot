@@ -11,28 +11,35 @@
  * v1.9.43.0
  */
 
-import { createLogger } from '../../lib/anti-hallucination.js';
-import { panelState, refs, togglePanelOpen, setVacancies, setStatus as setStatusInternal, updateStats as mergeStatsState } from '../state.js';
+import { createLogger } from "../../lib/anti-hallucination.js";
+import { toggleInspector } from "../dom-inspector.js";
+import { createFab, updateFabIcon } from "../fab.js";
+import { getSidebarHTML } from "../html.js";
+import {
+  updateStats as mergeStatsState,
+  panelState,
+  refs,
+  setStatus as setStatusInternal,
+  setVacancies,
+  togglePanelOpen,
+} from "../state.js";
+import { getSidebarCSS } from "../styles.js";
+import { renderAnalytics } from "../tabs/analytics-render.js";
+import { renderOverviewKPI } from "../tabs/overview.js";
+import { updateSkillGapSection } from "../tabs/resumes/resume-helpers.js";
+import { renderStatsValues, renderVacancyList, renderVacancyMatchScore } from "../tabs/vacancies.js";
 export { panelState };
-import { getSidebarCSS } from '../styles.js';
-import { getSidebarHTML } from '../html.js';
-import { createFab, updateFabIcon } from '../fab.js';
-import { toggleInspector } from '../dom-inspector.js';
-import { renderVacancyList, renderStatsValues, renderVacancyMatchScore } from '../tabs/vacancies.js';
-import { renderAnalytics } from '../tabs/analytics-render.js';
-import { updateSkillGapSection } from '../tabs/resumes/resume-helpers.js';
-import { renderOverviewKPI } from '../tabs/overview.js';
 
-import { bindTabClicks } from './events.js';
-import { bindTourEvents } from '../../lib/tour-engine.js';
-import { updateAuthState, loadNegotiationsInBackground } from './auth-and-bg.js';
-import { resumeFromCaptcha } from '../../lib/captcha-detector.js';
-import { showCaptchaNotification, hideCaptchaNotification } from './captcha-notifications.js';
+import { resumeFromCaptcha } from "../../lib/captcha-detector.js";
+import { bindTourEvents } from "../../lib/tour-engine.js";
+import { loadNegotiationsInBackground, updateAuthState } from "./auth-and-bg.js";
+import { hideCaptchaNotification, showCaptchaNotification } from "./captcha-notifications.js";
+import { bindTabClicks } from "./events.js";
 
 // Re-export auth functions for callers that import from here
-export { updateAuthState, updateAuthStateAsync } from './auth-and-bg.js';
+export { updateAuthState, updateAuthStateAsync } from "./auth-and-bg.js";
 
-const panelLog = createLogger('Panel');
+const panelLog = createLogger("Panel");
 
 // ===============================================
 // SIDEBAR CREATION
@@ -41,27 +48,31 @@ const panelLog = createLogger('Panel');
 export function createSidebar() {
   if (refs.sidebarEl) return;
 
-  refs.backdropEl = document.createElement('div');
-  refs.backdropEl.id = 'hh-ar-backdrop';
-  refs.backdropEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:999998;opacity:0;pointer-events:none;transition:opacity 0.3s;';
-  refs.backdropEl.addEventListener('click', () => { if (panelState.isOpen) toggleSidebar(); });
+  refs.backdropEl = document.createElement("div");
+  refs.backdropEl.id = "hh-ar-backdrop";
+  refs.backdropEl.style.cssText =
+    "position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:999998;opacity:0;pointer-events:none;transition:opacity 0.3s;";
+  refs.backdropEl.addEventListener("click", () => {
+    if (panelState.isOpen) toggleSidebar();
+  });
 
-  refs.sidebarEl = document.createElement('div');
-  refs.sidebarEl.id = 'hh-ar-sidebar';
-  refs.sidebarEl.style.cssText = 'position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);';
-  refs.sidebarEl.setAttribute('role', 'dialog');
-  refs.sidebarEl.setAttribute('aria-label', 'HH Copilot панель');
-  refs.sidebarEl.setAttribute('aria-modal', 'true');
-  refs.shadowRoot = refs.sidebarEl.attachShadow({ mode: 'closed' });
+  refs.sidebarEl = document.createElement("div");
+  refs.sidebarEl.id = "hh-ar-sidebar";
+  refs.sidebarEl.style.cssText =
+    "position:fixed;top:0;right:0;width:720px;height:100vh;z-index:999999;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);";
+  refs.sidebarEl.setAttribute("role", "dialog");
+  refs.sidebarEl.setAttribute("aria-label", "HH Copilot панель");
+  refs.sidebarEl.setAttribute("aria-modal", "true");
+  refs.shadowRoot = refs.sidebarEl.attachShadow({ mode: "closed" });
 
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.textContent = getSidebarCSS();
   refs.shadowRoot.appendChild(style);
 
-  const container = document.createElement('div');
-  container.className = 'fab-panel';
+  const container = document.createElement("div");
+  container.className = "fab-panel";
   container.innerHTML = getSidebarHTML();
-  container.setAttribute('lang', 'ru');
+  container.setAttribute("lang", "ru");
   refs.shadowRoot.appendChild(container);
 
   /* Initial bind: close button, retry-auth, tab clicks */
@@ -70,8 +81,8 @@ export function createSidebar() {
   bindTourEvents();
 
   /* Escape key handler -- close sidebar */
-  refs.sidebarEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && panelState.isOpen) {
+  refs.sidebarEl.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && panelState.isOpen) {
       e.preventDefault();
       toggleSidebar();
       return;
@@ -90,11 +101,13 @@ export function createSidebar() {
  * while it is open.
  */
 function bindFocusTrap() {
-  refs.sidebarEl.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab' || !panelState.isOpen) return;
+  refs.sidebarEl.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab" || !panelState.isOpen) return;
     const sr = refs.shadowRoot;
     if (!sr) return;
-    const focusable = sr.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    const focusable = sr.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
     if (focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -116,13 +129,13 @@ export function toggleSidebar() {
   if (!refs.sidebarEl) createSidebar();
   if (!refs.fabEl) createFab(toggleSidebar);
   togglePanelOpen();
-  refs.sidebarEl.style.transform = panelState.isOpen ? 'translateX(0)' : 'translateX(100%)';
+  refs.sidebarEl.style.transform = panelState.isOpen ? "translateX(0)" : "translateX(100%)";
   if (refs.backdropEl) {
-    refs.backdropEl.style.opacity = panelState.isOpen ? '1' : '0';
-    refs.backdropEl.style.pointerEvents = panelState.isOpen ? 'auto' : 'none';
+    refs.backdropEl.style.opacity = panelState.isOpen ? "1" : "0";
+    refs.backdropEl.style.pointerEvents = panelState.isOpen ? "auto" : "none";
   }
   updateFabIcon();
-  panelLog.info('Sidebar ' + (panelState.isOpen ? 'opened' : 'closed'));
+  panelLog.info("Sidebar " + (panelState.isOpen ? "opened" : "closed"));
 
   /* Focus management: move focus into sidebar when opened, return to FAB when closed */
   if (panelState.isOpen) {
@@ -173,43 +186,47 @@ export function createPanel() {
 
   // Bind inspector toggle button (in header, data-action="toggle-inspector").
   // Use document-level delegated listener because sidebar is re-rendered on auth change.
-  document.addEventListener('click', (e) => {
-    const btn = e.target && e.target.closest ? e.target.closest('[data-action="toggle-inspector"]') : null;
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    toggleInspector(btn);
-  }, true);
+  document.addEventListener(
+    "click",
+    (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('[data-action="toggle-inspector"]') : null;
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      toggleInspector(btn);
+    },
+    true,
+  );
 
   // Update analytics when vacancies change
-  window.addEventListener('hh-ar-vacancies-updated', (e) => {
+  window.addEventListener("hh-ar-vacancies-updated", (e) => {
     const vacancies = e.detail?.vacancies || panelState.vacancies;
     renderAnalytics(vacancies, panelState.resume);
   });
 
   // Listen for match score updates (from vacancy detail re-score)
-  window.addEventListener('hh-ar-match-updated', (e) => {
+  window.addEventListener("hh-ar-match-updated", (e) => {
     const { vacancyId, score, breakdown, details } = e.detail || {};
     if (score !== undefined) {
       renderVacancyMatchScore(vacancyId, score, breakdown, details);
-      panelLog.info('Match UI updated: ' + score + '% for vacancy ' + vacancyId);
+      panelLog.info("Match UI updated: " + score + "% for vacancy " + vacancyId);
     }
   });
 
   // Listen for CAPTCHA detection from content script
-  window.addEventListener('hh-ar-captcha-detected', async (e) => {
+  window.addEventListener("hh-ar-captcha-detected", async (e) => {
     const { type, found, paused } = e.detail || {};
     if (found) {
-      panelLog.warn('CAPTCHA detected in content script: ' + type);
+      panelLog.warn("CAPTCHA detected in content script: " + type);
       showCaptchaNotification(refs, panelLog, type, paused);
     }
   });
 
   // Listen for manual CAPTCHA resume from popup/settings
-  window.addEventListener('hh-ar-captcha-resume', async () => {
+  window.addEventListener("hh-ar-captcha-resume", async () => {
     await resumeFromCaptcha();
     hideCaptchaNotification(refs);
-    panelLog.info('CAPTCHA pause manually cleared');
+    panelLog.info("CAPTCHA pause manually cleared");
   });
 }
 
@@ -217,8 +234,11 @@ export function createPanel() {
 function updateVacancyCounts() {
   const el = (id) => refs.shadowRoot?.getElementById(id);
   const vacs = panelState.vacancies;
-  const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
-  set('vac-total', vacs.length);
-  set('vac-high-match', vacs.filter(v => (v.matchScore || 0) >= 70).length);
-  set('vac-blacklisted', vacs.filter(v => v.status === 'blacklisted').length);
+  const set = (id, val) => {
+    const e = el(id);
+    if (e) e.textContent = val;
+  };
+  set("vac-total", vacs.length);
+  set("vac-high-match", vacs.filter((v) => (v.matchScore || 0) >= 70).length);
+  set("vac-blacklisted", vacs.filter((v) => v.status === "blacklisted").length);
 }

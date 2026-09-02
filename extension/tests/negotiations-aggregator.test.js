@@ -7,24 +7,24 @@
  *   - All tests use injected fetchImpl + parseItemsImpl + sleepImpl (no network)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  fetchTab,
-  deduplicateByTopic,
-  fetchAllNegotiations,
-  invalidateNegotiationsCache,
-  NEGOTIATION_TABS,
   CACHE_KEY,
   CACHE_TTL_MS,
-} from '../src/parsers/negotiations-aggregator.js';
+  deduplicateByTopic,
+  fetchAllNegotiations,
+  fetchTab,
+  invalidateNegotiationsCache,
+  NEGOTIATION_TABS,
+} from "../src/parsers/negotiations-aggregator.js";
 
 // ===============================================
 // Helpers / fixtures
 // ===============================================
 
-const TAB_ALL = NEGOTIATION_TABS.find(t => t.id === 'all');
-const TAB_INVITE = NEGOTIATION_TABS.find(t => t.id === 'invite');
-const TAB_DISCARD = NEGOTIATION_TABS.find(t => t.id === 'discard');
+const TAB_ALL = NEGOTIATION_TABS.find((t) => t.id === "all");
+const TAB_INVITE = NEGOTIATION_TABS.find((t) => t.id === "invite");
+const TAB_DISCARD = NEGOTIATION_TABS.find((t) => t.id === "discard");
 
 /** Mock fetch that returns given items for a tab url. */
 function makeFetchImpl(routes) {
@@ -32,7 +32,7 @@ function makeFetchImpl(routes) {
   return async (url) => {
     const route = routes[url];
     if (!route) {
-      throw new Error('No route for ' + url);
+      throw new Error("No route for " + url);
     }
     if (route.throwMsg) throw new Error(route.throwMsg);
     const status = route.status || 200;
@@ -50,7 +50,9 @@ function makeFetchImpl(routes) {
 /** Mock DOMParser -- never actually used because parseItemsImpl is injected. */
 function makeDomParserImpl() {
   return class {
-    parseFromString() { return {}; }
+    parseFromString() {
+      return {};
+    }
   };
 }
 
@@ -69,9 +71,15 @@ function installChromeStub() {
   globalThis.chrome = {
     storage: {
       local: {
-        async get(key) { return key in store ? { [key]: store[key] } : {}; },
-        async set(obj) { Object.assign(store, obj); },
-        async remove(key) { delete store[key]; },
+        async get(key) {
+          return key in store ? { [key]: store[key] } : {};
+        },
+        async set(obj) {
+          Object.assign(store, obj);
+        },
+        async remove(key) {
+          delete store[key];
+        },
       },
     },
   };
@@ -82,16 +90,14 @@ function installChromeStub() {
 // Tests
 // ===============================================
 
-describe('F1.8 -- NEGOTIATION_TABS config', () => {
-  it('has 8 tabs covering all hh.ru statuses', () => {
+describe("F1.8 -- NEGOTIATION_TABS config", () => {
+  it("has 8 tabs covering all hh.ru statuses", () => {
     expect(NEGOTIATION_TABS).toHaveLength(8);
-    const ids = NEGOTIATION_TABS.map(t => t.id);
-    expect(ids).toEqual(
-      ['all', 'invite', 'consider', 'offer', 'wait', 'discard', 'deleted', 'archive']
-    );
+    const ids = NEGOTIATION_TABS.map((t) => t.id);
+    expect(ids).toEqual(["all", "invite", "consider", "offer", "wait", "discard", "deleted", "archive"]);
   });
 
-  it('each tab has id, label, url', () => {
+  it("each tab has id, label, url", () => {
     for (const t of NEGOTIATION_TABS) {
       expect(t.id).toBeTruthy();
       expect(t.label).toBeTruthy();
@@ -100,11 +106,11 @@ describe('F1.8 -- NEGOTIATION_TABS config', () => {
   });
 });
 
-describe('F1.8 -- fetchTab', () => {
-  it('returns parsed items on 200 OK', async () => {
+describe("F1.8 -- fetchTab", () => {
+  it("returns parsed items on 200 OK", async () => {
     const items = [
-      { id: 1, vacancyTitle: 'A', company: 'X', vacancyId: 'v1' },
-      { id: 2, vacancyTitle: 'B', company: 'Y', vacancyId: 'v2' },
+      { id: 1, vacancyTitle: "A", company: "X", vacancyId: "v1" },
+      { id: 2, vacancyTitle: "B", company: "Y", vacancyId: "v2" },
     ];
     parseItemsImplStub._lastItems = items;
 
@@ -114,13 +120,13 @@ describe('F1.8 -- fetchTab', () => {
       parseItemsImpl: () => items,
     });
 
-    expect(res.tab).toBe('all');
-    expect(res.label).toBe('Все');
+    expect(res.tab).toBe("all");
+    expect(res.label).toBe("Все");
     expect(res.items).toHaveLength(2);
     expect(res.error).toBeNull();
   });
 
-  it('returns empty items array (no ghost rows) when tab has 0 items', async () => {
+  it("returns empty items array (no ghost rows) when tab has 0 items", async () => {
     const res = await fetchTab(TAB_INVITE, {
       fetchImpl: makeFetchImpl({ [TAB_INVITE.url]: { items: [] } }),
       domParserImpl: makeDomParserImpl(),
@@ -131,7 +137,7 @@ describe('F1.8 -- fetchTab', () => {
     expect(res.error).toBeNull();
   });
 
-  it('records HTTP error and returns [] items', async () => {
+  it("records HTTP error and returns [] items", async () => {
     const res = await fetchTab(TAB_DISCARD, {
       fetchImpl: makeFetchImpl({ [TAB_DISCARD.url]: { status: 500 } }),
       domParserImpl: makeDomParserImpl(),
@@ -139,83 +145,83 @@ describe('F1.8 -- fetchTab', () => {
     });
 
     expect(res.items).toEqual([]);
-    expect(res.error).toBe('HTTP 500');
+    expect(res.error).toBe("HTTP 500");
   });
 
-  it('records network error and returns [] items', async () => {
+  it("records network error and returns [] items", async () => {
     const res = await fetchTab(TAB_ALL, {
-      fetchImpl: makeFetchImpl({ [TAB_ALL.url]: { throwMsg: 'CORS blocked' } }),
+      fetchImpl: makeFetchImpl({ [TAB_ALL.url]: { throwMsg: "CORS blocked" } }),
       domParserImpl: makeDomParserImpl(),
       parseItemsImpl: () => [],
     });
 
     expect(res.items).toEqual([]);
-    expect(res.error).toBe('CORS blocked');
+    expect(res.error).toBe("CORS blocked");
   });
 });
 
-describe('F1.8 -- deduplicateByTopic', () => {
-  it('deduplicates by vacancyId', () => {
+describe("F1.8 -- deduplicateByTopic", () => {
+  it("deduplicates by vacancyId", () => {
     const items = [
-      { vacancyId: 'v1', vacancyTitle: 'A', tabOrigin: 'all' },
-      { vacancyId: 'v2', vacancyTitle: 'B', tabOrigin: 'all' },
-      { vacancyId: 'v1', vacancyTitle: 'A', tabOrigin: 'wait' }, // dup
-      { vacancyId: 'v3', vacancyTitle: 'C', tabOrigin: 'discard' },
+      { vacancyId: "v1", vacancyTitle: "A", tabOrigin: "all" },
+      { vacancyId: "v2", vacancyTitle: "B", tabOrigin: "all" },
+      { vacancyId: "v1", vacancyTitle: "A", tabOrigin: "wait" }, // dup
+      { vacancyId: "v3", vacancyTitle: "C", tabOrigin: "discard" },
     ];
     const result = deduplicateByTopic(items);
     expect(result).toHaveLength(3);
-    expect(result[0].vacancyId).toBe('v1');
-    expect(result[0].alsoIn).toEqual(['wait']);
-    expect(result[1].vacancyId).toBe('v2');
+    expect(result[0].vacancyId).toBe("v1");
+    expect(result[0].alsoIn).toEqual(["wait"]);
+    expect(result[1].vacancyId).toBe("v2");
     expect(result[1].alsoIn).toBeUndefined();
-    expect(result[2].vacancyId).toBe('v3');
+    expect(result[2].vacancyId).toBe("v3");
   });
 
-  it('falls back to title+company when no vacancyId', () => {
+  it("falls back to title+company when no vacancyId", () => {
     const items = [
-      { vacancyTitle: 'Dev', company: 'X', tabOrigin: 'all' },
-      { vacancyTitle: 'Dev', company: 'X', tabOrigin: 'wait' }, // dup
-      { vacancyTitle: 'Dev', company: 'Y', tabOrigin: 'all' },
+      { vacancyTitle: "Dev", company: "X", tabOrigin: "all" },
+      { vacancyTitle: "Dev", company: "X", tabOrigin: "wait" }, // dup
+      { vacancyTitle: "Dev", company: "Y", tabOrigin: "all" },
     ];
     const result = deduplicateByTopic(items);
     expect(result).toHaveLength(2);
-    expect(result[0].alsoIn).toEqual(['wait']);
+    expect(result[0].alsoIn).toEqual(["wait"]);
   });
 
-  it('skips null/undefined items (anti-ghost)', () => {
-    const items = [null, undefined, { vacancyId: 'v1', tabOrigin: 'all' }, null];
+  it("skips null/undefined items (anti-ghost)", () => {
+    const items = [null, undefined, { vacancyId: "v1", tabOrigin: "all" }, null];
     const result = deduplicateByTopic(items);
     expect(result).toHaveLength(1);
-    expect(result[0].vacancyId).toBe('v1');
+    expect(result[0].vacancyId).toBe("v1");
   });
 
-  it('skips items with no usable key', () => {
+  it("skips items with no usable key", () => {
     const items = [
-      { tabOrigin: 'all' }, // no id, no title, no company
-      { vacancyId: 'v1', tabOrigin: 'all' },
+      { tabOrigin: "all" }, // no id, no title, no company
+      { vacancyId: "v1", tabOrigin: "all" },
     ];
     const result = deduplicateByTopic(items);
     expect(result).toHaveLength(1);
   });
 
-  it('handles empty input', () => {
+  it("handles empty input", () => {
     expect(deduplicateByTopic([])).toEqual([]);
     expect(deduplicateByTopic(null)).toEqual([]);
   });
 });
 
-describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
+describe("F1.8 -- fetchAllNegotiations (cache + partial failure)", () => {
   beforeEach(() => {
     installChromeStub();
     parseItemsImplStub._lastItems = [];
   });
 
-  it('fetches all 8 tabs when no cache', async () => {
+  it("fetches all 8 tabs when no cache", async () => {
     const sleepMock = vi.fn().mockResolvedValue(undefined);
     const fetchImpl = makeFetchImpl(
       Object.fromEntries(
-        NEGOTIATION_TABS.map(t => [t.url, { items: [{ vacancyId: 'v_' + t.id, tabOrigin: t.id }] }])
-      )
+        NEGOTIATION_TABS.map((t) => [t.url, { items: [{ vacancyId: "v_" + t.id, tabOrigin: t.id }] }]),
+      ),
     );
 
     const result = await fetchAllNegotiations({
@@ -224,7 +230,7 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
       parseItemsImpl: (doc) => {
         // doc is {} stub; we route by URL via closure on fetchImpl routes
         // For test simplicity: return 1 item per tab
-        return [{ vacancyId: 'v_tab', tabOrigin: 'unknown' }];
+        return [{ vacancyId: "v_tab", tabOrigin: "unknown" }];
       },
       sleepImpl: sleepMock,
     });
@@ -238,7 +244,7 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     expect(sleepMock).toHaveBeenCalledTimes(7); // 7 sleeps between 8 fetches
   });
 
-  it('serves cached result when fresh (no fetch)', async () => {
+  it("serves cached result when fresh (no fetch)", async () => {
     const sleepMock = vi.fn();
     const fetchImpl = vi.fn();
 
@@ -246,9 +252,7 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     const store = globalThis.chrome.storage.local;
     // Simulate prior fetch wrote cache via fetchAllNegotiations
     const firstResult = await fetchAllNegotiations({
-      fetchImpl: makeFetchImpl(
-        Object.fromEntries(NEGOTIATION_TABS.map(t => [t.url, { items: [] }]))
-      ),
+      fetchImpl: makeFetchImpl(Object.fromEntries(NEGOTIATION_TABS.map((t) => [t.url, { items: [] }]))),
       domParserImpl: makeDomParserImpl(),
       parseItemsImpl: () => [],
       sleepImpl: sleepMock,
@@ -268,11 +272,9 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('forceRefresh bypasses cache', async () => {
+  it("forceRefresh bypasses cache", async () => {
     const sleepMock = vi.fn().mockResolvedValue(undefined);
-    const fetchImpl = makeFetchImpl(
-      Object.fromEntries(NEGOTIATION_TABS.map(t => [t.url, { items: [] }]))
-    );
+    const fetchImpl = makeFetchImpl(Object.fromEntries(NEGOTIATION_TABS.map((t) => [t.url, { items: [] }])));
 
     // Prime cache
     await fetchAllNegotiations({
@@ -294,11 +296,9 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     expect(refreshed.fromCache).toBe(false);
   });
 
-  it('partial failure: one tab 500 does not break others', async () => {
+  it("partial failure: one tab 500 does not break others", async () => {
     const sleepMock = vi.fn().mockResolvedValue(undefined);
-    const routes = Object.fromEntries(
-      NEGOTIATION_TABS.map(t => [t.url, { items: [] }])
-    );
+    const routes = Object.fromEntries(NEGOTIATION_TABS.map((t) => [t.url, { items: [] }]));
     // Make discard fail
     routes[TAB_DISCARD.url] = { status: 500 };
 
@@ -312,22 +312,22 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     expect(result.fromCache).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatch(/discard: HTTP 500/);
-    expect(result.perTab.discard.error).toBe('HTTP 500');
+    expect(result.perTab.discard.error).toBe("HTTP 500");
     expect(result.perTab.all.count).toBe(0);
     // 7 other tabs succeeded
     expect(Object.keys(result.perTab)).toHaveLength(8);
   });
 
-  it('respects opts.tabs subset (only fetches specified tabs)', async () => {
+  it("respects opts.tabs subset (only fetches specified tabs)", async () => {
     const sleepMock = vi.fn().mockResolvedValue(undefined);
     const fetchImpl = vi.fn().mockImplementation(async (url) => ({
       ok: true,
       status: 200,
-      text: async () => '[]',
+      text: async () => "[]",
     }));
 
     await fetchAllNegotiations({
-      tabs: ['all', 'discard'],
+      tabs: ["all", "discard"],
       fetchImpl,
       domParserImpl: makeDomParserImpl(),
       parseItemsImpl: () => [],
@@ -338,11 +338,9 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     expect(sleepMock).toHaveBeenCalledTimes(1);
   });
 
-  it('invalidateNegotiationsCache removes cache entry', async () => {
+  it("invalidateNegotiationsCache removes cache entry", async () => {
     const sleepMock = vi.fn().mockResolvedValue(undefined);
-    const fetchImpl = makeFetchImpl(
-      Object.fromEntries(NEGOTIATION_TABS.map(t => [t.url, { items: [] }]))
-    );
+    const fetchImpl = makeFetchImpl(Object.fromEntries(NEGOTIATION_TABS.map((t) => [t.url, { items: [] }])));
 
     // Prime cache
     await fetchAllNegotiations({
@@ -367,11 +365,9 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
     expect(fetchSpy).toHaveBeenCalled();
   });
 
-  it('rate limit: sleepImpl called between tab fetches (not before first)', async () => {
+  it("rate limit: sleepImpl called between tab fetches (not before first)", async () => {
     const sleepMock = vi.fn().mockResolvedValue(undefined);
-    const routes = Object.fromEntries(
-      NEGOTIATION_TABS.map(t => [t.url, { items: [] }])
-    );
+    const routes = Object.fromEntries(NEGOTIATION_TABS.map((t) => [t.url, { items: [] }]));
 
     await fetchAllNegotiations({
       fetchImpl: makeFetchImpl(routes),
@@ -385,12 +381,12 @@ describe('F1.8 -- fetchAllNegotiations (cache + partial failure)', () => {
   });
 });
 
-describe('F1.8 -- constants', () => {
-  it('CACHE_KEY is the documented storage key', () => {
-    expect(CACHE_KEY).toBe('negotiations:all');
+describe("F1.8 -- constants", () => {
+  it("CACHE_KEY is the documented storage key", () => {
+    expect(CACHE_KEY).toBe("negotiations:all");
   });
 
-  it('CACHE_TTL_MS is 30 seconds', () => {
+  it("CACHE_TTL_MS is 30 seconds", () => {
     expect(CACHE_TTL_MS).toBe(30_000);
   });
 });

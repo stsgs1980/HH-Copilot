@@ -8,8 +8,8 @@
  * v1.9.43.0
  */
 
-import { computeMatchScore } from './match-scorer.js';
-import { restoreOriginalCase, formatSkillList, pluralYears, pluralMonths } from './cover-letter-format.js';
+import { formatSkillList, pluralMonths, pluralYears, restoreOriginalCase } from "./cover-letter-format.js";
+import { computeMatchScore } from "./match-scorer.js";
 
 /** Maximum skills to mention in the letter */
 export const MAX_SKILLS_MENTION = 5;
@@ -28,20 +28,20 @@ export async function extractPlaceholders(vacancy, resume) {
   const p = {};
 
   // {position} -- vacancy title
-  p.position = vacancy.title || 'эту позицию';
+  p.position = vacancy.title || "эту позицию";
 
   // {company} -- vacancy company
-  p.company = vacancy.company || 'вашу компанию';
+  p.company = vacancy.company || "вашу компанию";
 
   // {experience} -- years of experience from resume
   p.experience = extractExperienceText(resume);
 
   // {skills} -- top matching skills (preserving original case from vacancy/resume)
   const matchResult = resume ? await computeMatchScore(resume, vacancy) : null;
-  const matchingSkills = matchResult ? (matchResult.details.matchingSkills || []) : [];
+  const matchingSkills = matchResult ? matchResult.details.matchingSkills || [] : [];
 
   // Also include derived matches
-  const derivedMatches = matchResult ? (matchResult.details.derivedMatchSkills || []) : [];
+  const derivedMatches = matchResult ? matchResult.details.derivedMatchSkills || [] : [];
 
   // The scorer returns lowercase names. Look up original-case names from vacancy/resume.
   const matchingOriginal = restoreOriginalCase(matchingSkills, vacancy, resume);
@@ -49,21 +49,21 @@ export async function extractPlaceholders(vacancy, resume) {
 
   // Combine and limit
   const allMatches = [...matchingOriginal, ...derivedOriginal].slice(0, MAX_SKILLS_MENTION);
-  p.skills = allMatches.length > 0
-    ? formatSkillList(allMatches)
-    : (vacancy.keySkills && vacancy.keySkills.length > 0
-      ? formatSkillList(vacancy.keySkills.slice(0, MAX_SKILLS_MENTION))
-      : 'сфере деятельности');
+  p.skills =
+    allMatches.length > 0
+      ? formatSkillList(allMatches)
+      : vacancy.keySkills && vacancy.keySkills.length > 0
+        ? formatSkillList(vacancy.keySkills.slice(0, MAX_SKILLS_MENTION))
+        : "сфере деятельности";
 
   // {matching} -- matching skills as a simple list
-  p.matching = allMatches.length > 0
-    ? allMatches.join(', ')
-    : '';
+  p.matching = allMatches.length > 0 ? allMatches.join(", ") : "";
 
   // {matching_sentence} -- a sentence about matching skills
-  p.matching_sentence = allMatches.length > 0
-    ? 'Мой опыт включает ' + formatSkillList(allMatches) + ', что соответствует требованиям вакансии. '
-    : '';
+  p.matching_sentence =
+    allMatches.length > 0
+      ? "Мой опыт включает " + formatSkillList(allMatches) + ", что соответствует требованиям вакансии. "
+      : "";
 
   // {requirements} -- key requirements from vacancy description
   p.requirements = extractRequirementsText(vacancy);
@@ -78,7 +78,7 @@ export async function extractPlaceholders(vacancy, resume) {
  * @returns {string}
  */
 export function extractExperienceText(resume) {
-  if (!resume) return 'relevant';
+  if (!resume) return "relevant";
 
   // Try total experience from resume
   if (resume.experienceTotal) {
@@ -107,21 +107,21 @@ export function extractExperienceText(resume) {
       const years = Math.floor(totalMonths / 12);
       const months = totalMonths % 12;
       if (years > 0 && months > 0) {
-        return years + ' ' + pluralYears(years) + ' ' + months + ' ' + pluralMonths(months);
+        return years + " " + pluralYears(years) + " " + months + " " + pluralMonths(months);
       } else if (years > 0) {
-        return years + ' ' + pluralYears(years);
+        return years + " " + pluralYears(years);
       } else {
-        return months + ' ' + pluralMonths(months);
+        return months + " " + pluralMonths(months);
       }
     }
   }
 
   // Count experience entries as a rough indicator
   if (resume.experience && resume.experience.length > 0) {
-    return 'опыт в ' + resume.experience[0].position || 'сфере';
+    return "опыт в " + resume.experience[0].position || "сфере";
   }
 
-  return 'relevant';
+  return "relevant";
 }
 
 /**
@@ -136,14 +136,36 @@ export function parsePeriodToMonths(period) {
   if (!period) return 0;
 
   const months = {
-    'янв': 1, 'фев': 2, 'мар': 3, 'апр': 4, 'мая': 5, 'июн': 6,
-    'июл': 7, 'авг': 8, 'сен': 9, 'окт': 10, 'ноя': 11, 'дек': 12,
-    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+    янв: 1,
+    фев: 2,
+    мар: 3,
+    апр: 4,
+    мая: 5,
+    июн: 6,
+    июл: 7,
+    авг: 8,
+    сен: 9,
+    окт: 10,
+    ноя: 11,
+    дек: 12,
+    jan: 1,
+    feb: 2,
+    mar: 3,
+    apr: 4,
+    may: 5,
+    jun: 6,
+    jul: 7,
+    aug: 8,
+    sep: 9,
+    oct: 10,
+    nov: 11,
+    dec: 12,
   };
 
   // Match "Month Year -- Month Year" or "Month Year -- Present/Настоящее"
-  const rangeMatch = period.match(/(\w{3})\s*(\d{4})\s*[\u2013\u2014-]\s*(?:(\w{3})\s*(\d{4})|(настоящее|настоящее время|present|сейчас))/i);
+  const rangeMatch = period.match(
+    /(\w{3})\s*(\d{4})\s*[\u2013\u2014-]\s*(?:(\w{3})\s*(\d{4})|(настоящее|настоящее время|present|сейчас))/i,
+  );
   if (!rangeMatch) return 0;
 
   const startMonth = months[rangeMatch[1].toLowerCase().substring(0, 3)] || 1;
@@ -191,7 +213,7 @@ export function extractRequirementsText(vacancy) {
     return extractKeyPhrases(vacancy.description.text, MAX_REQUIREMENTS_QUOTE);
   }
 
-  return '';
+  return "";
 }
 
 /**
@@ -203,14 +225,15 @@ export function extractRequirementsText(vacancy) {
  * @returns {string}
  */
 export function extractKeyPhrases(text, maxPhrases) {
-  if (!text) return '';
+  if (!text) return "";
 
-  const lines = text.split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 5 && l.length < 150); // Skip too short or too long
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 5 && l.length < 150); // Skip too short or too long
 
   // Prioritize lines that look like bullet points or contain keywords
-  const scored = lines.map(line => {
+  const scored = lines.map((line) => {
     let score = 0;
     // Bullet points are usually key requirements
     if (/^[--->]/.test(line)) score += 2;
@@ -223,6 +246,6 @@ export function extractKeyPhrases(text, maxPhrases) {
 
   scored.sort((a, b) => b.score - a.score);
 
-  const selected = scored.slice(0, maxPhrases).map(s => s.line);
-  return selected.join('; ');
+  const selected = scored.slice(0, maxPhrases).map((s) => s.line);
+  return selected.join("; ");
 }

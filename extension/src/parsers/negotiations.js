@@ -15,10 +15,10 @@
  * v1.9.43.0: F1.4 — fallback selector chains, scoped helpers, 50+ items tested
  */
 
-import { findElement, findAllElements, HH_SELECTORS } from '../lib/selectors.js';
-import { createLogger, extractVacancyId, safeGetText, safeGetAttr } from '../lib/anti-hallucination.js';
+import { createLogger, extractVacancyId, safeGetAttr, safeGetText } from "../lib/anti-hallucination.js";
+import { findAllElements, findElement, HH_SELECTORS } from "../lib/selectors.js";
 
-const negLog = createLogger('NegParse');
+const negLog = createLogger("NegParse");
 
 /**
  * Parse status from the tag element's data-qa attribute.
@@ -29,17 +29,17 @@ const negLog = createLogger('NegParse');
  * @returns {{ status: string, statusText: string }}
  */
 function extractStatus(tagEl) {
-  if (!tagEl) return { status: 'unknown', statusText: '' };
+  if (!tagEl) return { status: "unknown", statusText: "" };
 
-  const qa = safeGetAttr(tagEl, 'data-qa', '');
+  const qa = safeGetAttr(tagEl, "data-qa", "");
   // Extract status suffix from "negotiations-tag negotiations-item-{status}"
   // Status may contain hyphens (e.g. "not-viewed"). \w alone stops at '-'.
   const match = qa.match(/negotiations-item-([\w-]+)/);
-  const status = match ? match[1] : 'unknown';
+  const status = match ? match[1] : "unknown";
 
   return {
     status,
-    statusText: safeGetText(tagEl, '')
+    statusText: safeGetText(tagEl, ""),
   };
 }
 
@@ -51,7 +51,7 @@ function extractStatus(tagEl) {
  * @returns {Element|null}
  */
 export function findListContainer(root) {
-  return findElement('negotiationsList', root);
+  return findElement("negotiationsList", root);
 }
 
 /**
@@ -70,11 +70,13 @@ export function findNegotiationItems(root) {
       try {
         const els = listEl.querySelectorAll(sel);
         if (els && els.length > 0) return Array.from(els);
-      } catch (_e) { /* invalid selector, skip */ }
+      } catch (_e) {
+        /* invalid selector, skip */
+      }
     }
   }
   // Fallback: search root document scope
-  return findAllElements('negotiationsItem', root);
+  return findAllElements("negotiationsItem", root);
 }
 
 /**
@@ -90,7 +92,9 @@ function findInsideItem(item, name) {
     try {
       const el = item.querySelector(sel);
       if (el) return el;
-    } catch (_e) { /* invalid selector */ }
+    } catch (_e) {
+      /* invalid selector */
+    }
   }
   return null;
 }
@@ -104,45 +108,43 @@ function findInsideItem(item, name) {
  * @returns {Object|null} Parsed negotiation object, or null if all fields empty
  */
 export function parseSingleItem(item, idx) {
-  const vacancyEl = findInsideItem(item, 'negotiationsItemVacancy');
-  const companyEl = findInsideItem(item, 'negotiationsItemCompany');
-  const dateEl = findInsideItem(item, 'negotiationsItemDate');
-  const tagEl = findInsideItem(item, 'negotiationsItemTag');
+  const vacancyEl = findInsideItem(item, "negotiationsItemVacancy");
+  const companyEl = findInsideItem(item, "negotiationsItemCompany");
+  const dateEl = findInsideItem(item, "negotiationsItemDate");
+  const tagEl = findInsideItem(item, "negotiationsItemTag");
 
   // Vacancy title and link
-  const vacancyTitle = safeGetText(vacancyEl, '');
+  const vacancyTitle = safeGetText(vacancyEl, "");
   // The vacancy link can be the vacancy element itself (if it's an <a>)
   // or a child <a> element
-  const linkEl = vacancyEl && vacancyEl.tagName === 'A'
-    ? vacancyEl
-    : (vacancyEl ? vacancyEl.querySelector('a') : null);
+  const linkEl = vacancyEl && vacancyEl.tagName === "A" ? vacancyEl : vacancyEl ? vacancyEl.querySelector("a") : null;
   // For fetched HTML, href may be relative — build full URL
-  let vacancyUrl = linkEl ? safeGetAttr(linkEl, 'href', '') : '';
-  if (vacancyUrl && !vacancyUrl.startsWith('http')) {
-    vacancyUrl = 'https://hh.ru' + vacancyUrl;
+  let vacancyUrl = linkEl ? safeGetAttr(linkEl, "href", "") : "";
+  if (vacancyUrl && !vacancyUrl.startsWith("http")) {
+    vacancyUrl = "https://hh.ru" + vacancyUrl;
   }
   // For current page DOM, use .href (already absolute)
   if (!vacancyUrl && linkEl && linkEl.href) {
     vacancyUrl = linkEl.href;
   }
-  const vacancyId = vacancyUrl ? extractVacancyId(vacancyUrl) : '';
+  const vacancyId = vacancyUrl ? extractVacancyId(vacancyUrl) : "";
 
   // Company name
-  const company = safeGetText(companyEl, '');
+  const company = safeGetText(companyEl, "");
 
   // Date
-  const date = safeGetText(dateEl, '');
+  const date = safeGetText(dateEl, "");
 
   // Status
   const { status, statusText } = extractStatus(tagEl);
 
   // Reject completely empty items (anti-hallucination: don't return ghost rows)
-  if (!vacancyTitle && !company && !date && status === 'unknown') {
+  if (!vacancyTitle && !company && !date && status === "unknown") {
     return null;
   }
 
   return {
-    id: vacancyId || ('neg-' + idx),
+    id: vacancyId || "neg-" + idx,
     vacancyTitle,
     vacancyUrl,
     vacancyId,
@@ -151,11 +153,11 @@ export function parseSingleItem(item, idx) {
     status,
     statusText,
     // UI compatibility: map to existing conversation model
-    name: vacancyTitle || company || 'Без названия',
+    name: vacancyTitle || company || "Без названия",
     time: date,
-    preview: statusText ? (statusText + ' -- ' + company) : company,
-    unread: status === 'not-viewed' || status === 'invite',
-    parsedAt: new Date().toISOString()
+    preview: statusText ? statusText + " -- " + company : company,
+    unread: status === "not-viewed" || status === "invite",
+    parsedAt: new Date().toISOString(),
   };
 }
 
@@ -169,17 +171,17 @@ export function parseNegotiationItems(root) {
 
   const listEl = findListContainer(root);
   if (!listEl) {
-    negLog.info('No negotiations-list container found');
+    negLog.info("No negotiations-list container found");
     return [];
   }
 
   const items = findNegotiationItems(root);
   if (!items || items.length === 0) {
-    negLog.info('No negotiation items found');
+    negLog.info("No negotiation items found");
     return [];
   }
 
-  negLog.info('Found ' + items.length + ' negotiation items');
+  negLog.info("Found " + items.length + " negotiation items");
 
   const negotiations = [];
   for (let i = 0; i < items.length; i++) {
@@ -187,11 +189,11 @@ export function parseNegotiationItems(root) {
       const parsed = parseSingleItem(items[i], i);
       if (parsed) negotiations.push(parsed);
     } catch (err) {
-      negLog.warn('Failed to parse negotiation item #' + i + ': ' + err.message);
+      negLog.warn("Failed to parse negotiation item #" + i + ": " + err.message);
     }
   }
 
-  negLog.info('Parsed ' + negotiations.length + ' negotiations');
+  negLog.info("Parsed " + negotiations.length + " negotiations");
   return negotiations;
 }
 
@@ -213,27 +215,27 @@ export async function parseNegotiations() {
  * @returns {Array<Object>} Parsed negotiation objects
  */
 export async function fetchAndParseNegotiations() {
-  const url = 'https://hh.ru/applicant/negotiations';
-  negLog.info('Background fetch: ' + url);
+  const url = "https://hh.ru/applicant/negotiations";
+  negLog.info("Background fetch: " + url);
 
   try {
     const resp = await fetch(url, {
-      credentials: 'include',
-      headers: { 'Accept': 'text/html' }
+      credentials: "include",
+      headers: { Accept: "text/html" },
     });
     if (!resp.ok) {
-      negLog.warn('Fetch failed: ' + resp.status);
+      negLog.warn("Fetch failed: " + resp.status);
       return [];
     }
     const html = await resp.text();
-    negLog.info('Fetched ' + html.length + ' chars');
+    negLog.info("Fetched " + html.length + " chars");
 
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const doc = parser.parseFromString(html, "text/html");
 
     return parseNegotiationItems(doc);
   } catch (err) {
-    negLog.warn('Background fetch error: ' + err.message);
+    negLog.warn("Background fetch error: " + err.message);
     return [];
   }
 }

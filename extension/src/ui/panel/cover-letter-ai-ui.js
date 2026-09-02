@@ -7,8 +7,7 @@
  * v1.9.51.0
  */
 
-import { refs } from '../state.js';
-import { panelState } from '../state.js';
+import { panelState, refs } from "../state.js";
 
 /**
  * Build the context string for #cl-ai-status.
@@ -19,16 +18,16 @@ export function buildAiStatusText(ctx) {
   const parts = [];
   if (ctx && ctx.vacancy) {
     const v = ctx.vacancy;
-    parts.push('Вакансия: ' + (v.title || '?') + (v.company ? ' @ ' + v.company : ''));
+    parts.push("Вакансия: " + (v.title || "?") + (v.company ? " @ " + v.company : ""));
   } else {
-    parts.push('Вакансия: не выбрана (открой hh.ru/vacancy/* или выбери в списке)');
+    parts.push("Вакансия: не выбрана (открой hh.ru/vacancy/* или выбери в списке)");
   }
   if (ctx && ctx.resume) {
-    parts.push('Резюме: ' + (ctx.resume.title || ctx.resume.position || '?'));
+    parts.push("Резюме: " + (ctx.resume.title || ctx.resume.position || "?"));
   } else {
     parts.push('Резюме: не выбрано (загрузи на вкладке "Резюме")');
   }
-  return 'Контекст: ' + parts.join(' | ');
+  return "Контекст: " + parts.join(" | ");
 }
 
 /**
@@ -39,7 +38,7 @@ export function buildAiStatusText(ctx) {
 export function updateAiStatus(ctx) {
   const sr = refs.shadowRoot;
   if (!sr) return;
-  const status = sr.getElementById('cl-ai-status');
+  const status = sr.getElementById("cl-ai-status");
   if (!status) return;
   status.textContent = buildAiStatusText(ctx);
 }
@@ -50,9 +49,10 @@ export function updateAiStatus(ctx) {
  */
 export function getCurrentAiContext() {
   return {
-    vacancy: (typeof window !== 'undefined' && window.__hhVacDetail) ||
-              (panelState.vacancies && panelState.vacancies[0]) ||
-              null,
+    vacancy:
+      (typeof window !== "undefined" && window.__hhVacDetail) ||
+      (panelState.vacancies && panelState.vacancies[0]) ||
+      null,
     resume: panelState.resume || null,
   };
 }
@@ -72,32 +72,42 @@ export function refreshAiStatus() {
 export function showAiToast(msg, kind) {
   const sr = refs.shadowRoot;
   if (!sr) {
-    try { console.log('[CoverLetterAI]', msg); } catch (_e) { /* ignore */ }
+    try {
+      console.log("[CoverLetterAI]", msg);
+    } catch (_e) {
+      /* ignore */
+    }
     return;
   }
-  const toast = sr.getElementById('cl-ai-toast');
+  const toast = sr.getElementById("cl-ai-toast");
   if (!toast) {
-    try { console.log('[CoverLetterAI]', msg); } catch (_e) { /* ignore */ }
+    try {
+      console.log("[CoverLetterAI]", msg);
+    } catch (_e) {
+      /* ignore */
+    }
     return;
   }
   toast.textContent = msg;
-  toast.style.display = 'block';
-  if (kind === 'error') {
-    toast.style.background = '#FEF2F2';
-    toast.style.color = '#DC2626';
-    toast.style.border = '1px solid #FECACA';
-  } else if (kind === 'success') {
-    toast.style.background = '#F0FDF4';
-    toast.style.color = '#15803D';
-    toast.style.border = '1px solid #BBF7D0';
+  toast.style.display = "block";
+  if (kind === "error") {
+    toast.style.background = "#FEF2F2";
+    toast.style.color = "#DC2626";
+    toast.style.border = "1px solid #FECACA";
+  } else if (kind === "success") {
+    toast.style.background = "#F0FDF4";
+    toast.style.color = "#15803D";
+    toast.style.border = "1px solid #BBF7D0";
   } else {
-    toast.style.background = '#FFFBEB';
-    toast.style.color = '#92400E';
-    toast.style.border = '1px solid #FDE68A';
+    toast.style.background = "#FFFBEB";
+    toast.style.color = "#92400E";
+    toast.style.border = "1px solid #FDE68A";
   }
   // Auto-hide after 6s
   clearTimeout(toast._hideTimer);
-  toast._hideTimer = setTimeout(() => { toast.style.display = 'none'; }, 6000);
+  toast._hideTimer = setTimeout(() => {
+    toast.style.display = "none";
+  }, 6000);
 }
 
 /**
@@ -106,13 +116,21 @@ export function showAiToast(msg, kind) {
  * @returns {string}
  */
 export function buildAiErrorMessage(result) {
-  const code = (result && result.code) || 'unknown';
-  const err = (result && result.error) || '';
-  const aiCode = (result && result.aiCode) ? ' [' + result.aiCode + ']' : '';
-  const msg = 'AI error: ' + code + aiCode + (err ? ' - ' + err : '') +
-              (code === 'NO_API_KEY' ? '. Открой Настройки -> AI API key.' : '') +
-              (code === 'NO_EVIDENCE' ? '. Вакансия и резюме не имеют общих навыков. Проверь, что в резюме заполнен блок "Навыки" (вкладка Резюме -> загрузить).' : '') +
-              (code === 'AI_ERROR' && aiCode === ' [TIMEOUT]' ? '. Увеличь Timeout (мс) в Настройки -> AI-настройки (до 90 000-120 000).' : '');
+  const code = (result && result.code) || "unknown";
+  const err = (result && result.error) || "";
+  const aiCode = result && result.aiCode ? " [" + result.aiCode + "]" : "";
+  const msg =
+    "AI error: " +
+    code +
+    aiCode +
+    (err ? " - " + err : "") +
+    (code === "NO_API_KEY" ? ". Открой Настройки -> AI API key." : "") +
+    (code === "NO_EVIDENCE"
+      ? '. Вакансия и резюме не имеют общих навыков. Проверь, что в резюме заполнен блок "Навыки" (вкладка Резюме -> загрузить).'
+      : "") +
+    (code === "AI_ERROR" && aiCode === " [TIMEOUT]"
+      ? ". Увеличь Timeout (мс) в Настройки -> AI-настройки (до 90 000-120 000)."
+      : "");
   return msg;
 }
 
@@ -123,11 +141,15 @@ export function buildAiErrorMessage(result) {
  */
 export function buildMissingContextMessage(ctx) {
   const missing = [];
-  if (!ctx.vacancy) missing.push('вакансия');
-  if (!ctx.resume) missing.push('резюме');
-  return 'Не хватает: ' + missing.join(', ') + '. ' +
-         (ctx.vacancy ? '' : 'Открой hh.ru/vacancy/* или выбери в списке. ') +
-         (ctx.resume ? '' : 'Загрузи резюме на вкладке "Резюме".');
+  if (!ctx.vacancy) missing.push("вакансия");
+  if (!ctx.resume) missing.push("резюме");
+  return (
+    "Не хватает: " +
+    missing.join(", ") +
+    ". " +
+    (ctx.vacancy ? "" : "Открой hh.ru/vacancy/* или выбери в списке. ") +
+    (ctx.resume ? "" : 'Загрузи резюме на вкладке "Резюме".')
+  );
 }
 
 /**
@@ -137,8 +159,12 @@ export function buildMissingContextMessage(ctx) {
  * @returns {string}
  */
 export function buildSuccessMessage(text, warnings) {
-  const len = (text || '').length;
-  const warnCount = (Array.isArray(warnings) && warnings.length > 0) ? warnings.length : 0;
-  return 'Письмо сгенерировано (' + len + ' символов)' +
-         (warnCount > 0 ? ', ' + warnCount + ' предупреждений валидатора' : '');
+  const len = (text || "").length;
+  const warnCount = Array.isArray(warnings) && warnings.length > 0 ? warnings.length : 0;
+  return (
+    "Письмо сгенерировано (" +
+    len +
+    " символов)" +
+    (warnCount > 0 ? ", " + warnCount + " предупреждений валидатора" : "")
+  );
 }

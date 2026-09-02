@@ -5,9 +5,9 @@
  * Extracted from parseResume() due to size.
  */
 
-import { createLogger } from '../../lib/anti-hallucination.js';
+import { createLogger } from "../../lib/anti-hallucination.js";
 
-const resumeLog = createLogger('Resume');
+const resumeLog = createLogger("Resume");
 
 // ===============================================
 // ОБРАЗОВАНИЕ (Education)
@@ -29,22 +29,26 @@ export function parseEducation(dbg, resume) {
   const eduEntries = [];
 
   // Способ 1: cell-based структура (как в experience)
-  const eduUiTexts = /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
+  const eduUiTexts =
+    /^(посмотреть всё|редактировать|образование|доп\.? образование|высшее|среднее|среднее специальное|добавить|добавить образование|среднее профессиональное)$/i;
   const eduCells = eduCard.querySelectorAll('[data-qa="cell-left-side"]');
-  resumeLog.info('Education: found ' + eduCells.length + ' cell-left-side elements');
+  resumeLog.info("Education: found " + eduCells.length + " cell-left-side elements");
 
-  eduCells.forEach(cell => {
+  eduCells.forEach((cell) => {
     const edu = {};
     const cellTexts = cell.querySelectorAll('[data-qa="cell-text-content"]');
-    cellTexts.forEach(ct => {
-      const t = (ct.textContent || '').trim();
+    cellTexts.forEach((ct) => {
+      const t = (ct.textContent || "").trim();
       if (!t || t.length < 2) return;
       if (eduUiTexts.test(t)) return;
       if (!edu.name) {
         edu.name = t;
       } else if (!edu.description) {
         edu.description = t;
-      } else if (!edu.degree && /^(Бакалавр|Магистр|Специалист|Кандидат наук|Доктор наук|Аспирант|Среднее|Высшее)/i.test(t)) {
+      } else if (
+        !edu.degree &&
+        /^(Бакалавр|Магистр|Специалист|Кандидат наук|Доктор наук|Аспирант|Среднее|Высшее)/i.test(t)
+      ) {
         edu.degree = t;
       } else if (!edu.year && /\d{4}/.test(t)) {
         edu.year = t.match(/\d{4}/)?.[0] || t;
@@ -57,27 +61,27 @@ export function parseEducation(dbg, resume) {
 
   // Способ 2: если cell-left-side не дали результатов -- прямые дети eduCard
   if (eduEntries.length === 0) {
-    resumeLog.info('Education: fallback to direct children of eduCard');
-    Array.from(eduCard.children).forEach(child => {
+    resumeLog.info("Education: fallback to direct children of eduCard");
+    Array.from(eduCard.children).forEach((child) => {
       const edu = {};
-      const linkEl = child.querySelector('a');
+      const linkEl = child.querySelector("a");
       if (linkEl) {
-        const t = (linkEl.textContent || '').trim();
+        const t = (linkEl.textContent || "").trim();
         if (!eduUiTexts.test(t)) edu.name = t;
       }
       if (!edu.name) {
-        const textEls = child.querySelectorAll('span, div, p');
+        const textEls = child.querySelectorAll("span, div, p");
         for (const el of textEls) {
-          const t = (el.textContent || '').trim();
+          const t = (el.textContent || "").trim();
           if (t.length > 3 && /[А-Яа-яЁё]/.test(t) && !/^\d/.test(t) && !/\d{4}/.test(t) && !eduUiTexts.test(t)) {
             edu.name = t;
             break;
           }
         }
       }
-      const spans = child.querySelectorAll('span, div');
+      const spans = child.querySelectorAll("span, div");
       for (const sp of spans) {
-        const t = (sp.textContent || '').trim();
+        const t = (sp.textContent || "").trim();
         if (/^\d{4}$/.test(t) || (/\d{4}/.test(t) && t.length < 15)) {
           edu.year = t;
           break;
@@ -91,15 +95,18 @@ export function parseEducation(dbg, resume) {
 
   // Способ 3: если всё ещё пусто -- берём весь текст eduCard и парсим
   if (eduEntries.length === 0) {
-    resumeLog.info('Education: fallback to full text scan');
-    const fullText = (eduCard.textContent || '').trim();
-    const lines = fullText.split(/[\n\r]+/).map(l => l.trim()).filter(l => l.length > 3);
+    resumeLog.info("Education: fallback to full text scan");
+    const fullText = (eduCard.textContent || "").trim();
+    const lines = fullText
+      .split(/[\n\r]+/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 3);
     for (const line of lines) {
       if (/[А-Яа-яЁё]{3,}/.test(line) && line.length < 200) {
         const yearMatch = line.match(/(\d{4})/);
         eduEntries.push({
-          name: line.replace(/\d{4}/g, '').trim().substring(0, 100),
-          year: yearMatch ? yearMatch[1] : ''
+          name: line.replace(/\d{4}/g, "").trim().substring(0, 100),
+          year: yearMatch ? yearMatch[1] : "",
         });
       }
     }
@@ -107,8 +114,8 @@ export function parseEducation(dbg, resume) {
 
   resume.education = eduEntries;
   if (eduEntries.length > 0) {
-    resume._debug.found.push('education: ' + eduEntries.length + ' entries');
+    resume._debug.found.push("education: " + eduEntries.length + " entries");
   } else {
-    resume._debug.missing.push('education (0 entries extracted)');
+    resume._debug.missing.push("education (0 entries extracted)");
   }
 }

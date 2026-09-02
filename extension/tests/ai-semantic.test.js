@@ -1,13 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { computeSemanticSimilarity } from '../src/lib/ai-semantic.js';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { computeSemanticSimilarity } from "../src/lib/ai-semantic.js";
 
 function installChromeStub(initial = {}) {
   const store = { ...initial };
   globalThis.chrome = {
     storage: {
       local: {
-        async get(key) { return key in store ? { [key]: store[key] } : {}; },
-        async set(obj) { Object.assign(store, obj); },
+        async get(key) {
+          return key in store ? { [key]: store[key] } : {};
+        },
+        async set(obj) {
+          Object.assign(store, obj);
+        },
       },
     },
   };
@@ -15,145 +19,136 @@ function installChromeStub(initial = {}) {
 }
 
 beforeEach(() => {
-  installChromeStub({ aiApiKey: 'test-key' });
+  installChromeStub({ aiApiKey: "test-key" });
 });
 
-describe('computeSemanticSimilarity', () => {
-  it('should return 0 for null inputs', async () => {
+describe("computeSemanticSimilarity", () => {
+  it("should return 0 for null inputs", async () => {
     const result = await computeSemanticSimilarity(null, null);
     expect(result).toBe(0);
   });
 
-  it('should return 0 for null resume', async () => {
-    const result = await computeSemanticSimilarity(null, { title: 'Test' });
+  it("should return 0 for null resume", async () => {
+    const result = await computeSemanticSimilarity(null, { title: "Test" });
     expect(result).toBe(0);
   });
 
-  it('should return 0 for null vacancy', async () => {
-    const result = await computeSemanticSimilarity({ title: 'Test' }, null);
+  it("should return 0 for null vacancy", async () => {
+    const result = await computeSemanticSimilarity({ title: "Test" }, null);
     expect(result).toBe(0);
   });
 
-  it('should return number between 0 and 1', async () => {
+  it("should return number between 0 and 1", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({
-        choices: [{ message: { content: '0.75' } }]
-      })
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "0.75" } }],
+        }),
     });
 
     const result = await computeSemanticSimilarity(
-      { title: 'Менеджер', skills: ['продажи'] },
-      { title: 'Менеджер', keySkills: ['продажи'] }
+      { title: "Менеджер", skills: ["продажи"] },
+      { title: "Менеджер", keySkills: ["продажи"] },
     );
 
     expect(result).toBeGreaterThanOrEqual(0);
     expect(result).toBeLessThanOrEqual(1);
   });
 
-  it('should clamp values outside 0-1 range', async () => {
+  it("should clamp values outside 0-1 range", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({
-        choices: [{ message: { content: '1.5' } }]
-      })
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "1.5" } }],
+        }),
     });
 
-    const result = await computeSemanticSimilarity(
-      { title: 'Test' },
-      { title: 'Test' }
-    );
+    const result = await computeSemanticSimilarity({ title: "Test" }, { title: "Test" });
 
     expect(result).toBe(1);
   });
 
-  it('should clamp negative values to 0', async () => {
+  it("should clamp negative values to 0", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({
-        choices: [{ message: { content: '-0.3' } }]
-      })
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "-0.3" } }],
+        }),
     });
 
-    const result = await computeSemanticSimilarity(
-      { title: 'Test' },
-      { title: 'Test' }
-    );
+    const result = await computeSemanticSimilarity({ title: "Test" }, { title: "Test" });
 
     expect(result).toBe(0);
   });
 
-  it('should return 0 on fetch error', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+  it("should return 0 on fetch error", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
-    const result = await computeSemanticSimilarity(
-      { title: 'Test' },
-      { title: 'Test' }
-    );
+    const result = await computeSemanticSimilarity({ title: "Test" }, { title: "Test" });
 
     expect(result).toBe(0);
   });
 
-  it('should return 0 when AI response is empty', async () => {
+  it("should return 0 when AI response is empty", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({
-        choices: [{ message: { content: '' } }]
-      })
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "" } }],
+        }),
     });
 
-    const result = await computeSemanticSimilarity(
-      { title: 'Test' },
-      { title: 'Test' }
-    );
+    const result = await computeSemanticSimilarity({ title: "Test" }, { title: "Test" });
 
     expect(result).toBe(0);
   });
 
-  it('should return 0 when choices array is empty', async () => {
+  it("should return 0 when choices array is empty", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({ choices: [] })
+      json: () => Promise.resolve({ choices: [] }),
     });
 
-    const result = await computeSemanticSimilarity(
-      { title: 'Test' },
-      { title: 'Test' }
-    );
+    const result = await computeSemanticSimilarity({ title: "Test" }, { title: "Test" });
 
     expect(result).toBe(0);
   });
 
-  it('should send correct request to Groq API', async () => {
+  it("should send correct request to Groq API", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({
-        choices: [{ message: { content: '0.8' } }]
-      })
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "0.8" } }],
+        }),
     });
     global.fetch = mockFetch;
 
     await computeSemanticSimilarity(
-      { title: 'Frontend Developer', skills: ['React', 'TypeScript'] },
-      { title: 'Frontend Developer', keySkills: ['React', 'TypeScript'], description: { text: 'Build UIs' } }
+      { title: "Frontend Developer", skills: ["React", "TypeScript"] },
+      { title: "Frontend Developer", keySkills: ["React", "TypeScript"], description: { text: "Build UIs" } },
     );
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe('https://api.groq.com/openai/v1/chat/completions');
-    expect(opts.method).toBe('POST');
-    expect(opts.headers['Authorization']).toBe('Bearer test-key');
+    expect(url).toBe("https://api.groq.com/openai/v1/chat/completions");
+    expect(opts.method).toBe("POST");
+    expect(opts.headers["Authorization"]).toBe("Bearer test-key");
     const body = JSON.parse(opts.body);
-    expect(body.model).toBe('llama-3.3-70b-versatile');
+    expect(body.model).toBe("llama-3.3-70b-versatile");
     expect(body.temperature).toBe(0.1);
     expect(body.max_tokens).toBe(10);
-    expect(body.messages[0].content).toContain('Frontend Developer');
+    expect(body.messages[0].content).toContain("Frontend Developer");
   });
 
-  it('should handle resume with missing optional fields', async () => {
+  it("should handle resume with missing optional fields", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => Promise.resolve({
-        choices: [{ message: { content: '0.3' } }]
-      })
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "0.3" } }],
+        }),
     });
 
     const result = await computeSemanticSimilarity(
       { title: null, skills: null, experienceTotal: null },
-      { title: 'Test', keySkills: [], description: null }
+      { title: "Test", keySkills: [], description: null },
     );
 
     expect(result).toBe(0.3);

@@ -8,18 +8,25 @@
  *   - resume-fetch-iframe-vis-dom.js  (DOM-based: S0, S1, S2, S4)
  *   - resume-fetch-iframe-vis-adv.js  (text/script: S3, S5, S6, S7, S8)
  */
-import { createLogger } from './anti-hallucination.js';
-import { VISIBILITY_UNKNOWN, normalizeWs } from './resume-constants.js';
+import { createLogger } from "./anti-hallucination.js";
+import { VISIBILITY_UNKNOWN, normalizeWs } from "./resume-constants.js";
 import {
-  checkVisibilityCard, checkHiddenDataQa, checkKeyButtons, checkHideLink,
-  collectDiagButtons
-} from './resume-fetch-iframe-vis-dom.js';
+  checkActionLinks,
+  checkBodyIndicators,
+  checkBodyVisibilityText,
+  checkNotificationBanners,
+  checkScriptPatterns,
+  collectVisRelatedElements,
+} from "./resume-fetch-iframe-vis-adv.js";
 import {
-  checkBodyIndicators, checkBodyVisibilityText, checkScriptPatterns,
-  checkNotificationBanners, checkActionLinks, collectVisRelatedElements
-} from './resume-fetch-iframe-vis-adv.js';
+  checkHiddenDataQa,
+  checkHideLink,
+  checkKeyButtons,
+  checkVisibilityCard,
+  collectDiagButtons,
+} from "./resume-fetch-iframe-vis-dom.js";
 
-const visLog = createLogger('ResumeFetch');
+const visLog = createLogger("ResumeFetch");
 
 /**
  * Run a strategy check; if it returns a definitive result, push trace and return.
@@ -42,7 +49,7 @@ export function detectVisibilityFromIframeDoc(iframeDoc) {
 
   // Collect diagnostic buttons + reuse allButtons for strategy S2
   const { buttons: diagButtons, allButtons } = collectDiagButtons(iframeDoc);
-  visLog.info('[VIS-IFRAME] Diagnostic buttons: ' + JSON.stringify(diagButtons));
+  visLog.info("[VIS-IFRAME] Diagnostic buttons: " + JSON.stringify(diagButtons));
 
   // S0: visibility-card (PRIMARY)
   let r = checkVisibilityCard(iframeDoc);
@@ -57,7 +64,7 @@ export function detectVisibilityFromIframeDoc(iframeDoc) {
   if (tryStrategy(r, trace)) return { visibility: r.visibility, trace };
 
   // S3: body text hidden/visible indicators
-  const bodyText = iframeDoc.body ? normalizeWs(iframeDoc.body.textContent || '') : '';
+  const bodyText = iframeDoc.body ? normalizeWs(iframeDoc.body.textContent || "") : "";
   r = checkBodyIndicators(bodyText);
   if (tryStrategy(r, trace)) return { visibility: r.visibility, trace };
 
@@ -85,11 +92,15 @@ export function detectVisibilityFromIframeDoc(iframeDoc) {
   // Final diagnostic dump
   const visElements = collectVisRelatedElements(iframeDoc);
   if (visElements.length > 0) {
-    visLog.info('[VIS-IFRAME] Related elements: ' + JSON.stringify(visElements));
+    visLog.info("[VIS-IFRAME] Related elements: " + JSON.stringify(visElements));
   }
 
-  trace.push('-> UNKNOWN');
-  visLog.info('[VIS-IFRAME] All strategies exhausted. Buttons found: ' + diagButtons.length +
-    ', Related elements: ' + visElements.length);
+  trace.push("-> UNKNOWN");
+  visLog.info(
+    "[VIS-IFRAME] All strategies exhausted. Buttons found: " +
+      diagButtons.length +
+      ", Related elements: " +
+      visElements.length,
+  );
   return { visibility: VISIBILITY_UNKNOWN, trace };
 }

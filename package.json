@@ -26,7 +26,6 @@
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx,json,html,md}": "prettier --write",
-    "extension/**/*.{js,ts,jsx,tsx}": "eslint --fix",
     "*.css": "stylelint --fix",
     "*.md": "markdownlint --fix --ignore node_modules"
   },

@@ -18,25 +18,24 @@ const WARN_LIMIT = 200;
 
 module.exports = {
   meta: {
-    type: 'suggestion',
+    type: "suggestion",
     docs: {
-      description: 'AHG Rule 12 (warn tier): suggest splitting files over 200 lines',
-      category: 'AHG Rules',
+      description: "AHG Rule 12 (warn tier): suggest splitting files over 200 lines",
+      category: "AHG Rules",
       recommended: true,
     },
     fixable: null,
     schema: [
       {
-        type: 'object',
+        type: "object",
         properties: {
-          warnLimit: { type: 'number', minimum: 50 },
+          warnLimit: { type: "number", minimum: 50 },
         },
         additionalProperties: false,
       },
     ],
     messages: {
-      overWarn:
-        'AHG Rule 12 [W]: File has {{ count }} lines (recommended max {{ limit }}). Consider splitting.',
+      overWarn: "AHG Rule 12 [W]: File has {{ count }} lines (recommended max {{ limit }}). Consider splitting.",
     },
   },
 
@@ -53,7 +52,7 @@ module.exports = {
         if (lineCount > warnLimit) {
           context.report({
             node,
-            messageId: 'overWarn',
+            messageId: "overWarn",
             data: { count: lineCount, limit: warnLimit },
           });
         }

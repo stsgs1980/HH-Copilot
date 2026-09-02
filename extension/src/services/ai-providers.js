@@ -8,12 +8,12 @@
  */
 
 /** Provider types */
-export const PROVIDER_ZAI = 'zai';
-export const PROVIDER_OLLAMA = 'ollama';
-export const PROVIDER_CUSTOM = 'custom';
+export const PROVIDER_ZAI = "zai";
+export const PROVIDER_OLLAMA = "ollama";
+export const PROVIDER_CUSTOM = "custom";
 
-export const OLLAMA_BASE_URL = 'http://localhost:11434/v1';
-export const OLLAMA_DEFAULT_MODEL = 'llama3';
+export const OLLAMA_BASE_URL = "http://localhost:11434/v1";
+export const OLLAMA_DEFAULT_MODEL = "llama3";
 
 /**
  * Detect AI provider from baseUrl.
@@ -23,8 +23,8 @@ export const OLLAMA_DEFAULT_MODEL = 'llama3';
 export function detectProvider(baseUrl) {
   if (!baseUrl) return PROVIDER_ZAI;
   const u = baseUrl.toLowerCase();
-  if (u.includes('z.ai')) return PROVIDER_ZAI;
-  if (u.includes('localhost:11434') || u.includes('127.0.0.1:11434')) return PROVIDER_OLLAMA;
+  if (u.includes("z.ai")) return PROVIDER_ZAI;
+  if (u.includes("localhost:11434") || u.includes("127.0.0.1:11434")) return PROVIDER_OLLAMA;
   return PROVIDER_CUSTOM;
 }
 
@@ -36,15 +36,15 @@ export function detectProvider(baseUrl) {
  * @returns {Promise<string[]>}
  */
 export async function fetchOllamaModels(baseUrl, fetchImpl) {
-  const base = (baseUrl || OLLAMA_BASE_URL).replace(/\/v1\/?$/, '').replace(/\/$/, '');
-  const url = base + '/api/tags';
+  const base = (baseUrl || OLLAMA_BASE_URL).replace(/\/v1\/?$/, "").replace(/\/$/, "");
+  const url = base + "/api/tags";
   const fetchFn = fetchImpl || globalThis.fetch.bind(globalThis);
   try {
-    const resp = await fetchFn(url, { method: 'GET' });
+    const resp = await fetchFn(url, { method: "GET" });
     if (!resp.ok) return [];
     const data = await resp.json();
     if (!data || !Array.isArray(data.models)) return [];
-    return data.models.map(m => m.name).filter(Boolean);
+    return data.models.map((m) => m.name).filter(Boolean);
   } catch (_e) {
     return [];
   }

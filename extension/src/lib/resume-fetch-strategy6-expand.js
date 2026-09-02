@@ -12,13 +12,13 @@
  *   resume-fetch-strategy6-urls.js    -- URL discovery + fetch
  *   resume-fetch-strategy6-api.js     -- applicant API + JSON/expanded-doc parsing
  */
-import { createLogger } from './anti-hallucination.js';
-import { fetchHtml, htmlToDoc } from './resume-fetch-helpers.js';
-import { fetchExpandedExperienceViaIframe } from './resume-fetch-strategy6-iframe.js';
-import { findExpansionUrls, tryFetchExpandedUrl } from './resume-fetch-strategy6-urls.js';
-import { tryApplicantApi, parseExperienceFromExpandedDoc } from './resume-fetch-strategy6-api.js';
+import { createLogger } from "./anti-hallucination.js";
+import { fetchHtml, htmlToDoc } from "./resume-fetch-helpers.js";
+import { parseExperienceFromExpandedDoc, tryApplicantApi } from "./resume-fetch-strategy6-api.js";
+import { fetchExpandedExperienceViaIframe } from "./resume-fetch-strategy6-iframe.js";
+import { findExpansionUrls, tryFetchExpandedUrl } from "./resume-fetch-strategy6-urls.js";
 
-const fetchLog = createLogger('ResumeFetch');
+const fetchLog = createLogger("ResumeFetch");
 
 /**
  * Try to fetch full experience data when SSR only renders 3 entries.
@@ -37,7 +37,7 @@ const fetchLog = createLogger('ResumeFetch');
  * @returns {Promise<{entries: Array, iframeVis?: string, iframeVisTrace?: string[], iframeDiag?: object}>}
  */
 export async function fetchExpandedExperience(doc, html, resumeId, currentCount, resumeUrl) {
-  fetchLog.info('Strategy 6: starting (currentCount=' + currentCount + ', resumeId=' + (resumeId || 'none') + ')');
+  fetchLog.info("Strategy 6: starting (currentCount=" + currentCount + ", resumeId=" + (resumeId || "none") + ")");
 
   // -- Step 0 [PRIMARY]: Load resume in hidden iframe, click "Развернуть", parse DOM --
   // Capture iframe visibility data -- it MUST survive through ALL code paths below.
@@ -53,16 +53,27 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
     iframeDiag = iframeResult.iframeDiag;
 
     if (iframeResult.entries.length > currentCount) {
-      fetchLog.info('Strategy 6: SUCCESS via iframe -- got ' + iframeResult.entries.length + ' experiences, vis=' + iframeVis);
+      fetchLog.info(
+        "Strategy 6: SUCCESS via iframe -- got " + iframeResult.entries.length + " experiences, vis=" + iframeVis,
+      );
       return {
         entries: iframeResult.entries,
-        iframeVis, iframeVisTrace, iframeDiag
+        iframeVis,
+        iframeVisTrace,
+        iframeDiag,
       };
     }
     // Even if entries didn't increase, we still have visibility data
-    fetchLog.info('Strategy 6: iframe got ' + iframeResult.entries.length + ' entries (not more than ' + currentCount + '), but visibility=' + iframeVis);
+    fetchLog.info(
+      "Strategy 6: iframe got " +
+        iframeResult.entries.length +
+        " entries (not more than " +
+        currentCount +
+        "), but visibility=" +
+        iframeVis,
+    );
   } catch (err) {
-    fetchLog.info('Strategy 6: iframe approach failed: ' + err.message);
+    fetchLog.info("Strategy 6: iframe approach failed: " + err.message);
   }
 
   // Helper: always include iframe visibility in return values
@@ -77,22 +88,22 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
 
   // -- Step 1: Find "Развернуть" / "Показать все" button URLs --
   const expansionUrls = findExpansionUrls(doc, html, resumeId);
-  fetchLog.info('Strategy 6: found ' + expansionUrls.length + ' candidate expansion URLs');
+  fetchLog.info("Strategy 6: found " + expansionUrls.length + " candidate expansion URLs");
   expansionUrls.forEach((u, i) => {
-    fetchLog.info('  URL ' + i + ': ' + u.url + ' (source: ' + u.source + ')');
+    fetchLog.info("  URL " + i + ": " + u.url + " (source: " + u.source + ")");
   });
 
   // -- Step 2: Try each expansion URL --
   for (const { url, source } of expansionUrls) {
     try {
-      fetchLog.info('Strategy 6: fetching [' + source + '] ' + url);
+      fetchLog.info("Strategy 6: fetching [" + source + "] " + url);
       const urlEntries = await tryFetchExpandedUrl(url, currentCount);
       if (urlEntries && urlEntries.length > currentCount) {
-        fetchLog.info('Strategy 6: SUCCESS from ' + source + ' -- got ' + urlEntries.length + ' experiences');
+        fetchLog.info("Strategy 6: SUCCESS from " + source + " -- got " + urlEntries.length + " experiences");
         return withVis({ entries: urlEntries });
       }
     } catch (err) {
-      fetchLog.info('Strategy 6: [' + source + '] error: ' + err.message);
+      fetchLog.info("Strategy 6: [" + source + "] error: " + err.message);
     }
   }
 
@@ -105,36 +116,45 @@ export async function fetchExpandedExperience(doc, html, resumeId, currentCount,
   // -- Step 4: Try re-fetching with expansion query parameters --
   if (resumeUrl) {
     const expandVariants = [
-      { url: resumeUrl + '&expand=experience_items', source: 'expand-experience-items' },
-      { url: resumeUrl + '&showAll=true', source: 'showAll' },
-      { url: resumeUrl + '&full=true', source: 'full' },
-      { url: resumeUrl + '&expand=all', source: 'expand-all' },
+      { url: resumeUrl + "&expand=experience_items", source: "expand-experience-items" },
+      { url: resumeUrl + "&showAll=true", source: "showAll" },
+      { url: resumeUrl + "&full=true", source: "full" },
+      { url: resumeUrl + "&expand=all", source: "expand-all" },
     ];
 
     for (const { url, source } of expandVariants) {
       try {
-        fetchLog.info('Strategy 6: trying param [' + source + '] ' + url);
+        fetchLog.info("Strategy 6: trying param [" + source + "] " + url);
         const expandedHtml = await fetchHtml(url);
         const expandedDoc = htmlToDoc(expandedHtml);
         const expCards = expandedDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
         const stepperItems = expandedDoc.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
 
-        fetchLog.info('Strategy 6: [' + source + '] returned HTML with ' +
-          expCards.length + ' company-cards, ' + stepperItems.length + ' stepper-items');
+        fetchLog.info(
+          "Strategy 6: [" +
+            source +
+            "] returned HTML with " +
+            expCards.length +
+            " company-cards, " +
+            stepperItems.length +
+            " stepper-items",
+        );
 
         if (expCards.length > currentCount || stepperItems.length > currentCount) {
           const parsed = parseExperienceFromExpandedDoc(expandedDoc, expandedHtml, currentCount);
           if (parsed.length > currentCount) {
-            fetchLog.info('Strategy 6: SUCCESS from ' + source + ' -- got ' + parsed.length + ' experiences');
+            fetchLog.info("Strategy 6: SUCCESS from " + source + " -- got " + parsed.length + " experiences");
             return withVis({ entries: parsed });
           }
         }
       } catch (err) {
-        fetchLog.info('Strategy 6: [' + source + '] error: ' + err.message);
+        fetchLog.info("Strategy 6: [" + source + "] error: " + err.message);
       }
     }
   }
 
-  fetchLog.info('Strategy 6: all approaches exhausted, returning current count: ' + currentCount + ', vis=' + iframeVis);
+  fetchLog.info(
+    "Strategy 6: all approaches exhausted, returning current count: " + currentCount + ", vis=" + iframeVis,
+  );
   return withVis({ entries: [] });
 }

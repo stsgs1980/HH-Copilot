@@ -23,11 +23,11 @@
  */
 export function scoreSalary(resume, vacancy) {
   // Parse resume salary expectation
-  const resumeSalary = parseResumeSalary(resume.salary || '');
+  const resumeSalary = parseResumeSalary(resume.salary || "");
   let vacSalary = vacancy.salary || {};
 
   // Handle string salary from vacancy-list parser (e.g., "150 000 - 200 000 rub")
-  if (typeof vacSalary === 'string') {
+  if (typeof vacSalary === "string") {
     vacSalary = parseVacancySalaryString(vacSalary);
   }
 
@@ -39,15 +39,15 @@ export function scoreSalary(resume, vacancy) {
 
   // If no salary info on either side -- low neutral score
   if (!resumeSalary && !vacSalary.min && !vacSalary.max) {
-    return { score: 4, reason: 'no-data' };
+    return { score: 4, reason: "no-data" };
   }
 
   if (!resumeSalary) {
-    return { score: 4, reason: 'resume-no-salary' };
+    return { score: 4, reason: "resume-no-salary" };
   }
 
   if (!vacSalary.min && !vacSalary.max) {
-    return { score: 4, reason: 'vacancy-no-salary' };
+    return { score: 4, reason: "vacancy-no-salary" };
   }
 
   // Check overlap between resume expectation and vacancy range
@@ -56,26 +56,26 @@ export function scoreSalary(resume, vacancy) {
 
   // Resume salary within vacancy range
   if (resumeSalary >= vacMin && resumeSalary <= vacMax) {
-    return { score: 15, reason: 'within-range' };
+    return { score: 15, reason: "within-range" };
   }
 
   // Resume salary slightly below vacancy min (within 20%)
   if (resumeSalary < vacMin && resumeSalary >= vacMin * 0.8) {
-    return { score: 12, reason: 'slightly-below' };
+    return { score: 12, reason: "slightly-below" };
   }
 
   // Resume salary slightly above vacancy max (within 20%)
   if (resumeSalary > vacMax && resumeSalary <= vacMax * 1.2) {
-    return { score: 10, reason: 'slightly-above' };
+    return { score: 10, reason: "slightly-above" };
   }
 
   // Resume salary way below
   if (resumeSalary < vacMin) {
-    return { score: 5, reason: 'below-range' };
+    return { score: 5, reason: "below-range" };
   }
 
   // Resume salary way above
-  return { score: 3, reason: 'above-range' };
+  return { score: 3, reason: "above-range" };
 }
 
 // ===============================================
@@ -84,22 +84,22 @@ export function scoreSalary(resume, vacancy) {
 
 /** Parse resume salary string into a number. */
 function parseResumeSalary(salaryStr) {
-  if (!salaryStr || typeof salaryStr !== 'string') return null;
+  if (!salaryStr || typeof salaryStr !== "string") return null;
   const nums = salaryStr.match(/\d[\d\s]*\d/g);
   if (!nums || nums.length === 0) return null;
   // Take the first number (expected salary)
-  return parseInt(nums[0].replace(/\s/g, ''), 10) || null;
+  return parseInt(nums[0].replace(/\s/g, ""), 10) || null;
 }
 
 /** Parse vacancy salary string like "150 000 - 200 000 rub" into { min, max }. */
 function parseVacancySalaryString(salaryStr) {
-  if (!salaryStr || typeof salaryStr !== 'string') return {};
+  if (!salaryStr || typeof salaryStr !== "string") return {};
   // Remove currency symbols and normalize spaces
-  const cleaned = salaryStr.replace(/[руб.$евроруб.]/gi, '').replace(/\s+/g, ' ');
+  const cleaned = salaryStr.replace(/[руб.$евроруб.]/gi, "").replace(/\s+/g, " ");
   // Find all number groups (e.g., "150 000" -> "150000")
   const nums = cleaned.match(/\d[\d\s]*\d/g);
   if (!nums || nums.length === 0) return {};
-  const parsed = nums.map(n => parseInt(n.replace(/\s/g, ''), 10)).filter(n => !isNaN(n));
+  const parsed = nums.map((n) => parseInt(n.replace(/\s/g, ""), 10)).filter((n) => !isNaN(n));
   if (parsed.length === 0) return {};
 
   // Handle "от N" / "до N" prefixes (SERP salary strings)

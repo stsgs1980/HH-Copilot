@@ -13,23 +13,19 @@
  * v1.9.43.0
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
-import { saveMyResume, getMyResumes, setActiveResume, markAsApplied } from '../lib/storage.js';
-import { parseNegotiations } from '../parsers/negotiations.js';
-import { fetchAllNegotiations } from '../parsers/negotiations-aggregator.js';
-import { parseResume, parseResumeList, expandHiddenSections } from '../parsers/resume-detail.js';
-import { fetchAndParseResume } from '../lib/resume-fetch.js';
-import { renderMyResumesPanel } from '../ui/tabs/resumes.js';
-import { setActiveResumeState, setMyResumes, setResumeList, setNegotiations } from '../ui/state.js';
+import { createLogger } from "../lib/anti-hallucination.js";
+import { fetchAndParseResume } from "../lib/resume-fetch.js";
+import { getMyResumes, markAsApplied, saveMyResume, setActiveResume } from "../lib/storage.js";
+import { fetchAllNegotiations } from "../parsers/negotiations-aggregator.js";
+import { parseNegotiations } from "../parsers/negotiations.js";
+import { expandHiddenSections, parseResume, parseResumeList } from "../parsers/resume-detail.js";
+import { setActiveResumeState, setMyResumes, setNegotiations, setResumeList } from "../ui/state.js";
+import { renderMyResumesPanel } from "../ui/tabs/resumes.js";
 
 // Re-export vacancy + main page handlers for callers that import from here
-export {
-  handleVacancySearchPage,
-  handleVacancyDetailPage,
-  handleMainPage,
-} from './main-page-handlers-vacancy.js';
+export { handleMainPage, handleVacancyDetailPage, handleVacancySearchPage } from "./main-page-handlers-vacancy.js";
 
-const pageLog = createLogger('Main');
+const pageLog = createLogger("Main");
 
 // -- Resume detail page --
 
@@ -45,21 +41,21 @@ export async function handleResumeDetailPage(path) {
     const editMatch = path.match(/\/resume\/([a-f0-9]+)/);
     if (editMatch) {
       const resumeId = editMatch[1];
-      const viewUrl = 'https://hh.ru/applicant/resumes/view?resume=' + resumeId;
-      pageLog.info('Edit page detected, fetching view: ' + viewUrl);
+      const viewUrl = "https://hh.ru/applicant/resumes/view?resume=" + resumeId;
+      pageLog.info("Edit page detected, fetching view: " + viewUrl);
       try {
         const resume = await fetchAndParseResume(viewUrl);
         if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
           await saveResumeToState(resume);
-          pageLog.info('Auto-fetched resume (from edit page): ' + resume.title);
+          pageLog.info("Auto-fetched resume (from edit page): " + resume.title);
         }
       } catch (err) {
-        pageLog.warn('Failed to fetch resume from edit page: ' + err.message);
+        pageLog.warn("Failed to fetch resume from edit page: " + err.message);
       }
     }
   } else if (/\/applicant\/resumes\/view/.test(path)) {
     // Applicant's own resume view: parse the current page directly
-    pageLog.info('Applicant resume view page detected');
+    pageLog.info("Applicant resume view page detected");
     await expandHiddenSections();
     const resume = parseResume();
     if (!resume.id) {
@@ -68,7 +64,7 @@ export async function handleResumeDetailPage(path) {
     }
     if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
       await saveResumeToState(resume);
-      pageLog.info('Auto-parsed resume (applicant view): ' + resume.title);
+      pageLog.info("Auto-parsed resume (applicant view): " + resume.title);
     }
   } else {
     // Standard resume page: /resume/{hex}
@@ -76,7 +72,7 @@ export async function handleResumeDetailPage(path) {
     const resume = parseResume();
     if (resume.id && (resume.title || resume.skills.length > 0 || resume.experience.length > 0)) {
       await saveResumeToState(resume);
-      pageLog.info('Auto-parsed resume: ' + resume.title);
+      pageLog.info("Auto-parsed resume: " + resume.title);
     }
   }
 }
@@ -92,7 +88,7 @@ export async function handleResumeListPage() {
   const list = await getMyResumes();
   setMyResumes(list);
   renderMyResumesPanel();
-  pageLog.info('Resume list page: ' + resumeList.length + ' resumes');
+  pageLog.info("Resume list page: " + resumeList.length + " resumes");
 }
 
 // -- Negotiations page -- v1.9.39.0
@@ -105,50 +101,54 @@ let negotiationsObserverActive = false;
  * SPA mutations for live updates.
  */
 export async function handleNegotiationsPage() {
-  pageLog.info('Negotiations page detected -- parsing negotiation items');
+  pageLog.info("Negotiations page detected -- parsing negotiation items");
 
   // Quick parse from current DOM (instant feedback)
   const negotiations = await parseNegotiations();
   setNegotiations(negotiations);
 
   // v1.9.39.0: Mark vacancy IDs from negotiations as 'applied' in storage.
-  const appliedIds = negotiations.filter(n => n.vacancyId).map(n => n.vacancyId);
+  const appliedIds = negotiations.filter((n) => n.vacancyId).map((n) => n.vacancyId);
   if (appliedIds.length > 0) {
-    pageLog.info('Marking ' + appliedIds.length + ' vacancies as applied from negotiations');
-    Promise.all(appliedIds.map(id => markAsApplied(id))).catch(() => {});
+    pageLog.info("Marking " + appliedIds.length + " vacancies as applied from negotiations");
+    Promise.all(appliedIds.map((id) => markAsApplied(id))).catch(() => {});
   }
 
   // Import renderNegotiationList lazily to avoid circular deps at module load
   try {
-    const { renderNegotiationList } = await import('../ui/tabs/negotiations.js');
+    const { renderNegotiationList } = await import("../ui/tabs/negotiations.js");
     renderNegotiationList();
   } catch (_e) {
-    pageLog.warn('Failed to render negotiation list');
+    pageLog.warn("Failed to render negotiation list");
   }
 
-  pageLog.info('Negotiations parsed: ' + negotiations.length + ' items');
+  pageLog.info("Negotiations parsed: " + negotiations.length + " items");
 
   // v1.9.43.0 F1.9: Background-fetch aggregated cross-tab list
   // (cache 30s -> if fresh, instant; otherwise fetches 8 tabs at 1 req/sec)
-  fetchAllNegotiations().then(result => {
-    if (result && result.items && result.items.length > 0) {
-      pageLog.info('Aggregated: ' + result.items.length + ' items, errors=' + result.errors.length);
-      setNegotiations(result.items);
-      import('../ui/state.js').then(({ panelState }) => {
-        panelState.negotiationsMeta = {
-          perTab: result.perTab,
-          errors: result.errors,
-          fetchedAt: result.fetchedAt,
-          fromCache: result.fromCache,
-        };
-      });
-      import('../ui/tabs/negotiations.js').then(({ renderNegotiationList }) => {
-        renderNegotiationList();
-      }).catch(() => {});
-    }
-  }).catch(err => {
-    pageLog.warn('Aggregator fetch failed: ' + err.message);
-  });
+  fetchAllNegotiations()
+    .then((result) => {
+      if (result && result.items && result.items.length > 0) {
+        pageLog.info("Aggregated: " + result.items.length + " items, errors=" + result.errors.length);
+        setNegotiations(result.items);
+        import("../ui/state.js").then(({ panelState }) => {
+          panelState.negotiationsMeta = {
+            perTab: result.perTab,
+            errors: result.errors,
+            fetchedAt: result.fetchedAt,
+            fromCache: result.fromCache,
+          };
+        });
+        import("../ui/tabs/negotiations.js")
+          .then(({ renderNegotiationList }) => {
+            renderNegotiationList();
+          })
+          .catch(() => {});
+      }
+    })
+    .catch((err) => {
+      pageLog.warn("Aggregator fetch failed: " + err.message);
+    });
 
   // SPA MutationObserver -- re-parse when DOM changes on negotiations page
   if (!negotiationsObserverActive) {
@@ -157,16 +157,16 @@ export async function handleNegotiationsPage() {
     new MutationObserver(() => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        if (!window.location.pathname.startsWith('/applicant/negotiations')) return;
+        if (!window.location.pathname.startsWith("/applicant/negotiations")) return;
         const fresh = await parseNegotiations();
         setNegotiations(fresh);
         try {
-          const { renderNegotiationList } = await import('../ui/tabs/negotiations.js');
+          const { renderNegotiationList } = await import("../ui/tabs/negotiations.js");
           renderNegotiationList();
         } catch (_e) {}
       }, 1500);
     }).observe(document.body, { childList: true, subtree: true });
-    pageLog.info('Negotiations SPA observer active');
+    pageLog.info("Negotiations SPA observer active");
   }
 }
 
@@ -182,11 +182,11 @@ export async function saveResumeToState(resume) {
   setActiveResumeState(resume);
   await setActiveResume(resume);
   saveMyResume(resume).then(() => {
-    getMyResumes().then(list => {
+    getMyResumes().then((list) => {
       setMyResumes(list);
       renderMyResumesPanel();
     });
   });
-  window.dispatchEvent(new CustomEvent('hh-ar-resume-loaded', { detail: { resume } }));
-  pageLog.info('Resume loaded -> dispatched hh-ar-resume-loaded');
+  window.dispatchEvent(new CustomEvent("hh-ar-resume-loaded", { detail: { resume } }));
+  pageLog.info("Resume loaded -> dispatched hh-ar-resume-loaded");
 }

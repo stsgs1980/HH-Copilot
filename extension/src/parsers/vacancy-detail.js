@@ -12,10 +12,10 @@
  * v1.9.19.0: split from monolith into focused modules
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
-import { parseVacancyDetailFromDoc } from '../lib/vacancy-fetch-text.js';
+import { createLogger } from "../lib/anti-hallucination.js";
+import { parseVacancyDetailFromDoc } from "../lib/vacancy-fetch-text.js";
 
-const vacLog = createLogger('VacDetail');
+const vacLog = createLogger("VacDetail");
 
 /**
  * Parse the current vacancy detail page.
@@ -31,7 +31,7 @@ export function parseVacancyDetail() {
   const vacancy = parseVacancyDetailFromDoc(document, url);
 
   if (!vacancy) {
-    vacLog.warn('parseVacancyDetailFromDoc returned null');
+    vacLog.warn("parseVacancyDetailFromDoc returned null");
     return null;
   }
 
@@ -40,7 +40,7 @@ export function parseVacancyDetail() {
   // Apply button detection (uses findElement for visibility check)
   try {
     const applyBtn = document.querySelector(
-      '[data-qa="vacancy-response-apply"], [data-qa="vacancy-response-link-top"]'
+      '[data-qa="vacancy-response-apply"], [data-qa="vacancy-response-link-top"]',
     );
     vacancy.hasApplyButton = !!applyBtn && document.body.contains(applyBtn);
   } catch (_e) {
@@ -48,13 +48,22 @@ export function parseVacancyDetail() {
   }
 
   // Ensure source is set correctly for on-page parsing
-  vacancy.source = 'detail';
+  vacancy.source = "detail";
 
   const elapsed = (performance.now() - t0).toFixed(1);
-  vacLog.info('Parsed vacancy "' + vacancy.title.substring(0, 40) + '" in ' + elapsed + 'ms');
-  vacLog.info('Skills: ' + vacancy.keySkills.length + ' (source: ' + vacancy._skillsSource + ')' +
-    ' | Derived: ' + vacancy.derivedSkills.length +
-    ' | Desc: ' + vacancy.description.text.length + ' chars');
+  vacLog.info('Parsed vacancy "' + vacancy.title.substring(0, 40) + '" in ' + elapsed + "ms");
+  vacLog.info(
+    "Skills: " +
+      vacancy.keySkills.length +
+      " (source: " +
+      vacancy._skillsSource +
+      ")" +
+      " | Derived: " +
+      vacancy.derivedSkills.length +
+      " | Desc: " +
+      vacancy.description.text.length +
+      " chars",
+  );
 
   return vacancy;
 }

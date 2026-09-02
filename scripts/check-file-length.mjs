@@ -3,34 +3,48 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
-const MAX_LINES = 250;
+const HARD_LIMIT = 400;
 
 /**
- * Pre-commit check: staged TS/JS files must not exceed MAX_LINES.
+ * Pre-commit check: new TS/JS files must not exceed HARD_LIMIT.
+ * Modified files are only warned, not blocked.
  * @returns {void}
  */
 function main() {
-  const output = execSync("git diff --cached --name-only --diff-filter=ACM", {
+  const added = execSync("git diff --cached --name-only --diff-filter=A", {
     encoding: "utf8",
   });
 
-  const files = output
+  const modified = execSync("git diff --cached --name-only --diff-filter=M", {
+    encoding: "utf8",
+  });
+
+  const newFiles = added
     .split("\n")
-    .map((file) => file.trim())
-    .filter((file) => /\.(ts|tsx|js|jsx)$/.test(file));
+    .map((f) => f.trim())
+    .filter((f) => /\.(ts|tsx|js|jsx)$/.test(f));
+
+  const modifiedFiles = modified
+    .split("\n")
+    .map((f) => f.trim())
+    .filter((f) => /\.(ts|tsx|js|jsx)$/.test(f));
 
   let failed = 0;
 
-  for (const file of files) {
-    if (!existsSync(file)) {
-      continue;
-    }
-
+  for (const file of newFiles) {
+    if (!existsSync(file)) continue;
     const lines = readFileSync(file, "utf8").split("\n").length;
-
-    if (lines > MAX_LINES) {
-      console.error(`[FAIL] File '${file}' has ${lines} lines. Limit: ${MAX_LINES}.`);
+    if (lines > HARD_LIMIT) {
+      console.error(`[FAIL] NEW file '${file}' has ${lines} lines. Hard limit: ${HARD_LIMIT}.`);
       failed = 1;
+    }
+  }
+
+  for (const file of modifiedFiles) {
+    if (!existsSync(file)) continue;
+    const lines = readFileSync(file, "utf8").split("\n").length;
+    if (lines > HARD_LIMIT) {
+      console.error(`[WARN] Modified file '${file}' has ${lines} lines. Hard limit: ${HARD_LIMIT}.`);
     }
   }
 

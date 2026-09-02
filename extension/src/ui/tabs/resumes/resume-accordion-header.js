@@ -5,8 +5,8 @@
  * Split from render-resume-panel.js for anti-monolith compliance.
  */
 
-import { refs } from '../../state.js';
-import { getInitials } from './resume-helpers.js';
+import { refs } from "../../state.js";
+import { getInitials } from "./resume-helpers.js";
 
 /**
  * Calculate total years of experience from resume.experience array.
@@ -33,10 +33,10 @@ function calcExperienceYears(resume) {
 function yearWord(n) {
   const mod10 = n % 10;
   const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 19) return 'лет';
-  if (mod10 === 1) return 'год';
-  if (mod10 >= 2 && mod10 <= 4) return 'года';
-  return 'лет';
+  if (mod100 >= 11 && mod100 <= 19) return "лет";
+  if (mod10 === 1) return "год";
+  if (mod10 >= 2 && mod10 <= 4) return "года";
+  return "лет";
 }
 
 /**
@@ -45,45 +45,45 @@ function yearWord(n) {
  * @param {object|null} resume - Active resume object, or null if none selected
  */
 export function updateAccordionHeader(resume) {
-  const titleEl = refs.shadowRoot?.getElementById('res-title');
-  const subtitleEl = refs.shadowRoot?.getElementById('res-subtitle');
-  const badgeEl = refs.shadowRoot?.getElementById('res-parsed-badge');
-  const avatarEl = refs.shadowRoot?.getElementById('res-avatar');
+  const titleEl = refs.shadowRoot?.getElementById("res-title");
+  const subtitleEl = refs.shadowRoot?.getElementById("res-subtitle");
+  const badgeEl = refs.shadowRoot?.getElementById("res-parsed-badge");
+  const avatarEl = refs.shadowRoot?.getElementById("res-avatar");
 
   if (resume && resume.id) {
-    if (titleEl) titleEl.textContent = 'Действующее резюме';
+    if (titleEl) titleEl.textContent = "Действующее резюме";
     if (subtitleEl) {
       const parts = [];
       if (resume.name) parts.push(resume.name);
       else if (resume.title) parts.push(resume.title);
       const expYears = calcExperienceYears(resume);
-      if (expYears > 0) parts.push(expYears + ' ' + yearWord(expYears) + ' опыта');
-      if (resume.skills && resume.skills.length) parts.push(resume.skills.length + ' навыков');
-      subtitleEl.textContent = parts.join(' - ') || 'Резюме загружено';
+      if (expYears > 0) parts.push(expYears + " " + yearWord(expYears) + " опыта");
+      if (resume.skills && resume.skills.length) parts.push(resume.skills.length + " навыков");
+      subtitleEl.textContent = parts.join(" - ") || "Резюме загружено";
     }
     if (badgeEl) {
-      const vis = resume.visibility || (resume.hidden ? 'hidden' : 'unknown');
-      if (vis === 'hidden') {
-        badgeEl.textContent = 'действующее (скрыто)';
-        badgeEl.className = 'badge badge-amber';
+      const vis = resume.visibility || (resume.hidden ? "hidden" : "unknown");
+      if (vis === "hidden") {
+        badgeEl.textContent = "действующее (скрыто)";
+        badgeEl.className = "badge badge-amber";
       } else {
-        badgeEl.textContent = 'действующее';
-        badgeEl.className = 'badge badge-green';
+        badgeEl.textContent = "действующее";
+        badgeEl.className = "badge badge-green";
       }
-      badgeEl.style.fontSize = '11px';
+      badgeEl.style.fontSize = "11px";
     }
     if (avatarEl) {
-      const initials = getInitials(resume.name || resume.title || resume.gender || '?');
+      const initials = getInitials(resume.name || resume.title || resume.gender || "?");
       avatarEl.textContent = initials;
     }
   } else {
-    if (titleEl) titleEl.textContent = 'Действующее резюме';
-    if (subtitleEl) subtitleEl.textContent = 'Выберите резюме из списка ниже';
+    if (titleEl) titleEl.textContent = "Действующее резюме";
+    if (subtitleEl) subtitleEl.textContent = "Выберите резюме из списка ниже";
     if (badgeEl) {
-      badgeEl.textContent = 'не выбрано';
-      badgeEl.className = 'badge badge-zinc';
-      badgeEl.style.fontSize = '11px';
+      badgeEl.textContent = "не выбрано";
+      badgeEl.className = "badge badge-zinc";
+      badgeEl.style.fontSize = "11px";
     }
-    if (avatarEl) avatarEl.textContent = '?';
+    if (avatarEl) avatarEl.textContent = "?";
   }
 }

@@ -24,14 +24,15 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 
 **Ключевая концепция ESCO:** для каждой профессии навыки делятся на две категории:
 
-| Категория | Определение ESCO |
-|-----------|-----------------|
+| Категория     | Определение ESCO                                                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Essential** | Знания, навыки и компетенции, которые **обычно требуются** при работе в данной профессии, **независимо от контекста** или работодателя |
-| **Optional** | Знания, навыки и компетенции, которые **могут потребоваться** в зависимости от работодателя или конкретного контекста работы |
+| **Optional**  | Знания, навыки и компетенции, которые **могут потребоваться** в зависимости от работодателя или конкретного контекста работы           |
 
 ### Пример из ESCO API: Sales Manager
 
 **Essential skills (40):**
+
 - supervise sales activities
 - sales strategies
 - motivate employees
@@ -45,6 +46,7 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 - ...ещё 30
 
 **Optional skills (18):**
+
 - manage accounts
 - forecast sales over periods of time
 - customer segmentation
@@ -57,6 +59,7 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 ### Пример: Department Manager
 
 **Essential skills (16):**
+
 - manage staff
 - strategic planning
 - liaise with managers
@@ -67,6 +70,7 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 - ...
 
 **Optional skills (67):**
+
 - supply chain management
 - business management principles
 - international trade
@@ -75,6 +79,7 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 ### Пример: Chief Operating Officer (COO)
 
 **Essential skills (22):**
+
 - lead managers of company departments
 - evaluate performance of organisational collaborators
 - delegate activities
@@ -105,6 +110,7 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 #### Руководитель (head/director/руководитель/директор/начальник)
 
 Implied навыки:
+
 - управление командой / руководство командой
 - руководство коллективом
 - делегирование / постановка задач
@@ -120,6 +126,7 @@ Implied навыки:
 #### Менеджер по продажам (sales manager / менеджер по продажам)
 
 Implied навыки:
+
 - переговоры / ведение переговоров
 - работа с клиентами
 - воронка продаж
@@ -135,6 +142,7 @@ Implied навыки:
 #### Маркетолог (marketing / маркетолог / маркетинг менеджер)
 
 Implied навыки:
+
 - маркетинг / продвижение
 - маркетинговые исследования
 - анализ конкурентов
@@ -144,6 +152,7 @@ Implied навыки:
 #### HR-специалист (HR / кадровик / рекрутер)
 
 Implied навыки:
+
 - подбор персонала / рекрутинг
 - адаптация персонала / онбординг
 - оценка персонала
@@ -171,39 +180,39 @@ Implied навыки:
 const ROLE_SKILL_MAP = [
   {
     // Ключевые слова должности (normalized)
-    triggers: ['руководител', 'director', 'head', 'директор', 'начальник'],
+    triggers: ["руководител", "director", "head", "директор", "начальник"],
     // Исключения — если должность содержит эти слова, не применять
-    exclude: ['заместитель', 'зам ', 'зам.', 'помощник', 'assistant', 'deputy'],
+    exclude: ["заместитель", "зам ", "зам.", "помощник", "assistant", "deputy"],
     // Подразумеваемые навыки (normalized)
     implied: [
-      'управление командой',
-      'руководство командой',
-      'руководство коллективом',
-      'делегирование',
-      'постановка задач',
-      'мотивация персонала',
-      'развитие персонала',
-      'управление проектами',
-      'стратегическое планирование',
-      'оценка персонала',
-      'операционное управление',
-      'контроль исполнения',
-      'планирование',
+      "управление командой",
+      "руководство командой",
+      "руководство коллективом",
+      "делегирование",
+      "постановка задач",
+      "мотивация персонала",
+      "развитие персонала",
+      "управление проектами",
+      "стратегическое планирование",
+      "оценка персонала",
+      "операционное управление",
+      "контроль исполнения",
+      "планирование",
     ],
   },
   {
-    triggers: ['менеджер по продажам', 'sales manager', 'менеджер продаж'],
-    exclude: ['ассистент', 'помощник'],
+    triggers: ["менеджер по продажам", "sales manager", "менеджер продаж"],
+    exclude: ["ассистент", "помощник"],
     implied: [
-      'переговоры',
-      'ведение переговоров',
-      'работа с клиентами',
-      'воронка продаж',
-      'активные продажи',
-      'прямые продажи',
-      'заключение договоров',
-      'аналитика продаж',
-      'работа с возражениями',
+      "переговоры",
+      "ведение переговоров",
+      "работа с клиентами",
+      "воронка продаж",
+      "активные продажи",
+      "прямые продажи",
+      "заключение договоров",
+      "аналитика продаж",
+      "работа с возражениями",
     ],
   },
   // ... другие группы
@@ -228,13 +237,13 @@ if (roleImplied.has(vs)) continue; // Навык подразумевается 
 
 Добавить **implied match** как ещё одну категорию (между synonym и missing):
 
-| Категория | Вес | Описание |
-|-----------|-----|----------|
-| Explicit | 100% | Навык прямо указан в резюме |
-| Derived | 70% | Навык выведен из описания опыта |
-| Synonym | 50% | Связанный навык из группы синонимов |
+| Категория   | Вес     | Описание                             |
+| ----------- | ------- | ------------------------------------ |
+| Explicit    | 100%    | Навык прямо указан в резюме          |
+| Derived     | 70%     | Навык выведен из описания опыта      |
+| Synonym     | 50%     | Связанный навык из группы синонимов  |
 | **Implied** | **40%** | **Навык подразумевается должностью** |
-| Missing | 0% | Навык отсутствует |
+| Missing     | 0%      | Навык отсутствует                    |
 
 Вес 40% (а не 100%) потому что implied — это предположение. Человек может формально быть «руководителем», но не иметь навыка «управление проектами». Но это лучше, чем 0% — мы даём частичный кредит.
 
@@ -243,17 +252,20 @@ if (roleImplied.has(vs)) continue; // Навык подразумевается 
 ## 5. Что предстоит сделать (roadmap)
 
 ### Фаза 1: Базовая карта role-implied навыков (Текущая задача)
+
 - [ ] Создать `src/lib/role-implied-skills.js` с картой для 5-7 ключевых категорий должностей
 - [ ] Интегрировать в `quality-recommendations.js` — фильтрация implied из missing
 - [ ] Интегрировать в `match-scorer-skills.js` — категория implied match (40%)
 - [ ] Покрыть тестами: «Руководитель отделов продаж» не получает «руководство коллективом» как missing
 
 ### Фаза 2: Расширение карты
+
 - [ ] Добавить больше категорий должностей (IT, финансы, логистика и т.д.)
 - [ ] Учесть уровень должности (intern → junior → middle → senior → lead → head)
 - [ ] Синергия с `quality-experience.js` — detectProgression lvl() для определения уровня
 
 ### Фаза 3: Возможная интеграция с ESCO API (опционально, на будущее)
+
 - [ ] ESCO API endpoint: `https://ec.europa.eu/esco/api/search?text=...&type=occupation`
 - [ ] Получение essential/optional навыков по профессии
 - [ ] Кэширование результатов в chrome.storage
@@ -264,17 +276,19 @@ if (roleImplied.has(vs)) continue; // Навык подразумевается 
 
 ## 6. Источники
 
-1. **ESCO Optional definition**: https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/optional  
+1. **ESCO Optional definition**: <https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/optional>
+
    > "Optional refers to knowledge, skills and competences that may be required or occur when working in an occupation depending on the employer."
 
-2. **ESCO Essential definition**: https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/essential  
+2. **ESCO Essential definition**: <https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/essential>
+
    > "Essential are those knowledge, skills and competences that are usually required when working in the occupation, independently of the work context or the employer."
 
-3. **ESCO API**: https://ec.europa.eu/esco/api/search — доступен бесплатно, без авторизации
+3. **ESCO API**: <https://ec.europa.eu/esco/api/search> — доступен бесплатно, без авторизации
 
-4. **ESCO v1.1.1 handbook** (PDF): https://www.skillsforemployment.org/sites/default/files/2024-01/edmsp1_212824.pdf
+4. **ESCO v1.1.1 handbook** (PDF): <https://www.skillsforemployment.org/sites/default/files/2024-01/edmsp1_212824.pdf>
 
-5. **ESCO Occupation definition**: https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/occupation
+5. **ESCO Occupation definition**: <https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/occupation>
 
 ### Проверка через API (выполнено 2026-06-15)
 

@@ -1,7 +1,7 @@
 /**
  * TAB 1: OVERVIEW
  */
-import { ICONS } from '../icons.js';
+import { ICONS } from "../icons.js";
 
 export function getOverviewSection() {
   return `<div class="tab-section active" id="tab-overview" role="tabpanel" aria-labelledby="tabbtn-overview" tabindex="0">

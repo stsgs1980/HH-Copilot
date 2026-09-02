@@ -11,7 +11,7 @@
 export const panelState = {
   isOpen: false,
   isLoggedIn: null,
-  status: 'idle',
+  status: "idle",
   activeTab: null,
   vacancies: [],
   stats: {},
@@ -28,12 +28,12 @@ export const panelState = {
     adaptiveSlowdown: true,
     captchaAutoPause: true,
     captchaPauseTime: 5,
-    dailyResetTime: '00:00',
+    dailyResetTime: "00:00",
     autoAuthCheck: true,
     notifications: true,
     logging: true,
     shadowDOM: true,
-    matchMode: 'precise'
+    matchMode: "precise",
   },
   logs: [],
   dailyStats: {
@@ -47,8 +47,8 @@ export const panelState = {
     running: false,
     minMatch: 70,
     maxApply: 20,
-    progress: 0
-  }
+    progress: 0,
+  },
 };
 
 /**
@@ -60,7 +60,7 @@ export const refs = {
   fabInspectorEl: null,
   sidebarEl: null,
   backdropEl: null,
-  shadowRoot: null
+  shadowRoot: null,
 };
 
 // ===============================================
@@ -102,7 +102,7 @@ export function togglePanelOpen() {
 
 /** Set vacancies list (filtered). */
 export function setVacancies(vacancies) {
-  panelState.vacancies = (vacancies || []).filter(v => v && v.id && v.title);
+  panelState.vacancies = (vacancies || []).filter((v) => v && v.id && v.title);
 }
 
 /** Set engine status. */
@@ -127,7 +127,7 @@ export function setNegotiations(list) {
 
 /** Remove a company from the blacklist by name. */
 export function removeFromBlacklist(name) {
-  panelState.blacklist = panelState.blacklist.filter(n => n !== name);
+  panelState.blacklist = panelState.blacklist.filter((n) => n !== name);
 }
 
 /** Merge stats object into panelState.stats. */

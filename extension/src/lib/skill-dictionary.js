@@ -16,9 +16,9 @@
  * v1.9.43.0
  */
 
-import { MANAGEMENT_SKILLS, SALES_SKILLS } from './skill-dictionary-management-sales.js';
-import { MARKETING_SKILLS, FINANCE_SKILLS, IT_SKILLS } from './skill-dictionary-marketing-finance-it.js';
-import { PRODUCT_SKILLS, HR_SKILLS, LOGISTICS_SKILLS, SOFT_SKILLS } from './skill-dictionary-product-hr-soft.js';
+import { MANAGEMENT_SKILLS, SALES_SKILLS } from "./skill-dictionary-management-sales.js";
+import { FINANCE_SKILLS, IT_SKILLS, MARKETING_SKILLS } from "./skill-dictionary-marketing-finance-it.js";
+import { HR_SKILLS, LOGISTICS_SKILLS, PRODUCT_SKILLS, SOFT_SKILLS } from "./skill-dictionary-product-hr-soft.js";
 
 /**
  * Full skill pattern dictionary.
@@ -42,7 +42,7 @@ export const SKILL_PATTERNS = [
  * Useful for debugging and testing.
  */
 export function getAllSkillNames() {
-  return SKILL_PATTERNS.map(s => s.skill);
+  return SKILL_PATTERNS.map((s) => s.skill);
 }
 
 /**

@@ -1,30 +1,30 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock('../src/ui/state.js', () => ({
+vi.mock("../src/ui/state.js", () => ({
   refs: { shadowRoot: null },
 }));
 
-vi.mock('../src/ui/html.js', () => ({
-  esc: (s) => s || '',
+vi.mock("../src/ui/html.js", () => ({
+  esc: (s) => s || "",
 }));
 
-import { renderAnalytics } from '../src/ui/tabs/analytics-render.js';
-import { refs } from '../src/ui/state.js';
+import { refs } from "../src/ui/state.js";
+import { renderAnalytics } from "../src/ui/tabs/analytics-render.js";
 
 function setupDom() {
-  const root = document.createElement('div');
-  const content = document.createElement('div');
-  content.id = 'analytics-content';
-  const empty = document.createElement('div');
-  empty.id = 'analytics-empty';
-  const avgEl = document.createElement('span');
-  avgEl.id = 'analytics-avg-score';
-  const totalEl = document.createElement('span');
-  totalEl.id = 'analytics-total';
-  const topSkillEl = document.createElement('span');
-  topSkillEl.id = 'analytics-top-skill';
-  const skillsList = document.createElement('div');
-  skillsList.id = 'analytics-skills-list';
+  const root = document.createElement("div");
+  const content = document.createElement("div");
+  content.id = "analytics-content";
+  const empty = document.createElement("div");
+  empty.id = "analytics-empty";
+  const avgEl = document.createElement("span");
+  avgEl.id = "analytics-avg-score";
+  const totalEl = document.createElement("span");
+  totalEl.id = "analytics-total";
+  const topSkillEl = document.createElement("span");
+  topSkillEl.id = "analytics-top-skill";
+  const skillsList = document.createElement("div");
+  skillsList.id = "analytics-skills-list";
 
   content.appendChild(avgEl);
   content.appendChild(totalEl);
@@ -33,38 +33,38 @@ function setupDom() {
   root.appendChild(content);
   root.appendChild(empty);
 
-  refs.shadowRoot = { getElementById: (id) => root.querySelector('#' + id) };
+  refs.shadowRoot = { getElementById: (id) => root.querySelector("#" + id) };
   return { content, empty, avgEl, totalEl, topSkillEl, skillsList };
 }
 
-describe('renderAnalytics', () => {
+describe("renderAnalytics", () => {
   beforeEach(() => {
     refs.shadowRoot = null;
   });
 
-  it('shows empty state when vacancies is empty array', () => {
+  it("shows empty state when vacancies is empty array", () => {
     const { content, empty } = setupDom();
     renderAnalytics([], null);
-    expect(content.style.display).toBe('none');
-    expect(empty.style.display).toBe('');
+    expect(content.style.display).toBe("none");
+    expect(empty.style.display).toBe("");
   });
 
-  it('shows empty state when vacancies is null', () => {
+  it("shows empty state when vacancies is null", () => {
     const { content, empty } = setupDom();
     renderAnalytics(null, null);
-    expect(content.style.display).toBe('none');
-    expect(empty.style.display).toBe('');
+    expect(content.style.display).toBe("none");
+    expect(empty.style.display).toBe("");
   });
 
-  it('shows content when vacancies exist', () => {
+  it("shows content when vacancies exist", () => {
     const { content, empty } = setupDom();
     const vacancies = [{ matchScore: 80, keySkills: [] }];
     renderAnalytics(vacancies, null);
-    expect(content.style.display).toBe('');
-    expect(empty.style.display).toBe('none');
+    expect(content.style.display).toBe("");
+    expect(empty.style.display).toBe("none");
   });
 
-  it('calculates average score correctly', () => {
+  it("calculates average score correctly", () => {
     const { avgEl } = setupDom();
     const vacancies = [
       { matchScore: 60, keySkills: [] },
@@ -72,10 +72,10 @@ describe('renderAnalytics', () => {
       { matchScore: 100, keySkills: [] },
     ];
     renderAnalytics(vacancies, null);
-    expect(avgEl.textContent).toBe('80%');
+    expect(avgEl.textContent).toBe("80%");
   });
 
-  it('handles vacancies with null matchScore', () => {
+  it("handles vacancies with null matchScore", () => {
     const { avgEl } = setupDom();
     const vacancies = [
       { matchScore: null, keySkills: [] },
@@ -83,43 +83,43 @@ describe('renderAnalytics', () => {
       { matchScore: null, keySkills: [] },
     ];
     renderAnalytics(vacancies, null);
-    expect(avgEl.textContent).toBe('90%');
+    expect(avgEl.textContent).toBe("90%");
   });
 
-  it('shows total vacancy count', () => {
+  it("shows total vacancy count", () => {
     const { totalEl } = setupDom();
     const vacancies = [
       { matchScore: 50, keySkills: [] },
       { matchScore: 70, keySkills: [] },
     ];
     renderAnalytics(vacancies, null);
-    expect(totalEl.textContent).toBe('2');
+    expect(totalEl.textContent).toBe("2");
   });
 
-  it('shows top skill name', () => {
+  it("shows top skill name", () => {
     const { topSkillEl } = setupDom();
     const vacancies = [
-      { matchScore: 80, keySkills: ['JavaScript', 'TypeScript', 'React'] },
-      { matchScore: 70, keySkills: ['JavaScript', 'Vue'] },
+      { matchScore: 80, keySkills: ["JavaScript", "TypeScript", "React"] },
+      { matchScore: 70, keySkills: ["JavaScript", "Vue"] },
     ];
     renderAnalytics(vacancies, null);
-    expect(topSkillEl.textContent).toBe('JavaScript');
+    expect(topSkillEl.textContent).toBe("JavaScript");
   });
 
-  it('handles mixed string/{name} skill formats', () => {
+  it("handles mixed string/{name} skill formats", () => {
     const { topSkillEl, skillsList } = setupDom();
     const vacancies = [
-      { matchScore: 80, keySkills: ['JavaScript', { name: 'TypeScript' }, { name: 'JavaScript' }] },
-      { matchScore: 70, keySkills: ['Vue', { name: 'JavaScript' }] },
+      { matchScore: 80, keySkills: ["JavaScript", { name: "TypeScript" }, { name: "JavaScript" }] },
+      { matchScore: 70, keySkills: ["Vue", { name: "JavaScript" }] },
     ];
     renderAnalytics(vacancies, null);
-    expect(topSkillEl.textContent).toBe('JavaScript');
-    expect(skillsList.innerHTML).toContain('JavaScript (3)');
-    expect(skillsList.innerHTML).toContain('TypeScript (1)');
-    expect(skillsList.innerHTML).toContain('Vue (1)');
+    expect(topSkillEl.textContent).toBe("JavaScript");
+    expect(skillsList.innerHTML).toContain("JavaScript (3)");
+    expect(skillsList.innerHTML).toContain("TypeScript (1)");
+    expect(skillsList.innerHTML).toContain("Vue (1)");
   });
 
-  it('sorts skills by count descending and limits to top 10', () => {
+  it("sorts skills by count descending and limits to top 10", () => {
     const { skillsList } = setupDom();
     const skills = Array.from({ length: 15 }, (_, i) => `Skill${i}`);
     const vacancies = skills.map((s, i) => ({
@@ -127,12 +127,12 @@ describe('renderAnalytics', () => {
       keySkills: [s, ...skills.slice(0, i)],
     }));
     renderAnalytics(vacancies, null);
-    const spans = skillsList.querySelectorAll('span');
+    const spans = skillsList.querySelectorAll("span");
     expect(spans.length).toBe(10);
-    expect(spans[0].textContent).toContain('Skill0');
+    expect(spans[0].textContent).toContain("Skill0");
   });
 
-  it('returns early when DOM elements missing', () => {
+  it("returns early when DOM elements missing", () => {
     refs.shadowRoot = { getElementById: () => null };
     expect(() => renderAnalytics([{ matchScore: 80 }], null)).not.toThrow();
   });

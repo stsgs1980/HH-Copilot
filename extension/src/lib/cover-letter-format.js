@@ -19,11 +19,11 @@
  * @returns {string}
  */
 export function formatSkillList(skills) {
-  if (!skills || skills.length === 0) return '';
+  if (!skills || skills.length === 0) return "";
   if (skills.length === 1) return skills[0];
-  if (skills.length === 2) return skills[0] + ' и ' + skills[1];
+  if (skills.length === 2) return skills[0] + " и " + skills[1];
   // 3+: comma-separated with "и" before last
-  return skills.slice(0, -1).join(', ') + ' и ' + skills[skills.length - 1];
+  return skills.slice(0, -1).join(", ") + " и " + skills[skills.length - 1];
 }
 
 /**
@@ -47,7 +47,7 @@ export function restoreOriginalCase(normalizedSkills, vacancy, resume) {
   for (const arr of vacSources) {
     if (!Array.isArray(arr)) continue;
     for (const s of arr) {
-      const name = typeof s === 'string' ? s : (s?.name || '');
+      const name = typeof s === "string" ? s : s?.name || "";
       if (name) caseMap.set(normalizeSkillName(name), name);
     }
   }
@@ -58,14 +58,14 @@ export function restoreOriginalCase(normalizedSkills, vacancy, resume) {
     for (const arr of resSources) {
       if (!Array.isArray(arr)) continue;
       for (const s of arr) {
-        const name = typeof s === 'string' ? s : (s?.name || '');
+        const name = typeof s === "string" ? s : s?.name || "";
         if (name) caseMap.set(normalizeSkillName(name), name);
       }
     }
   }
 
   // Map normalized names back to original case
-  return normalizedSkills.map(ns => caseMap.get(ns) || ns);
+  return normalizedSkills.map((ns) => caseMap.get(ns) || ns);
 }
 
 /**
@@ -77,10 +77,12 @@ export function restoreOriginalCase(normalizedSkills, vacancy, resume) {
  * @returns {string}
  */
 function normalizeSkillName(name) {
-  return name.toLowerCase().trim()
-    .replace(/[-\u2013\u2014]/g, ' ')
-    .replace(/ё/g, 'е')
-    .replace(/\s+/g, ' ');
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[-\u2013\u2014]/g, " ")
+    .replace(/ё/g, "е")
+    .replace(/\s+/g, " ");
 }
 
 /**
@@ -92,10 +94,10 @@ function normalizeSkillName(name) {
 export function pluralYears(n) {
   const abs = Math.abs(n) % 100;
   const lastDigit = abs % 10;
-  if (abs > 10 && abs < 20) return 'лет';
-  if (lastDigit > 1 && lastDigit < 5) return 'года';
-  if (lastDigit === 1) return 'год';
-  return 'лет';
+  if (abs > 10 && abs < 20) return "лет";
+  if (lastDigit > 1 && lastDigit < 5) return "года";
+  if (lastDigit === 1) return "год";
+  return "лет";
 }
 
 /**
@@ -107,8 +109,8 @@ export function pluralYears(n) {
 export function pluralMonths(n) {
   const abs = Math.abs(n) % 100;
   const lastDigit = abs % 10;
-  if (abs > 10 && abs < 20) return 'месяцев';
-  if (lastDigit > 1 && lastDigit < 5) return 'месяца';
-  if (lastDigit === 1) return 'месяц';
-  return 'месяцев';
+  if (abs > 10 && abs < 20) return "месяцев";
+  if (lastDigit > 1 && lastDigit < 5) return "месяца";
+  if (lastDigit === 1) return "месяц";
+  return "месяцев";
 }

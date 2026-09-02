@@ -12,7 +12,6 @@
  *   5. Magritte-style skill tags
  */
 
-
 /**
  * Parse skills from a fetched HTML document.
  * @param {Document} doc -- parsed HTML document
@@ -61,7 +60,7 @@ export function parseSkillsFromDoc(doc, dbg, resume) {
     if (resume.skills.length === 0) {
       const magritteSkills = _findMagritteSkillTagsInDoc(doc);
       if (magritteSkills.length > 0) {
-        resume._debug.found.push('skillsBlock (Magritte tag scan fallback)');
+        resume._debug.found.push("skillsBlock (Magritte tag scan fallback)");
         for (const text of magritteSkills) {
           if (text && text.length > 0 && text.length < 100 && !resume.skills.includes(text)) {
             resume.skills.push(text);
@@ -72,7 +71,7 @@ export function parseSkillsFromDoc(doc, dbg, resume) {
   }
 
   if (resume.skills.length > 0) {
-    resume._debug.found.push('skills: ' + resume.skills.length + ' tags');
+    resume._debug.found.push("skills: " + resume.skills.length + " tags");
   }
 }
 
@@ -82,25 +81,27 @@ export function parseSkillsFromDoc(doc, dbg, resume) {
 function _extractSkillsFromDocContainer(container, doc, dbg, resume) {
   // Skill levels
   const skillLevelEls = container.querySelectorAll('[data-qa^="skill-level-title-"]');
-  skillLevelEls.forEach(el => {
-    const qa = el.getAttribute('data-qa') || '';
+  skillLevelEls.forEach((el) => {
+    const qa = el.getAttribute("data-qa") || "";
     const lvlMatch = qa.match(/skill-level-title-(\d)/);
     if (lvlMatch) {
       const lvl = lvlMatch[1];
-      const labels = { '3': 'Продвинутый', '2': 'Средний', '1': 'Начальный' };
-      resume.skillLevels[lvl] = labels[lvl] || (el.textContent || '').trim();
-      resume._debug.found.push('skillLevel' + lvl);
+      const labels = { 3: "Продвинутый", 2: "Средний", 1: "Начальный" };
+      resume.skillLevels[lvl] = labels[lvl] || (el.textContent || "").trim();
+      resume._debug.found.push("skillLevel" + lvl);
     }
   });
   // Skill tags (all known patterns)
-  container.querySelectorAll(
-    '[data-qa^="skill-tag-"], .bloko-tag__text, [data-qa^="resume-skill"], [data-qa*="skill-tag"], [data-qa="skills-element"]'
-  ).forEach(tag => {
-    const text = (tag.textContent || '').trim();
-    if (text && text.length > 0 && text.length < 100 && !resume.skills.includes(text)) {
-      resume.skills.push(text);
-    }
-  });
+  container
+    .querySelectorAll(
+      '[data-qa^="skill-tag-"], .bloko-tag__text, [data-qa^="resume-skill"], [data-qa*="skill-tag"], [data-qa="skills-element"]',
+    )
+    .forEach((tag) => {
+      const text = (tag.textContent || "").trim();
+      if (text && text.length > 0 && text.length < 100 && !resume.skills.includes(text)) {
+        resume.skills.push(text);
+      }
+    });
 }
 
 /**
@@ -109,8 +110,13 @@ function _extractSkillsFromDocContainer(container, doc, dbg, resume) {
 function _findSkillsSectionByHeadingInDoc(doc) {
   const headings = doc.querySelectorAll('h2, h3, [data-qa^="resume-block-title"]');
   for (const h of headings) {
-    const text = (h.textContent || '').trim().toLowerCase();
-    if (text === 'навыки' || text.startsWith('навыки') || text === 'ключевые навыки' || text.startsWith('ключевые навыки')) {
+    const text = (h.textContent || "").trim().toLowerCase();
+    if (
+      text === "навыки" ||
+      text.startsWith("навыки") ||
+      text === "ключевые навыки" ||
+      text.startsWith("ключевые навыки")
+    ) {
       let container = h.parentElement;
       for (let i = 0; i < 4 && container; i++) {
         const tags = container.querySelectorAll('.bloko-tag__text, [data-qa^="skill-tag"], [data-qa^="resume-skill"]');
@@ -145,9 +151,11 @@ function _findTopmostSkillContainerInDoc(skillElements) {
     if (skillChildren.length >= 2 && skillChildren.length <= 200) return p;
   }
   if (skillElements.length > 0) {
-    return skillElements[0].closest('[data-qa="resume-block-item"]') ||
-           skillElements[0].closest('section') ||
-           skillElements[0].parentElement;
+    return (
+      skillElements[0].closest('[data-qa="resume-block-item"]') ||
+      skillElements[0].closest("section") ||
+      skillElements[0].parentElement
+    );
   }
   return null;
 }
@@ -157,14 +165,10 @@ function _findTopmostSkillContainerInDoc(skillElements) {
  */
 function _findMagritteSkillTagsInDoc(doc) {
   const skills = [];
-  const tagSelectors = [
-    '[data-qa^="resume-skill"]',
-    '[data-qa*="skill-tag"]',
-    '[data-qa="skills-element"]',
-  ];
+  const tagSelectors = ['[data-qa^="resume-skill"]', '[data-qa*="skill-tag"]', '[data-qa="skills-element"]'];
   for (const sel of tagSelectors) {
-    doc.querySelectorAll(sel).forEach(el => {
-      const text = (el.textContent || '').trim();
+    doc.querySelectorAll(sel).forEach((el) => {
+      const text = (el.textContent || "").trim();
       if (text && text.length > 1 && text.length < 100) {
         skills.push(text);
       }

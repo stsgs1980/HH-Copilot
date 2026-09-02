@@ -10,18 +10,18 @@
  *   - resume-fetch-resume-diag.js     -- pre-parse diagnostics + visibility resolution
  *   - resume-fetch-resume-skills.js   -- skills parsing (5 strategies)
  */
-import { createLogger } from './anti-hallucination.js';
-import { fetchHtml, htmlToDoc, safeGetText } from './resume-fetch-helpers.js';
-import { parsePersonalDataFromDoc, parseContactsFromDoc } from './resume-fetch-parse.js';
-import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from './resume-constants.js';
-import { detectVisibilityFromResumePage } from './resume-fetch-resume-page-vis.js';
-import { parseExperienceFromDoc } from './resume-fetch-resume-exp-orch.js';
-import { parseEducationFromDocSection, parseLanguagesAndAbout } from './resume-fetch-education-languages.js';
-import { logPreParseDiagnostics, resolveVisibilityDecision } from './resume-fetch-resume-diag.js';
-import { deriveSkillsFromExperience } from './derive-skills.js';
-import { parseSkillsFromDoc } from './resume-fetch-resume-skills.js';
+import { createLogger } from "./anti-hallucination.js";
+import { deriveSkillsFromExperience } from "./derive-skills.js";
+import { TITLE_SUFFIX_NOISE, VISIBILITY_UNKNOWN } from "./resume-constants.js";
+import { parseEducationFromDocSection, parseLanguagesAndAbout } from "./resume-fetch-education-languages.js";
+import { fetchHtml, htmlToDoc, safeGetText } from "./resume-fetch-helpers.js";
+import { parseContactsFromDoc, parsePersonalDataFromDoc } from "./resume-fetch-parse.js";
+import { logPreParseDiagnostics, resolveVisibilityDecision } from "./resume-fetch-resume-diag.js";
+import { parseExperienceFromDoc } from "./resume-fetch-resume-exp-orch.js";
+import { detectVisibilityFromResumePage } from "./resume-fetch-resume-page-vis.js";
+import { parseSkillsFromDoc } from "./resume-fetch-resume-skills.js";
 
-const fetchLog = createLogger('ResumeFetch');
+const fetchLog = createLogger("ResumeFetch");
 
 /**
  * Fetch and parse a single resume from its URL.
@@ -30,10 +30,10 @@ const fetchLog = createLogger('ResumeFetch');
  * @returns {object} Parsed resume object
  */
 export async function fetchAndParseResume(resumeUrl, listMeta) {
-  fetchLog.info('Fetching resume: ' + resumeUrl);
+  fetchLog.info("Fetching resume: " + resumeUrl);
   const html = await fetchHtml(resumeUrl);
   const doc = htmlToDoc(html);
-  fetchLog.info('Resume HTML: ' + html.length + ' chars');
+  fetchLog.info("Resume HTML: " + html.length + " chars");
 
   logPreParseDiagnostics(html, doc);
 
@@ -42,19 +42,35 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
 
   let hashMatch = resumeUrl.match(/\/resume\/([a-f0-9]+)/);
   if (!hashMatch) hashMatch = resumeUrl.match(/[?&]resume=([a-f0-9]+)/);
-  const id = hashMatch ? hashMatch[1] : '';
+  const id = hashMatch ? hashMatch[1] : "";
 
   const resume = {
-    id, url: resumeUrl,
-    title: '', salary: '', gender: '', age: '', address: '',
-    phone: '', email: '', telegram: '',
-    employmentType: '', workFormat: '', schedule: '', relocation: '',
-    specializations: [], skills: [], skillLevels: {}, derivedSkills: [],
-    experience: [], education: [], languages: [],
-    additionalInfo: '', parsedAt: new Date().toISOString(),
+    id,
+    url: resumeUrl,
+    title: "",
+    salary: "",
+    gender: "",
+    age: "",
+    address: "",
+    phone: "",
+    email: "",
+    telegram: "",
+    employmentType: "",
+    workFormat: "",
+    schedule: "",
+    relocation: "",
+    specializations: [],
+    skills: [],
+    skillLevels: {},
+    derivedSkills: [],
+    experience: [],
+    education: [],
+    languages: [],
+    additionalInfo: "",
+    parsedAt: new Date().toISOString(),
     visibility: VISIBILITY_UNKNOWN,
     hidden: false,
-    _debug: { found: [], missing: [] }
+    _debug: { found: [], missing: [] },
   };
 
   // Detect visibility from resume detail page HTML
@@ -63,32 +79,34 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   const pageTrace = pageVisResult.trace || [];
 
   const visDiagEntry = {
-    id: id || 'unknown',
-    title: '(will be set after parse)',
-    pageVis, pageTrace,
-    listVis: listMeta ? listMeta.visibility : 'no-list-meta',
+    id: id || "unknown",
+    title: "(will be set after parse)",
+    pageVis,
+    pageTrace,
+    listVis: listMeta ? listMeta.visibility : "no-list-meta",
     listHidden: listMeta ? listMeta.hidden : undefined,
-    decision: null, decisionReason: null,
-    timestamp: new Date().toISOString()
+    decision: null,
+    decisionReason: null,
+    timestamp: new Date().toISOString(),
   };
 
   resolveVisibilityDecision(resume, pageVis, listMeta, visDiagEntry);
   resume._visDiag = visDiagEntry;
 
-  if (listMeta && listMeta.title && listMeta.title !== 'Untitled') {
+  if (listMeta && listMeta.title && listMeta.title !== "Untitled") {
     resume._listTitle = listMeta.title;
   }
 
   // Parse all sections
   const dbg = (key, val) => {
-    if (val) resume._debug.found.push(key + ': ' + (typeof val === 'string' ? '"' + val.substring(0, 60) + '"' : val));
+    if (val) resume._debug.found.push(key + ": " + (typeof val === "string" ? '"' + val.substring(0, 60) + '"' : val));
     else resume._debug.missing.push(key);
     return val;
   };
 
   parseHeader(doc, dbg, resume);
   parseSalaryConditionsFromDoc(doc, dbg, resume);
-  if (resume.title) resume.title = resume.title.replace(TITLE_SUFFIX_NOISE, '').trim();
+  if (resume.title) resume.title = resume.title.replace(TITLE_SUFFIX_NOISE, "").trim();
   parsePersonalDataFromDoc(doc, doc.querySelector('[data-qa="resume-block-title-position"]'), dbg, resume);
   parseSkillsFromDoc(doc, dbg, resume);
   await parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl);
@@ -99,11 +117,20 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
   // Derive skills from experience descriptions
   deriveSkillsFromExperience(resume);
 
-  if (resume._visDiag) resume._visDiag.title = resume.title || '(no title)';
+  if (resume._visDiag) resume._visDiag.title = resume.title || "(no title)";
 
-  fetchLog.info('Parsed: ' + resume.title + ' | Skills: ' + resume.skills.length +
-    ' | Derived: ' + (resume.derivedSkills ? resume.derivedSkills.length : 0) +
-    ' | Exp: ' + resume.experience.length + ' | Edu: ' + resume.education.length);
+  fetchLog.info(
+    "Parsed: " +
+      resume.title +
+      " | Skills: " +
+      resume.skills.length +
+      " | Derived: " +
+      (resume.derivedSkills ? resume.derivedSkills.length : 0) +
+      " | Exp: " +
+      resume.experience.length +
+      " | Edu: " +
+      resume.education.length,
+  );
   return resume;
 }
 
@@ -111,25 +138,28 @@ export async function fetchAndParseResume(resumeUrl, listMeta) {
 
 function parseHeader(doc, dbg, resume) {
   const titleEl = doc.querySelector('[data-qa="resume-block-title-position"]');
-  if (titleEl) resume.title = dbg('resumeTitle (data-qa)', safeGetText(titleEl));
+  if (titleEl) resume.title = dbg("resumeTitle (data-qa)", safeGetText(titleEl));
   if (!resume.title) {
-    const h1 = doc.querySelector('h1');
-    if (h1) resume.title = dbg('resumeTitle (h1)', (h1.textContent || '').trim());
+    const h1 = doc.querySelector("h1");
+    if (h1) resume.title = dbg("resumeTitle (h1)", (h1.textContent || "").trim());
   }
   const salaryEl = doc.querySelector('[data-qa="resume-block-salary"]');
-  if (salaryEl) resume.salary = dbg('resumeSalary (data-qa)', safeGetText(salaryEl));
+  if (salaryEl) resume.salary = dbg("resumeSalary (data-qa)", safeGetText(salaryEl));
 }
 
 // -- Salary conditions (employment, format, schedule, relocation) --
 
 function parseSalaryConditionsFromDoc(doc, dbg, resume) {
   const posCard = doc.querySelector('[data-qa="resume-position-card"]');
-  if (!posCard) { resume._debug.missing.push('salaryConditions (no position-card)'); return; }
+  if (!posCard) {
+    resume._debug.missing.push("salaryConditions (no position-card)");
+    return;
+  }
 
   const texts = [];
-  posCard.querySelectorAll('span, p, div').forEach(el => {
+  posCard.querySelectorAll("span, p, div").forEach((el) => {
     if (el.children.length > 5) return;
-    const t = (el.textContent || '').trim();
+    const t = (el.textContent || "").trim();
     if (t && t.length > 2 && t.length < 100) texts.push(t);
   });
 
@@ -148,24 +178,52 @@ function parseSalaryConditionsFromDoc(doc, dbg, resume) {
     /(?:^|\s)(Гибрид|Смешанный формат)(?:$|[,;\s])/i,
   ];
   const schedPatterns = [
-    /(?:^|\s)(Гибкий график)(?:$|[,;\s])/i, /(?:^|\s)(Полный день)(?:$|[,;\s])/i,
-    /(?:^|\s)(Сменный график)(?:$|[,;\s])/i, /(?:^|\s)(Вахтовый метод)(?:$|[,;\s])/i,
+    /(?:^|\s)(Гибкий график)(?:$|[,;\s])/i,
+    /(?:^|\s)(Полный день)(?:$|[,;\s])/i,
+    /(?:^|\s)(Сменный график)(?:$|[,;\s])/i,
+    /(?:^|\s)(Вахтовый метод)(?:$|[,;\s])/i,
   ];
   const relocPatterns = [
-    /(?:^|\s)(Не готов к переезду)(?:$|[,;\s])/i, /(?:^|\s)(Готов к переезду)(?:$|[,;\s])/i,
+    /(?:^|\s)(Не готов к переезду)(?:$|[,;\s])/i,
+    /(?:^|\s)(Готов к переезду)(?:$|[,;\s])/i,
     /(?:^|\s)(Хочу переехать)(?:$|[,;\s])/i,
   ];
 
   for (const t of texts) {
     if (!resume.employmentType) {
-      for (const p of empPatterns) { const m = t.match(p); if (m) { resume.employmentType = dbg('employmentType', m[1]); break; } }
+      for (const p of empPatterns) {
+        const m = t.match(p);
+        if (m) {
+          resume.employmentType = dbg("employmentType", m[1]);
+          break;
+        }
+      }
     }
     if (!resume.workFormat) {
       const fmtMatches = [];
-      for (const p of fmtPatterns) { const m = t.match(p); if (m) fmtMatches.push(m[1]); }
-      if (fmtMatches.length > 0) resume.workFormat = dbg('workFormat', fmtMatches.join(', '));
+      for (const p of fmtPatterns) {
+        const m = t.match(p);
+        if (m) fmtMatches.push(m[1]);
+      }
+      if (fmtMatches.length > 0) resume.workFormat = dbg("workFormat", fmtMatches.join(", "));
     }
-    if (!resume.schedule) { for (const p of schedPatterns) { const m = t.match(p); if (m) { resume.schedule = dbg('schedule', m[1]); break; } } }
-    if (!resume.relocation) { for (const p of relocPatterns) { const m = t.match(p); if (m) { resume.relocation = dbg('relocation', m[1]); break; } } }
+    if (!resume.schedule) {
+      for (const p of schedPatterns) {
+        const m = t.match(p);
+        if (m) {
+          resume.schedule = dbg("schedule", m[1]);
+          break;
+        }
+      }
+    }
+    if (!resume.relocation) {
+      for (const p of relocPatterns) {
+        const m = t.match(p);
+        if (m) {
+          resume.relocation = dbg("relocation", m[1]);
+          break;
+        }
+      }
+    }
   }
 }

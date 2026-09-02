@@ -26,30 +26,34 @@
  *   result.details     -> { matchingSkills, missingSkills, ... }
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { scoreSkills } from './match-scorer-skills.js';
-import { scoreTitle } from './match-scorer-title.js';
-import { scoreSalary } from './match-scorer-salary.js';
-import { scoreExperience } from './match-scorer-experience.js';
-import { scoreLocation } from './match-scorer-location.js';
-import { computeSemanticSimilarity } from './ai-semantic.js';
+import { computeSemanticSimilarity } from "./ai-semantic.js";
+import { createLogger } from "./anti-hallucination.js";
+import { scoreExperience } from "./match-scorer-experience.js";
+import { scoreLocation } from "./match-scorer-location.js";
+import { scoreSalary } from "./match-scorer-salary.js";
+import { scoreSkills } from "./match-scorer-skills.js";
+import { scoreTitle } from "./match-scorer-title.js";
 
-const scoreLog = createLogger('Scorer');
+const scoreLog = createLogger("Scorer");
 
 const WEIGHT_PROFILES = {
   precise: { skills: 35, title: 25, salary: 15, experience: 10, location: 15 },
-  flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 }
+  flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 },
 };
 
-export async function computeMatchScore(resume, vacancy, mode = 'precise') {
+export async function computeMatchScore(resume, vacancy, mode = "precise") {
   if (!resume || !vacancy) {
-    return { total: 0, breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0, semantic: 0 }, details: {} };
+    return {
+      total: 0,
+      breakdown: { skills: 0, title: 0, salary: 0, experience: 0, location: 0, semantic: 0 },
+      details: {},
+    };
   }
 
   const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
 
   let semanticScore = 0;
-  if (mode === 'flexible') {
+  if (mode === "flexible") {
     semanticScore = await computeSemanticSimilarity(resume, vacancy);
   }
 
@@ -65,13 +69,21 @@ export async function computeMatchScore(resume, vacancy, mode = 'precise') {
     salary: Math.round(salaryResult.score * (profile.salary / 15)),
     experience: Math.round(expResult.score * (profile.experience / 15)),
     location: locResult.score,
-    semantic: mode === 'flexible' ? Math.round(semanticScore * 45) : 0,
+    semantic: mode === "flexible" ? Math.round(semanticScore * 45) : 0,
   };
 
-  let total = Math.min(100, breakdown.skills + breakdown.title + breakdown.salary + breakdown.experience + breakdown.location + breakdown.semantic);
+  let total = Math.min(
+    100,
+    breakdown.skills +
+      breakdown.title +
+      breakdown.salary +
+      breakdown.experience +
+      breakdown.location +
+      breakdown.semantic,
+  );
 
   // Role mismatch penalty (only in precise mode)
-  if (mode === 'precise') {
+  if (mode === "precise") {
     if (titleResult.score === 0 && titleResult.similarity === 0) {
       total = Math.min(total, 25);
     } else if (titleResult.similarity > 0 && titleResult.similarity < 0.15) {
@@ -93,7 +105,22 @@ export async function computeMatchScore(resume, vacancy, mode = 'precise') {
     semanticScore: semanticScore,
   };
 
-  scoreLog.info('Score ' + total + '%: skills=' + breakdown.skills + ' title=' + breakdown.title + ' salary=' + breakdown.salary + ' exp=' + breakdown.experience + ' loc=' + breakdown.location + ' semantic=' + breakdown.semantic);
+  scoreLog.info(
+    "Score " +
+      total +
+      "%: skills=" +
+      breakdown.skills +
+      " title=" +
+      breakdown.title +
+      " salary=" +
+      breakdown.salary +
+      " exp=" +
+      breakdown.experience +
+      " loc=" +
+      breakdown.location +
+      " semantic=" +
+      breakdown.semantic,
+  );
 
   return { total, breakdown, details };
 }

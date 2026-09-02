@@ -11,15 +11,11 @@
  * v1.9.61.0
  */
 
-import { refs } from '../state.js';
-import {
-  getCoverLetterConfig,
-  setCoverLetterTemplate,
-  setLetterTone,
-} from '../../lib/cover-letter-storage.js';
-import { TONES, validateTone, getTemplateForTone, _internal as TONE_INTERNAL } from '../../lib/cover-letter-tone.js';
-import { refreshAiStatus } from './cover-letter-ai-ui.js';
-import { bindCoverLetterAIBtn, bindAiLogButtons } from './cover-letter-ai-events.js';
+import { getCoverLetterConfig, setCoverLetterTemplate, setLetterTone } from "../../lib/cover-letter-storage.js";
+import { getTemplateForTone, _internal as TONE_INTERNAL, TONES, validateTone } from "../../lib/cover-letter-tone.js";
+import { refs } from "../state.js";
+import { bindAiLogButtons, bindCoverLetterAIBtn } from "./cover-letter-ai-events.js";
+import { refreshAiStatus } from "./cover-letter-ai-ui.js";
 
 const DEBOUNCE_MS = 500;
 
@@ -36,22 +32,20 @@ export async function populateCoverLetterFields(opts) {
   const storage = (opts && opts.storageImpl) || null;
   let config;
   try {
-    config = storage
-      ? await storage.getCoverLetterConfig()
-      : await getCoverLetterConfig();
+    config = storage ? await storage.getCoverLetterConfig() : await getCoverLetterConfig();
   } catch (_e) {
-    config = { template: '', tone: 'formal' };
+    config = { template: "", tone: "formal" };
   }
 
   // Populate template textarea (only if storage has a value; otherwise leave
   // the hardcoded HTML default intact to avoid clobbering it)
-  const tmplEl = sr.getElementById('cover-letter-text');
+  const tmplEl = sr.getElementById("cover-letter-text");
   if (tmplEl && config.template) {
     tmplEl.value = config.template;
   }
 
   // Populate tone select
-  const toneEl = sr.getElementById('s-letter-tone');
+  const toneEl = sr.getElementById("s-letter-tone");
   if (toneEl) {
     toneEl.value = validateTone(config.tone);
   }
@@ -73,13 +67,13 @@ export function bindCoverLetterTemplateSave(opts) {
   const storage = (opts && opts.storageImpl) || null;
   const debounceMs = (opts && opts.debounceMs) || DEBOUNCE_MS;
 
-  const tmplEl = sr.getElementById('cover-letter-text');
+  const tmplEl = sr.getElementById("cover-letter-text");
   if (!tmplEl) return () => {};
 
   let timer = null;
 
   const onSave = () => {
-    const text = tmplEl.value || '';
+    const text = tmplEl.value || "";
     if (storage) {
       storage.setCoverLetterTemplate(text).catch(() => {});
     } else {
@@ -87,7 +81,7 @@ export function bindCoverLetterTemplateSave(opts) {
     }
   };
 
-  tmplEl.addEventListener('input', () => {
+  tmplEl.addEventListener("input", () => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       timer = null;
@@ -111,18 +105,20 @@ export function bindCoverLetterTemplateSave(opts) {
 export function bindLetterToneHandler(container, opts) {
   if (!container) return;
   const storage = (opts && opts.storageImpl) || null;
-  const toneEl = container.querySelector('#s-letter-tone');
+  const toneEl = container.querySelector("#s-letter-tone");
   if (!toneEl) return;
 
-  toneEl.addEventListener('change', () => {
+  toneEl.addEventListener("change", () => {
     const tone = validateTone(toneEl.value);
     toneEl.value = tone;
 
     // Smart template swap: if textarea still has a default template, swap it.
-    const tmplEl = container.querySelector('#cover-letter-text') || (refs.shadowRoot && refs.shadowRoot.getElementById('cover-letter-text'));
+    const tmplEl =
+      container.querySelector("#cover-letter-text") ||
+      (refs.shadowRoot && refs.shadowRoot.getElementById("cover-letter-text"));
     if (tmplEl) {
       const currentText = tmplEl.value.trim();
-      const allDefaults = Object.values(TONE_INTERNAL.TEMPLATES).map(t => t.trim());
+      const allDefaults = Object.values(TONE_INTERNAL.TEMPLATES).map((t) => t.trim());
       if (allDefaults.includes(currentText)) {
         const newTemplate = getTemplateForTone(tone);
         tmplEl.value = newTemplate;

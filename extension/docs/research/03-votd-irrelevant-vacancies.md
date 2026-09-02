@@ -16,20 +16,23 @@ When a logged-in user with resume «Руководитель отдела про
 
 ### 2.1 Two Separate Sections on hh.ru Main Page
 
-| Section | data-qa attribute | Personalized | Nature |
-|---------|-------------------|-------------|--------|
-| «Для вас» (recommended) | `vacancy-serp__vacancy` | **Yes** — ML-based, resume-matched | Smart search (free for users) |
-| «Вакансии дня» (VOTD) | `vacancy_of_the_day_title` | **No** — geo-only (region) | Paid promotional product for employers |
+| Section                 | data-qa attribute          | Personalized                       | Nature                                 |
+| ----------------------- | -------------------------- | ---------------------------------- | -------------------------------------- |
+| «Для вас» (recommended) | `vacancy-serp__vacancy`    | **Yes** — ML-based, resume-matched | Smart search (free for users)          |
+| «Вакансии дня» (VOTD)   | `vacancy_of_the_day_title` | **No** — geo-only (region)         | Paid promotional product for employers |
 
 ### 2.2 Evidence from hh.ru Official Documentation
 
 From `/article/vacancyday`:
+
 > «Вакансия дня размещается на главной hh.ru, отображается и у авторизованных, и у анонимных пользователей»
 
 From `/knowledge-base/article/0195`:
+
 > «Подходящие вакансии» — алгоритмы hh.ru подбирают специально для вас. Умный поиск анализирует ваш опыт, навыки, действия на сайте.
 
 These are **two different products** with **different goals**:
+
 - «Подходящие» = ML recommendations (free, user-centric)
 - VOTD = promotional banner (paid, employer-centric)
 
@@ -37,13 +40,13 @@ These are **two different products** with **different goals**:
 
 Verified by fetching and parsing the actual hh.ru main page HTML:
 
-| Metric | Value |
-|--------|-------|
-| `vacancy-serp__vacancy` occurrences | **0** (anonymous page); >0 for logged-in users |
-| `vacancy_of_the_day_title` occurrences | **14** |
-| `adsrv.hh.ru/click` URLs (sponsored VOTD) | **11** |
-| `content.hh.ru/api/v1/vacancy_of_the_day/click` URLs (organic VOTD) | **4** |
-| Direct `/vacancy/XXX` links | **0** (VOTD uses click-tracking URLs, not direct links) |
+| Metric                                                              | Value                                                   |
+| ------------------------------------------------------------------- | ------------------------------------------------------- |
+| `vacancy-serp__vacancy` occurrences                                 | **0** (anonymous page); >0 for logged-in users          |
+| `vacancy_of_the_day_title` occurrences                              | **14**                                                  |
+| `adsrv.hh.ru/click` URLs (sponsored VOTD)                           | **11**                                                  |
+| `content.hh.ru/api/v1/vacancy_of_the_day/click` URLs (organic VOTD) | **4**                                                   |
+| Direct `/vacancy/XXX` links                                         | **0** (VOTD uses click-tracking URLs, not direct links) |
 
 VOTD vacancy IDs are embedded as parent element `id` attributes (e.g., `<div id="132982706">`), matching our code's Fallback 2 extraction path.
 
@@ -53,26 +56,27 @@ VOTD vacancy IDs are embedded as parent element `id` attributes (e.g., `<div id=
 
 The 14 VOTD vacancies from the real main page:
 
-| # | Title | Category |
-|---|-------|----------|
-| 1 | Уборщик производственных и служебных помещений (м. Строгино) | Blue collar |
-| 2 | Повар (м. Пражская) | Blue collar |
-| 3 | Курьер / Велокурьер в Озон фреш | Blue collar |
-| 4 | Пекарь (м. Бибирево) | Blue collar |
-| 5 | Курьер документов и посылок | Blue collar |
-| 6 | Слесарь-сборщик космического аппарата | Blue collar |
-| 7 | Менеджер (generic) | Mid-level |
-| 8 | Менеджер по премиальному развитию клиентов | Mid-level |
-| 9 | Главный менеджер по работе с клиентами | Mid-level |
-| 10 | Менеджер по привлечению клиентов | Mid-level |
-| 11 | Ассистент стоматолога | Retail/Service |
-| 12 | Ассистент ветеринарного врача | Retail/Service |
-| 13 | Бариста в кофейню Дринкит (м. ЦСКА) | Retail/Service |
-| 14 | Консультант-кассир MAAG (ТЦ Охотный ряд) | Retail/Service |
+| #   | Title                                                        | Category       |
+| --- | ------------------------------------------------------------ | -------------- |
+| 1   | Уборщик производственных и служебных помещений (м. Строгино) | Blue collar    |
+| 2   | Повар (м. Пражская)                                          | Blue collar    |
+| 3   | Курьер / Велокурьер в Озон фреш                              | Blue collar    |
+| 4   | Пекарь (м. Бибирево)                                         | Blue collar    |
+| 5   | Курьер документов и посылок                                  | Blue collar    |
+| 6   | Слесарь-сборщик космического аппарата                        | Blue collar    |
+| 7   | Менеджер (generic)                                           | Mid-level      |
+| 8   | Менеджер по премиальному развитию клиентов                   | Mid-level      |
+| 9   | Главный менеджер по работе с клиентами                       | Mid-level      |
+| 10  | Менеджер по привлечению клиентов                             | Mid-level      |
+| 11  | Ассистент стоматолога                                        | Retail/Service |
+| 12  | Ассистент ветеринарного врача                                | Retail/Service |
+| 13  | Бариста в кофейню Дринкит (м. ЦСКА)                          | Retail/Service |
+| 14  | Консультант-кассир MAAG (ТЦ Охотный ряд)                     | Retail/Service |
 
 **Breakdown:** 6/14 blue collar, 4/14 generic mid-level, 4/14 retail/service. **Zero senior/executive positions.**
 
 **Reasons:**
+
 1. **Mass hiring** — Courier services, retail, restaurants hire by hundreds. VOTD is cost-effective for them.
 2. **High turnover** — Blue collar positions have weekly churn, constant need for new applicants.
 3. **Budget** — Large employers (Ozon, retail chains) have advertising budgets. A company hiring one sales director won't pay for VOTD.
@@ -86,9 +90,9 @@ The 14 VOTD vacancies from the real main page:
 ### 4.1 Entry Point — `handleMainPage()` (main-page-handlers-pages.js:191-227)
 
 ```javascript
-const recommended = await parseVacanciesFromPage(panelState.resume);  // 5 vacancies
-const votd = await parseVacanciesOfTheDay(panelState.resume);         // 14 vacancies
-const allVacancies = [...recommended, ...votd];                       // 19 merged
+const recommended = await parseVacanciesFromPage(panelState.resume); // 5 vacancies
+const votd = await parseVacanciesOfTheDay(panelState.resume); // 14 vacancies
+const allVacancies = [...recommended, ...votd]; // 19 merged
 ```
 
 **Problem:** Both arrays merged without distinguishing source. VOTD ads sit alongside personalized recommendations.
@@ -96,6 +100,7 @@ const allVacancies = [...recommended, ...votd];                       // 19 merg
 ### 4.2 VOTD Parser — `parseVacanciesOfTheDay()` (vacancy-list.js:131-233)
 
 Correctly finds 14 VOTD cards via `[data-qa="vacancy_of_the_day_title"]`. Extracts:
+
 - title, salary, company, vacancy ID
 - Sets `source: 'votd'` on each vacancy object (line 214)
 
@@ -105,24 +110,24 @@ Correctly finds 14 VOTD cards via `[data-qa="vacancy_of_the_day_title"]`. Extrac
 
 For «Курьер / Велокурьер» vs «Руководитель отдела продаж»:
 
-| Component | Score | Reason |
-|-----------|-------|--------|
-| skills | 10/40 | Empty skills → neutral fallback (scoreSkills line 46) |
-| title | 0/30 | Zero keyword overlap, similarity=0 |
-| salary | 5-15/15 | May overlap numerically |
-| experience | 0/15 | Empty experience string |
-| **Role mismatch penalty** | **cap 25%** | similarity=0 → total capped at 25% |
+| Component                 | Score       | Reason                                                |
+| ------------------------- | ----------- | ----------------------------------------------------- |
+| skills                    | 10/40       | Empty skills → neutral fallback (scoreSkills line 46) |
+| title                     | 0/30        | Zero keyword overlap, similarity=0                    |
+| salary                    | 5-15/15     | May overlap numerically                               |
+| experience                | 0/15        | Empty experience string                               |
+| **Role mismatch penalty** | **cap 25%** | similarity=0 → total capped at 25%                    |
 
 **SERP-score: ~10-25%. Already below minMatchScore=60%.**
 
 ### 4.4 THE HOLE — `fetchVacancyDetails()` (vacancy-fetch.js:121-129)
 
 ```javascript
-const toFetch = vacancies.filter(v => {
-  if (v.keySkills && v.keySkills.length > 0) return false;  // VOTD: keySkills=undefined → passes
+const toFetch = vacancies.filter((v) => {
+  if (v.keySkills && v.keySkills.length > 0) return false; // VOTD: keySkills=undefined → passes
   const cached = detailMap.get(v.id);
-  if (cached && isDetailFresh(cached)) return false;         // No cache → passes
-  return true;  // GARBAGE WITH matchScore=17% REACHES HERE
+  if (cached && isDetailFresh(cached)) return false; // No cache → passes
+  return true; // GARBAGE WITH matchScore=17% REACHES HERE
 });
 ```
 
@@ -131,6 +136,7 @@ const toFetch = vacancies.filter(v => {
 ### 4.5 Wasted Resources
 
 For each of 14 irrelevant vacancies:
+
 1. `fetchVacancyViaIframe(vacancy.url)` — creates iframe, loads page, parses DOM
 2. `fetchVacancyViaText(vacancy.url)` — fallback text fetch
 3. `gaussianDelay(1500, 3500)` — rate limit between fetches
@@ -149,15 +155,15 @@ DEEP-score: same ~10-25%. **Fetch changed nothing.**
 
 Before fetch, we already have:
 
-| Field | Available | Usable for filtering? |
-|-------|-----------|----------------------|
-| `title` | Yes — «Курьер / Велокурьер» | Yes — title similarity = 0 |
-| `salary` | Yes — «от 120 000 до 250 000» | Partially |
-| `source` | Yes — `'votd'` | **Yes — 100% reliable marker** |
-| `matchScore` | Yes — 10-25% | **Yes — already < minMatchScore** |
-| `company` | Yes | Limited value |
-| `skills` | No — empty `[]` | N/A |
-| `experience` | No — empty string | N/A |
+| Field        | Available                     | Usable for filtering?             |
+| ------------ | ----------------------------- | --------------------------------- |
+| `title`      | Yes — «Курьер / Велокурьер»   | Yes — title similarity = 0        |
+| `salary`     | Yes — «от 120 000 до 250 000» | Partially                         |
+| `source`     | Yes — `'votd'`                | **Yes — 100% reliable marker**    |
+| `matchScore` | Yes — 10-25%                  | **Yes — already < minMatchScore** |
+| `company`    | Yes                           | Limited value                     |
+| `skills`     | No — empty `[]`               | N/A                               |
+| `experience` | No — empty string             | N/A                               |
 
 **Conclusion:** `source: 'votd'` + `matchScore < minMatchScore` are sufficient for 100% reliable early filtering. No fetch needed.
 
@@ -165,13 +171,13 @@ Before fetch, we already have:
 
 ## 6. Discrepancy Map — All Points Where Code Diverges from Optimal Behavior
 
-| # | Problem | File:Line | Impact | Fix Complexity |
-|---|---------|-----------|--------|----------------|
-| 1 | VOTD not filtered by source before merge | `main-page-handlers-pages.js:196` | Ads mixed with recommendations | Low |
-| 2 | `fetchVacancyDetails()` ignores matchScore | `vacancy-fetch.js:121-129` | Garbage with 10% goes to fetch | Low |
-| 3 | `fetchVacancyDetails()` ignores source='votd' | `vacancy-fetch.js:121-129` | VOTD always fetches (no keySkills) | Low |
-| 4 | No VOTD vs Recommended distinction in UI | `vacancies.js` render | User confused about garbage source | Medium |
-| 5 | VOTD cards have no skills/experience | Nature of VOTD | Fetch required for scoring, but useless | Architectural |
+| #   | Problem                                       | File:Line                         | Impact                                  | Fix Complexity |
+| --- | --------------------------------------------- | --------------------------------- | --------------------------------------- | -------------- |
+| 1   | VOTD not filtered by source before merge      | `main-page-handlers-pages.js:196` | Ads mixed with recommendations          | Low            |
+| 2   | `fetchVacancyDetails()` ignores matchScore    | `vacancy-fetch.js:121-129`        | Garbage with 10% goes to fetch          | Low            |
+| 3   | `fetchVacancyDetails()` ignores source='votd' | `vacancy-fetch.js:121-129`        | VOTD always fetches (no keySkills)      | Low            |
+| 4   | No VOTD vs Recommended distinction in UI      | `vacancies.js` render             | User confused about garbage source      | Medium         |
+| 5   | VOTD cards have no skills/experience          | Nature of VOTD                    | Fetch required for scoring, but useless | Architectural  |
 
 ---
 

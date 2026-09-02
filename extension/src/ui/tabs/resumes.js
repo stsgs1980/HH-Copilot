@@ -5,10 +5,6 @@
  * This file exists for backward compatibility with existing imports.
  */
 
-export {
-  renderResumePanel,
-  renderMyResumesPanel,
-  renderResumeListPanel
-} from './resumes/index.js';
+export { renderMyResumesPanel, renderResumeListPanel, renderResumePanel } from "./resumes/index.js";
 
-export { getResumePageType } from '../../parsers/resume-detail.js';
+export { getResumePageType } from "../../parsers/resume-detail.js";

@@ -17,7 +17,7 @@
  * NO caching -- each call scans the actual DOM state.
  */
 
-import { isLoggedOut, isLoggedIn } from './auth-detection.js';
+import { isLoggedIn, isLoggedOut } from "./auth-detection.js";
 
 // --- MAIN AUTH CHECK (no caching, always fresh) ----------------------
 
@@ -42,28 +42,31 @@ function checkCookiesViaBackground() {
   return new Promise((resolve) => {
     let settled = false;
     try {
-      chrome.runtime.sendMessage(
-        { type: 'check-auth-cookies' },
-        (response) => {
-          if (settled) return;
-          settled = true;
-          if (chrome.runtime.lastError) {
-            resolve(null);
-            return;
-          }
-          if (response && typeof response.hasAuthCookie === 'boolean') {
-            resolve(response.hasAuthCookie);
-          } else {
-            resolve(null);
-          }
+      chrome.runtime.sendMessage({ type: "check-auth-cookies" }, (response) => {
+        if (settled) return;
+        settled = true;
+        if (chrome.runtime.lastError) {
+          resolve(null);
+          return;
         }
-      );
+        if (response && typeof response.hasAuthCookie === "boolean") {
+          resolve(response.hasAuthCookie);
+        } else {
+          resolve(null);
+        }
+      });
     } catch (_e) {
-      if (!settled) { settled = true; resolve(null); }
+      if (!settled) {
+        settled = true;
+        resolve(null);
+      }
     }
     // Safety timeout
     setTimeout(() => {
-      if (!settled) { settled = true; resolve(null); }
+      if (!settled) {
+        settled = true;
+        resolve(null);
+      }
     }, 3000);
   });
 }
@@ -85,7 +88,7 @@ export async function checkAuthAsync() {
       return syncResult; // Background unavailable -- trust sync
     }
     if (!cookieResult) {
-      console.log('[HH-AR][Auth] Async: sync=authorized, cookies=NO -> false');
+      console.log("[HH-AR][Auth] Async: sync=authorized, cookies=NO -> false");
       return false;
     }
     return true;
@@ -94,7 +97,7 @@ export async function checkAuthAsync() {
   // Sync says NOT authorized -- check cookies as potential override
   const cookieResult = await checkCookiesViaBackground();
   if (cookieResult === true) {
-    console.log('[HH-AR][Auth] Async: sync=not authorized, cookies=YES -> true (cookie override)');
+    console.log("[HH-AR][Auth] Async: sync=not authorized, cookies=YES -> true (cookie override)");
     return true;
   }
 

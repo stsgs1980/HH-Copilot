@@ -43,11 +43,11 @@ negotiations-list
 
 Three sample rows (2026-06-16):
 
-| vacancy | vacancyHref | company | date | status class | status text |
-|---------|-------------|---------|------|-------------|-------------|
-| AI Engineer / AI Automation Specialist... | https://hh.ru/vacancy/133218911?hhtmFrom=negotiation_list | Matuzova Olesya Vasilievna | 9 iyunya | not-viewed | Ne prosmotren |
-| Rukovoditel napravleniya prodazh | https://hh.ru/vacancy/133252199?hhtmFrom=negotiation_list | FRESBERI | 9 iyunya | discard | Otkaz |
-| Rukovoditel otdela prodazh (remont i dizayn) | https://hh.ru/vacancy/133898632?hhtmFrom=negotiation_list | UrbandCraft | 5 iyunya | not-viewed | Ne prosmotren |
+| vacancy                                      | vacancyHref                                                 | company                    | date     | status class | status text   |
+| -------------------------------------------- | ----------------------------------------------------------- | -------------------------- | -------- | ------------ | ------------- |
+| AI Engineer / AI Automation Specialist...    | <https://hh.ru/vacancy/133218911?hhtmFrom=negotiation_list> | Matuzova Olesya Vasilievna | 9 iyunya | not-viewed   | Ne prosmotren |
+| Rukovoditel napravleniya prodazh             | <https://hh.ru/vacancy/133252199?hhtmFrom=negotiation_list> | FRESBERI                   | 9 iyunya | discard      | Otkaz         |
+| Rukovoditel otdela prodazh (remont i dizayn) | <https://hh.ru/vacancy/133898632?hhtmFrom=negotiation_list> | UrbandCraft                | 5 iyunya | not-viewed   | Ne prosmotren |
 
 ---
 
@@ -55,11 +55,11 @@ Three sample rows (2026-06-16):
 
 All unique statuses found on page:
 
-| data-qa suffix | Text | Meaning | UI color suggestion |
-|----------------|------|---------|-------------------|
-| `negotiations-item-not-viewed` | Ne prosmotren | Employer has not viewed your application yet | amber (#D97706) |
-| `negotiations-item-viewed` | Prosmotren | Employer viewed, no response yet | blue (#2563EB) |
-| `negotiations-item-discard` | Otkaz | Employer rejected your application | red (#DC2626) |
+| data-qa suffix                 | Text          | Meaning                                      | UI color suggestion |
+| ------------------------------ | ------------- | -------------------------------------------- | ------------------- |
+| `negotiations-item-not-viewed` | Ne prosmotren | Employer has not viewed your application yet | amber (#D97706)     |
+| `negotiations-item-viewed`     | Prosmotren    | Employer viewed, no response yet             | blue (#2563EB)      |
+| `negotiations-item-discard`    | Otkaz         | Employer rejected your application           | red (#DC2626)       |
 
 **Potentially possible** (not found on current page but may exist):
 | `negotiations-item-invite` | Priglashenie | Employer invited you to interview | green (#059669) |
@@ -69,11 +69,13 @@ All unique statuses found on page:
 ## 6. Vacancy ID Extraction
 
 The vacancy link in `negotiations-item-vacancy` contains the vacancy ID:
+
 ```
 https://hh.ru/vacancy/133218911?hhtmFrom=negotiation_list
 ```
 
 `extractVacancyId()` from `anti-hallucination.js` already handles this URL format. The ID can be used to:
+
 - Link to already-parsed vacancy data (matchScore, skills)
 - Navigate to vacancy detail page
 - Cross-reference with vacancy list
@@ -83,6 +85,7 @@ https://hh.ru/vacancy/133218911?hhtmFrom=negotiation_list
 ## 7. Selectors to Add
 
 Current selectors in `selectors.js`:
+
 ```js
 negotiationsChatItem:   ['[data-qa="negotiations-chat-item"]', '[class*="negotiations-chat"]'],
 negotiationsChatUnread: ['[data-qa="negotiations-chat-unread"]', '[class*="unread"]'],
@@ -122,6 +125,7 @@ negotiationsItemTag:     ['[data-qa^="negotiations-tag"]'],
 ## 9. Implementation Plan
 
 ### Phase 1: Parse and Display (minimal viable)
+
 1. Add correct selectors to `selectors.js`
 2. Implement `parseNegotiations()` in `parsers/negotiations.js`
 3. Add route handler for `/applicant/negotiations` in `main-page-handlers-pages.js`
@@ -130,11 +134,13 @@ negotiationsItemTag:     ['[data-qa^="negotiations-tag"]'],
 6. Bump version to 1.9.39.0
 
 ### Phase 2: MatchScore Integration
+
 - Cross-reference negotiation vacancy IDs with cached vacancy data
 - Show matchScore ring next to each negotiation
 - Color-code: high match + discard = highlight (missed opportunity)
 
 ### Phase 3: Advanced Features (future)
+
 - Status filter pills (All / Invites / Viewed / Discarded)
 - Unread count badge
 - AI-generated reply to invitations

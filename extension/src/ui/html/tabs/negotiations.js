@@ -1,7 +1,7 @@
 /**
  * TAB 4: NEGOTIATIONS
  */
-import { ICONS } from '../icons.js';
+import { ICONS } from "../icons.js";
 
 export function getNegotiationsSection() {
   return `<div class="tab-section" id="tab-negotiations" role="tabpanel" aria-labelledby="tabbtn-negotiations" tabindex="0">

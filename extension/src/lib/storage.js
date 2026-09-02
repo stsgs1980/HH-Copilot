@@ -9,21 +9,44 @@
  */
 
 export {
-  DEFAULT_SETTINGS, DEFAULT_STATS,
-  getAllSettings, getStats, incrementApplied, checkDailyReset
-} from './storage-settings.js';
+  DEFAULT_SETTINGS,
+  DEFAULT_STATS,
+  checkDailyReset,
+  getAllSettings,
+  getStats,
+  incrementApplied,
+} from "./storage-settings.js";
 
 export {
-  getAppliedVacancies, isAlreadyApplied, markAsApplied,
-  getMyResumes, saveMyResume, saveMyResumes, clearMyResumes,
-  getSyncQueue, setSyncQueue, dequeueSyncItem, clearSyncQueue,
-  getActiveResume, setActiveResume, clearActiveResume,
-  getApplyQueue, setApplyQueue,
-  getBlacklistedCompanies, setBlacklistedCompanies, addBlacklistedCompany, removeBlacklistedCompany
-} from './storage-queue.js';
+  addBlacklistedCompany,
+  clearActiveResume,
+  clearMyResumes,
+  clearSyncQueue,
+  dequeueSyncItem,
+  getActiveResume,
+  getAppliedVacancies,
+  getApplyQueue,
+  getBlacklistedCompanies,
+  getMyResumes,
+  getSyncQueue,
+  isAlreadyApplied,
+  markAsApplied,
+  removeBlacklistedCompany,
+  saveMyResume,
+  saveMyResumes,
+  setActiveResume,
+  setApplyQueue,
+  setBlacklistedCompanies,
+  setSyncQueue,
+} from "./storage-queue.js";
 
 export {
-  getVacancyDetails, getVacancyDetail, saveVacancyDetail,
-  removeVacancyDetail, clearVacancyDetails,
-  getVacancyScores, saveVacancyScore, getVacancyScore
-} from './storage-vacancies.js';
+  clearVacancyDetails,
+  getVacancyDetail,
+  getVacancyDetails,
+  getVacancyScore,
+  getVacancyScores,
+  removeVacancyDetail,
+  saveVacancyDetail,
+  saveVacancyScore,
+} from "./storage-vacancies.js";

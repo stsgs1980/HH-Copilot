@@ -5,12 +5,12 @@
  * Delegates storage to lib/storage.js for centralized access.
  */
 
-import { createLogger } from '../lib/anti-hallucination.js';
-import rateLimiter from '../lib/rate-limiter.js';
-import { simulateReading } from '../lib/timing.js';
-import { getApplyQueue, setApplyQueue } from '../lib/storage.js';
+import { createLogger } from "../lib/anti-hallucination.js";
+import rateLimiter from "../lib/rate-limiter.js";
+import { getApplyQueue, setApplyQueue } from "../lib/storage.js";
+import { simulateReading } from "../lib/timing.js";
 
-const autoLog = createLogger('AutoRespond');
+const autoLog = createLogger("AutoRespond");
 
 /**
  * Get the current apply queue.
@@ -57,16 +57,16 @@ const QUEUE_ITEM_MAX_AGE = 600000;
 export async function processNextInQueue() {
   const queue = await getApplyQueue();
   if (queue.length === 0) {
-    autoLog.info('Queue empty -- mass apply complete');
+    autoLog.info("Queue empty -- mass apply complete");
     return;
   }
 
-  autoLog.info('Queue has ' + queue.length + ' more vacancies');
+  autoLog.info("Queue has " + queue.length + " more vacancies");
 
   // Rate check before proceeding
   const rateCheck = await rateLimiter.check();
   if (!rateCheck.allowed) {
-    autoLog.warn('Rate limit hit: ' + rateCheck.reason + '. Queue preserved for later.');
+    autoLog.warn("Rate limit hit: " + rateCheck.reason + ". Queue preserved for later.");
     return;
   }
 
@@ -79,12 +79,12 @@ export async function processNextInQueue() {
 
   const age = Date.now() - (next.timestamp || 0);
   if (age > QUEUE_ITEM_MAX_AGE) {
-    autoLog.warn('Queue item too old, skipping');
+    autoLog.warn("Queue item too old, skipping");
     await processNextInQueue();
     return;
   }
 
-  autoLog.info('Processing next: vacancy ' + next.vacancyId);
-  const url = 'https://hh.ru/vacancy/' + next.vacancyId;
+  autoLog.info("Processing next: vacancy " + next.vacancyId);
+  const url = "https://hh.ru/vacancy/" + next.vacancyId;
   window.location.href = url;
 }

@@ -9,7 +9,7 @@
  */
 
 export function parseExperienceString(raw) {
-  if (!raw) return { raw: '', min: null, max: null };
+  if (!raw) return { raw: "", min: null, max: null };
 
   const text = raw.toLowerCase().trim();
 

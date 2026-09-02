@@ -4,8 +4,18 @@
  */
 
 const RU_MONTHS = {
-  'январ': 0, 'феврал': 1, 'март': 2, 'апрел': 3, 'ма': 4, 'июн': 5,
-  'июл': 6, 'август': 7, 'сентябр': 8, 'октябр': 9, 'ноябр': 10, 'декабр': 11,
+  январ: 0,
+  феврал: 1,
+  март: 2,
+  апрел: 3,
+  ма: 4,
+  июн: 5,
+  июл: 6,
+  август: 7,
+  сентябр: 8,
+  октябр: 9,
+  ноябр: 10,
+  декабр: 11,
 };
 
 /**
@@ -14,7 +24,7 @@ const RU_MONTHS = {
  */
 export function findEmploymentGaps(exps) {
   const gaps = [];
-  const parsedDates = exps.map(e => parsePeriodDates(e.period || e.duration || ''));
+  const parsedDates = exps.map((e) => parsePeriodDates(e.period || e.duration || ""));
 
   for (let i = 0; i < parsedDates.length - 1; i++) {
     const curr = parsedDates[i];
@@ -22,9 +32,7 @@ export function findEmploymentGaps(exps) {
     if (curr.end && next.start) {
       const gapMonths = monthDiff(curr.end, next.start);
       if (gapMonths > 3) {
-        const label = gapMonths >= 12
-          ? Math.round(gapMonths / 12) + ' г.'
-          : gapMonths + ' мес.';
+        const label = gapMonths >= 12 ? Math.round(gapMonths / 12) + " г." : gapMonths + " мес.";
         gaps.push({ label, months: gapMonths });
       }
     }
@@ -40,7 +48,7 @@ export function parsePeriodDates(period) {
   const result = { start: null, end: null };
 
   const m = period.match(
-    /([а-яА-ЯёЁ]+\s+\d{4})\s*[\u2013\u2014-]\s*([а-яА-ЯёЁ]+\s+\d{4}|Настоящее\s+время|настоящее\s+время|по\s+настоящее)/i
+    /([а-яА-ЯёЁ]+\s+\d{4})\s*[\u2013\u2014-]\s*([а-яА-ЯёЁ]+\s+\d{4}|Настоящее\s+время|настоящее\s+время|по\s+настоящее)/i,
   );
   if (m) {
     result.start = parseRuDate(m[1]);
@@ -75,7 +83,7 @@ function parseRuDate(str) {
   const s = str.trim().toLowerCase();
   for (const [prefix, month] of Object.entries(RU_MONTHS)) {
     if (s.startsWith(prefix)) {
-      const year = parseInt(s.match(/\d{4}/)?.[0] || '0');
+      const year = parseInt(s.match(/\d{4}/)?.[0] || "0");
       if (year > 1990 && year <= 2030) return new Date(year, month);
     }
   }

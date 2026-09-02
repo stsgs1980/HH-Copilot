@@ -14,8 +14,8 @@
  * Returns a `found` record or null.
  */
 
-import { mentionsSkillStem } from './skill-stem-match.js';
-import { splitSentences } from './cover-letter-evidence-fallback.js';
+import { splitSentences } from "./cover-letter-evidence-fallback.js";
+import { mentionsSkillStem } from "./skill-stem-match.js";
 
 /**
  * Case-insensitive whole-word substring check.
@@ -27,9 +27,7 @@ function mentionsSkill(sentence, skill) {
   if (!sentence || !skill) return false;
   const s = sentence.toLowerCase();
   const k = String(skill).toLowerCase().trim();
-  const re = new RegExp('(^|[^a-zа-яё0-9])'
-    + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    + '([^a-zа-яё0-9]|$)', 'i');
+  const re = new RegExp("(^|[^a-zа-яё0-9])" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-zа-яё0-9]|$)", "i");
   return re.test(s);
 }
 
@@ -40,9 +38,9 @@ function makeFound(i, exp, sentence, fieldType, entryDescription) {
   return {
     sentence,
     index: i,
-    company: exp.company || '',
-    position: exp.position || '',
-    period: exp.period || '',
+    company: exp.company || "",
+    position: exp.position || "",
+    period: exp.period || "",
     entryDescription,
     fieldType,
   };
@@ -66,7 +64,7 @@ export function findCompetencyEvidence(comp, experience) {
     if (exp.description) {
       for (const sentence of splitSentences(exp.description)) {
         if (mentionsSkill(sentence, comp)) {
-          found = makeFound(i, exp, sentence, 'description', exp.description);
+          found = makeFound(i, exp, sentence, "description", exp.description);
           break;
         }
       }
@@ -74,12 +72,12 @@ export function findCompetencyEvidence(comp, experience) {
 
     // 2. Secondary: scan position title (exact).
     if (!found && exp.position && mentionsSkill(exp.position, comp)) {
-      found = makeFound(i, exp, exp.position, 'position', exp.position);
+      found = makeFound(i, exp, exp.position, "position", exp.position);
     }
 
     // 3. Tertiary: scan company name (exact).
     if (!found && exp.company && mentionsSkill(exp.company, comp)) {
-      found = makeFound(i, exp, exp.company, 'company', exp.company);
+      found = makeFound(i, exp, exp.company, "company", exp.company);
     }
 
     // 4. Quaternary (v1.9.55.0): partial/stem match on description.
@@ -87,7 +85,7 @@ export function findCompetencyEvidence(comp, experience) {
     if (!found && exp.description) {
       for (const sentence of splitSentences(exp.description)) {
         if (mentionsSkillStem(sentence, comp)) {
-          found = makeFound(i, exp, sentence, 'stem', exp.description);
+          found = makeFound(i, exp, sentence, "stem", exp.description);
           break;
         }
       }

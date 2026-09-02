@@ -14,15 +14,15 @@
  *
  * Scanners are in resume-fetch-strategy5-scanners.js
  */
-import { createLogger } from './anti-hallucination.js';
-import { findExperienceInObject } from './resume-fetch-json-utils.js';
+import { createLogger } from "./anti-hallucination.js";
+import { findExperienceInObject } from "./resume-fetch-json-utils.js";
 import {
-  extractExperienceFromStructuredJson,
+  deepScanForExperience,
   extractExperienceFromArray,
-  deepScanForExperience
-} from './resume-fetch-strategy5-scanners.js';
+  extractExperienceFromStructuredJson,
+} from "./resume-fetch-strategy5-scanners.js";
 
-const fetchLog = createLogger('ResumeFetch');
+const fetchLog = createLogger("ResumeFetch");
 
 /**
  * Parse experience from Magritte <script> hydration JSON.
@@ -36,26 +36,30 @@ export function parseExperienceFromScripts(doc, html) {
   // -- Pass 1: Look for structured JSON in script tags --
   const scripts = doc.querySelectorAll('script[type="application/json"], script:not([src])');
   for (const script of scripts) {
-    const text = script.textContent || '';
+    const text = script.textContent || "";
     if (text.length < 100) continue;
 
     // Check if this script contains experience-related data
     if (!/experience|работ[аеы]|компани|должност|career|position/i.test(text)) continue;
 
-    fetchLog.info('Strategy 5: examining script (' + text.length + ' chars, first 300: ' +
-      text.substring(0, 300).replace(/\n/g, ' '));
+    fetchLog.info(
+      "Strategy 5: examining script (" +
+        text.length +
+        " chars, first 300: " +
+        text.substring(0, 300).replace(/\n/g, " "),
+    );
 
     // Try multiple JSON extraction approaches
     const fromStructured = extractExperienceFromStructuredJson(text);
     if (fromStructured.length > 0) {
-      fetchLog.info('Strategy 5: found ' + fromStructured.length + ' from structured JSON');
+      fetchLog.info("Strategy 5: found " + fromStructured.length + " from structured JSON");
       return fromStructured;
     }
 
     // Try to find experience array in any JSON-like structure
     const fromArray = extractExperienceFromArray(text);
     if (fromArray.length > 0) {
-      fetchLog.info('Strategy 5: found ' + fromArray.length + ' from JSON array scan');
+      fetchLog.info("Strategy 5: found " + fromArray.length + " from JSON array scan");
       return fromArray;
     }
   }
@@ -74,11 +78,11 @@ export function parseExperienceFromScripts(doc, html) {
         const state = JSON.parse(m[1]);
         const exp = findExperienceInObject(state, 0);
         if (exp && exp.length > 0) {
-          fetchLog.info('Strategy 5: found ' + exp.length + ' from window state');
+          fetchLog.info("Strategy 5: found " + exp.length + " from window state");
           return exp;
         }
       } catch (e) {
-        fetchLog.info('Strategy 5: state JSON parse failed: ' + e.message);
+        fetchLog.info("Strategy 5: state JSON parse failed: " + e.message);
       }
     }
   }
@@ -96,11 +100,11 @@ export function parseExperienceFromScripts(doc, html) {
         const store = JSON.parse(m[1]);
         const exp = findExperienceInObject(store, 0);
         if (exp && exp.length > 0) {
-          fetchLog.info('Strategy 5: found ' + exp.length + ' from store pattern');
+          fetchLog.info("Strategy 5: found " + exp.length + " from store pattern");
           return exp;
         }
       } catch (e) {
-        fetchLog.info('Strategy 5: store JSON parse failed: ' + e.message);
+        fetchLog.info("Strategy 5: store JSON parse failed: " + e.message);
       }
     }
   }
@@ -108,7 +112,7 @@ export function parseExperienceFromScripts(doc, html) {
   // -- Pass 4: Deep scan -- find ANY JSON array containing objects with date fields --
   const deepScan = deepScanForExperience(html);
   if (deepScan.length > 0) {
-    fetchLog.info('Strategy 5: found ' + deepScan.length + ' from deep scan');
+    fetchLog.info("Strategy 5: found " + deepScan.length + " from deep scan");
     return deepScan;
   }
 

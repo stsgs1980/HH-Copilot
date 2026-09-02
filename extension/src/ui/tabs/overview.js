@@ -5,9 +5,9 @@
  * and (F1.9) negotiations summary widget.
  */
 
-import { panelState, refs } from '../state.js';
-import { esc } from '../html.js';
-import { computeStatusCounts, formatSummaryText } from './negotiations-summary.js';
+import { esc } from "../html.js";
+import { panelState, refs } from "../state.js";
+import { computeStatusCounts, formatSummaryText } from "./negotiations-summary.js";
 
 export function renderOverviewKPI() {
   const s = panelState.stats;
@@ -18,20 +18,23 @@ export function renderOverviewKPI() {
   const el = (id) => refs.shadowRoot?.getElementById(id);
   if (!el) return;
 
-  const set = (id, val) => { const e = el(id); if (e) e.textContent = val; };
+  const set = (id, val) => {
+    const e = el(id);
+    if (e) e.textContent = val;
+  };
 
-  set('kpi-daily-count', applied);
-  set('kpi-hourly-count', hourly);
-  set('kpi-applied-count', applied);
-  set('kpi-invitations-count', panelState.dailyStats.invitations || 0);
-  set('rl-429-count', panelState.dailyStats.errors429 || 0);
+  set("kpi-daily-count", applied);
+  set("kpi-hourly-count", hourly);
+  set("kpi-applied-count", applied);
+  set("kpi-invitations-count", panelState.dailyStats.invitations || 0);
+  set("rl-429-count", panelState.dailyStats.errors429 || 0);
 
   /* Update KPI ring SVG aria-label for screen readers */
-  const kpiSvg = refs.shadowRoot?.querySelector('.kpi-ring-fill')?.closest('svg');
-  if (kpiSvg) kpiSvg.setAttribute('aria-label', `Дневной лимит: ${applied} из ${limit}`);
+  const kpiSvg = refs.shadowRoot?.querySelector(".kpi-ring-fill")?.closest("svg");
+  if (kpiSvg) kpiSvg.setAttribute("aria-label", `Дневной лимит: ${applied} из ${limit}`);
 
-  const hourlyBar = el('kpi-hourly-bar')?.querySelector('.fill');
-  if (hourlyBar) hourlyBar.style.width = Math.min(100, (hourly / hourlyLimit) * 100) + '%';
+  const hourlyBar = el("kpi-hourly-bar")?.querySelector(".fill");
+  if (hourlyBar) hourlyBar.style.width = Math.min(100, (hourly / hourlyLimit) * 100) + "%";
 
   // v1.9.43.0 F1.9: Negotiations summary widget
   renderNegotiationsSummary();
@@ -42,33 +45,38 @@ export function renderOverviewKPI() {
  * Shows total + per-status breakdown, links to negotiations tab.
  */
 function renderNegotiationsSummary() {
-  const container = refs.shadowRoot?.getElementById('overview-negotiations');
+  const container = refs.shadowRoot?.getElementById("overview-negotiations");
   if (!container) return;
   const convs = panelState.negotiations || [];
   const counts = computeStatusCounts(convs);
   const meta = panelState.negotiationsMeta || {};
 
   const summaryText = formatSummaryText(counts);
-  const errorBadge = (meta.errors && meta.errors.length > 0)
-    ? `<span style="font-size:9px;color:#DC2626;margin-left:6px;" title="${esc(meta.errors.join('; '))}">[!${meta.errors.length}]</span>`
-    : '';
+  const errorBadge =
+    meta.errors && meta.errors.length > 0
+      ? `<span style="font-size:9px;color:#DC2626;margin-left:6px;" title="${esc(meta.errors.join("; "))}">[!${meta.errors.length}]</span>`
+      : "";
 
-  const breakdown = ['invite', 'not-viewed', 'viewed', 'discard']
-    .map(s => {
+  const breakdown = ["invite", "not-viewed", "viewed", "discard"]
+    .map((s) => {
       const cnt = counts[s] || 0;
-      if (cnt === 0) return '';
+      if (cnt === 0) return "";
       const labels = {
-        invite: 'Приглашения', 'not-viewed': 'Не просмотрены',
-        viewed: 'Просмотрены', discard: 'Отказы',
+        invite: "Приглашения",
+        "not-viewed": "Не просмотрены",
+        viewed: "Просмотрены",
+        discard: "Отказы",
       };
       const colors = {
-        invite: '#059669', 'not-viewed': '#D97706',
-        viewed: '#2563EB', discard: '#DC2626',
+        invite: "#059669",
+        "not-viewed": "#D97706",
+        viewed: "#2563EB",
+        discard: "#DC2626",
       };
       return `<span style="font-size:11px;color:${colors[s]};">${labels[s]}: ${cnt}</span>`;
     })
     .filter(Boolean)
-    .join(' · ');
+    .join(" · ");
 
   container.innerHTML = `
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;">
@@ -76,54 +84,54 @@ function renderNegotiationsSummary() {
         <span style="font-size:11px;font-weight:600;color:#0F172A;">Отклики</span>
         <span style="font-size:13px;font-weight:700;color:#0F172A;">${esc(summaryText)}${errorBadge}</span>
       </div>
-      ${breakdown ? `<div style="font-size:10px;display:flex;gap:6px;flex-wrap:wrap;">${breakdown}</div>` : ''}
-      ${meta.fromCache ? '<div style="font-size:9px;color:#94A3B8;margin-top:4px;">из кэша</div>' : ''}
+      ${breakdown ? `<div style="font-size:10px;display:flex;gap:6px;flex-wrap:wrap;">${breakdown}</div>` : ""}
+      ${meta.fromCache ? '<div style="font-size:9px;color:#94A3B8;margin-top:4px;">из кэша</div>' : ""}
     </div>`;
 }
 
 export function addTimelineEvent(type, text, detail) {
-  const list = refs.shadowRoot?.getElementById('tl-activity-list');
+  const list = refs.shadowRoot?.getElementById("tl-activity-list");
   if (!list) return;
   const colors = {
-    apply: '#059669',
-    invitation: '#2563EB',
-    captcha: '#D97706',
-    error: '#DC2626',
-    info: '#71717a',
-    resume: '#7C3AED',
-    parsing: '#059669',
-    reset: '#71717a',
+    apply: "#059669",
+    invitation: "#2563EB",
+    captcha: "#D97706",
+    error: "#DC2626",
+    info: "#71717a",
+    resume: "#7C3AED",
+    parsing: "#059669",
+    reset: "#71717a",
   };
   const labels = {
-    apply: 'ОТКЛИК',
-    invitation: 'ПРИГЛАШЕНИЕ',
-    captcha: 'CAPTCHA',
-    error: 'ОШИБКА',
-    info: 'ИНФО',
-    resume: 'РЕЗЮМЕ',
-    parsing: 'ПАРСИНГ',
-    reset: 'СБРОС',
+    apply: "ОТКЛИК",
+    invitation: "ПРИГЛАШЕНИЕ",
+    captcha: "CAPTCHA",
+    error: "ОШИБКА",
+    info: "ИНФО",
+    resume: "РЕЗЮМЕ",
+    parsing: "ПАРСИНГ",
+    reset: "СБРОС",
   };
-  const color = colors[type] || '#71717a';
-  const label = labels[type] || 'СОБЫТИЕ';
-  const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const color = colors[type] || "#71717a";
+  const label = labels[type] || "СОБЫТИЕ";
+  const time = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  const entry = document.createElement('div');
-  entry.className = 'tl-item';
+  const entry = document.createElement("div");
+  entry.className = "tl-item";
   entry.innerHTML = `<div class="tl-dot" style="background:${color};"></div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;">
       <span style="font-size:11px;"><b style="color:${color};">[${label}]</b> ${esc(text)}</span>
       <span style="font-size:11px;color:#52525b;flex-shrink:0;margin-left:8px;">${time}</span>
     </div>
-    ${detail ? `<div style="font-size:11px;color:#52525b;margin-top:1px;">${esc(detail)}</div>` : ''}`;
+    ${detail ? `<div style="font-size:11px;color:#52525b;margin-top:1px;">${esc(detail)}</div>` : ""}`;
 
   const placeholder = list.querySelector('div[style*="text-align:center"]');
-  if (placeholder) list.innerHTML = '';
+  if (placeholder) list.innerHTML = "";
   list.prepend(entry);
 
-  const count = list.querySelectorAll('.tl-item').length;
-  const countEl = refs.shadowRoot?.getElementById('tl-event-count');
-  if (countEl) countEl.textContent = count + ' ' + declension(count, ['событие', 'события', 'событий']);
+  const count = list.querySelectorAll(".tl-item").length;
+  const countEl = refs.shadowRoot?.getElementById("tl-event-count");
+  if (countEl) countEl.textContent = count + " " + declension(count, ["событие", "события", "событий"]);
 }
 
 function declension(n, forms) {

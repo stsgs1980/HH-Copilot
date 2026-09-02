@@ -11,36 +11,28 @@
  * - Extension install/update handling
  */
 
-import {
-  sendMessage as aiSendMessage,
-  getAiConfig,
-  setAiConfig,
-  isAiAvailable,
-} from '../src/services/ai-service.js';
-import { fetchOllamaModels } from '../src/services/ai-providers.js';
-import {
-  generateCoverLetterAI,
-  generateChatReply,
-} from '../src/services/ai-helpers.js';
+import { generateChatReply, generateCoverLetterAI } from "../src/services/ai-helpers.js";
+import { fetchOllamaModels } from "../src/services/ai-providers.js";
+import { sendMessage as aiSendMessage, getAiConfig, isAiAvailable, setAiConfig } from "../src/services/ai-service.js";
 
 // --- Install / Update --------------------------
 
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log('[HH-AR] Extension installed/updated', details);
+  console.log("[HH-AR] Extension installed/updated", details);
 
-  if (details.reason === 'install') {
+  if (details.reason === "install") {
     // First launch -- initialize defaults
     chrome.storage.local.set({
       settings: {
-        mode: 'manual',
+        mode: "manual",
         dailyLimit: 200,
         minMatchScore: 60,
-        letterTone: 'formal',
+        letterTone: "formal",
         searchInterval: 300,
         autoScroll: true,
         showMatchScore: true,
         confirmBeforeApply: true,
-        coverLetterTemplate: ''
+        coverLetterTemplate: "",
       },
       stats: {
         totalApplied: 0,
@@ -49,19 +41,19 @@ chrome.runtime.onInstalled.addListener((details) => {
         responsesReceived: 0,
         skipsToday: 0,
         errorsToday: 0,
-        lastActivity: null
+        lastActivity: null,
       },
       appliedVacancies: [],
       skippedVacancies: [],
       blacklistedCompanies: [],
       logs: [],
-      installedAt: new Date().toISOString()
+      installedAt: new Date().toISOString(),
     });
 
     // Alarm for daily reset
-    chrome.alarms.create('dailyReset', {
+    chrome.alarms.create("dailyReset", {
       when: getNextMidnight(),
-      periodInMinutes: 24 * 60
+      periodInMinutes: 24 * 60,
     });
   }
 });
@@ -69,9 +61,9 @@ chrome.runtime.onInstalled.addListener((details) => {
 // --- Daily Reset Alarm -------------------------
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'dailyReset') {
-    console.log('[HH-AR] Daily reset alarm fired');
-    chrome.storage.local.get('stats', (data) => {
+  if (alarm.name === "dailyReset") {
+    console.log("[HH-AR] Daily reset alarm fired");
+    chrome.storage.local.get("stats", (data) => {
       const stats = data.stats || {};
       stats.appliedToday = 0;
       stats.skipsToday = 0;
@@ -92,30 +84,30 @@ function getNextMidnight() {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
-    case 'get-stats':
-      chrome.storage.local.get('stats', (data) => {
+    case "get-stats":
+      chrome.storage.local.get("stats", (data) => {
         sendResponse(data.stats || {});
       });
       return true; // async response
 
-    case 'get-settings':
-      chrome.storage.local.get('settings', (data) => {
+    case "get-settings":
+      chrome.storage.local.get("settings", (data) => {
         sendResponse(data.settings || {});
       });
       return true;
 
-    case 'toggle-inspector':
-    case 'apply-vacancy':
+    case "toggle-inspector":
+    case "apply-vacancy":
       // Forward to active tab's content script
-      chrome.tabs.query({ active: true, url: 'https://hh.ru/*' }, (tabs) => {
+      chrome.tabs.query({ active: true, url: "https://hh.ru/*" }, (tabs) => {
         if (tabs[0]) {
           chrome.tabs.sendMessage(tabs[0].id, message);
         }
       });
       break;
 
-    case 'log':
-      chrome.storage.local.get('logs', (data) => {
+    case "log":
+      chrome.storage.local.get("logs", (data) => {
         const logs = data.logs || [];
         logs.push({ ...message.entry, ts: new Date().toISOString() });
         if (logs.length > 500) logs.splice(0, logs.length - 500);
@@ -123,9 +115,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       break;
 
-    case 'check-auth-cookies':
+    case "check-auth-cookies":
       // Check for hh.ru auth cookies via chrome.cookies API
-      chrome.cookies.get({ url: 'https://hh.ru', name: 'hhtoken' }, (cookie) => {
+      chrome.cookies.get({ url: "https://hh.ru", name: "hhtoken" }, (cookie) => {
         if (chrome.runtime.lastError) {
           sendResponse({ hasAuthCookie: false });
           return;
@@ -134,15 +126,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true; // async response
 
-    case 'ai-send-message':
+    case "ai-send-message":
       aiSendMessage(message.payload || {})
         .then(sendResponse)
-        .catch((e) => sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' }));
+        .catch((e) => sendResponse({ ok: false, error: e.message, code: "UNCAUGHT" }));
       return true;
 
-    case 'ai-cover-letter':
-       
-      console.log('[AI-BTN][bg] ai-cover-letter received', {
+    case "ai-cover-letter":
+      console.log("[AI-BTN][bg] ai-cover-letter received", {
         vacancyId: message.vacancy && message.vacancy.id,
         vacancyTitle: message.vacancy && message.vacancy.title,
         resumeId: message.resume && message.resume.id,
@@ -150,8 +141,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       generateCoverLetterAI(message.vacancy, message.resume, message.opts || {})
         .then((result) => {
-           
-          console.log('[AI-BTN][bg] ai-cover-letter done', {
+          console.log("[AI-BTN][bg] ai-cover-letter done", {
             ok: !!(result && result.ok),
             code: result && result.code,
             aiCode: result && result.aiCode,
@@ -161,31 +151,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse(result);
         })
         .catch((e) => {
-           
-          console.error('[AI-BTN][bg] ai-cover-letter UNCAUGHT', e);
-          sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' });
+          console.error("[AI-BTN][bg] ai-cover-letter UNCAUGHT", e);
+          sendResponse({ ok: false, error: e.message, code: "UNCAUGHT" });
         });
       return true;
 
-    case 'ai-chat-reply':
+    case "ai-chat-reply":
       generateChatReply(message.history, message.opts || {})
         .then(sendResponse)
-        .catch((e) => sendResponse({ ok: false, error: e.message, code: 'UNCAUGHT' }));
+        .catch((e) => sendResponse({ ok: false, error: e.message, code: "UNCAUGHT" }));
       return true;
 
-    case 'ai-get-config':
+    case "ai-get-config":
       getAiConfig().then(sendResponse);
       return true;
 
-    case 'ai-set-config':
+    case "ai-set-config":
       setAiConfig(message.config || {}).then(sendResponse);
       return true;
 
-    case 'ai-available':
+    case "ai-available":
       isAiAvailable().then(sendResponse);
       return true;
 
-    case 'ai-fetch-ollama-models':
+    case "ai-fetch-ollama-models":
       fetchOllamaModels(message.baseUrl)
         .then((models) => sendResponse({ ok: true, models }))
         .catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
@@ -200,11 +189,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * Called periodically or when stats change.
  */
 export function updateBadge() {
-  chrome.storage.local.get('stats', (data) => {
+  chrome.storage.local.get("stats", (data) => {
     const applied = data.stats?.appliedToday || 0;
-    const text = applied > 0 ? String(applied) : '';
+    const text = applied > 0 ? String(applied) : "";
     chrome.action.setBadgeText({ text });
-    chrome.action.setBadgeBackgroundColor({ color: '#2964FF' });
+    chrome.action.setBadgeBackgroundColor({ color: "#2964FF" });
   });
 }
 

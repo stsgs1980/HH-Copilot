@@ -26,14 +26,14 @@
  * v1.9.29.0
  */
 
-import { createLogger } from './anti-hallucination.js';
-import { gaussianDelay } from './timing.js';
-import { getVacancyDetails, saveVacancyDetail, saveVacancyScore } from './storage-vacancies.js';
-import { fetchVacancyViaIframe } from './vacancy-fetch-iframe.js';
-import { fetchVacancyViaText } from './vacancy-fetch-text.js';
-import { enrichVacancy, enrichVacanciesFromCache, isDetailFresh } from './vacancy-fetch-enrichment.js';
+import { createLogger } from "./anti-hallucination.js";
+import { getVacancyDetails, saveVacancyDetail, saveVacancyScore } from "./storage-vacancies.js";
+import { gaussianDelay } from "./timing.js";
+import { enrichVacanciesFromCache, enrichVacancy, isDetailFresh } from "./vacancy-fetch-enrichment.js";
+import { fetchVacancyViaIframe } from "./vacancy-fetch-iframe.js";
+import { fetchVacancyViaText } from "./vacancy-fetch-text.js";
 
-const fetchLog = createLogger('VacFetch');
+const fetchLog = createLogger("VacFetch");
 
 /** Max number of vacancies to fetch per batch */
 const MAX_FETCH_PER_BATCH = 50;
@@ -71,10 +71,10 @@ export async function enrichFromCache(vacancies, resume) {
   try {
     const storedDetails = await getVacancyDetails();
     const result = enrichVacanciesFromCache(vacancies, storedDetails, resume);
-    fetchLog.info('Cache enrichment: ' + result.enriched + '/' + vacancies.length + ' vacancies enriched');
+    fetchLog.info("Cache enrichment: " + result.enriched + "/" + vacancies.length + " vacancies enriched");
     return result;
   } catch (err) {
-    fetchLog.warn('Cache enrichment failed: ' + err.message);
+    fetchLog.warn("Cache enrichment failed: " + err.message);
     return { enriched: 0, cached: 0, skipped: vacancies.length };
   }
 }
@@ -95,7 +95,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
   }
 
   if (isFetching) {
-    fetchLog.warn('Fetch already in progress -- skipping');
+    fetchLog.warn("Fetch already in progress -- skipping");
     return { fetched: 0, failed: 0, cached: 0, total: 0 };
   }
 
@@ -117,7 +117,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
       if (d && d.id) detailMap.set(d.id, d);
     }
 
-    const toFetch = vacancies.filter(v => {
+    const toFetch = vacancies.filter((v) => {
       // Already have key skills from enrichment -- skip
       if (v.keySkills && v.keySkills.length > 0) return false;
       // Have fresh cached detail -- skip
@@ -128,9 +128,13 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
     });
 
     fetchLog.info(
-      'Fetch batch: ' + toFetch.length + ' need fetching, ' +
-      cacheResult.enriched + ' already from cache, ' +
-      (vacancies.length - toFetch.length - cacheResult.enriched) + ' skipped'
+      "Fetch batch: " +
+        toFetch.length +
+        " need fetching, " +
+        cacheResult.enriched +
+        " already from cache, " +
+        (vacancies.length - toFetch.length - cacheResult.enriched) +
+        " skipped",
     );
 
     if (toFetch.length === 0) {
@@ -155,7 +159,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
     // Step 4: Fetch each vacancy with rate limiting
     for (let i = 0; i < batch.length; i++) {
       if (abortFetch) {
-        fetchLog.info('Fetch aborted after ' + fetched + ' vacancies');
+        fetchLog.info("Fetch aborted after " + fetched + " vacancies");
         break;
       }
 
@@ -168,7 +172,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
       try {
         detail = await fetchVacancyViaIframe(vacancy.url);
       } catch (err) {
-        fetchLog.warn('Iframe failed for ' + vacancy.id + ': ' + err.message);
+        fetchLog.warn("Iframe failed for " + vacancy.id + ": " + err.message);
       }
 
       // Strategy 2: text fetch fallback (no JS rendering)
@@ -176,7 +180,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
         try {
           detail = await fetchVacancyViaText(vacancy.url);
         } catch (err) {
-          fetchLog.warn('Text fetch failed for ' + vacancy.id + ': ' + err.message);
+          fetchLog.warn("Text fetch failed for " + vacancy.id + ": " + err.message);
         }
       }
 
@@ -189,8 +193,9 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
 
         // Save score to storage
         if (vacancy.matchScore != null) {
-          saveVacancyScore(vacancy.id, vacancy.matchScore, vacancy.matchBreakdown, vacancy.matchDetails)
-            .catch(() => {});
+          saveVacancyScore(vacancy.id, vacancy.matchScore, vacancy.matchBreakdown, vacancy.matchDetails).catch(
+            () => {},
+          );
         }
 
         fetched++;
@@ -206,14 +211,21 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
     }
 
     fetchLog.info(
-      'Batch complete: ' + fetched + ' fetched, ' + failed + ' failed, ' +
-      cacheResult.cached + ' from cache, ' + vacancies.length + ' total'
+      "Batch complete: " +
+        fetched +
+        " fetched, " +
+        failed +
+        " failed, " +
+        cacheResult.cached +
+        " from cache, " +
+        vacancies.length +
+        " total",
     );
 
     onComplete(vacancies);
     return { fetched, failed, cached: cacheResult.cached, total: vacancies.length };
   } catch (err) {
-    fetchLog.error('Fatal error in fetch batch: ' + err.message);
+    fetchLog.error("Fatal error in fetch batch: " + err.message);
     return { fetched: 0, failed: 0, cached: 0, total: vacancies.length };
   } finally {
     isFetching = false;
@@ -227,7 +239,7 @@ export async function fetchVacancyDetails(vacancies, resume, callbacks) {
  */
 export function abortVacancyFetch() {
   if (isFetching) {
-    fetchLog.info('Abort requested');
+    fetchLog.info("Abort requested");
     abortFetch = true;
   }
 }

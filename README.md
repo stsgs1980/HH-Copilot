@@ -4,12 +4,9 @@ Chrome extension for automating job search on hh.ru -- parses vacancies, extract
 
 **Version:** 1.9.86.0 | **Platform:** Chrome Extension (Manifest V3) | **Target:** hh.ru (Magritte design system)
 
-[![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square)](https://react.dev)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square)](https://python.org)
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square)](https://nodejs.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square)](https://fastapi.tiangolo.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?style=flat-square)](https://developer.chrome.com/docs/extensions/)
+[![esbuild](https://img.shields.io/badge/esbuild-yellow?style=flat-square)](https://esbuild.github.io)
+[![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square)](https://vitest.dev)
 
 ## Table of Contents
 
@@ -34,7 +31,7 @@ Chrome extension for automating job search on hh.ru -- parses vacancies, extract
 - AI chat reply generation (3 variants, tone-adaptive, typing simulation)
 - Resume quality analysis with ATS compatibility scoring, red flags, and improvement recommendations
 - SPA navigation tracking via MutationObserver and pushState/replaceState patch
-- 522 unit tests across 27 files (Vitest + jsdom), ESLint with custom AHG anti-monolith rules
+- 729 unit tests across 27 files (Vitest + jsdom), ESLint with custom anti-monolith rules
 - Hot-reload for development via WebSocket (port 35729)
 
 ## Tech Stack
@@ -42,7 +39,7 @@ Chrome extension for automating job search on hh.ru -- parses vacancies, extract
 - **Build** - esbuild (IIFE bundle for Manifest V3)
 - **Testing** - Vitest, jsdom
 - **Platform** - Chrome Extension Manifest V3
-- **Linting** - ESLint with AHG custom rules (max-file-lines, no-unicode-graphics)
+- **Linting** - ESLint, markdownlint, commitlint
 - **Hot Reload** - WebSocket (ws)
 - **UI** - Shadow DOM (closed mode), Custom Events
 - **Storage** - chrome.storage.local
@@ -60,7 +57,6 @@ Chrome extension for automating job search on hh.ru -- parses vacancies, extract
 ```bash
 git clone https://github.com/stsgs1980/HH-Copilot.git
 cd HH-Copilot
-git submodule update --init
 cd extension
 npm install
 npm run build
@@ -109,10 +105,8 @@ The sidebar panel is isolated via Shadow DOM (mode: closed) -- hh.ru styles (Blo
 - `extension/src/parsers/` - Vacancy, resume, negotiation, diagnostic parsers (24 files)
 - `extension/src/engine/` - Apply orchestrator, actions, queue (4 files)
 - `extension/src/ui/` - FAB, panel, tabs, sidebar CSS, auth (44 files)
-- `extension/docs/` - Architecture, task cascade, Unicode policy
+- `extension/docs/` - Architecture, task cascade
 - `extension/CHANGELOG.md` - Version history (Keep a Changelog format)
-- `docs/wireframes/` - UI prototypes (FAB panel, landing page)
-- `anti-hallucination-guard/` - Git submodule for code quality guard
 
 ## Scripts
 
@@ -120,7 +114,7 @@ The sidebar panel is isolated via Shadow DOM (mode: closed) -- hh.ru styles (Blo
 cd extension
 npm run build        # Build content.js from src/content/main.js
 npm run watch        # Auto-rebuild + hot-reload (ws://localhost:35729)
-npm test             # Run 522 unit tests (Vitest + jsdom)
+npm test             # Run 729 unit tests (Vitest + jsdom)
 npm run lint         # ESLint with AHG rules
 npm run lint:fix     # Auto-fix ESLint issues
 ```
@@ -135,19 +129,20 @@ Extracted fields (13): position, salary, gender, age, city, skills with proficie
 
 ## Status
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| Phase 0: Modular refactoring | Completed | esbuild, 140 modules, anti-monolith, ESLint AHG rules |
-| Phase 1: Extended parsing | Completed | Detailed vacancy parser, resume quality analysis, 5-component scoring |
-| Phase 2: Matching engine | Completed | Jaccard + alias matching, skill gap analysis, synonym matching |
-| Phase 3: Auto-apply | In progress | Orchestrator + queue + actions, guided tour, SPA nav, CAPTCHA handling |
-| Phase 4: AI integration | Pending | Cover letter LLM, AI replies, API key management |
-| Phase 5: Analytics and UX | Pending | KPI dashboard, conversion funnel, extended statistics |
-| Phase 6: Polish | Pending | Dark theme, Chrome Web Store publication |
+| Phase                        | Status      | Description                                                            |
+| ---------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Phase 0: Modular refactoring | Completed   | esbuild, 140 modules, anti-monolith, ESLint AHG rules                  |
+| Phase 1: Extended parsing    | Completed   | Detailed vacancy parser, resume quality analysis, 5-component scoring  |
+| Phase 2: Matching engine     | Completed   | Jaccard + alias matching, skill gap analysis, synonym matching         |
+| Phase 3: Auto-apply          | In progress | Orchestrator + queue + actions, guided tour, SPA nav, CAPTCHA handling |
+| Phase 4: AI integration      | Pending     | Cover letter LLM, AI replies, API key management                       |
+| Phase 5: Analytics and UX    | Pending     | KPI dashboard, conversion funnel, extended statistics                  |
+| Phase 6: Polish              | Pending     | Dark theme, Chrome Web Store publication                               |
 
 ## License
 
 Private project. All rights reserved.
 
 ---
+
 Built with: TypeScript + Chrome Extensions API

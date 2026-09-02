@@ -10,14 +10,14 @@
 export function parseSalaryConditions(dbg, resume) {
   const posCard = document.querySelector('[data-qa="resume-position-card"]');
   if (!posCard) {
-    resume._debug.missing.push('salaryConditions (no position-card)');
+    resume._debug.missing.push("salaryConditions (no position-card)");
     return;
   }
 
   const texts = [];
-  posCard.querySelectorAll('span, p, div').forEach(el => {
+  posCard.querySelectorAll("span, p, div").forEach((el) => {
     if (el.children.length > 5) return;
-    const t = (el.textContent || '').trim();
+    const t = (el.textContent || "").trim();
     if (t && t.length > 2 && t.length < 100) texts.push(t);
   });
 
@@ -39,27 +39,55 @@ export function parseSalaryConditions(dbg, resume) {
     /(?:^|\s)(Гибрид|Смешанный формат)(?:$|[,;\s])/i,
   ];
   const schedPatterns = [
-    /(?:^|\s)(Гибкий график)(?:$|[,;\s])/i, /(?:^|\s)(Полный день)(?:$|[,;\s])/i,
-    /(?:^|\s)(Сменный график)(?:$|[,;\s])/i, /(?:^|\s)(Вахтовый метод)(?:$|[,;\s])/i,
+    /(?:^|\s)(Гибкий график)(?:$|[,;\s])/i,
+    /(?:^|\s)(Полный день)(?:$|[,;\s])/i,
+    /(?:^|\s)(Сменный график)(?:$|[,;\s])/i,
+    /(?:^|\s)(Вахтовый метод)(?:$|[,;\s])/i,
   ];
   const relocPatterns = [
-    /(?:^|\s)(Не готов к переезду)(?:$|[,;\s])/i, /(?:^|\s)(Готов к переезду)(?:$|[,;\s])/i,
+    /(?:^|\s)(Не готов к переезду)(?:$|[,;\s])/i,
+    /(?:^|\s)(Готов к переезду)(?:$|[,;\s])/i,
     /(?:^|\s)(Хочу переехать)(?:$|[,;\s])/i,
   ];
 
   for (const t of texts) {
     if (!resume.employmentType) {
-      for (const p of empPatterns) { const m = t.match(p); if (m) { resume.employmentType = dbg('employmentType', m[1]); break; } }
+      for (const p of empPatterns) {
+        const m = t.match(p);
+        if (m) {
+          resume.employmentType = dbg("employmentType", m[1]);
+          break;
+        }
+      }
     }
     // Work format: collect ALL matches (comma-separated on hh.ru)
     if (!resume.workFormat) {
       const fmtMatches = [];
-      for (const p of fmtPatterns) { const m = t.match(p); if (m) fmtMatches.push(m[1]); }
+      for (const p of fmtPatterns) {
+        const m = t.match(p);
+        if (m) fmtMatches.push(m[1]);
+      }
       if (fmtMatches.length > 0) {
-        resume.workFormat = dbg('workFormat', fmtMatches.join(', '));
+        resume.workFormat = dbg("workFormat", fmtMatches.join(", "));
       }
     }
-    if (!resume.schedule) { for (const p of schedPatterns) { const m = t.match(p); if (m) { resume.schedule = dbg('schedule', m[1]); break; } } }
-    if (!resume.relocation) { for (const p of relocPatterns) { const m = t.match(p); if (m) { resume.relocation = dbg('relocation', m[1]); break; } } }
+    if (!resume.schedule) {
+      for (const p of schedPatterns) {
+        const m = t.match(p);
+        if (m) {
+          resume.schedule = dbg("schedule", m[1]);
+          break;
+        }
+      }
+    }
+    if (!resume.relocation) {
+      for (const p of relocPatterns) {
+        const m = t.match(p);
+        if (m) {
+          resume.relocation = dbg("relocation", m[1]);
+          break;
+        }
+      }
+    }
   }
 }

@@ -6,7 +6,8 @@
  */
 
 export function gaussianRandom(mean, stddev) {
-  mean = mean || 10.0; stddev = stddev || 4.0;
+  mean = mean || 10.0;
+  stddev = stddev || 4.0;
   const u1 = Math.max(1e-10, Math.min(1 - 1e-10, Math.random()));
   const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * Math.random());
   return z * stddev + mean;
@@ -14,7 +15,7 @@ export function gaussianRandom(mean, stddev) {
 
 export function randomDelay() {
   // Floor of 2.0s (2000ms) for default reading/simulation delays
-  return new Promise(r => setTimeout(r, Math.max(2000, gaussianRandom() * 1000)));
+  return new Promise((r) => setTimeout(r, Math.max(2000, gaussianRandom() * 1000)));
 }
 
 export function gaussianDelay(minMs, maxMs) {
@@ -24,12 +25,12 @@ export function gaussianDelay(minMs, maxMs) {
   const stddev = (maxMs - minMs) / 4;
   // Clamp to [minMs, maxMs] range
   const delay = Math.max(minMs, Math.min(maxMs, gaussianRandom(mean / 1000, stddev / 1000) * 1000));
-  return new Promise(r => setTimeout(r, delay));
+  return new Promise((r) => setTimeout(r, delay));
 }
 
 export function simulateReading() {
   const delay = 5000 + Math.random() * 7000;
-  return new Promise(r => setTimeout(r, delay));
+  return new Promise((r) => setTimeout(r, delay));
 }
 
 /**
@@ -54,10 +55,10 @@ export function simulateReading() {
  * @returns {Promise<boolean>} true if typing completed, false if aborted (readonly/unsupported)
  */
 export async function simulateTyping(el, text, opts) {
-  if (!el || typeof text !== 'string') return false;
+  if (!el || typeof text !== "string") return false;
 
   // Anti-hallucination: skip readonly elements gracefully (don't crash)
-  if (el.hasAttribute && el.hasAttribute('readonly')) {
+  if (el.hasAttribute && el.hasAttribute("readonly")) {
     return false;
   }
 
@@ -68,39 +69,38 @@ export async function simulateTyping(el, text, opts) {
   // Anti-hallucination: use native setter so React/Magritte detects the change.
   // Direct `el.value = x` bypasses the prototype setter and React's onChange
   // handler never fires. We MUST use the descriptor's set method.
-  const proto = el instanceof HTMLTextAreaElement
-    ? HTMLTextAreaElement.prototype
-    : (el instanceof HTMLInputElement ? HTMLInputElement.prototype : null);
+  const proto =
+    el instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : el instanceof HTMLInputElement
+        ? HTMLInputElement.prototype
+        : null;
 
-  const nativeSetter = proto
-    ? Object.getOwnPropertyDescriptor(proto, 'value')?.set
-    : null;
+  const nativeSetter = proto ? Object.getOwnPropertyDescriptor(proto, "value")?.set : null;
 
   // Characters that trigger a longer pause (sentence/clause boundaries)
   // Note: em-dash (U+2014) and en-dash (U+2013) are included via escape sequences
   // to comply with AHG Rule 15 (no raw Unicode dashes in source code).
-  const PUNCT = new Set(['.', ',', '!', '?', ';', ':', '\u2014', '\u2013']);
+  const PUNCT = new Set([".", ",", "!", "?", ";", ":", "\u2014", "\u2013"]);
 
   for (const ch of text) {
     if (nativeSetter) {
-      nativeSetter.call(el, (el.value || '') + ch);
+      nativeSetter.call(el, (el.value || "") + ch);
     } else {
       // Fallback: direct assignment (won't trigger React, but at least sets the value)
-      el.value = (el.value || '') + ch;
+      el.value = (el.value || "") + ch;
     }
 
     // Dispatch input event so frameworks pick up the change
-    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event("input", { bubbles: true }));
 
     // Longer pause after punctuation; normal random delay otherwise
-    const delay = PUNCT.has(ch)
-      ? punctDelay + Math.random() * 100
-      : baseDelay + Math.random() * jitter;
-    await new Promise(r => setTimeout(r, delay));
+    const delay = PUNCT.has(ch) ? punctDelay + Math.random() * 100 : baseDelay + Math.random() * jitter;
+    await new Promise((r) => setTimeout(r, delay));
   }
 
   // Final change event to signal completion
-  el.dispatchEvent(new Event('change', { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
 
   return true;
 }

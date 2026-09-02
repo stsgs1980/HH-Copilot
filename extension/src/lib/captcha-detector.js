@@ -28,23 +28,23 @@
  * v1.9.47.0
  */
 
-import { createLogger } from './anti-hallucination.js';
+import { createLogger } from "./anti-hallucination.js";
 
-const captchaLog = createLogger('Captcha');
+const captchaLog = createLogger("Captcha");
 
 /** Selectors that indicate a CAPTCHA challenge is present. */
 const CAPTCHA_SELECTORS = [
-  { sel: 'img[src*="captcha"]', type: 'image' },
-  { sel: '.g-recaptcha', type: 'recaptcha' },
-  { sel: '[data-qa*="captcha"]', type: 'data-qa' },
-  { sel: 'iframe[src*="recaptcha"]', type: 'recaptcha-iframe' },
-  { sel: '#captcha', type: 'captcha-id' },
-  { sel: '.captcha', type: 'captcha-class' },
-  { sel: 'textarea#g-recaptcha-response', type: 'recaptcha-response' },
+  { sel: 'img[src*="captcha"]', type: "image" },
+  { sel: ".g-recaptcha", type: "recaptcha" },
+  { sel: '[data-qa*="captcha"]', type: "data-qa" },
+  { sel: 'iframe[src*="recaptcha"]', type: "recaptcha-iframe" },
+  { sel: "#captcha", type: "captcha-id" },
+  { sel: ".captcha", type: "captcha-class" },
+  { sel: "textarea#g-recaptcha-response", type: "recaptcha-response" },
 ];
 
 /** Storage key for CAPTCHA pause state. */
-export const CAPTCHA_STATE_KEY = 'captchaState';
+export const CAPTCHA_STATE_KEY = "captchaState";
 
 /** In-memory cache of pause state (avoids async reads in hot paths). */
 let _state = { paused: false, reason: null, detectedAt: null, type: null };
@@ -55,7 +55,7 @@ let _state = { paused: false, reason: null, detectedAt: null, type: null };
  * @returns {{ found: boolean, type: string|null, source: string|null }}
  */
 export function detectCaptcha(root) {
-  root = root || (typeof document !== 'undefined' ? document : null);
+  root = root || (typeof document !== "undefined" ? document : null);
   if (!root || !root.querySelectorAll) return { found: false, type: null, source: null };
 
   for (const { sel, type } of CAPTCHA_SELECTORS) {
@@ -65,15 +65,15 @@ export function detectCaptcha(root) {
         // Anti-ghost: skip elements explicitly hidden via inline style or computed style.
         // Note: jsdom does not compute layout, so offsetParent / getClientRects are
         // always empty/zero. We rely on inline style + computed style only.
-        const style = (typeof getComputedStyle === 'function')
-          ? getComputedStyle(el)
-          : el.style;
+        const style = typeof getComputedStyle === "function" ? getComputedStyle(el) : el.style;
         const display = style.display;
         const visibility = style.visibility;
-        if (display === 'none' || visibility === 'hidden') continue;
+        if (display === "none" || visibility === "hidden") continue;
         return { found: true, type, source: sel };
       }
-    } catch (_e) { /* invalid selector */ }
+    } catch (_e) {
+      /* invalid selector */
+    }
   }
 
   return { found: false, type: null, source: null };
@@ -105,13 +105,13 @@ export function isAutoPaused() {
 export async function pauseForCaptcha(type, reason) {
   _state = {
     paused: true,
-    reason: reason || ('CAPTCHA detected: ' + (type || 'unknown')),
+    reason: reason || "CAPTCHA detected: " + (type || "unknown"),
     detectedAt: new Date().toISOString(),
     type: type || null,
   };
   try {
     await chrome.storage.local.set({ [CAPTCHA_STATE_KEY]: _state });
-    captchaLog.warn('AUTO-PAUSE: ' + _state.reason);
+    captchaLog.warn("AUTO-PAUSE: " + _state.reason);
     return true;
   } catch (_e) {
     // State still set in memory, just not persisted
@@ -128,7 +128,7 @@ export async function resumeFromCaptcha() {
   _state = { paused: false, reason: null, detectedAt: null, type: null };
   try {
     await chrome.storage.local.remove(CAPTCHA_STATE_KEY);
-    captchaLog.info('Manual resume: CAPTCHA pause cleared');
+    captchaLog.info("Manual resume: CAPTCHA pause cleared");
     return true;
   } catch (_e) {
     return false;
@@ -146,14 +146,18 @@ export async function loadCaptchaState() {
     if (data && data[CAPTCHA_STATE_KEY]) {
       _state = { ..._state, ...data[CAPTCHA_STATE_KEY] };
     }
-  } catch (_e) { /* ignore */ }
+  } catch (_e) {
+    /* ignore */
+  }
 }
 
 /** Exported for tests. */
 export const _internal = {
   CAPTCHA_SELECTORS,
   CAPTCHA_STATE_KEY,
-  _resetState: () => { _state = { paused: false, reason: null, detectedAt: null, type: null }; },
+  _resetState: () => {
+    _state = { paused: false, reason: null, detectedAt: null, type: null };
+  },
 };
 
 /**
@@ -162,7 +166,7 @@ export const _internal = {
  */
 export async function getCaptchaStats() {
   try {
-    const data = await chrome.storage.local.get('captchaStats');
+    const data = await chrome.storage.local.get("captchaStats");
     return data.captchaStats || { total: 0, lastDetected: null, types: {} };
   } catch (_e) {
     return { total: 0, lastDetected: null, types: {} };
@@ -188,7 +192,9 @@ async function recordCaptchaDetection(type) {
       stats.types = Object.fromEntries(sorted.slice(0, 15));
     }
     await chrome.storage.local.set({ captchaStats: stats });
-  } catch (_e) { /* ignore */ }
+  } catch (_e) {
+    /* ignore */
+  }
 }
 
 /**
@@ -210,9 +216,9 @@ export async function checkAndPause(root, settings) {
 
   const shouldPause = settings ? settings.captchaAutoPause !== false : true;
   if (shouldPause && !isAutoPaused()) {
-    await pauseForCaptcha(detection.type, 'CAPTCHA detected: ' + detection.type);
+    await pauseForCaptcha(detection.type, "CAPTCHA detected: " + detection.type);
   } else {
-    captchaLog.info('CAPTCHA detected but auto-pause disabled or already paused');
+    captchaLog.info("CAPTCHA detected but auto-pause disabled or already paused");
   }
 
   return { found: true, paused: shouldPause, type: detection.type };

@@ -40,38 +40,36 @@ const EXPERIENCE_FALLBACK_MAX = 2; // top-N most recent experience items used as
 // Stem/partial matching logic lives in skill-stem-match.js (extracted in
 // v1.9.56.0 to keep this file under AHG Rule 12). Re-exported here so the
 // existing _internal export and tests keep working without import churn.
-import {
-  mentionsSkillStem,
-  MIN_STEM_LEN,
-} from './skill-stem-match.js';
+import { mentionsSkillStem, MIN_STEM_LEN } from "./skill-stem-match.js";
 
 // Sentence splitter + experience fallback extracted to a sibling module
 // (v1.9.56.0) to keep this file under AHG Rule 12.
-import {
-  buildExperienceFallback,
-  truncate,
-} from './cover-letter-evidence-fallback.js';
+import { buildExperienceFallback, truncate } from "./cover-letter-evidence-fallback.js";
 
 // 4-tier evidence search extracted to a sibling module (v1.9.56.0).
-import { findCompetencyEvidence } from './cover-letter-evidence-search.js';
+import { findCompetencyEvidence } from "./cover-letter-evidence-search.js";
 
 // Confidence: high if entry description contains a number/percent/year, else medium
 function assessConfidence(entryDescription) {
-  if (!entryDescription) return 'medium';
-  if (/\d+\s*%|\d+\s*(раз|раза|ч|часов|часа|мин|мес|лет|года|год)\b|\d{4}\b|\$\s*\d+|\d+\s*(пользовател|клиент|страниц|записей|репозитор)/i.test(entryDescription)) {
-    return 'high';
+  if (!entryDescription) return "medium";
+  if (
+    /\d+\s*%|\d+\s*(раз|раза|ч|часов|часа|мин|мес|лет|года|год)\b|\d{4}\b|\$\s*\d+|\d+\s*(пользовател|клиент|страниц|записей|репозитор)/i.test(
+      entryDescription,
+    )
+  ) {
+    return "high";
   }
-  return 'medium';
+  return "medium";
 }
 
 // Normalize a skill name the same way match-scorer-skills.js does
 function normalizeSkill(s) {
-  return String(s || '')
+  return String(s || "")
     .toLowerCase()
     .trim()
-    .replace(/[-\u2013\u2014]/g, ' ')
-    .replace(/ё/g, 'е')
-    .replace(/\s+/g, ' ');
+    .replace(/[-\u2013\u2014]/g, " ")
+    .replace(/ё/g, "е")
+    .replace(/\s+/g, " ");
 }
 
 /**
@@ -93,7 +91,7 @@ export function mapEvidence(scorecard, resume, matchResult) {
   const synonyms = Array.isArray(details.synonymMatchSkills) ? details.synonymMatchSkills : [];
   const implied = Array.isArray(details.impliedMatchSkills) ? details.impliedMatchSkills : [];
   const missing = new Set(
-    (Array.isArray(details.missingSkills) ? details.missingSkills : []).map(s => normalizeSkill(s))
+    (Array.isArray(details.missingSkills) ? details.missingSkills : []).map((s) => normalizeSkill(s)),
   );
 
   const experience = Array.isArray(resume.experience) ? resume.experience : [];
@@ -113,14 +111,16 @@ export function mapEvidence(scorecard, resume, matchResult) {
     if (missing.has(compNorm)) continue;
 
     // Determine confidence baseline from skill classification
-    const isMatching = matching.some(s => normalizeSkill(s) === compNorm);
-    const isDerived = derived.some(s => normalizeSkill(s) === compNorm);
+    const isMatching = matching.some((s) => normalizeSkill(s) === compNorm);
+    const isDerived = derived.some((s) => normalizeSkill(s) === compNorm);
     // Synonym entries come shaped like "B2B продажи ~ работа с возражениями" -- check both sides
-    const isSynonym = synonyms.some(s => {
-      const parts = String(s).split('~').map(p => normalizeSkill(p));
+    const isSynonym = synonyms.some((s) => {
+      const parts = String(s)
+        .split("~")
+        .map((p) => normalizeSkill(p));
       return parts.includes(compNorm);
     });
-    const isImplied = implied.some(s => normalizeSkill(s) === compNorm);
+    const isImplied = implied.some((s) => normalizeSkill(s) === compNorm);
 
     if (!isMatching && !isDerived && !isSynonym && !isImplied) {
       // Competency not in match result at all -- skip (no evidence basis)
@@ -137,16 +137,16 @@ export function mapEvidence(scorecard, resume, matchResult) {
     if (!found && resumeSkillsNorm.has(compNorm)) {
       evidence.push({
         competency: comp,
-        evidenceText: 'Декларированный навык в резюме: ' + comp,
+        evidenceText: "Декларированный навык в резюме: " + comp,
         source: {
-          type: 'skill_declaration',
+          type: "skill_declaration",
           index: -1,
-          sentence: '',
-          company: '',
-          position: '',
-          period: '',
+          sentence: "",
+          company: "",
+          position: "",
+          period: "",
         },
-        confidence: 'declared',
+        confidence: "declared",
       });
       continue;
     }
@@ -162,22 +162,22 @@ export function mapEvidence(scorecard, resume, matchResult) {
       confidence = assessConfidence(found.entryDescription);
     } else {
       // derived/synonym/implied -> max medium
-      confidence = 'medium';
+      confidence = "medium";
     }
     // Position-only or company-only matches are weaker -- cap at medium
-    if (found.fieldType !== 'description') {
-      confidence = 'medium';
+    if (found.fieldType !== "description") {
+      confidence = "medium";
     }
     // Stem match is the weakest -- cap at 'low' so the LLM knows to be cautious
-    if (found.fieldType === 'stem') {
-      confidence = 'low';
+    if (found.fieldType === "stem") {
+      confidence = "low";
     }
 
     evidence.push({
       competency: comp,
       evidenceText: truncate(found.sentence),
       source: {
-        type: 'experience',
+        type: "experience",
         index: found.index,
         sentence: found.sentence,
         company: found.company,

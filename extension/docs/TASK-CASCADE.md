@@ -3,7 +3,7 @@
 **Document version:** 5.0.0
 **Date:** 2026-06-25
 **Status:** Master planning document
-**Current extension version:** 1.9.65.0
+**Current extension version:** 1.9.86.0
 **Cascade-state sync:** `cascade-state.json` (root) -- 33/35 tasks completed, 2 pending
 
 ---
@@ -16,11 +16,7 @@
 - F5.2 (dark/light theme) remains PENDING: settings.js exists but theme toggle NOT implemented
 - F6.4 (Chrome Web Store) remains PENDING: no implementation files yet
 - Fixed `cascade-state.json` corruption: file was previously overwritten with
-  anti-hallucination-guard module dump (RULE-001..017) instead of HH-Copilot tasks
-- Fixed `scripts/sync-task-state.sh` jq query: `(.implementationFiles | length > 0)`
-  threw "boolean has no length" on null fields; replaced with safe `(.implementationFiles // []) | type == "array" and length > 0`
-- Added auditNote guard in sync-task-state.sh: tasks with auditNote matching
-  "NOT implemented|manual|blocked" are skipped by auto-sync
+  agent configuration dump instead of HH-Copilot tasks
 
 ---
 
@@ -112,6 +108,7 @@ src/
 ```
 
 **Functionally working:**
+
 - Build via esbuild: `npm run build` assembles content.js from 42 modules, `npm run watch` for development
 - FAB button (fixed bottom-right) with CSS !important isolation from hh.ru styles, 3 states (gray/blue/red)
 - 720px side panel with Shadow DOM isolation (mode: closed), 6 tabs per wireframe: Overview, Resume, Vacancies, Negotiations, Settings, Statistics
@@ -289,6 +286,7 @@ Status: COMPLETED
 Description: Split the parsing section into separate modules.
 
 Implementation:
+
 - src/parsers/vacancy-list.js -- 65 lines, parseVacanciesFromPage()
 - src/parsers/vacancy-detail.js -- 11 lines, stub parseVacancyDetail() (Phase 1)
 - src/parsers/negotiations.js -- 11 lines, stub parseNegotiations() (Phase 1)
@@ -312,6 +310,7 @@ Status: COMPLETED
 Description: Split the UI section (~400 lines) into modules with 6 tabs per wireframe.
 
 Implementation: Fully modular UI system:
+
 - src/ui/fab.js (98 lines) -- FAB button with !important CSS isolation
 - src/ui/styles.js (240 lines) -- CSS template literals for Shadow DOM
 - src/ui/state.js (57 lines) -- panel state (activeTab, isOpen)

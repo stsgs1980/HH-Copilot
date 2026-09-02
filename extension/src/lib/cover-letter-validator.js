@@ -20,14 +20,20 @@ const MAX_LENGTH = 5000;
 
 // AI pattern regexes (Russian-aware, per humanizer skill)
 const AI_PATTERNS = [
-  { name: 'inflated_symbolism', re: /служит\s+\S*\s*(?:свидетельством|доказательством)|выступает\s+доказательством|подчёркивает важность|свидетельствует о/i },
-  { name: 'ai_vocabulary', re: /кроме того|более того|вместе с тем|важно отметить|следует подчеркнуть/i },
-  { name: 'negative_parallelism', re: /не только[^.!?]{1,80}но и|это не просто[^.!?]{1,80}это/i },
-  { name: 'verbal_noun_filler', re: /обеспечивая|подчёркивая|отражая|демонстрируя|формируя/i },
-  { name: 'generic_conclusion', re: /буду рад принести ценность|уверен,?\s*что мой опыт|безусловно[^.!?]{1,40}подтвердится/i },
-  { name: 'filler', re: /важно отметить,?\s*что|следует подчеркнуть,?\s*что/i },
-  { name: 'sycophantic', re: /большое спасибо за внимание|благодарю за уделённое время/i },
-  { name: 'inline_header_list', re: /^\s*[•\-*]\s*\*\*[^*]+\*\*:/m },
+  {
+    name: "inflated_symbolism",
+    re: /служит\s+\S*\s*(?:свидетельством|доказательством)|выступает\s+доказательством|подчёркивает важность|свидетельствует о/i,
+  },
+  { name: "ai_vocabulary", re: /кроме того|более того|вместе с тем|важно отметить|следует подчеркнуть/i },
+  { name: "negative_parallelism", re: /не только[^.!?]{1,80}но и|это не просто[^.!?]{1,80}это/i },
+  { name: "verbal_noun_filler", re: /обеспечивая|подчёркивая|отражая|демонстрируя|формируя/i },
+  {
+    name: "generic_conclusion",
+    re: /буду рад принести ценность|уверен,?\s*что мой опыт|безусловно[^.!?]{1,40}подтвердится/i,
+  },
+  { name: "filler", re: /важно отметить,?\s*что|следует подчеркнуть,?\s*что/i },
+  { name: "sycophantic", re: /большое спасибо за внимание|благодарю за уделённое время/i },
+  { name: "inline_header_list", re: /^\s*[•\-*]\s*\*\*[^*]+\*\*:/m },
 ];
 
 // LLM filler first paragraph detection
@@ -39,7 +45,7 @@ function detectAIPatterns(text) {
   const warnings = [];
   for (const { name, re } of AI_PATTERNS) {
     if (re.test(text)) {
-      warnings.push('AI_PATTERN: ' + name);
+      warnings.push("AI_PATTERN: " + name);
     }
   }
   // Rule of three (heuristic, may false-positive): 3+ comma-separated lowercase words
@@ -47,25 +53,25 @@ function detectAIPatterns(text) {
   // Em dash overuse: count > 3
   const emDashCount = (text.match(/—/g) || []).length;
   if (emDashCount > 3) {
-    warnings.push('AI_PATTERN: em_dash_overuse (' + emDashCount + ')');
+    warnings.push("AI_PATTERN: em_dash_overuse (" + emDashCount + ")");
   }
   // Boldface: detect + auto-strip
   if (/\*\*[^*]+\*\*/.test(text)) {
-    warnings.push('AI_PATTERN: boldface (auto-stripped)');
+    warnings.push("AI_PATTERN: boldface (auto-stripped)");
   }
   return warnings;
 }
 
 function stripBoldface(text) {
-  return text.replace(/\*\*([^*]+)\*\*/g, '$1');
+  return text.replace(/\*\*([^*]+)\*\*/g, "$1");
 }
 
 function stripLeadingFiller(text) {
   let t = text;
   // Strip "Здравствуйте, меня зовут ..."
-  t = t.replace(NAME_INTRO_RE, '');
+  t = t.replace(NAME_INTRO_RE, "");
   // Strip LLM filler first paragraph
-  t = t.replace(LLM_FILLER_RE, '');
+  t = t.replace(LLM_FILLER_RE, "");
   return t;
 }
 
@@ -73,9 +79,9 @@ function findUnverifiedSkills(text, evidence, resumeSkills) {
   const warnings = [];
   if (!text) return warnings;
   const known = new Set();
-  (evidence || []).forEach(e => known.add(String(e.competency).toLowerCase().trim()));
-  (resumeSkills || []).forEach(s => {
-    if (typeof s === 'string') known.add(s.toLowerCase().trim());
+  (evidence || []).forEach((e) => known.add(String(e.competency).toLowerCase().trim()));
+  (resumeSkills || []).forEach((s) => {
+    if (typeof s === "string") known.add(s.toLowerCase().trim());
     else if (s && s.name) known.add(s.name.toLowerCase().trim());
   });
   // Scan text for known tech skills (heuristic: capitalized Latin words 3+ chars OR known acronyms)
@@ -89,9 +95,13 @@ function findUnverifiedSkills(text, evidence, resumeSkills) {
     if (seen.has(low)) continue;
     seen.add(low);
     // Skip common Russian false-positives (capitalized English words that aren't skills)
-    if (/^(React|TypeScript|JavaScript|Python|Java|Go|Rust|C\+\+|SQL|HTML|CSS|Node\.js|Docker|Kubernetes|AWS|GCP|Azure|Kafka|Redis|MongoDB|PostgreSQL|MySQL|GraphQL|REST|API|HTTP|HTTPS|CI|CD|Git|Linux|Windows|MacOS)$/.test(skill)) {
+    if (
+      /^(React|TypeScript|JavaScript|Python|Java|Go|Rust|C\+\+|SQL|HTML|CSS|Node\.js|Docker|Kubernetes|AWS|GCP|Azure|Kafka|Redis|MongoDB|PostgreSQL|MySQL|GraphQL|REST|API|HTTP|HTTPS|CI|CD|Git|Linux|Windows|MacOS)$/.test(
+        skill,
+      )
+    ) {
       if (!known.has(low)) {
-        warnings.push('UNVERIFIED_SKILL: ' + skill);
+        warnings.push("UNVERIFIED_SKILL: " + skill);
       }
     }
   }
@@ -103,15 +113,15 @@ function findUnverifiedNumbers(text, evidence) {
   if (!text) return warnings;
   // Collect numbers from evidence
   const evidenceNumbers = new Set();
-  (evidence || []).forEach(e => {
-    const nums = String(e.evidenceText || '').match(/\d+/g);
-    if (nums) nums.forEach(n => evidenceNumbers.add(n));
+  (evidence || []).forEach((e) => {
+    const nums = String(e.evidenceText || "").match(/\d+/g);
+    if (nums) nums.forEach((n) => evidenceNumbers.add(n));
   });
   // Find numbers in text
   const textNums = text.match(/\d+/g);
   if (!textNums) return warnings;
   // Filter out years (1900-2099) and small common numbers
-  const suspect = textNums.filter(n => {
+  const suspect = textNums.filter((n) => {
     const i = parseInt(n, 10);
     if (i >= 1900 && i <= 2099) return false; // year
     if (i < 2) return false; // too small
@@ -119,7 +129,7 @@ function findUnverifiedNumbers(text, evidence) {
   });
   // Dedupe + cap to 5 warnings
   const unique = [...new Set(suspect)].slice(0, 5);
-  unique.forEach(n => warnings.push('UNVERIFIED_NUMBER: ' + n));
+  unique.forEach((n) => warnings.push("UNVERIFIED_NUMBER: " + n));
   return warnings;
 }
 
@@ -132,7 +142,7 @@ function findUnverifiedNumbers(text, evidence) {
  * @returns {{ ok: boolean, text: string, warnings: string[] }}
  */
 export function validateLetter(text, evidence, resumeSkills) {
-  let cleaned = text || '';
+  let cleaned = text || "";
   const warnings = [];
 
   // 1. Detect AI patterns on ORIGINAL text (before stripping boldface)
@@ -144,8 +154,8 @@ export function validateLetter(text, evidence, resumeSkills) {
 
   // 3. Length check (truncate)
   if (cleaned.length > MAX_LENGTH) {
-    cleaned = cleaned.substring(0, MAX_LENGTH - 3) + '...';
-    warnings.push('LENGTH: truncated to ' + MAX_LENGTH + ' chars');
+    cleaned = cleaned.substring(0, MAX_LENGTH - 3) + "...";
+    warnings.push("LENGTH: truncated to " + MAX_LENGTH + " chars");
   }
 
   // 4. Unverified skills/numbers (on cleaned text)
@@ -153,9 +163,7 @@ export function validateLetter(text, evidence, resumeSkills) {
   warnings.push(...findUnverifiedNumbers(cleaned, evidence));
 
   // ok = no critical warnings (length truncation is not critical)
-  const criticalPatterns = warnings.filter(w =>
-    /UNVERIFIED_SKILL|UNVERIFIED_NUMBER/.test(w)
-  );
+  const criticalPatterns = warnings.filter((w) => /UNVERIFIED_SKILL|UNVERIFIED_NUMBER/.test(w));
   const ok = criticalPatterns.length === 0 && cleaned.length > 0;
 
   return { ok, text: cleaned, warnings };
