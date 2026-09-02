@@ -573,9 +573,6 @@ HH-Copilot-repo/
 ├── README.md               -- Project overview
 ├── worklog.md              -- Root-level worklog (shared multi-agent log)
 │
-├── docs/
-│   └── diagrams/           -- Architecture diagrams (PlantUML)
-│
 └── extension/              -- Chrome extension source (v1.9.86.0+)
     ├── package.json        -- npm scripts: build, watch, test, lint
     ├── esbuild.config.mjs  -- Build configuration
@@ -586,8 +583,6 @@ HH-Copilot-repo/
     │
     ├── docs/
     │   ├── ARCHITECTURE.md         -- This file (extension architecture)
-    │   ├── TASK-CASCADE.md         -- Task breakdown and status
-    │   ├── PLANTUML-REFERENCE.md   -- Diagram syntax reference
     │   └── research/               -- Research documents
     │       ├── INDEX.md            -- Research index with conclusions
     │       ├── 01-role-implied-skills.md  -- ESCO essential/optional → role-implied
