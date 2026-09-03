@@ -20,7 +20,7 @@
 
 **Steps:**
 
-- [ ] Скопировать три файла в `eslint-rules/`:
+- [x] Скопировать три файла в `eslint-rules/`:
 
 ```bash
 cp extension/eslint-rules/no-unicode-graphics.js eslint-rules/
@@ -28,7 +28,7 @@ cp extension/eslint-rules/max-file-lines.js eslint-rules/
 cp extension/eslint-rules/max-file-lines-hard.js eslint-rules/
 ```
 
-- [ ] Проверить что файлы на месте:
+- [x] Проверить что файлы на месте:
 
 ```bash
 ls eslint-rules/
@@ -37,7 +37,7 @@ ls eslint-rules/
 # max-file-lines.js       unicode-policy.js
 ```
 
-- [ ] Удалить старые копии:
+- [x] Удалить старые копии:
 
 ```bash
 rm -r extension/eslint-rules/
@@ -53,7 +53,7 @@ rm -r extension/eslint-rules/
 
 **Steps:**
 
-- [ ] Заменить импорты (строки 8-10):
+- [x] Заменить импорты (строки 8-10):
 
 ```javascript
 // Старое:
@@ -73,7 +73,7 @@ import noUnicodeGraphicsExt from "./eslint-rules/no-unicode-graphics.js";
 
 **Steps:**
 
-- [ ] Запустить линтер и убедиться что все правила работают:
+- [x] Запустить линтер и убедиться что все правила работают:
 
 ```bash
 npx eslint .
@@ -81,7 +81,7 @@ npx eslint .
 
 Ожидаемый результат: нет ошибок импорта, ошибки юникода/длины файлов работают как раньше.
 
-- [ ] Закоммитить:
+- [x] Закоммитить:
 
 ```bash
 git add eslint-rules/ eslint.config.js

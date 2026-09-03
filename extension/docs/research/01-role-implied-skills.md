@@ -81,7 +81,7 @@ ESCO (European Skills, Competences, Qualifications and Occupations) — евро
 **Essential skills (22):**
 
 - lead managers of company departments
-- evaluate performance of organisational collaborators
+- evaluate performance of organizational collaborators
 - delegate activities
 - make strategic business decisions
 - negotiate with stakeholders
@@ -181,7 +181,7 @@ const ROLE_SKILL_MAP = [
   {
     // Ключевые слова должности (normalized)
     triggers: ["руководител", "director", "head", "директор", "начальник"],
-    // Исключения — если должность содержит эти слова, не применять
+    // Исключения: если должность содержит эти слова, не применять
     exclude: ["заместитель", "зам ", "зам.", "помощник", "assistant", "deputy"],
     // Подразумеваемые навыки (normalized)
     implied: [
@@ -226,11 +226,13 @@ const ROLE_SKILL_MAP = [
 ```js
 // После строки 47: const allResume = new Set([...resumeExplicit, ...resumeDerived]);
 // Добавить:
-const roleImplied = getRoleImpliedSkills(r.title || '');
+const roleImplied = getRoleImpliedSkills(r.title || "");
 const allResumeWithImplied = new Set([...allResume, ...roleImplied]);
 
 // В цикле проверки missing добавить:
-if (roleImplied.has(vs)) continue; // Навык подразумевается должностью
+for (const vs of vacancySkills) {
+  if (roleImplied.has(vs)) continue; // Навык подразумевается должностью
+}
 ```
 
 ### Интеграция в `match-scorer-skills.js`
@@ -278,11 +280,14 @@ if (roleImplied.has(vs)) continue; // Навык подразумевается 
 
 1. **ESCO Optional definition**: <https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/optional>
 
-   > "Optional refers to knowledge, skills and competences that may be required or occur when working in an occupation depending on the employer."
+   > "Optional refers to knowledge, skills and competences that may be
+   > required or occur when working in an occupation depending on the employer."
 
 2. **ESCO Essential definition**: <https://esco.ec.europa.eu/en/about-esco/escopedia/escopedia/essential>
 
-   > "Essential are those knowledge, skills and competences that are usually required when working in the occupation, independently of the work context or the employer."
+   > "Essential are those knowledge, skills and competences that are usually
+   > required when working in the occupation, independently of the work
+   > context or the employer."
 
 3. **ESCO API**: <https://ec.europa.eu/esco/api/search> — доступен бесплатно, без авторизации
 
