@@ -4,10 +4,10 @@ import jsdoc from "eslint-plugin-jsdoc";
 import globals from "globals";
 import markdownSnippetsProcessor from "./eslint-processors/markdown-snippets.js";
 import codeBlockLanguage from "./eslint-rules/code-block-language.js";
+import maxFileLinesHard from "./eslint-rules/max-file-lines-hard.js";
+import maxFileLines from "./eslint-rules/max-file-lines.js";
+import noUnicodeGraphicsExt from "./eslint-rules/no-unicode-graphics.js";
 import unicodePolicy from "./eslint-rules/unicode-policy.js";
-import maxFileLinesHard from "./extension/eslint-rules/max-file-lines-hard.js";
-import maxFileLines from "./extension/eslint-rules/max-file-lines.js";
-import noUnicodeGraphicsExt from "./extension/eslint-rules/no-unicode-graphics.js";
 
 const codeBlockLanguagePlugin = {
   meta: { name: "code-block-language", version: "1.0.0" },
@@ -108,6 +108,14 @@ export default [
       "ahg-rules/no-unicode-graphics": "error",
       "ahg-rules/max-file-lines": ["warn", { warnLimit: 200 }],
       "ahg-rules/max-file-lines-hard": ["error", { errorLimit: 250, hardCap: 400 }],
+      "jsdoc/require-jsdoc": "off",
+      "jsdoc/require-param": "off",
+      "jsdoc/require-returns": "off",
+    },
+  },
+  {
+    files: ["eslint-rules/**/*.js"],
+    rules: {
       "jsdoc/require-jsdoc": "off",
       "jsdoc/require-param": "off",
       "jsdoc/require-returns": "off",

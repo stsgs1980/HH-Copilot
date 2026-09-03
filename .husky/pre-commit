@@ -3,3 +3,6 @@ npx lint-staged
 
 # Запуск проверки на максимальный размер файла (anti-monolith)
 node scripts/check-file-length.mjs
+
+# Проверка согласованности версий (source of truth: manifest.json)
+node scripts/version-sync.mjs

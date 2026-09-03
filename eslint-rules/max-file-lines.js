@@ -16,7 +16,7 @@
 
 const WARN_LIMIT = 200;
 
-module.exports = {
+export default {
   meta: {
     type: "suggestion",
     docs: {

@@ -28,7 +28,7 @@ function hasException(sourceCode) {
   return false;
 }
 
-module.exports = {
+export default {
   meta: {
     type: "problem",
     docs: {

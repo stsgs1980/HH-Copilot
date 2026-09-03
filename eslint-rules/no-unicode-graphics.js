@@ -80,7 +80,7 @@ function hasEscapeInRaw(node, codePoint) {
   return false;
 }
 
-module.exports = {
+export default {
   meta: {
     type: "problem",
     docs: {
