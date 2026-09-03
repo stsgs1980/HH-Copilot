@@ -2,9 +2,9 @@
 // Rules: Chrome Extension best practices + AHG Rule 12 (anti-monolith) + Rule 15 (UNICODE_POLICY)
 import js from "@eslint/js";
 import globals from "globals";
-import maxFileLinesHard from "./eslint-rules/max-file-lines-hard.js";
-import maxFileLines from "./eslint-rules/max-file-lines.js";
-import noUnicodeGraphics from "./eslint-rules/no-unicode-graphics.js";
+import maxFileLinesHard from "../eslint-rules/max-file-lines-hard.js";
+import maxFileLines from "../eslint-rules/max-file-lines.js";
+import noUnicodeGraphics from "../eslint-rules/no-unicode-graphics.js";
 
 export default [
   // -- Base: all JS files in the extension -----------------------------------
