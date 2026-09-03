@@ -39,7 +39,7 @@
     "lint:fix": "eslint --fix extension/src/ extension/background/ extension/tests/",
     "lint:md": "markdownlint \"**/*.md\" --ignore node_modules --ignore extension/dist",
     "format": "prettier --write .",
-    "test": "vitest run",
+    "test": "cd extension && npm test",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check:versions": "node scripts/version-sync.mjs",
