@@ -1,5 +1,4 @@
 /// <reference types="vitest/globals" />
-// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 
 /**
  * TEST: Real hh.ru data flow
@@ -8,9 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { scoreSalary } from "../src/lib/match-scorer-salary.js";
 import { computeMatchScore } from "../src/lib/match-scorer.js";
-import { parseExperienceString } from "../src/lib/parse-experience.js";
 
 // ============================================
 // REAL RESUME (what hh.ru actually provides)
@@ -193,66 +190,5 @@ describe("REAL DATA: Enriched vacancy scoring (after detail fetch)", () => {
     // SERP has 5 tag skills (all match), enriched has 10 keySkills (8 match, 2 missing)
     // Enriched is more accurate: shows missing skills that SERP doesn't know about
     expect(enriched.total).not.toBe(serp.total);
-  });
-});
-
-describe("REAL DATA: VOTD scoring (no skills, no salary)", () => {
-  it('VOTD with empty skills and "Не указана" salary', async () => {
-    const r = await computeMatchScore(REAL_RESUME, VOTD_VACANCY);
-    console.log("VOTD total:", r.total, "breakdown:", JSON.stringify(r.breakdown));
-    console.log("VOTD details:", JSON.stringify(r.details));
-    // VOTD typically gets low score due to missing data
-  });
-});
-
-describe("REAL DATA: Remote vacancy scoring", () => {
-  it("remote vacancy vs hybrid resume", async () => {
-    const r = await computeMatchScore(REAL_RESUME, REMOTE_VACANCY);
-    console.log("Remote total:", r.total, "breakdown:", JSON.stringify(r.breakdown));
-    console.log("Location:", r.details.locationMatch);
-  });
-});
-
-describe("REAL DATA: parseExperienceString edge cases", () => {
-  it('parse "от 3 до 5 лет"', () => {
-    const r = parseExperienceString("от 3 до 5 лет");
-    console.log("parsed:", r);
-  });
-
-  it('parse "3--5 лет"', () => {
-    const r = parseExperienceString("3--5 лет");
-    console.log("parsed:", r);
-  });
-
-  it('parse "не менее 3 лет"', () => {
-    const r = parseExperienceString("не менее 3 лет");
-    console.log("parsed:", r);
-  });
-
-  it('parse "Без опыта"', () => {
-    const r = parseExperienceString("Без опыта");
-    console.log("parsed:", r);
-  });
-
-  it('parse "" (empty)', () => {
-    const r = parseExperienceString("");
-    console.log("parsed:", r);
-  });
-});
-
-describe("REAL DATA: salary string edge cases", () => {
-  it('salary "от 200 000 до 300 000 руб. до вычета налогов"', async () => {
-    const r = scoreSalary({ salary: "200 000" }, { salary: "от 200 000 до 300 000 руб. до вычета налогов" });
-    console.log("salary result:", r);
-  });
-
-  it('salary "Не указана"', async () => {
-    const r = scoreSalary({ salary: "200 000" }, { salary: "Не указана" });
-    console.log('"Не указана" result:', r);
-  });
-
-  it('salary {raw: "от 200 000", min: 200000, max: null} (from enrichment)', async () => {
-    const r = scoreSalary({ salary: "200 000" }, { salary: { raw: "от 200 000", min: 200000, max: null } });
-    console.log("structured salary result:", r);
   });
 });

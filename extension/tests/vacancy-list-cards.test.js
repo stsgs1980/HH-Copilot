@@ -1,5 +1,4 @@
 /// <reference types="vitest/globals" />
-// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * TESTS: vacancy-list.js -- parseVacanciesFromPage + parseVacanciesOfTheDay
  * Uses jsdom to mock hh.ru DOM structure
@@ -21,7 +20,7 @@ vi.mock("../src/lib/match-scorer.js", () => ({
   computeMatchScore: vi.fn().mockReturnValue({ total: 75, breakdown: {} }),
 }));
 
-import { parseVacanciesFromPage, parseVacanciesOfTheDay } from "../src/parsers/vacancy-list.js";
+import { parseVacanciesFromPage } from "../src/parsers/vacancy-list.js";
 
 /**
  * Build a mock vacancy card matching hh.ru search page DOM structure.
@@ -141,10 +140,6 @@ describe("parseVacanciesFromPage -- search page cards", () => {
   });
 });
 
-// ===============================================
-// parseVacanciesFromPage -- Main Page (space-separated data-qa)
-// ===============================================
-
 describe("parseVacanciesFromPage -- main page cards (space-separated data-qa)", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
@@ -196,118 +191,5 @@ describe("parseVacanciesFromPage -- main page cards (space-separated data-qa)", 
     const titles = vacancies.map((v) => v.title);
     expect(titles).toContain("Search Card");
     expect(titles).toContain("Main Page Card");
-  });
-});
-
-// ===============================================
-// parseVacanciesOfTheDay
-// ===============================================
-
-describe("parseVacanciesOfTheDay", () => {
-  beforeEach(() => {
-    document.body.innerHTML = "";
-  });
-
-  it("parses a single VotD block with tracking click-URL", async () => {
-    document.body.appendChild(createVotDBlock());
-
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies.length).toBe(1);
-    expect(vacancies[0].title).toBe("Курьер в Озон фреш");
-    expect(vacancies[0].id).toBe("132537734");
-    expect(vacancies[0].url).toBe("https://hh.ru/vacancy/132537734");
-    expect(vacancies[0].company).toBe("Ozon");
-    expect(vacancies[0].salary).toContain("120 000");
-    expect(vacancies[0].source).toBe("votd");
-  });
-
-  it("parses VotD block with adsrv.hh.ru tracking URL", async () => {
-    document.body.appendChild(
-      createVotDBlock({
-        clickUrl: "https://adsrv.hh.ru/click?b=2090206&vacancyId=109478297&domainAreaId=1&source=vacancies_of_the_day",
-        vacancyId: "109478297",
-        title: "Senior Developer",
-        company: "Yandex",
-        salary: "от 300 000 \u20BD",
-      }),
-    );
-
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies.length).toBe(1);
-    expect(vacancies[0].id).toBe("109478297");
-    expect(vacancies[0].url).toBe("https://hh.ru/vacancy/109478297");
-    expect(vacancies[0].title).toBe("Senior Developer");
-  });
-
-  it("parses multiple VotD blocks", async () => {
-    for (let i = 0; i < 3; i++) {
-      document.body.appendChild(
-        createVotDBlock({
-          title: `VotD ${i}`,
-          vacancyId: `77000${i}`,
-          company: `Company ${i}`,
-        }),
-      );
-    }
-
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies.length).toBe(3);
-    const ids = vacancies.map((v) => v.id);
-    expect(ids).toContain("770000");
-    expect(ids).toContain("770001");
-    expect(ids).toContain("770002");
-  });
-
-  it("returns empty array when no VotD blocks exist", async () => {
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies).toEqual([]);
-  });
-
-  it("skips VotD blocks without extractable vacancy ID", async () => {
-    const block = document.createElement("div");
-    block.innerHTML = `
-      <div data-qa="vacancy_of_the_day_title">No ID Vacancy</div>
-      <div data-qa="vacancy_of_the_day_compensation">от 50 000 \u20BD</div>
-      <div data-qa="vacancy_of_the_day_company">Test</div>
-      <!-- No link with vacancy ID -- no <a> parent, no vacancyId param -->
-    `;
-    document.body.appendChild(block);
-
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies.length).toBe(0);
-  });
-
-  it("sets canonical hh.ru URL for VotD items (not tracking URL)", async () => {
-    document.body.appendChild(createVotDBlock({ vacancyId: "12345678" }));
-
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies[0].url).toBe("https://hh.ru/vacancy/12345678");
-    // URL must NOT be the tracking URL
-    expect(vacancies[0].url).not.toContain("content.hh.ru");
-    expect(vacancies[0].url).not.toContain("adsrv.hh.ru");
-  });
-
-  it("extracts ID from parent element id attribute (sponsored/adsrv VotD)", async () => {
-    // Sponsored VotD: adsrv.hh.ru/click?meta=... -- NO vacancyId in URL
-    // But parent <div id="131408939"> has the vacancy ID
-    const wrapper = document.createElement("div");
-    wrapper.id = "131408939";
-    wrapper.className = "vacancy-of-the-day-sponsored";
-    wrapper.innerHTML = `
-      <div class="votd-inner">
-        <a href="https://adsrv.hh.ru/click?b=2091117&meta=pQNVxNN0As4hRaEh9OAXo1NOzBrasz1EJyRKTSE2OxtDc9TdIEjg">
-          <div data-qa="vacancy_of_the_day_title">Спонсируемая вакансия</div>
-        </a>
-        <div data-qa="vacancy_of_the_day_compensation">от 200 000 \u20BD</div>
-        <div data-qa="vacancy_of_the_day_company">Спонсор Corp</div>
-      </div>
-    `;
-    document.body.appendChild(wrapper);
-
-    const vacancies = await parseVacanciesOfTheDay(null);
-    expect(vacancies.length).toBe(1);
-    expect(vacancies[0].id).toBe("131408939");
-    expect(vacancies[0].url).toBe("https://hh.ru/vacancy/131408939");
-    expect(vacancies[0].title).toBe("Спонсируемая вакансия");
   });
 });

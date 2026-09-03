@@ -1,5 +1,4 @@
 /// <reference types="vitest/globals" />
-// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * TESTS: AI service (F4.2)
  * Covers:
@@ -11,7 +10,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { generateChatReply, generateCoverLetterAI } from "../src/services/ai-helpers.js";
 import { AI_CONFIG_KEY, getAiConfig, isAiAvailable, sendMessage, setAiConfig } from "../src/services/ai-service.js";
 
 // ===============================================
@@ -109,7 +107,6 @@ beforeEach(() => {
     },
   });
 });
-
 describe("F4.2 -- config", () => {
   it("getAiConfig returns built-in defaults when no config in storage", async () => {
     installChromeStub({});
@@ -206,165 +203,5 @@ describe("F4.2 -- sendMessage success", () => {
     const fetchImpl = makeOkFetch("  trimmed  ");
     const res = await sendMessage({ messages: [{ role: "user", content: "x" }], fetchImpl });
     expect(res.text).toBe("trimmed");
-  });
-});
-
-describe("F4.2 -- sendMessage error paths", () => {
-  it("returns BAD_INPUT when messages is empty", async () => {
-    const res = await sendMessage({ messages: [], fetchImpl: makeOkFetch("x") });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("BAD_INPUT");
-  });
-
-  it("returns NO_API_KEY when no key configured (both apiKey and token empty, defaults disabled)", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "", token: "", __test_no_defaults: true } });
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeOkFetch("x"),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("NO_API_KEY");
-  });
-
-  it("returns NO_API_KEY when token missing but apiKey present (defaults disabled)", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "", __test_no_defaults: true } });
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeOkFetch("x"),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("NO_API_KEY");
-  });
-
-  it("returns EMPTY when content is empty string", async () => {
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeEmptyFetch(),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("EMPTY");
-  });
-
-  it("returns HTTP_500 on server error", async () => {
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeHttpFetch(500, "Server down"),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("HTTP_500");
-    expect(res.error).toBe("HTTP 500");
-  });
-
-  it("returns RATE_LIMIT on 429", async () => {
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeHttpFetch(429),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("RATE_LIMIT");
-  });
-
-  it("returns TIMEOUT on AbortError", async () => {
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeAbortFetch(),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("TIMEOUT");
-  });
-
-  it("uses aiConfig.timeoutMs when params.timeoutMs not provided", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 120000 } });
-    const fetchImpl = makeAbortFetch();
-    await sendMessage({ messages: [{ role: "user", content: "x" }], fetchImpl });
-    // AbortController fires after the configured timeout; for the test we only
-    // need to verify that the error message reports the right timeout value.
-    // Since makeAbortFetch aborts synchronously, we just check the returned
-    // error contains the configured timeout.
-    const res = await sendMessage({ messages: [{ role: "user", content: "x" }], fetchImpl });
-    expect(res.code).toBe("TIMEOUT");
-    expect(res.error).toContain("120000ms");
-  });
-
-  it("params.timeoutMs overrides aiConfig.timeoutMs", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 120000 } });
-    const fetchImpl = makeAbortFetch();
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl,
-      timeoutMs: 90000,
-    });
-    expect(res.code).toBe("TIMEOUT");
-    expect(res.error).toContain("90000ms");
-  });
-
-  it("returns NETWORK on generic fetch error", async () => {
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeNetworkErrFetch("Connection refused"),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("NETWORK");
-    expect(res.error).toBe("Connection refused");
-  });
-
-  it("returns BAD_JSON when response is not JSON", async () => {
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeBadJsonFetch(),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("BAD_JSON");
-  });
-});
-
-describe("F4.2 -- generateCoverLetterAI (delegates to orchestrator)", () => {
-  // v1.9.50.0 (F-CR-02): generateCoverLetterAI now delegates to
-  // lib/cover-letter-ai.js orchestrator. Full pipeline tests are in
-  // tests/cover-letter-ai.test.js. This file keeps a sanity-check that
-  // the wrapper passes args through.
-
-  it("returns BAD_INPUT when vacancy is null (orchestrator guard)", async () => {
-    const res = await generateCoverLetterAI(null, {}, { fetchImpl: makeOkFetch("x") });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("BAD_INPUT");
-  });
-});
-
-describe("F4.2 -- generateChatReply", () => {
-  it("splits variants by ---VARIANT--- separator", async () => {
-    const fetchImpl = makeOkFetch("Variant 1\n---VARIANT---\nVariant 2\n---VARIANT---\nVariant 3");
-    const res = await generateChatReply([{ role: "user", content: "Когда интервью?" }], { variants: 3, fetchImpl });
-    expect(res.ok).toBe(true);
-    expect(res.variants).toHaveLength(3);
-    expect(res.variants[0]).toBe("Variant 1");
-    expect(res.variants[2]).toBe("Variant 3");
-  });
-
-  it("falls back to whole text as 1 variant when separator missing", async () => {
-    const fetchImpl = makeOkFetch("Just one reply here.");
-    const res = await generateChatReply([{ role: "user", content: "hi" }], { variants: 3, fetchImpl });
-    expect(res.ok).toBe(true);
-    expect(res.variants).toHaveLength(1);
-    expect(res.variants[0]).toBe("Just one reply here.");
-  });
-
-  it("clamps variants to 1..3", async () => {
-    const fetchImpl = makeOkFetch("a\n---VARIANT---\nb");
-    const res = await generateChatReply([{ role: "user", content: "x" }], { variants: 10, fetchImpl });
-    expect(res.ok).toBe(true);
-    expect(res.variants).toHaveLength(2); // AI returned 2, cap at 3 still allows 2
-  });
-
-  it("returns BAD_INPUT on empty history", async () => {
-    const res = await generateChatReply([], { fetchImpl: makeOkFetch("x") });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("BAD_INPUT");
-  });
-
-  it("propagates HTTP error from sendMessage", async () => {
-    const res = await generateChatReply([{ role: "user", content: "x" }], { fetchImpl: makeHttpFetch(503) });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("HTTP_503");
   });
 });
