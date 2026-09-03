@@ -4,13 +4,13 @@
  * ====================================
  * Scans resume experience descriptions and title for skill keywords
  * using the SKILL_PATTERNS dictionary. Derived skills are added to
- * resume.derivedSkills[] -- they do NOT replace resume.skills[].
+ * resume.derivedSkills[] -- they do NOT replace resume. Skills[].
  *
- * Also scans vacancy keySkills that are NOT in resume.skills and tries
+ * Also scans vacancy keySkills that are NOT in resume. Skills and tries
  * to match them against experience text (reverse derivation).
  *
  * Flow:
- *   parseSkills()       -> resume.skills[]     (explicit tags from page)
+ *   parseSkills()       -> resume. Skills[]     (explicit tags from page)
  *   deriveSkillsFromExperience() -> resume.derivedSkills[] (inferred from text)
  *   scoreSkills()       -> merges both for matching
  *
@@ -59,6 +59,22 @@ const NEGATION_MARKERS = [
   /(?<!\p{L})(?:на\s+практике\s+не|не\s+применял\s+на\s+практике)(?!\p{L})/iu,
   /(?<!\p{L})(?:только\s+(?:читал|слышал|знал)\s+про)(?!\p{L})/iu,
 ];
+
+/**
+ * Whole-word match for tech names. \b is unreliable for C++, C#,
+ * Node.js, .NET (special chars), so custom boundaries: not preceded
+ * or followed by letter, digit, #, + or dot. Falls back to plain
+ * test() if the pattern is incompatible with Unicode mode.
+ */
+function matchesWholeWord(pattern, corpus) {
+  try {
+    const flags = pattern.flags.includes("u") ? pattern.flags : pattern.flags + "u";
+    const wrapped = new RegExp("(?<![\\p{L}\\p{N}+#.])(?:" + pattern.source + ")(?![A-Za-z\\p{N}+#])", flags);
+    return wrapped.test(corpus);
+  } catch {
+    return pattern.test(corpus);
+  }
+}
 
 /**
  * Split text into sentences and filter out those with negation/context markers.
@@ -131,9 +147,9 @@ export function deriveSkillsFromExperience(resume) {
     // Skip if already in explicit skills
     if (existingSkills.has(entry.skill.toLowerCase().trim())) continue;
 
-    // Check each pattern against SAFE corpus only
+    // Check each pattern against SAFE corpus only (whole-word boundaries)
     for (const pattern of entry.patterns) {
-      if (pattern.test(safeCorpus)) {
+      if (matchesWholeWord(pattern, safeCorpus)) {
         derived.push(entry.skill);
         break; // one match is enough per skill
       }
@@ -188,8 +204,15 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
     // Already in explicit skills -- skip
     if (existingSkills.has(normalized)) continue;
 
-    // Check if the skill name itself appears in SAFE text
-    if (safeCorpus.includes(normalized)) {
+    // Issue #13: substring "Go" не должен матчиться внутри "Google"
+    let hit = false;
+    const esc = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    try {
+      hit = new RegExp("(?<![\\p{L}\\p{N}+#.])" + esc + "(?![A-Za-z\\p{N}+#])", "iu").test(safeCorpus);
+    } catch {
+      hit = safeCorpus.includes(normalized);
+    }
+    if (hit) {
       matched.push(skill);
       continue;
     }
@@ -198,7 +221,7 @@ export function matchVacancySkillsToExperience(resume, vacancySkillNames) {
     for (const entry of SKILL_PATTERNS) {
       if (entry.skill.toLowerCase() === normalized) {
         for (const pattern of entry.patterns) {
-          if (pattern.test(safeCorpus)) {
+          if (matchesWholeWord(pattern, safeCorpus)) {
             matched.push(skill);
             break;
           }
