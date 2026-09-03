@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, no-undef, no-double-spread */
 import * as esbuild from "esbuild";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 
@@ -182,8 +183,8 @@ if (isWatch) {
   await esbuild.build(pageWorldOptions);
   await esbuild.build(backgroundOptions);
   console.log(
-    `[esbuild] v${VERSION} build complete -- dist/content.js + page-world.js + background/index.js (${isProd ? "production" : "development"})`,
+    `[esbuild] v${VERSION} build complete -- dist/content.js + page-world.js + ` +
+      `background/index.js (${isProd ? "production" : "development"})`,
   );
   console.log(`[dist] Load ${DIST}/ as unpacked extension in Chrome`);
 }
-
