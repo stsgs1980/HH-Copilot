@@ -1,3 +1,4 @@
+ 
 /**
  * TESTS: derive-skills (F-CR-02 supporting module)
  * ================================================
@@ -306,5 +307,53 @@ describe("matchVacancySkillsToExperience -- reverse derivation", () => {
   it("returns [] when experience text is empty", () => {
     const resume = { experience: [{ description: "" }] };
     expect(matchVacancySkillsToExperience(resume, ["Python"])).toEqual([]);
+  });
+});
+
+describe("whole-word boundaries (#13)", () => {
+  it('matches short skill "SMM" as whole word ("SMM менеджер")', () => {
+    const resume = {
+      experience: [{ description: "Работал SMM менеджером. Вёл соцсети." }],
+    };
+    const derived = deriveSkillsFromExperience(resume);
+    expect(derived).toContain("SMM");
+  });
+
+  it('does NOT match "SMM" inside unrelated compound ("SMMarketing")', () => {
+    const resume = {
+      experience: [{ description: "Анализ SMMarketing стратегии." }],
+    };
+    const derived = deriveSkillsFromExperience(resume);
+    expect(derived).not.toContain("SMM");
+  });
+
+  it('matches "Python" in direct mention', () => {
+    const resume = {
+      experience: [{ description: "Писал бэкенд на Python (Django)." }],
+    };
+    expect(deriveSkillsFromExperience(resume)).toContain("Python");
+  });
+
+  it('does NOT match "Python" inside compound "MicroPython"', () => {
+    const resume = {
+      experience: [{ description: "Один раз видел MicroPython на конференции." }],
+    };
+    const derived = deriveSkillsFromExperience(resume);
+    expect(derived).not.toContain("Python");
+  });
+
+  it("long skills continue to match normally (regression)", () => {
+    const resume = {
+      experience: [{ description: "Управление командой из 8 человек." }],
+    };
+    const derived = deriveSkillsFromExperience(resume);
+    expect(derived).toContain("управление командой");
+  });
+
+  it('reverse: "Go" matches "на Go", not "в Google"', () => {
+    const r1 = matchVacancySkillsToExperience({ experience: [{ description: "Писал сервис на Go." }] }, ["Go"]);
+    expect(r1).toContain("Go");
+    const r2 = matchVacancySkillsToExperience({ experience: [{ description: "Работал в Google." }] }, ["Go"]);
+    expect(r2).not.toContain("Go");
   });
 });
