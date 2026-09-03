@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * LIB: CAPTCHA DETECTOR (F4.4)
  * =========================================

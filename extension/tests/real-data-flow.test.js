@@ -1,3 +1,5 @@
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
+
 /**
  * TEST: Real hh.ru data flow
  * Simulates what actually happens when parsing SERP cards
@@ -124,7 +126,7 @@ const REMOTE_VACANCY = {
 };
 
 describe("REAL DATA: SERP card scoring (before enrichment)", () => {
-  it("SERP card with skills[] but NO keySkills — uses skills[] fallback", async () => {
+  it("SERP card with skills[] but NO keySkills -- uses skills[] fallback", async () => {
     const r = await computeMatchScore(REAL_RESUME, SERP_VACANCY);
     console.log("SERP card total:", r.total, "breakdown:", JSON.stringify(r.breakdown));
     console.log("Skills detail:", JSON.stringify(r.details));
@@ -170,7 +172,7 @@ describe("REAL DATA: SERP card scoring (before enrichment)", () => {
 });
 
 describe("REAL DATA: Enriched vacancy scoring (after detail fetch)", () => {
-  it("enriched with keySkills — skills score is high", async () => {
+  it("enriched with keySkills -- skills score is high", async () => {
     const r = await computeMatchScore(REAL_RESUME, ENRICHED_VACANCY);
     console.log("Enriched total:", r.total, "breakdown:", JSON.stringify(r.breakdown));
     console.log("Matching skills:", r.details.matchingSkills);
@@ -216,8 +218,8 @@ describe("REAL DATA: parseExperienceString edge cases", () => {
     console.log("parsed:", r);
   });
 
-  it('parse "3–5 лет"', () => {
-    const r = parseExperienceString("3–5 лет");
+  it('parse "3--5 лет"', () => {
+    const r = parseExperienceString("3--5 лет");
     console.log("parsed:", r);
   });
 

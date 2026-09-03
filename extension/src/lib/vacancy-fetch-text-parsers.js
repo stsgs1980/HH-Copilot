@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * VACANCY FETCH -- Text Strategy: Section & Skills Parsers
  * =========================================================

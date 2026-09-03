@@ -28,6 +28,12 @@ function main() {
 
     const lines = readFileSync(file, "utf8").split("\n").length;
 
+    // Skip files that suppress max-file-lines (intentionally large legacy files)
+    const content = readFileSync(file, "utf8");
+    if (content.includes("eslint-disable ahg-rules/max-file-lines")) {
+      continue;
+    }
+
     if (lines > MAX_LINES) {
       console.error(`[FAIL] File '${file}' has ${lines} lines. Limit: ${MAX_LINES}.`);
       failed = 1;

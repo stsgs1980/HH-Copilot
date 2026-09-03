@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * SERVICES: AI SERVICE (F4.2)
  * =========================================

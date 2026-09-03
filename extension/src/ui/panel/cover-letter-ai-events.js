@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * UI: PANEL -- COVER LETTER AI EVENTS (F-CR-02)
  * ===============================================

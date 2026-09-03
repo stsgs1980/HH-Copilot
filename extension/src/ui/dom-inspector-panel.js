@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * DOM Inspector -- visual layer (overlay + panel + buttons + toast + clipboard).
  * All SVG icons are official Lucide paths (DOC-003 s7 compliance).

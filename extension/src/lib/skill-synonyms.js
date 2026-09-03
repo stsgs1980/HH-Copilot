@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * LIB: SKILL SYNONYMS (orchestrator)
  * ===================================

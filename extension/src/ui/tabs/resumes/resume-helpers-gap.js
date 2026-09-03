@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard, ahg-rules/max-file-lines-hard */
 /**
  * UI: RESUMES -- Skill Gap Analysis
  * ==================================

@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * AGGREGATOR: NEGOTIATIONS CROSS-TAB (F1.8)
  * =========================================

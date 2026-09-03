@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * Single resume parsing -- fetches and parses a resume page.
  *

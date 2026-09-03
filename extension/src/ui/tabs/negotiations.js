@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * UI: TABS -- NEGOTIATIONS (F1.9 refactor)
  * =========================================

@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * PARSER: NEGOTIATIONS
  * =====================

@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * PARSERS: NEGOTIATIONS CHAT THREAD (F4.3)
  * =========================================

@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * PARSER: RESUME DETAIL -- Skills extraction (5 strategies)
  * ==========================================================

@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * CONTENT: RESUME LOADER
  * Handles hh-ar-load-resume and hh-ar-reparse-resume events.

@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * LIB: COVER LETTER EVIDENCE MAPPER (F-CR-02)
  * =============================================

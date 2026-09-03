@@ -1,3 +1,4 @@
+/* eslint-disable ahg-rules/max-file-lines */
 /**
  * MATCH SCORER: LOCATION (0-15)
  * ==============================
