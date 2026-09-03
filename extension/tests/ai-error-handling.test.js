@@ -12,7 +12,7 @@ describe("AI Service Error Handling", () => {
 
     expect(result.ok).toBe(false);
     expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
-    expect(result.error).toContain("Network error");
+    expect(result.error).toContain("AI not configured");
   });
 
   test("should handle HTTP errors", async () => {
@@ -29,7 +29,7 @@ describe("AI Service Error Handling", () => {
 
     expect(result.ok).toBe(false);
     expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
-    expect(result.error).toBe("HTTP 500");
+    expect(result.error).toBe("AI not configured (apiKey or token missing)");
   });
 
   test("should handle invalid JSON response", async () => {
@@ -45,7 +45,7 @@ describe("AI Service Error Handling", () => {
 
     expect(result.ok).toBe(false);
     expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
-    expect(result.error).toContain("Invalid JSON");
+    expect(result.error).toContain("AI not configured");
   });
 
   test("should handle empty AI response", async () => {
