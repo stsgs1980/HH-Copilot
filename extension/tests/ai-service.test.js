@@ -1,3 +1,4 @@
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * TESTS: AI service (F4.2)
  * Covers:
@@ -113,8 +114,8 @@ describe("F4.2 -- config", () => {
     installChromeStub({});
     const cfg = await getAiConfig();
     expect(cfg.baseUrl).toBe("https://internal-api.z.ai/v1");
-    expect(cfg.apiKey).toBe("Z.ai"); // built-in marker
-    expect(cfg.token).toMatch(/^eyJ/); // built-in JWT
+    expect(cfg.apiKey).toBe(""); // no built-in defaults
+    expect(cfg.token).toBe(""); // no built-in JWT
     expect(cfg.model).toBe("glm-4.5");
     expect(cfg.timeoutMs).toBe(60000);
   });
@@ -139,9 +140,9 @@ describe("F4.2 -- config", () => {
     expect(await isAiAvailable()).toBe(false);
   });
 
-  it("isAiAvailable true out-of-the-box (built-in defaults applied when storage empty)", async () => {
+  it("isAiAvailable false out-of-the-box (no built-in defaults when storage empty)", async () => {
     installChromeStub({});
-    expect(await isAiAvailable()).toBe(true);
+    expect(await isAiAvailable()).toBe(false);
   });
 
   it("getAiConfig returns stored timeoutMs when set", async () => {
@@ -285,7 +286,7 @@ describe("F4.2 -- sendMessage error paths", () => {
   });
 
   it("params.timeoutMs overrides aiConfig.timeoutMs", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: 120000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 120000 } });
     const fetchImpl = makeAbortFetch();
     const res = await sendMessage({
       messages: [{ role: "user", content: "x" }],

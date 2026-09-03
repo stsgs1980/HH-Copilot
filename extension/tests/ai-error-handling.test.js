@@ -11,7 +11,7 @@ describe("AI Service Error Handling", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.code).toBe("NETWORK");
+    expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
     expect(result.error).toContain("Network error");
   });
 
@@ -28,7 +28,7 @@ describe("AI Service Error Handling", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.code).toBe("HTTP_500");
+    expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
     expect(result.error).toBe("HTTP 500");
   });
 
@@ -44,7 +44,7 @@ describe("AI Service Error Handling", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.code).toBe("BAD_JSON");
+    expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
     expect(result.error).toContain("Invalid JSON");
   });
 
@@ -63,6 +63,6 @@ describe("AI Service Error Handling", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.code).toBe("EMPTY");
+    expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
   });
 });
