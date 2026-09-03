@@ -34,15 +34,6 @@ const DEFAULT_MODEL = "glm-4.5";
 const MIN_TIMEOUT_MS = 5000;
 const MAX_TIMEOUT_MS = 600000;
 
-const BUILTIN_DEFAULTS = Object.freeze({
-  provider: PROVIDER_ZAI,
-  apiKey: "Z.ai",
-  token:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2U5MjY3YWMtM2Q3MS00ODA4LWI3M2YtZTAzZGViYzVhMzBhIiwiY2hhdF9pZCI6ImNoYXQtNTVkMWFlNzUtMDQ0Ni00NGYwLWIyZmQtMzc3OWEwMTU4MTAwIiwicGxhdGZvcm0iOiJ6YWkifQ.JjoptGFwMQjXuU4afXfqfJ9Cqf2f1q9gKPNSSSvrfS4",
-  chatId: "chat-55d1ae75-0446-44f0-b2fd-3779a0158100",
-  userId: "7e9267ac-3d71-4808-b73f-e03debc5a30a",
-});
-
 const OLLAMA_DEFAULTS = Object.freeze({
   provider: PROVIDER_OLLAMA,
   apiKey: "",
@@ -67,7 +58,7 @@ export async function getAiConfig() {
     } else if (provider === PROVIDER_CUSTOM) {
       d = { apiKey: "", token: "", chatId: "", userId: "" };
     } else {
-      d = useDefaults ? BUILTIN_DEFAULTS : { apiKey: "", token: "", chatId: "", userId: "" };
+      d = { apiKey: "", token: "", chatId: "", userId: "" };
     }
 
     return {
@@ -84,10 +75,10 @@ export async function getAiConfig() {
     return {
       provider: PROVIDER_ZAI,
       baseUrl: DEFAULT_BASE_URL,
-      apiKey: BUILTIN_DEFAULTS.apiKey,
-      token: BUILTIN_DEFAULTS.token,
-      chatId: BUILTIN_DEFAULTS.chatId,
-      userId: BUILTIN_DEFAULTS.userId,
+      apiKey: "",
+      token: "",
+      chatId: "",
+      userId: "",
       model: DEFAULT_MODEL,
       timeoutMs: DEFAULT_TIMEOUT_MS,
     };
