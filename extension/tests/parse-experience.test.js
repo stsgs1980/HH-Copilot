@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: parse-experience.js
  * Pure functions -- no DOM needed

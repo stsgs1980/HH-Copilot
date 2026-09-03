@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * TESTS: negotiations parser + diagnostic
  * Covers F1.4 acceptance criteria:

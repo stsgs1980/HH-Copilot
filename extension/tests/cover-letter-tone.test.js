@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * TESTS: cover letter tone + storage (F3.2)
  * Covers:

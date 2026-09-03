@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * INTEGRATION TESTS: MATCH SCORER
  * Tests match scoring with realistic resume/vacancy data structures

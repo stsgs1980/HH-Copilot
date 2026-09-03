@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { describe, expect, test } from "vitest";
 import {
   checkVersions,

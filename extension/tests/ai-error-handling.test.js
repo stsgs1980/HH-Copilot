@@ -1,9 +1,10 @@
+/// <reference types="vitest/globals" />
 import { describe, expect, test, vi } from "vitest";
 import { sendMessage } from "../src/services/ai-service.js";
 
 describe("AI Service Error Handling", () => {
   test("should handle network errors gracefully", async () => {
-    // Мокаем fetch для симуляции сетевой ошибки
+    // Mock fetch для симуляции сетевой ошибки
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     const result = await sendMessage({
@@ -16,7 +17,7 @@ describe("AI Service Error Handling", () => {
   });
 
   test("should handle HTTP errors", async () => {
-    // Мокаем fetch для симуляции HTTP ошибки
+    // Mock fetch для симуляции HTTP ошибки
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -33,7 +34,7 @@ describe("AI Service Error Handling", () => {
   });
 
   test("should handle invalid JSON response", async () => {
-    // Мокаем fetch для симуляции невалидного JSON
+    // Mock fetch для симуляции невалидного JSON
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.reject(new Error("Invalid JSON")),
@@ -49,7 +50,7 @@ describe("AI Service Error Handling", () => {
   });
 
   test("should handle empty AI response", async () => {
-    // Мокаем fetch для симуляции пустого ответа
+    // Mock fetch для симуляции пустого ответа
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () =>

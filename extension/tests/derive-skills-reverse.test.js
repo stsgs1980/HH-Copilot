@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: derive-skills reverse derivation (matchVacancySkillsToExperience)
  * ======================================================================

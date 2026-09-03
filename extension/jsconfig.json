@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "checkJs": false,
+    "types": ["vitest/globals"],
+    "paths": {
+      "vitest": ["./node_modules/vitest/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.js", "tests/**/*.js"]
+}

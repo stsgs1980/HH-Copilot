@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: selectors.js
  * Tests selector matching against mock DOM -- verifies ~= word-match, fallbacks

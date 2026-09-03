@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { beforeEach, describe, expect, test } from "vitest";
 import { parseVacanciesFromPage } from "../src/parsers/vacancy-list.js";
 

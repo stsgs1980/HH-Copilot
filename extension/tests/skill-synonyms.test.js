@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: skill-synonyms (matching engine supporting module)
  * ==========================================================

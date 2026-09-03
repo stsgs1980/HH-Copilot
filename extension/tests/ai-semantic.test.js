@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { computeSemanticSimilarity } from "../src/lib/ai-semantic.js";
 

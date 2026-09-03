@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: negotiations chat thread parser (F4.3)
  * Covers:

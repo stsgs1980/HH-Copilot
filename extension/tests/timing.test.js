@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * Tests for timing.js — simulateTyping (F3.3)
  *

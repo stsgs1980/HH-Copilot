@@ -1,3 +1,6 @@
+/// <reference types="vitest/globals" />
+// noinspection JSValidateTypes
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../src/ui/state.js", () => ({

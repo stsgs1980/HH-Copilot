@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /** TESTS: derive-skills (F-CR-02) — deriveSkillsFromExperience */
 import { describe, expect, it } from "vitest";
 import { deriveSkillsFromExperience } from "../src/lib/derive-skills.js";

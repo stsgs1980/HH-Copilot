@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { describe, expect, test } from "vitest";
 import { findAllElements } from "../src/lib/selectors.js";
 import { parseVacanciesFromPage } from "../src/parsers/vacancy-list.js";

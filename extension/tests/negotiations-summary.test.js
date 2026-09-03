@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: negotiations UI helpers (F1.9)
  * Covers computeStatusCounts, computeTabOriginCounts, formatSummaryText,

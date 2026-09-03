@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: routing logic
  * Tests routeToHandler path matching -- extracted logic without side effects

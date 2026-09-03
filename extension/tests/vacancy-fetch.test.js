@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * Tests for vacancy-fetch modules:
  *   - vacancy-fetch-text.js (parseVacancyDetailFromDoc, fetchVacancyViaText)

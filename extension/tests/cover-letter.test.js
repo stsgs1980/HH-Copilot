@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * Tests for cover-letter-generator.js
  *   - generateCoverLetter()

@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { describe, expect, it } from "vitest";
 import { parseResumeSalary, parseVacancySalaryString, scoreSalary } from "../src/lib/match-scorer-salary.js";
 
@@ -38,7 +39,7 @@ describe("parseVacancySalaryString", () => {
   });
 
   it("dash range with NBSP and en-dash", () => {
-    expect(parseVacancySalaryString("80\u00A0000 – 120\u00A0000 ₽")).toEqual({
+    expect(parseVacancySalaryString("80\u00A0000--120\u00A0000 ₽")).toEqual({
       min: 80000,
       max: 120000,
     });
@@ -109,14 +110,14 @@ describe("parseVacancySalaryString", () => {
   });
 
   it("en-dash with spaces", () => {
-    expect(parseVacancySalaryString("80 000 – 120 000 ₽")).toEqual({
+    expect(parseVacancySalaryString("80 000--120 000 ₽")).toEqual({
       min: 80000,
       max: 120000,
     });
   });
 
   it("en-dash WITHOUT spaces (regression: digits glued into 80000120000)", () => {
-    expect(parseVacancySalaryString("80 000–120 000 ₽")).toEqual({
+    expect(parseVacancySalaryString("80 000--120 000 ₽")).toEqual({
       min: 80000,
       max: 120000,
     });

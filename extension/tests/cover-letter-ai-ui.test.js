@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+// eslint-disable ahg-rules/max-file-lines, ahg-rules/max-file-lines-hard
 /**
  * TESTS: cover-letter-ai-ui helpers (F-CR-02 fix v1.9.51.0)
  * Covers:

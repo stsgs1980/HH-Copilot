@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: cover-letter-validator (F-CR-02)
  * =========================================

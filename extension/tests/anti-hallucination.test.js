@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: anti-hallucination.js
  * Pure functions -- no DOM needed

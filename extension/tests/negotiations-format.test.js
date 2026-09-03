@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: formatRelativeTime (F4.1)
  * Pure function: hh.ru negotiations date string -> short relative label.

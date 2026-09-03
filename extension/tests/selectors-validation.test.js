@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: SELECTOR VALIDATION
  * Tests for the selector debugging utilities.

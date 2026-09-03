@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: cover-letter-ai orchestrator (F-CR-02)
  * ===============================================

@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 /**
  * TESTS: negotiations AI reply UI (F4.3)
  * Covers:
