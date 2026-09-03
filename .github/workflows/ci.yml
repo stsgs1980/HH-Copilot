@@ -37,7 +37,8 @@ jobs:
         run: npm run build
 
       - name: Verify version sync
-        run: bash scripts/version-sync.sh
+        run: node scripts/version-sync.mjs
+        working-directory: .
 
   test-windows:
     runs-on: windows-latest
@@ -75,42 +76,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Check version consistency across files
-        run: |
-          set -euo pipefail
-          echo "=== Checking version consistency ==="
-
-          # Extract versions with explicit error handling
-          VERSION_MANIFEST=$(grep '"version"' extension/manifest.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
-          echo "manifest.json: $VERSION_MANIFEST"
-
-          VERSION_PACKAGE=$(grep '"version"' extension/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
-          echo "package.json: $VERSION_PACKAGE"
-
-          # Extract VERSION from version.js - match only the version number (handles both ' and " quotes)
-          VERSION_LIB=$(grep -oP "VERSION\s*=\s*['\"]\K[^'\"]+" extension/src/lib/version.js | head -1)
-          echo "version.js: $VERSION_LIB"
-
-          # Extract version from README - handle markdown bold
-          VERSION_README=$(grep -i 'version:' README.md | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
-          echo "README.md: $VERSION_README"
-
-          VERSION_POPUP=$(grep 'id="version"' extension/popup/index.html | sed 's/.*>v\(.*\)<.*/\1/')
-          echo "popup/index.html: $VERSION_POPUP"
-
-          # Validate all versions exist
-          for v in "$VERSION_MANIFEST" "$VERSION_PACKAGE" "$VERSION_LIB" "$VERSION_README" "$VERSION_POPUP"; do
-            if [ -z "$v" ]; then
-              echo "ERROR: Failed to extract a version"
-              exit 1
-            fi
-          done
-
-          # Compare all versions to manifest
-          if [ "$VERSION_MANIFEST" != "$VERSION_PACKAGE" ] || [ "$VERSION_MANIFEST" != "$VERSION_LIB" ] || [ "$VERSION_MANIFEST" != "$VERSION_README" ] || [ "$VERSION_MANIFEST" != "$VERSION_POPUP" ]; then
-            echo "ERROR: Version mismatch detected!"
-            echo "Expected: $VERSION_MANIFEST"
-            exit 1
-          fi
-
-          echo "All versions match: $VERSION_MANIFEST"
+        run: node scripts/version-sync.mjs
