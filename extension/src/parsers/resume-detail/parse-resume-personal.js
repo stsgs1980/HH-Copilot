@@ -13,8 +13,6 @@ const _resumeLog = createLogger("Resume");
 // ===============================================
 
 export function parsePersonalData(titleEl, dbg, resume) {
-  const personalText = [];
-
   // Имя: hh.ru показывает имя вверху страницы резюме
   const nameEl = document.querySelector('[data-qa="resume-personal-name"]');
   if (nameEl) {
@@ -47,20 +45,7 @@ export function parsePersonalData(titleEl, dbg, resume) {
 
   // Собираем текст из position-card и соседних блоков
   const posCard = document.querySelector('[data-qa="resume-position-card"]');
-  if (posCard) {
-    posCard.querySelectorAll("span, div, p, a").forEach((el) => {
-      const t = (el.textContent || "").trim();
-      if (t && t.length > 0 && t.length < 200) personalText.push(t);
-    });
-  }
-  const titleContainer = titleEl ? titleEl.closest("div[data-qa], section") || titleEl.parentElement : null;
-  if (titleContainer) {
-    titleContainer.querySelectorAll("span, div, p, a").forEach((el) => {
-      if (el === titleEl || titleEl.contains(el)) return;
-      const t = (el.textContent || "").trim();
-      if (t && t.length > 0 && t.length < 200 && !personalText.includes(t)) personalText.push(t);
-    });
-  }
+  const personalText = collectPersonalTexts(posCard, titleEl);
 
   const genderPatterns = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
   const agePattern = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;

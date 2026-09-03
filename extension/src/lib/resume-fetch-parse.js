@@ -7,56 +7,35 @@
  */
 
 export { parseContactsFromDoc } from "./resume-fetch-parse-contacts.js";
+import { parseCardHead, parseStepperJob } from "./resume-dom-cells.js";
 
 // ===============================================
 // COMPANY CARD PARSER
 // ===============================================
 
 export function parseCompanyCardFromDoc(card) {
-  const job = {};
-
-  const cellLeft = card.querySelector('[data-qa="cell-left-side"]');
-  if (cellLeft) {
-    const cellTexts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-    if (cellTexts.length >= 1) {
-      job.company = (cellTexts[0].textContent || "").trim();
-    }
-    if (cellTexts.length >= 2) {
-      job.duration = (cellTexts[1].textContent || "").trim();
-    }
-  }
+  const job = parseCardHead(card);
 
   const stepContent = card.querySelector('[data-qa="magritte-stepper-step-content"]');
   if (stepContent) {
-    const stepCellLeft = stepContent.querySelector('[data-qa="cell-left-side"]');
-    if (stepCellLeft) {
-      const stepTexts = stepCellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-      if (stepTexts.length >= 1) {
-        job.position = (stepTexts[0].textContent || "").trim();
-      }
-      if (stepTexts.length >= 2) {
-        let rawPeriod = (stepTexts[1].textContent || "").trim();
-        rawPeriod = rawPeriod.replace(/\s*\(\d[^)]+\)$/, "").trim();
-        job.period = rawPeriod;
-      }
-    }
-    const fullStepText = (stepContent.textContent || "").trim();
-    let desc = fullStepText;
-    const posText = job.position || "";
-    const periodText = job.period || "";
-    if (posText && desc.startsWith(posText)) {
-      desc = desc.substring(posText.length);
-    }
-    if (periodText && desc.startsWith(periodText)) {
-      desc = desc.substring(periodText.length);
-    }
-    desc = desc.trim();
-    if (desc.length > 20) {
-      job.description = desc;
-    }
+    Object.assign(job, parseStepperJob(stepContent));
+    const description = extractStepDescription(stepContent, job.position || "", job.period || "");
+    if (description) job.description = description;
   }
 
   return job.company || job.position ? job : null;
+}
+
+function extractStepDescription(stepContent, posText, periodText) {
+  let desc = (stepContent.textContent || "").trim();
+  if (posText && desc.startsWith(posText)) {
+    desc = desc.substring(posText.length);
+  }
+  if (periodText && desc.startsWith(periodText)) {
+    desc = desc.substring(periodText.length);
+  }
+  desc = desc.trim();
+  return desc.length > 20 ? desc : "";
 }
 
 // ===============================================
@@ -66,25 +45,11 @@ export function parseCompanyCardFromDoc(card) {
 const GENDER_PATTERNS = [/(?:^|\s)(мужчина|женщина|мужской|женский|male|female)(?:$|\s)/i];
 const AGE_PATTERN = /(?:полных\s*)?(\d{2})\s*(?:лет|год|года)/i;
 const AGE_PATTERN2 = /(\d{2})\s*years?\s*old/i;
-
+const EMPLOYMENT_META_PATTERN =
+  /тип занятости|формат работы|график работы|полная занятость|частичная занятость|проектная работа|стажировка|удаленная работа|гибридный формат/i;
 export function parsePersonalDataFromDoc(doc, titleEl, dbg, resume) {
-  const personalText = [];
   const posCard = doc.querySelector('[data-qa="resume-position-card"]');
-  if (posCard) {
-    posCard.querySelectorAll("span, div, p, a").forEach((el) => {
-      const t = (el.textContent || "").trim();
-      if (t && t.length > 0 && t.length < 200) personalText.push(t);
-    });
-  }
-  const titleContainer = titleEl ? titleEl.closest("div[data-qa], section") || titleEl.parentElement : null;
-  if (titleContainer) {
-    titleContainer.querySelectorAll("span, div, p, a").forEach((el) => {
-      if (el === titleEl || titleEl.contains(el)) return;
-      const t = (el.textContent || "").trim();
-      if (t && t.length > 0 && t.length < 200 && !personalText.includes(t)) personalText.push(t);
-    });
-  }
-
+  const personalText = collectPersonalTexts(posCard, titleEl);
   for (const t of personalText) {
     if (!resume.gender) {
       for (const gp of GENDER_PATTERNS) {
@@ -104,10 +69,7 @@ export function parsePersonalDataFromDoc(doc, titleEl, dbg, resume) {
     if (!resume.address && t.length > 3) {
       const isGender = GENDER_PATTERNS.some((p) => p.test(t));
       const isAge = AGE_PATTERN.test(t) || AGE_PATTERN2.test(t);
-      const isEmploymentMeta =
-        /тип занятости|формат работы|график работы|полная занятость|частичная занятость|проектная работа|стажировка|удаленная работа|гибридный формат/i.test(
-          t,
-        );
+      const isEmploymentMeta = EMPLOYMENT_META_PATTERN.test(t);
       if (
         !isGender &&
         !isAge &&

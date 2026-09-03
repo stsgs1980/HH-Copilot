@@ -86,62 +86,22 @@ export function clickExpandButtons(iframeDoc) {
  */
 export function parseExperienceFromIframeDoc(iframeDoc) {
   const allCards = iframeDoc.querySelectorAll('[data-qa="profile-experience-company-card"]');
-  const seen = new Set();
-  const uniqueCards = [];
-  allCards.forEach((c) => {
-    if (!seen.has(c)) {
-      seen.add(c);
-      uniqueCards.push(c);
-    }
-  });
+  const uniqueCards = dedupElements(allCards);
 
   const entries = [];
   const usedStepperElements = new Set();
 
-  uniqueCards.forEach((card) => {
-    const job = parseCompanyCardFromDoc(card);
-    if (job) entries.push(job);
-    const stepEl = card.querySelector('[data-qa="magritte-stepper-step-content"]');
-    if (stepEl) usedStepperElements.add(stepEl);
-  });
+  parseCardsInto(uniqueCards, parseCompanyCardFromDoc, entries, usedStepperElements);
 
   const expCard = iframeDoc.querySelector('[data-qa="resume-list-card-experience"]');
   if (expCard) {
     const stepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
-    stepperItems.forEach((step) => {
-      if (usedStepperElements.has(step)) return;
-      const parentCard = step.closest('[data-qa="profile-experience-company-card"]');
-      if (parentCard && uniqueCards.includes(parentCard)) return;
-
-      const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
-      if (!cellLeft) return;
-      const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-      const job = {};
-      if (texts.length >= 1) job.position = (texts[0].textContent || "").trim();
-      if (texts.length >= 2)
-        job.period = (texts[1].textContent || "")
-          .trim()
-          .replace(/\s*\(\d[^)]+\)$/, "")
-          .trim();
-      if (job.position || job.period) entries.push(job);
-    });
+    parseUncoveredSteppers(stepperItems, usedStepperElements, uniqueCards, entries);
   }
 
   if (entries.length === 0 && expCard) {
     const allStepperItems = expCard.querySelectorAll('[data-qa="magritte-stepper-step-content"]');
-    allStepperItems.forEach((step) => {
-      const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
-      if (!cellLeft) return;
-      const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-      const job = {};
-      if (texts.length >= 1) job.position = (texts[0].textContent || "").trim();
-      if (texts.length >= 2)
-        job.period = (texts[1].textContent || "")
-          .trim()
-          .replace(/\s*\(\d[^)]+\)$/, "")
-          .trim();
-      if (job.position) entries.push(job);
-    });
+    parseStepperFallback(allStepperItems, entries);
   }
 
   return entries;

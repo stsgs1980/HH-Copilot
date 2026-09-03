@@ -2,9 +2,21 @@
  * JSON utility functions for extracting experience data from structured JSON.
  * Used by Strategy 5 (script JSON parsing) and Strategy 6 (API responses).
  */
-import { createLogger } from "./anti-hallucination.js";
 
-const _fetchLog = createLogger("ResumeFetch");
+/**
+ * @typedef {object} ApiExperienceItem hh.ru API experience entry.
+ * @property {string} [position]
+ * @property {string} [name]
+ * @property {(string|{name?: string})} [company]
+ * @property {string} [organization]
+ * @property {({year?: number, month?: number}|string)} [start]
+ * @property {({year?: number, month?: number}|string)} [startDate]
+ * @property {({year?: number, month?: number}|string)} [end]
+ * @property {({year?: number, month?: number}|string)} [endDate]
+ * @property {boolean} [current]
+ * @property {boolean} [untilNow]
+ * @property {string} [description]
+ */
 
 /**
  * Extract a JSON array starting at startIdx from text.
@@ -69,7 +81,7 @@ export function extractJsonArrayFromHtml(html, startIdx) {
 /**
  * Build an experience entry object from an API item.
  * Handles hh.ru API field formats.
- * @param {object} item - API item with position, company, start, end, etc.
+ * @param {ApiExperienceItem} item - API item with position, company, start, end, etc.
  * @returns {object} Normalized experience entry { position, company, period, description }
  */
 export function buildEntryFromApiItem(item) {

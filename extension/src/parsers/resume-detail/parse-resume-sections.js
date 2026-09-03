@@ -6,6 +6,7 @@
  */
 
 import { createLogger } from "../../lib/anti-hallucination.js";
+import { dedupElements, parseCardsInto, parseStepperJob } from "../../lib/resume-dom-cells.js";
 import { parseCompanyCard } from "./parse-company-card.js";
 import { parseSkills } from "./parse-resume-skills.js";
 
@@ -20,28 +21,16 @@ export { parseSkills };
 
 export function parseExperience(dbg, resume) {
   const expCard = document.querySelector('[data-qa="resume-list-card-experience"]');
-
   const allCompanyCards = document.querySelectorAll('[data-qa="profile-experience-company-card"]');
-  const uniqueCards = [];
-  const cardSet = new Set();
-  allCompanyCards.forEach((c) => {
-    if (!cardSet.has(c)) {
-      cardSet.add(c);
-      uniqueCards.push(c);
-    }
-  });
+  const uniqueCards = dedupElements(allCompanyCards);
+  const cardSet = new Set(uniqueCards);
   resumeLog.info("Experience: total company-cards on page: " + uniqueCards.length);
 
   const expEntries = [];
   const usedStepperElements = new Set();
 
   // Strategy 1: parse company cards
-  uniqueCards.forEach((card) => {
-    const job = parseCompanyCard(card);
-    if (job) expEntries.push(job);
-    const stepEl = card.querySelector('[data-qa="magritte-stepper-step-content"]');
-    if (stepEl) usedStepperElements.add(stepEl);
-  });
+  parseCardsInto(uniqueCards, parseCompanyCard, expEntries, usedStepperElements);
 
   // Strategy 2: parse stepper items NOT covered by company cards
   if (expCard) {
@@ -53,20 +42,13 @@ export function parseExperience(dbg, resume) {
       const parentCard = step.closest('[data-qa="profile-experience-company-card"]');
       if (parentCard && cardSet.has(parentCard)) return;
 
-      const cellLeft = step.querySelector('[data-qa="cell-left-side"]');
-      if (!cellLeft) return;
-      const texts = cellLeft.querySelectorAll('[data-qa="cell-text-content"]');
-      const job = {};
-      if (texts.length >= 1) job.position = (texts[0].textContent || "").trim();
-      if (texts.length >= 2) {
-        let rawPeriod = (texts[1].textContent || "").trim();
-        rawPeriod = rawPeriod.replace(/\s*\(\d[^)]+\)$/, "").trim();
-        job.period = rawPeriod;
-      }
+      const job = parseStepperJob(step);
+      if (!job) return;
+      const stepCellLeft = step.querySelector('[data-qa="cell-left-side"]');
       const parent = step.parentElement;
       if (parent) {
         const parentCellLeft = parent.querySelector('[data-qa="cell-left-side"]');
-        if (parentCellLeft && parentCellLeft !== cellLeft) {
+        if (parentCellLeft && parentCellLeft !== stepCellLeft) {
           const parentTexts = parentCellLeft.querySelectorAll('[data-qa="cell-text-content"]');
           if (parentTexts.length >= 1 && !job.company) job.company = (parentTexts[0].textContent || "").trim();
           if (parentTexts.length >= 2 && !job.duration) job.duration = (parentTexts[1].textContent || "").trim();
