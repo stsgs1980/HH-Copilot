@@ -65,13 +65,17 @@ cat package.json
 Add these to devDependencies section:
 
 ```json
-"eslint": "^9.39.0",
-"eslint-plugin-jsdoc": "^64.2.0",
-"prettier-plugin-organize-imports": "^4.3.0",
-"prettier-plugin-tailwindcss": "^0.8.1",
-"stylelint": "^17.14.1",
-"stylelint-config-standard": "^40.0.0",
-"typescript": "^5.9.3"
+{
+  "devDependencies": {
+    "eslint": "^9.39.0",
+    "eslint-plugin-jsdoc": "^64.2.0",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0",
+    "typescript": "^5.9.3"
+  }
+}
 ```
 
 - [x] **Step 3: Update lint-staged patterns**
@@ -79,11 +83,13 @@ Add these to devDependencies section:
 Replace current lint-staged with:
 
 ```json
-"lint-staged": {
-  "*.{js,ts,jsx,tsx,json,html,md}": "prettier --write",
-  "*.{js,ts,jsx,tsx}": "eslint --fix",
-  "*.css": "stylelint --fix",
-  "*.md": "markdownlint --fix --ignore node_modules"
+{
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx,json,html,md}": "prettier --write",
+    "*.{js,ts,jsx,tsx}": "eslint --fix",
+    "*.css": "stylelint --fix",
+    "*.md": "markdownlint --fix --ignore node_modules"
+  }
 }
 ```
 
@@ -92,10 +98,14 @@ Replace current lint-staged with:
 Add to scripts section:
 
 ```json
-"lint:css": "stylelint \"**/*.css\" --allow-empty-input",
-"test": "vitest run",
-"test:watch": "vitest",
-"test:coverage": "vitest run --coverage"
+{
+  "scripts": {
+    "lint:css": "stylelint \"**/*.css\" --allow-empty-input",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  }
+}
 ```
 
 - [x] **Step 5: Run npm install**
@@ -147,7 +157,7 @@ Add plugins array to .prettierrc:
 
 Add missing entries:
 
-```
+```text
 node_modules/
 dist/
 build/
@@ -713,7 +723,7 @@ When a threshold is crossed:
 
 Add these entries if missing:
 
-```
+```text
 # Frameworks
 .next/
 .nuxt/
