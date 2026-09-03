@@ -83,7 +83,7 @@ export function scoreSalary(resume, vacancy) {
 // ===============================================
 
 /** Parse resume salary string into a number. */
-function parseResumeSalary(salaryStr) {
+export function parseResumeSalary(salaryStr) {
   if (!salaryStr || typeof salaryStr !== "string") return null;
   const nums = salaryStr.match(/\d[\d\s]*\d/g);
   if (!nums || nums.length === 0) return null;
@@ -92,26 +92,38 @@ function parseResumeSalary(salaryStr) {
 }
 
 /** Parse vacancy salary string like "150 000 - 200 000 rub" into { min, max }. */
-function parseVacancySalaryString(salaryStr) {
+export function parseVacancySalaryString(salaryStr) {
   if (!salaryStr || typeof salaryStr !== "string") return {};
-  // Remove currency symbols and normalize spaces
-  const cleaned = salaryStr.replace(/[руб.$евроруб.]/gi, "").replace(/\s+/g, " ");
-  // Find all number groups (e.g., "150 000" -> "150000")
-  const nums = cleaned.match(/\d[\d\s]*\d/g);
-  if (!nums || nums.length === 0) return {};
-  const parsed = nums.map((n) => parseInt(n.replace(/\s/g, ""), 10)).filter((n) => !isNaN(n));
+
+  const lowerStr = salaryStr.toLowerCase().trim();
+
+  // «от»/«до» заменяем на дефис ДО чистки, иначе после удаления букв
+  // «80 000 до 120 000» склеивается в одно число 80000120000.
+  // Границы слов через \p{L}, т.к. \b в JS не работает с кириллицей.
+  const cleaned = salaryStr
+    .toLowerCase()
+    .replace(/(?<![\p{L}])от(?![\p{L}])/giu, "-")
+    .replace(/(?<![\p{L}])до(?![\p{L}])/giu, "-")
+    .replace(/[–—−]/g, "-")
+    .replace(/[^\d\s\-.]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const nums = cleaned.match(/\d[\d\s]*\d/g) || [];
+  const parsed = nums.map((n) => parseInt(n.replace(/\s/g, ""), 10)).filter((n) => Number.isFinite(n) && n > 0);
   if (parsed.length === 0) return {};
 
-  // Handle "от N" / "до N" prefixes (SERP salary strings)
-  const lowerStr = salaryStr.toLowerCase();
-  if (/^от|^from/i.test(lowerStr) && parsed.length >= 1) {
-    return { min: parsed[0], max: null };
+  // «от X до Y»: префикс «от» + два числа.
+  // «от 80 000, до вычета» даст одно число — max останется null.
+  if (/^от/.test(lowerStr)) {
+    // «от X до Y» даёт два числа; «от X, до вычета...» — одно
+    // (слово «до» заменено на дефис до чистки, «вычета» стёрт)
+    return { min: parsed[0], max: parsed.length > 1 ? parsed[1] : null };
   }
-  if (/^до|^up\s*to/i.test(lowerStr) && parsed.length >= 1) {
+  if (/^до|^up\s*to/i.test(lowerStr)) {
     return { min: null, max: parsed[0] };
   }
 
   if (parsed.length === 1) return { min: parsed[0], max: parsed[0] };
-  // Take first two numbers as min/max
   return { min: parsed[0], max: parsed[1] };
 }
