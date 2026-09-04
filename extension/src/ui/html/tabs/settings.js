@@ -149,6 +149,7 @@ function settingsGeneral() {
         </select>
         <div style="font-size:10px;color:#71717A;margin-top:4px;">Точный: навыки 35%, должность 25%. Гибкий: семантика 45%, опыт 20%.</div>
       </div>
+      ${settingToggle("Dry-run (репетиция)", "Проверяет проход без реальных откликов", "s-dry-run", false)}
       ${settingToggle("Авто-проверка авторизации", "", "s-auth-check", true)}
       ${settingToggle("Уведомления", "", "s-notifications", true)}
       ${settingToggle("Логирование действий", "", "s-logging", true)}

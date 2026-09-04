@@ -22,6 +22,7 @@ import {
 } from "../src/lib/storage.js";
 
 vi.mock("../src/lib/storage.js", () => ({
+  getAllSettings: vi.fn(async () => ({})),
   incrementApplied: vi.fn(async () => ({ allowed: true, remaining: 199 })),
   isAlreadyApplied: vi.fn(async () => false),
   isAlreadySkipped: vi.fn(async () => false),

@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
   autoScroll: true,
   showMatchScore: true,
   confirmBeforeApply: true,
+  dryRun: false,
 };
 
 export const DEFAULT_STATS = {

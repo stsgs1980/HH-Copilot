@@ -10,7 +10,7 @@
  * v1.9.43.0
  */
 
-import { panelState, refs, setActiveTab } from "../state.js";
+import { refs, setActiveTab } from "../state.js";
 import { handleAiReplyClick, setAiTone } from "../tabs/negotiations-ai-reply.js";
 import {
   refreshNegotiations,
@@ -23,6 +23,7 @@ import { renderStats } from "../tabs/stats.js";
 import { bindAiSettingsHandlers, populateAiFields } from "./ai-settings.js";
 import { bindCoverLetterEvents, populateCoverLetterFields } from "./cover-letter-events.js";
 import { bindAccessibilityHandlers, bindTabKeyboardNav, filterVacancies } from "./events-a11y.js";
+import { bindSettingsToggles } from "./settings-toggles.js";
 import { bindSidebarClicks } from "./sidebar-events.js";
 
 // Re-export filterVacancies for callers that import from here
@@ -216,30 +217,6 @@ function bindInputChanges(container) {
     });
   }
 
-  /* Match mode selector change */
-  const matchModeSelect = container.querySelector("#s-match-mode");
-  if (matchModeSelect) {
-    matchModeSelect.addEventListener("change", async (e) => {
-      const mode = e.target.value;
-      const data = await chrome.storage.local.get("settings");
-      const settings = data.settings || {};
-      settings.matchMode = mode;
-      await chrome.storage.local.set({ settings });
-      panelState.settings.matchMode = mode;
-      window.dispatchEvent(new CustomEvent("hh-ar-match-mode-changed", { detail: { mode } }));
-    });
-  }
-
-  /* Semantic scoring opt-in toggle change (issue #9, default OFF) */
-  const semanticOptInEl = container.querySelector("#s-semantic-optin");
-  if (semanticOptInEl) {
-    semanticOptInEl.addEventListener("change", async (e) => {
-      const on = !!e.target.checked;
-      const data = await chrome.storage.local.get("settings");
-      const settings = data.settings || {};
-      settings.semanticOptIn = on;
-      await chrome.storage.local.set({ settings });
-      panelState.settings.semanticOptIn = on;
-    });
-  }
+  /* Settings controls: match mode, semantic opt-in, dry-run */
+  bindSettingsToggles(container);
 }

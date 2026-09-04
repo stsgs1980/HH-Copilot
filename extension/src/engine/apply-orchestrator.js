@@ -13,6 +13,7 @@
 import { createLogger } from "../lib/anti-hallucination.js";
 import rateLimiter from "../lib/rate-limiter.js";
 import {
+  getAllSettings,
   getSkippedVacancies,
   incrementApplied,
   isAlreadyApplied,
@@ -79,30 +80,43 @@ export async function continueApply(pending) {
   const actualPath = window.location.pathname;
   if (!actualPath.includes(pending.vacancyId)) {
     autoLog.warn("Wrong page: expected " + expectedPath + " got " + actualPath);
+    auditApply(pending.vacancyId, "failed", "Не на странице вакансии");
     return { success: false, reason: "Не на странице вакансии" };
   }
+
+  // Dry-run rehearsal flag (settings) -- no real applies downstream
+  const settings = await getAllSettings();
+  const dryRun = settings.dryRun === true;
 
   // Wait for page to fully render
   await waitForPageReady();
   autoLog.info("Page ready, looking for apply button...");
 
   // Try to find and click the apply button
-  const applyResult = await clickApplyButton();
+  const applyResult = await clickApplyButton({ dryRun });
   if (!applyResult.clicked) {
     autoLog.error("Could not find/click apply button: " + applyResult.reason);
     await markAsSkipped(pending.vacancyId, "no-apply-button: " + applyResult.reason);
+    auditApply(pending.vacancyId, "skipped", "no-apply-button: " + applyResult.reason);
     return { success: false, reason: applyResult.reason, skipped: true };
   }
 
   // Wait for popup/modal to appear
   autoLog.info("Apply button clicked, waiting for popup...");
-  const popupResult = await waitForPopupAndSubmit();
+  const popupResult = await waitForPopupAndSubmit({ dryRun });
   if (!popupResult.success) {
     autoLog.warn("Popup handling: " + popupResult.reason);
     // Click happened (action on hh.ru) but submission unconfirmed -- honest outcome
     await markAsSkipped(pending.vacancyId, "popup-not-handled: " + popupResult.reason);
     rateLimiter.recordAction();
+    auditApply(pending.vacancyId, "skipped", "popup-not-handled: " + popupResult.reason);
     return { success: false, reason: popupResult.reason, skipped: true };
+  }
+
+  if (dryRun) {
+    autoLog.info("DRY-RUN: would apply to " + pending.vacancyId);
+    await processNextInQueue();
+    return { success: true, dryRun: true };
   }
 
   // Success!
@@ -110,6 +124,7 @@ export async function continueApply(pending) {
   await incrementApplied();
   await markAsApplied(pending.vacancyId);
   autoLog.info("Successfully applied to vacancy " + pending.vacancyId);
+  auditApply(pending.vacancyId, "applied", "");
 
   // Process next in queue after delay
   await processNextInQueue();
@@ -117,33 +132,37 @@ export async function continueApply(pending) {
 }
 
 /**
- * Apply to all eligible vacancies (mass apply).
- * Filters by status and match score, builds a queue, and starts processing.
+ * Fire-and-forget audit entry to background "log" case.
+ * Never throws (headless/test env without chrome -- silent).
+ */
+function auditApply(vacancyId, outcome, reason) {
+  try {
+    chrome.runtime.sendMessage({ type: "log", entry: { action: "apply", vacancyId, outcome, reason } });
+  } catch (_e) {}
+}
+
+/**
+ * Preview mass apply: filter/sort eligible vacancies without side effects.
+ * No setQueue, no navigation -- returns ids for user confirmation.
  * @param {Array} vacancies - List of vacancy objects
  * @param {number} [minScore=70] - Minimum match score to apply
- * @returns {Promise<{processed: number, reason?: string}>}
+ * @returns {Promise<{ok: boolean, queue: string[], skippedPreviously: number, minScore: number, reason?: string}>}
  */
-export async function applyToAll(vacancies, minScore, resume) {
+export async function previewApplyAll(vacancies, minScore) {
   minScore = minScore || 70;
 
-  // Set resume for cover letter generation before navigating
-  if (resume) {
-    setActiveResumeForCoverLetter(resume);
-  }
-
-  const eligible = vacancies
+  const eligible = (vacancies || [])
     .filter((v) => v.status === "new" && v.hasReply)
     .filter((v) => v.matchScore === null || v.matchScore >= minScore)
     .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
   if (eligible.length === 0) {
     autoLog.info("No eligible vacancies for mass apply");
-    return { processed: 0, skippedPreviously: 0, reason: "Нет подходящих вакансий" };
+    return { ok: false, queue: [], skippedPreviously: 0, minScore, reason: "Нет подходящих вакансий" };
   }
 
-  autoLog.info("Mass apply: " + eligible.length + " vacancies (score >= " + minScore + ")");
+  autoLog.info("Mass apply preview: " + eligible.length + " vacancies (score >= " + minScore + ")");
 
-  // Build queue with all eligible vacancies.
   // Single bulk read of skipped list (no per-item storage round-trips).
   const skippedIds = new Set((await getSkippedVacancies()).map((s) => s && s.id));
   const prevSkipped = [];
@@ -154,11 +173,37 @@ export async function applyToAll(vacancies, minScore, resume) {
       prevSkipped.push(v);
       continue;
     }
-    queue.push({ vacancyId: v.id, timestamp: Date.now() });
+    queue.push(v.id);
   }
 
   if (queue.length === 0) {
-    return { processed: 0, skippedPreviously: prevSkipped.length, reason: "Все вакансии уже в очереди/откликнуты" };
+    return {
+      ok: false,
+      queue: [],
+      skippedPreviously: prevSkipped.length,
+      minScore,
+      reason: "Все вакансии уже в очереди/откликнуты",
+    };
+  }
+
+  return { ok: true, queue, skippedPreviously: prevSkipped.length, minScore };
+}
+
+/**
+ * Start mass apply from a previewed id list: persist queue, rate-check, navigate.
+ * @param {string[]} queueIds - Vacancy ids from previewApplyAll
+ * @param {Object} [resume] - Active resume for cover letter generation
+ * @returns {Promise<{processed: number, skippedPreviously?: number, reason?: string}>}
+ */
+export async function startApplyAll(queueIds, resume) {
+  // Set resume for cover letter generation before navigating
+  if (resume) {
+    setActiveResumeForCoverLetter(resume);
+  }
+
+  const queue = (queueIds || []).map((id) => ({ vacancyId: id, timestamp: Date.now() }));
+  if (queue.length === 0) {
+    return { processed: 0, reason: "Пустая очередь" };
   }
 
   await setQueue(queue);
@@ -169,16 +214,28 @@ export async function applyToAll(vacancies, minScore, resume) {
   const rateCheck = await rateLimiter.check();
   if (!rateCheck.allowed) {
     autoLog.warn("Rate limit: " + rateCheck.reason);
-    return { processed: 0, skippedPreviously: prevSkipped.length, reason: rateCheck.reason };
+    return { processed: 0, reason: rateCheck.reason };
   }
 
   // Navigate to first vacancy
   const url = "https://hh.ru/vacancy/" + first.vacancyId;
   autoLog.info("Starting mass apply, navigating to: " + url);
   window.location.href = url;
-  return {
-    processed: 0,
-    skippedPreviously: prevSkipped.length,
-    reason: "Переход на первую вакансию (очередь: " + queue.length + ")",
-  };
+  return { processed: 0, reason: "Переход на первую вакансию (очередь: " + queue.length + ")" };
+}
+
+/**
+ * Apply to all eligible vacancies (mass apply).
+ * Thin wrapper: preview + start. Kept for backward compatibility.
+ * @param {Array} vacancies - List of vacancy objects
+ * @param {number} [minScore=70] - Minimum match score to apply
+ * @returns {Promise<{processed: number, skippedPreviously?: number, reason?: string}>}
+ */
+export async function applyToAll(vacancies, minScore, resume) {
+  const preview = await previewApplyAll(vacancies, minScore);
+  if (!preview.ok) {
+    return { processed: 0, skippedPreviously: preview.skippedPreviously, reason: preview.reason };
+  }
+  const started = await startApplyAll(preview.queue, resume);
+  return { ...started, skippedPreviously: preview.skippedPreviously };
 }

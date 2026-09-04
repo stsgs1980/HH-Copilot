@@ -106,8 +106,20 @@ async function init() {
 
   window.addEventListener("hh-ar-apply-all", async () => {
     if (!panelState.isLoggedIn) return;
-    const { applyToAll } = await import("../engine/index.js");
-    await applyToAll(panelState.vacancies, undefined, panelState.resume);
+    const { previewApplyAll, startApplyAll } = await import("../engine/index.js");
+    const preview = await previewApplyAll(panelState.vacancies, undefined);
+    if (!preview.ok) return;
+    const settings = await getAllSettings();
+    if (settings.confirmBeforeApply !== false) {
+      const { confirmApplyAll } = await import("../ui/panel/apply-confirm.js");
+      const confirmed = await confirmApplyAll({
+        count: preview.queue.length,
+        minScore: preview.minScore,
+        skipped: preview.skippedPreviously,
+      });
+      if (!confirmed) return;
+    }
+    await startApplyAll(preview.queue, panelState.resume);
   });
 
   window.addEventListener("hh-ar-refresh", async () => {

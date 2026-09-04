@@ -51,9 +51,10 @@ const APPLY_BUTTON_SELECTORS = [
 /**
  * Find and click the "Откликнуться" (Apply) button on the vacancy page.
  * Tries multiple selectors with retries, then falls back to text search.
- * @returns {Promise<{clicked: boolean, reason?: string}>}
+ * @param {{dryRun?: boolean}} [opts] - dryRun: find the button but do not click
+ * @returns {Promise<{clicked: boolean, dryRun?: boolean, reason?: string}>}
  */
-export async function clickApplyButton() {
+export async function clickApplyButton(opts = {}) {
   // First, check if already applied
   const alreadyApplied = findElement("alreadyApplied");
   if (alreadyApplied) {
@@ -79,6 +80,10 @@ export async function clickApplyButton() {
 
         autoLog.info("Found apply button: " + sel + " (attempt " + (attempt + 1) + ")");
 
+        if (opts.dryRun) {
+          return { clicked: true, dryRun: true, reason: "dry-run: button found" };
+        }
+
         // Click with human-like delay
         await randomDelay();
         el.click();
@@ -102,6 +107,9 @@ export async function clickApplyButton() {
     const text = (el.textContent || "").trim().toLowerCase();
     if (text === "откликнуться" || text === "откликнуться на вакансию") {
       autoLog.info('Found apply button via text search: "' + text + '"');
+      if (opts.dryRun) {
+        return { clicked: true, dryRun: true, reason: "dry-run: button found" };
+      }
       await randomDelay();
       el.click();
       return { clicked: true };
@@ -130,9 +138,13 @@ const POPUP_SUBMIT_SELECTORS = [
 /**
  * After clicking "Откликнуться", wait for the apply popup/modal to appear
  * and click the submit button. Handles optional relocation confirmation.
- * @returns {Promise<{success: boolean, reason?: string}>}
+ * @param {{dryRun?: boolean}} [opts] - dryRun: do not open/submit anything
+ * @returns {Promise<{success: boolean, dryRun?: boolean, reason?: string}>}
  */
-export async function waitForPopupAndSubmit() {
+export async function waitForPopupAndSubmit(opts = {}) {
+  if (opts.dryRun) {
+    return { success: true, dryRun: true };
+  }
   // Wait for popup (up to 8 seconds)
   for (let i = 0; i < 16; i++) {
     await new Promise((r) => setTimeout(r, 500));

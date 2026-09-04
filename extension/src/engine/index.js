@@ -3,7 +3,7 @@
 // ===============================================
 
 // Public API (orchestrator)
-export { applyToAll, applyToVacancy, continueApply } from "./apply-orchestrator.js";
+export { applyToAll, applyToVacancy, continueApply, previewApplyAll, startApplyAll } from "./apply-orchestrator.js";
 
 // Queue management (for external access e.g. diagnostics)
 export { clearQueue, dequeueNext, getQueue, setQueue } from "./apply-queue.js";
