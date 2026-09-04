@@ -56,11 +56,15 @@ describe("computeSemanticSimilarity", () => {
     expect(result).toBeLessThanOrEqual(1);
   });
 
-  it("should clamp values outside 0-1 range", async () => {
+  it("clamps values outside 0-1 range (openrouter aiConfig)", async () => {
+    installChromeStub({
+      aiConfig: { provider: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKey: "k" },
+    });
     global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
       json: () =>
         Promise.resolve({
-          choices: [{ message: { content: "1.5" } }],
+          choices: [{ message: { content: "1.7" } }],
         }),
     });
 
@@ -113,8 +117,12 @@ describe("computeSemanticSimilarity", () => {
     expect(result).toBe(0);
   });
 
-  it("should send correct request to Groq API", async () => {
+  it("sends through unified ai-service (openrouter, no groq leftovers)", async () => {
+    installChromeStub({
+      aiConfig: { provider: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKey: "k" },
+    });
     const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
       json: () =>
         Promise.resolve({
           choices: [{ message: { content: "0.8" } }],
@@ -129,29 +137,34 @@ describe("computeSemanticSimilarity", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://api.groq.com/openai/v1/chat/completions");
+    expect(url).toContain("openrouter.ai");
     expect(opts.method).toBe("POST");
-    expect(opts.headers["Authorization"]).toBe("Bearer test-key");
+    expect(opts.headers["Authorization"]).toBe("Bearer k");
     const body = JSON.parse(opts.body);
-    expect(body.model).toBe("llama-3.3-70b-versatile");
+    expect(JSON.stringify(body)).not.toMatch(/groq|llama-3\.3/i);
     expect(body.temperature).toBe(0.1);
     expect(body.max_tokens).toBe(10);
     expect(body.messages[0].content).toContain("Frontend Developer");
   });
 
-  it("should handle resume with missing optional fields", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+  it("handles missing optional fields (prompt has N/A fallbacks)", async () => {
+    installChromeStub({
+      aiConfig: { provider: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKey: "k" },
+    });
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
       json: () =>
         Promise.resolve({
           choices: [{ message: { content: "0.3" } }],
         }),
     });
+    global.fetch = mockFetch;
 
-    const result = await computeSemanticSimilarity(
-      { title: null, skills: null, experienceTotal: null },
-      { title: "Test", keySkills: [], description: null },
-    );
+    const result = await computeSemanticSimilarity({}, { title: "X" });
 
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[0].content).toContain("N/A");
     expect(result).toBe(0.3);
   });
 });

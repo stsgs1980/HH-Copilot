@@ -25,6 +25,7 @@ function settingsAI() {
         <select id="s-ai-provider" aria-label="AI provider" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
           <option value="zai">Z.ai (облачный)</option>
           <option value="ollama">Ollama (локальный)</option>
+          <option value="openrouter">OpenRouter (free models)</option>
           <option value="custom">Custom OpenAI-compatible</option>
         </select>
         <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">Z.ai -- из коробки. Ollama -- запусти <code>ollama serve</code> и скачай модель. Custom -- любой OpenAI-совместимый API.</div>

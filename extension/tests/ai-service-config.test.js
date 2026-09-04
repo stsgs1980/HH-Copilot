@@ -204,4 +204,18 @@ describe("F4.2 -- sendMessage success", () => {
     const res = await sendMessage({ messages: [{ role: "user", content: "x" }], fetchImpl });
     expect(res.text).toBe("trimmed");
   });
+
+  it("passes max_tokens through to body when a number (#8)", async () => {
+    const fetchImpl = makeOkFetch("ok");
+    await sendMessage({ messages: [{ role: "user", content: "hi" }], max_tokens: 10, fetchImpl });
+    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(body.max_tokens).toBe(10);
+  });
+
+  it("omits max_tokens when not provided", async () => {
+    const fetchImpl = makeOkFetch("ok");
+    await sendMessage({ messages: [{ role: "user", content: "hi" }], fetchImpl });
+    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect("max_tokens" in body).toBe(false);
+  });
 });

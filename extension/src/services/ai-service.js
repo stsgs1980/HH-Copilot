@@ -17,15 +17,26 @@ import { createLogger } from "../lib/anti-hallucination.js";
 import {
   OLLAMA_BASE_URL,
   OLLAMA_DEFAULT_MODEL,
+  OPENROUTER_BASE_URL,
   PROVIDER_CUSTOM,
   PROVIDER_OLLAMA,
+  PROVIDER_OPENROUTER,
   PROVIDER_ZAI,
   detectProvider,
   fetchOllamaModels,
+  fetchOpenRouterModels,
 } from "./ai-providers.js";
 import { sendOllamaNative } from "./ai-service-ollama.js";
 
-export { PROVIDER_CUSTOM, PROVIDER_OLLAMA, PROVIDER_ZAI, fetchOllamaModels };
+export {
+  OPENROUTER_BASE_URL,
+  PROVIDER_CUSTOM,
+  PROVIDER_OLLAMA,
+  PROVIDER_OPENROUTER,
+  PROVIDER_ZAI,
+  fetchOllamaModels,
+  fetchOpenRouterModels,
+};
 
 const aiLog = createLogger("AIService");
 const DEFAULT_BASE_URL = "https://internal-api.z.ai/v1";
@@ -68,7 +79,9 @@ export async function getAiConfig() {
       token: cfg.token || d.token,
       chatId: cfg.chatId || d.chatId,
       userId: cfg.userId || d.userId,
-      model: cfg.model || (provider === PROVIDER_OLLAMA ? OLLAMA_DEFAULT_MODEL : DEFAULT_MODEL),
+      model:
+        cfg.model ||
+        (provider === PROVIDER_OLLAMA ? OLLAMA_DEFAULT_MODEL : provider === PROVIDER_OPENROUTER ? "" : DEFAULT_MODEL),
       timeoutMs: clampTimeout(cfg.timeoutMs),
     };
   } catch (_e) {
@@ -103,6 +116,7 @@ export async function isAiAvailable() {
   const cfg = await getAiConfig();
   if (cfg.provider === PROVIDER_OLLAMA) return true;
   if (cfg.provider === PROVIDER_CUSTOM) return !!cfg.apiKey;
+  if (cfg.provider === PROVIDER_OPENROUTER) return !!cfg.apiKey;
   return !!(cfg.apiKey && cfg.token);
 }
 
@@ -112,6 +126,7 @@ export async function isAiAvailable() {
  * @param {Array<{role:string,content:string}>} params.messages
  * @param {string} [params.model]
  * @param {number} [params.temperature] -- 0..2, default 0.7
+ * @param {number} [params.max_tokens] -- passed through to provider body when a number
  * @param {number} [params.timeoutMs]
  * @param {Function} [params.fetchImpl] -- injectable for testing
  * @returns {Promise<{ok:boolean,text?:string,usage?:Object,error?:string,code?:string}>}
@@ -128,6 +143,9 @@ export async function sendMessage(params) {
     return { ok: false, error: "AI not configured (apiKey or token missing)", code: "NO_API_KEY" };
   }
   if (cfg.provider === PROVIDER_CUSTOM && !cfg.apiKey) {
+    return { ok: false, error: "AI not configured (apiKey missing)", code: "NO_API_KEY" };
+  }
+  if (cfg.provider === PROVIDER_OPENROUTER && !cfg.apiKey) {
     return { ok: false, error: "AI not configured (apiKey missing)", code: "NO_API_KEY" };
   }
 
@@ -149,6 +167,7 @@ export async function sendMessage(params) {
   if (cfg.provider === PROVIDER_ZAI) {
     body.thinking = { type: "disabled" };
   }
+  if (typeof params.max_tokens === "number") body.max_tokens = params.max_tokens;
 
   const url = cfg.baseUrl.replace(/\/$/, "") + "/chat/completions";
 
@@ -161,6 +180,10 @@ export async function sendMessage(params) {
     if (cfg.token) headers["X-Token"] = cfg.token;
   } else if (cfg.provider === PROVIDER_CUSTOM) {
     headers["Authorization"] = "Bearer " + cfg.apiKey;
+  } else if (cfg.provider === PROVIDER_OPENROUTER) {
+    headers["Authorization"] = "Bearer " + cfg.apiKey;
+    headers["HTTP-Referer"] = "https://github.com/stsgs1980/HH-Copilot";
+    headers["X-Title"] = "HH-Copilot";
   }
 
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;

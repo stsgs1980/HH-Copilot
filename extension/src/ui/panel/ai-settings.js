@@ -11,6 +11,7 @@
  * v1.9.78.0
  */
 
+import { PROVIDER_DEFAULTS } from "../../services/ai-providers.js";
 import { refs } from "../state.js";
 import { bindModelFetchHandler, bindProviderHandler, toggleZaiFields } from "./ai-settings-handlers.js";
 
@@ -63,12 +64,12 @@ export async function loadAiConfig(msgImpl) {
     ok: true,
     config: {
       provider: cfg.provider || "zai",
-      baseUrl: cfg.baseUrl || "https://internal-api.z.ai/v1",
-      apiKey: cfg.apiKey || "Z.ai",
+      baseUrl: cfg.baseUrl || PROVIDER_DEFAULTS.zai.baseUrl,
+      apiKey: cfg.apiKey || "",
       token: cfg.token || "",
       chatId: cfg.chatId || "",
       userId: cfg.userId || "",
-      model: cfg.model || "glm-4.5",
+      model: cfg.model || PROVIDER_DEFAULTS.zai.model,
       timeoutMs: cfg.timeoutMs || 60000,
     },
   };
@@ -96,12 +97,12 @@ export async function populateAiFields(msgImpl) {
   const result = await loadAiConfig(msgImpl);
   if (!result.ok) {
     setFieldValue(sr, "s-ai-provider", "zai");
-    setFieldValue(sr, "s-ai-base-url", "https://internal-api.z.ai/v1");
-    setFieldValue(sr, "s-ai-api-key", "Z.ai");
+    setFieldValue(sr, "s-ai-base-url", PROVIDER_DEFAULTS.zai.baseUrl);
+    setFieldValue(sr, "s-ai-api-key", "");
     setFieldValue(sr, "s-ai-token", "");
     setFieldValue(sr, "s-ai-chat-id", "");
     setFieldValue(sr, "s-ai-user-id", "");
-    setFieldValue(sr, "s-ai-model", "glm-4.5");
+    setFieldValue(sr, "s-ai-model", PROVIDER_DEFAULTS.zai.model);
     setFieldValue(sr, "s-ai-timeout", "60000");
     toggleZaiFields(sr, "zai");
     return false;

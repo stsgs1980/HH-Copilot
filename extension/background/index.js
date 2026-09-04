@@ -180,6 +180,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .then((models) => sendResponse({ ok: true, models }))
         .catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
       return true;
+
+    case "ai-fetch-openrouter-models":
+      fetchOpenRouterModels(message.baseUrl)
+        .then((models) => sendResponse({ ok: true, models }))
+        .catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
+      return true;
   }
 });
 
