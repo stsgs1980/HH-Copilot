@@ -25,7 +25,8 @@ jobs:
           cache-dependency-path: extension/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
+        # --force: EBADPLATFORM workaround for @esbuild optional platform packages (see 2f3b351)
+        run: npm ci --prefer-offline --no-audit --force
 
       - name: Run lint
         run: npm run lint
@@ -59,7 +60,8 @@ jobs:
           cache-dependency-path: extension/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
+        # --force: EBADPLATFORM workaround for @esbuild optional platform packages (see 2f3b351)
+        run: npm ci --prefer-offline --no-audit --force
 
       - name: Run lint
         run: npm run lint
