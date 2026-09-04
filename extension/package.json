@@ -1,6 +1,7 @@
 {
   "name": "hh-copilot",
   "version": "1.9.86.0",
+  "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.9",
