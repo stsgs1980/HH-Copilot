@@ -1,0 +1,2 @@
+node scripts/update-worklog.mjs
+exit 0

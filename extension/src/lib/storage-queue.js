@@ -5,6 +5,8 @@
  * Split from storage.js for anti-monolith compliance.
  */
 
+import { getStats } from "./storage-settings.js";
+
 // ===============================================
 // APPLIED VACANCIES TRACKING
 // ===============================================

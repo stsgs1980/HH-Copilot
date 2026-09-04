@@ -43,6 +43,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check:versions": "node scripts/version-sync.mjs",
+    "worklog": "node scripts/update-worklog.mjs",
     "prepare": "husky"
   }
 }

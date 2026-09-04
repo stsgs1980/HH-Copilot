@@ -9,6 +9,7 @@
 
 import { createLogger } from "./anti-hallucination.js";
 import { normalizeWs } from "./resume-constants.js";
+import { dedupElements, parseCardsInto, parseStepperFallback, parseUncoveredSteppers } from "./resume-dom-cells.js";
 import { parseCompanyCardFromDoc } from "./resume-fetch-parse.js";
 
 const helperLog = createLogger("ResumeFetch");

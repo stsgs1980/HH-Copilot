@@ -40,7 +40,7 @@ export default [
       ...js.configs.recommended.rules,
 
       // -- Relax rules that don't fit Chrome Extension patterns --------------
-      "no-undef": "warn", // Chrome APIs are global, not always detectable
+      "no-undef": "error",
       "no-unused-vars": [
         "warn",
         {

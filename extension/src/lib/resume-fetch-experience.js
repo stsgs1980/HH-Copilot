@@ -7,6 +7,7 @@
  * - Strategy 3: fallback -- all stepper items directly
  */
 
+import { dedupElements, parseCardsInto, parseStepperFallback, parseUncoveredSteppers } from "./resume-dom-cells.js";
 import { parseCompanyCardFromDoc } from "./resume-fetch-parse.js";
 
 /**
