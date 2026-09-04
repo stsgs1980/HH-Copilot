@@ -12,7 +12,13 @@
 
 import { createLogger } from "../lib/anti-hallucination.js";
 import rateLimiter from "../lib/rate-limiter.js";
-import { incrementApplied, isAlreadyApplied, markAsApplied } from "../lib/storage.js";
+import {
+  getSkippedVacancies,
+  incrementApplied,
+  isAlreadyApplied,
+  markAsApplied,
+  markAsSkipped,
+} from "../lib/storage.js";
 import {
   clickApplyButton,
   setActiveResumeForCoverLetter,
@@ -84,8 +90,8 @@ export async function continueApply(pending) {
   const applyResult = await clickApplyButton();
   if (!applyResult.clicked) {
     autoLog.error("Could not find/click apply button: " + applyResult.reason);
-    await markAsApplied(pending.vacancyId);
-    return { success: false, reason: applyResult.reason };
+    await markAsSkipped(pending.vacancyId, "no-apply-button: " + applyResult.reason);
+    return { success: false, reason: applyResult.reason, skipped: true };
   }
 
   // Wait for popup/modal to appear
@@ -93,10 +99,10 @@ export async function continueApply(pending) {
   const popupResult = await waitForPopupAndSubmit();
   if (!popupResult.success) {
     autoLog.warn("Popup handling: " + popupResult.reason);
-    // Even if popup submission failed, the click may have worked
-    await markAsApplied(pending.vacancyId);
+    // Click happened (action on hh.ru) but submission unconfirmed -- honest outcome
+    await markAsSkipped(pending.vacancyId, "popup-not-handled: " + popupResult.reason);
     rateLimiter.recordAction();
-    return { success: true, reason: "Клик выполнен (попап не обработан)" };
+    return { success: false, reason: popupResult.reason, skipped: true };
   }
 
   // Success!
@@ -132,21 +138,27 @@ export async function applyToAll(vacancies, minScore, resume) {
 
   if (eligible.length === 0) {
     autoLog.info("No eligible vacancies for mass apply");
-    return { processed: 0, reason: "Нет подходящих вакансий" };
+    return { processed: 0, skippedPreviously: 0, reason: "Нет подходящих вакансий" };
   }
 
   autoLog.info("Mass apply: " + eligible.length + " vacancies (score >= " + minScore + ")");
 
-  // Build queue with all eligible vacancies
+  // Build queue with all eligible vacancies.
+  // Single bulk read of skipped list (no per-item storage round-trips).
+  const skippedIds = new Set((await getSkippedVacancies()).map((s) => s && s.id));
+  const prevSkipped = [];
   const queue = [];
   for (const v of eligible) {
-    if (!(await isAlreadyApplied(v.id))) {
-      queue.push({ vacancyId: v.id, timestamp: Date.now() });
+    if (await isAlreadyApplied(v.id)) continue;
+    if (skippedIds.has(v.id)) {
+      prevSkipped.push(v);
+      continue;
     }
+    queue.push({ vacancyId: v.id, timestamp: Date.now() });
   }
 
   if (queue.length === 0) {
-    return { processed: 0, reason: "Все вакансии уже в очереди/откликнуты" };
+    return { processed: 0, skippedPreviously: prevSkipped.length, reason: "Все вакансии уже в очереди/откликнуты" };
   }
 
   await setQueue(queue);
@@ -157,12 +169,16 @@ export async function applyToAll(vacancies, minScore, resume) {
   const rateCheck = await rateLimiter.check();
   if (!rateCheck.allowed) {
     autoLog.warn("Rate limit: " + rateCheck.reason);
-    return { processed: 0, reason: rateCheck.reason };
+    return { processed: 0, skippedPreviously: prevSkipped.length, reason: rateCheck.reason };
   }
 
   // Navigate to first vacancy
   const url = "https://hh.ru/vacancy/" + first.vacancyId;
   autoLog.info("Starting mass apply, navigating to: " + url);
   window.location.href = url;
-  return { processed: 0, reason: "Переход на первую вакансию (очередь: " + queue.length + ")" };
+  return {
+    processed: 0,
+    skippedPreviously: prevSkipped.length,
+    reason: "Переход на первую вакансию (очередь: " + queue.length + ")",
+  };
 }

@@ -35,6 +35,40 @@ export async function markAsApplied(id) {
 }
 
 // ===============================================
+// SKIPPED VACANCIES TRACKING
+// ===============================================
+
+export async function getSkippedVacancies() {
+  try {
+    const d = await chrome.storage.local.get("skippedVacancies");
+    const arr = d.skippedVacancies || [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (_e) {
+    return [];
+  }
+}
+
+export async function isAlreadySkipped(id) {
+  const arr = await getSkippedVacancies();
+  return arr.some((s) => s && s.id === id);
+}
+
+export async function markAsSkipped(vacancyId, reason) {
+  try {
+    const d = await chrome.storage.local.get("skippedVacancies");
+    const arr = Array.isArray(d.skippedVacancies) ? d.skippedVacancies : [];
+    if (!arr.find((s) => s && s.id === vacancyId)) {
+      arr.push({ id: vacancyId, reason: reason || "unknown", ts: new Date().toISOString() });
+      await chrome.storage.local.set({ skippedVacancies: arr });
+    }
+    const stats = await getStats();
+    stats.skipsToday = (stats.skipsToday || 0) + 1;
+    stats.lastActivity = new Date().toISOString();
+    await chrome.storage.local.set({ stats });
+  } catch (_e) {}
+}
+
+// ===============================================
 // MY RESUMES (multiple)
 // ===============================================
 
