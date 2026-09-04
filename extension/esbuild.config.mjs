@@ -4,7 +4,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 
 const isWatch = process.argv.includes("--watch");
 const isProd = process.argv.includes("--production");
-const DIST = "dist";
+const DIST = process.env.DIST || "dist";
 
 // Read version from manifest.json — single source of truth
 const manifest = JSON.parse(readFileSync("manifest.json", "utf8"));

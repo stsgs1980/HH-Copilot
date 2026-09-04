@@ -4,6 +4,7 @@
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@vitest/coverage-v8": "^4.1.9",
     "@vitest/ui": "^4.1.9",
     "esbuild": "^0.24.0",
@@ -17,7 +18,9 @@
   "private": true,
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "build:dev": "node ../scripts/build-dev.mjs",
     "build:prod": "node esbuild.config.mjs --production",
+    "mock": "node ../scripts/serve-mock.mjs",
     "watch": "node esbuild.config.mjs --watch",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -36,3 +36,7 @@ hh_*.json
 
 # Map files (esbuild generated)
 *.map
+
+# Playwright E2E
+e2e/screenshots/
+e2e/test-results/
