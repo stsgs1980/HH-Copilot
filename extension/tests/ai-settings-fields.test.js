@@ -53,7 +53,7 @@ describe("F5.6 -- populateAiFields", () => {
     });
     const ok = await populateAiFields();
     expect(ok).toBe(false);
-    expect(refs.shadowRoot.getElementById("s-ai-base-url").value).toBe("https://internal-api.z.ai/v1");
+    expect(refs.shadowRoot.getElementById("s-ai-base-url").value).toBe("https://api.z.ai/api/paas/v4");
     expect(refs.shadowRoot.getElementById("s-ai-api-key").value).toBe("");
     expect(refs.shadowRoot.getElementById("s-ai-token").value).toBe("");
     expect(refs.shadowRoot.getElementById("s-ai-chat-id").value).toBe("");

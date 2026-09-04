@@ -39,7 +39,7 @@ export {
 };
 
 const aiLog = createLogger("AIService");
-const DEFAULT_BASE_URL = "https://internal-api.z.ai/v1";
+const DEFAULT_BASE_URL = "https://api.z.ai/api/paas/v4";
 const DEFAULT_TIMEOUT_MS = 60000;
 const DEFAULT_MODEL = "glm-4.5";
 const MIN_TIMEOUT_MS = 5000;
@@ -58,7 +58,20 @@ export const AI_CONFIG_KEY = "aiConfig";
 export async function getAiConfig() {
   try {
     const data = await chrome.storage.local.get(AI_CONFIG_KEY);
-    const cfg = data[AI_CONFIG_KEY] || {};
+    let cfg = data[AI_CONFIG_KEY];
+    if (!cfg || typeof cfg !== "object") cfg = {};
+    // Migration v1 -> v2 (issue #11): internal-api.z.ai is gone.
+    // Rewrite stored legacy baseUrl to the public endpoint. Custom URLs
+    // (not equal to legacy) pass through untouched.
+    const LEGACY_ZAI_BASE_URL = "https://internal-api.z.ai/v1";
+    if (
+      (cfg.provider === PROVIDER_ZAI || !cfg.provider) &&
+      typeof cfg.baseUrl === "string" &&
+      cfg.baseUrl.replace(/\/+$/, "") === LEGACY_ZAI_BASE_URL
+    ) {
+      cfg = { ...cfg, baseUrl: DEFAULT_BASE_URL };
+      chrome.storage.local.set({ [AI_CONFIG_KEY]: cfg }).catch(() => {});
+    }
     const useDefaults = !cfg.__test_no_defaults;
     const baseUrl = cfg.baseUrl || DEFAULT_BASE_URL;
     const provider = cfg.provider || detectProvider(baseUrl);
@@ -174,10 +187,9 @@ export async function sendMessage(params) {
   const headers = { "Content-Type": "application/json" };
   if (cfg.provider === PROVIDER_ZAI) {
     headers["Authorization"] = "Bearer " + cfg.apiKey;
-    headers["X-Z-AI-From"] = "Z";
-    if (cfg.chatId) headers["X-Chat-Id"] = cfg.chatId;
-    if (cfg.userId) headers["X-User-Id"] = cfg.userId;
-    if (cfg.token) headers["X-Token"] = cfg.token;
+    if (cfg.token) headers["X-Token"] = cfg.token; // legacy, only if set
+    if (cfg.chatId) headers["X-Chat-Id"] = cfg.chatId; // legacy
+    if (cfg.userId) headers["X-User-Id"] = cfg.userId; // legacy
   } else if (cfg.provider === PROVIDER_CUSTOM) {
     headers["Authorization"] = "Bearer " + cfg.apiKey;
   } else if (cfg.provider === PROVIDER_OPENROUTER) {

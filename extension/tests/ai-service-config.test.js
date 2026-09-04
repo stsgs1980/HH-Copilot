@@ -99,7 +99,7 @@ function makeNetworkErrFetch(msg = "Network failed") {
 beforeEach(() => {
   installChromeStub({
     [AI_CONFIG_KEY]: {
-      baseUrl: "https://internal-api.z.ai/v1",
+      baseUrl: "https://api.z.ai/api/paas/v4",
       apiKey: "test-key",
       token: "test-jwt",
       chatId: "chat-test",
@@ -111,7 +111,7 @@ describe("F4.2 -- config", () => {
   it("getAiConfig returns built-in defaults when no config in storage", async () => {
     installChromeStub({});
     const cfg = await getAiConfig();
-    expect(cfg.baseUrl).toBe("https://internal-api.z.ai/v1");
+    expect(cfg.baseUrl).toBe("https://api.z.ai/api/paas/v4");
     expect(cfg.apiKey).toBe(""); // no built-in defaults
     expect(cfg.token).toBe(""); // no built-in JWT
     expect(cfg.model).toBe("glm-4.5");
@@ -120,11 +120,11 @@ describe("F4.2 -- config", () => {
 
   it("setAiConfig merges partial", async () => {
     const store = installChromeStub({
-      [AI_CONFIG_KEY]: { baseUrl: "https://internal-api.z.ai/v1", apiKey: "old", token: "old-jwt" },
+      [AI_CONFIG_KEY]: { baseUrl: "https://api.z.ai/api/paas/v4", apiKey: "old", token: "old-jwt" },
     });
     await setAiConfig({ apiKey: "new" });
     expect(store[AI_CONFIG_KEY].apiKey).toBe("new");
-    expect(store[AI_CONFIG_KEY].baseUrl).toBe("https://internal-api.z.ai/v1");
+    expect(store[AI_CONFIG_KEY].baseUrl).toBe("https://api.z.ai/api/paas/v4");
     // token is preserved
     expect(store[AI_CONFIG_KEY].token).toBe("old-jwt");
   });
@@ -188,7 +188,7 @@ describe("F4.2 -- sendMessage success", () => {
     });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, opts] = fetchImpl.mock.calls[0];
-    expect(url).toBe("https://internal-api.z.ai/v1/chat/completions");
+    expect(url).toBe("https://api.z.ai/api/paas/v4/chat/completions");
     expect(opts.method).toBe("POST");
     expect(opts.headers["Authorization"]).toBe("Bearer test-key");
     expect(opts.headers["Content-Type"]).toBe("application/json");

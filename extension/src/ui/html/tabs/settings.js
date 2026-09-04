@@ -32,7 +32,7 @@ function settingsAI() {
       </div>
       <div>
         <label for="s-ai-base-url" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Base URL</label>
-        <input type="text" id="s-ai-base-url" value="https://internal-api.z.ai/v1" placeholder="https://api.example.com/v1" aria-label="AI API base URL" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <input type="text" id="s-ai-base-url" value="https://api.z.ai/api/paas/v4" placeholder="https://api.example.com/v1" aria-label="AI API base URL" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
       </div>
       <div>
         <label for="s-ai-api-key" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">API Key</label>

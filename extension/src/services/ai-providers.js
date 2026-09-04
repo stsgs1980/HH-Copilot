@@ -22,7 +22,7 @@ export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
  * (base URL prefill, api key placeholder, default model).
  */
 export const PROVIDER_DEFAULTS = {
-  zai: { baseUrl: "https://internal-api.z.ai/v1", apiKey: "", model: "glm-4.5" },
+  zai: { baseUrl: "https://api.z.ai/api/paas/v4", apiKey: "", model: "glm-4.5" },
   ollama: { baseUrl: "http://localhost:11434/v1", apiKey: "", model: "llama3" },
   custom: { baseUrl: "", apiKey: "", model: "" },
   openrouter: { baseUrl: "https://openrouter.ai/api/v1", apiKey: "", model: "" },

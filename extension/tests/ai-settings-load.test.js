@@ -60,7 +60,7 @@ describe("F5.6 -- loadAiConfig", () => {
     });
     const res = await loadAiConfig();
     expect(res.ok).toBe(true);
-    expect(res.config.baseUrl).toBe("https://internal-api.z.ai/v1");
+    expect(res.config.baseUrl).toBe("https://api.z.ai/api/paas/v4");
     expect(res.config.apiKey).toBe(""); // no fake stub key (#8)
     expect(res.config.token).toBe(""); // empty (user must paste their JWT)
     expect(res.config.model).toBe("glm-4.5");

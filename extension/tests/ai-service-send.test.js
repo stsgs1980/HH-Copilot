@@ -99,7 +99,7 @@ function makeNetworkErrFetch(msg = "Network failed") {
 beforeEach(() => {
   installChromeStub({
     [AI_CONFIG_KEY]: {
-      baseUrl: "https://internal-api.z.ai/v1",
+      baseUrl: "https://api.z.ai/api/paas/v4",
       apiKey: "test-key",
       token: "test-jwt",
       chatId: "chat-test",
