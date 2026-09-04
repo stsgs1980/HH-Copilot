@@ -6479,3 +6479,110 @@ Stage Summary:
 - New: eslint.config.js, eslint-rules/ (2 files)
 - Modified: package.json, package-lock.json, scripts/check-file-length.mjs
 - Commit: 9a307b5
+
+Task ID: auto-2026-09-04-16
+Agent: main
+Task: Validator — inverted skill whitelist + humanizer split (#16)
+
+Work Log:
+
+- 3ff2cfe fix(validator): inverted skill whitelist — any capitalized latin token not in evidence/skills/STOP now warns (Angular/Vue/PHP hallucinations caught; old list had only 27)
+  Root cause of audit finding: whitelist checked only 27 hardcoded skills; C++/C# were unreachable (regex excluded +)
+  Humanizer (AI patterns + boldface strip) extracted to cover-letter-humanizer.js — validator under 250-line cap
+  NAME_INTRO_RE limited to name only; sentence-boundary truncation; warning dedup
+
+Stage Summary:
+
+- Commits: 3ff2cfe
+
+---
+
+Task ID: auto-2026-09-04-14-13
+Agent: main
+Task: Scoring data quality — salary ranges, skill boundaries, tenure intervals (#12–#14)
+
+Work Log:
+
+- 517d039 fix(salary): «от X до Y» lost max (parsed as min-only); en/em dashes glued range digits; whitelist cleanup instead of char-class deletion («1.5 млн» → 15)
+- cdf2089 fix(skills): whole-word boundaries — «Go» no longer matches «Google»; start boundary blocks letters/digits/#/+. end blocks only latin (cyrillic morphology preserved: /продаж/ matches «продажами»)
+- 5307cfd fix(experience): parse period strings to intervals, union merge — parallel jobs 2020–2023 give 3 years, not 6; fallback to duration-sum when <2 parseable
+  NBSP hypothesis from #12 disproved during implementation (JS \s covers \u00A0/\u202F) — real bugs were different
+
+Stage Summary:
+
+- Commits: 517d039, cdf2089, 5307cfd
+
+---
+
+Task ID: auto-2026-09-04-8
+Agent: main
+Task: Unified LLM service — OpenRouter provider, orphan semantic fixed (#8)
+
+Work Log:
+
+- b221c50 feat(llm): OpenRouter as first-class provider (detect, headers, free-models fetch)
+  Root cause: ai-semantic.js was a separate stack — hardcoded Groq URL + private aiApiKey, ignoring provider config; privacy contract broken (Ollama users leaked resume to Groq)
+  ai-semantic routed through sendMessage(): one config, one key; max_tokens passthrough added
+  PROVIDER_DEFAULTS single source (was 3 copies); fake «Z.ai» default key removed; model tags via createElement (innerHTML XSS pattern fixed); baseUrl readonly for openrouter
+
+Stage Summary:
+
+- Commits: b221c50
+
+---
+
+Task ID: auto-2026-09-04-11
+Agent: main
+Task: Z.ai public API v4 migration + storage self-healing (#11)
+
+Work Log:
+
+- 110c3be fix(llm): DEFAULT_BASE_URL → api.z.ai/api/paas/v4; getAiConfig one-time rewrite of stored legacy internal-api baseUrl (trailing-slash tolerant, custom URLs untouched)
+  Live smoke: 429 code 1113 «Insufficient balance» — endpoint valid, key needs balance (user path = OpenRouter free)
+- d6195e3 chore: .npmrc force=true deleted (EBADPLATFORM experiment) — warning gone locally
+- bde5e40 ci: --force scoped to workflow after CI proved EBADPLATFORM alive (@esbuild/openharmony-arm64); issue #18 tracks root cause
+
+Stage Summary:
+
+- Commits: 110c3be, d6195e3, bde5e40
+
+---
+
+Task ID: auto-2026-09-04-9
+Agent: main
+Task: Semantic scoring opt-in + flexible weight fixes (#9)
+
+Work Log:
+
+- dd0b563 feat(privacy): s-semantic-optin toggle, default OFF — resume fragments go to external LLM only after explicit consent
+  FIX: location now scaled by profile (flexible gave raw 15 instead of 5)
+  FIX: flexible_semantic profile (title 25 + semantic 20) replaces stacking semantic on top of full 100 — profiles sum exactly
+  Discovery: flexible mode has zero callers; matchMode selector unconsumed — wiring deferred, contract (mode, opts) ready
+- 495cc2d fix: background import fetchOpenRouterModels (was ReferenceError on model fetch)
+
+Stage Summary:
+
+- Commits: dd0b563, 495cc2d
+
+---
+
+Task ID: auto-2026-09-04-10
+Agent: main
+Task: Honest apply engine + user control — confirm, dry-run, audit (#10)
+
+Work Log:
+
+- adfb80c fix(engine): continueApply failure paths marked vacancies as applied without applying — markAsSkipped introduced (skippedVacancies audit format); popup-fail now success:false
+  Root cause: silent data corruption — skipped vacancies dropped from future runs, stats lied
+  rate-limiter state hydrated from storage: min-interval/burst/adaptive survive content-script navigation (were per-page only due to state loss)
+- e4a23b4 feat(engine): applyToAll split previewApplyAll+startApplyAll; batch confirm dialog wired to existing confirmBeforeApply (was default-only, no consumer); dry-run mode (s-dry-run): buttons found, nothing clicked, no counters; audit log senders to existing background «log» handler (cap-500 ring was unused)
+  collectPersonalTexts imports restored (e99ccdd) — regression from e62a7b5 dom-cells refactor, esbuild doesn't flag free identifiers; caught in live run
+
+Stage Summary:
+
+- Commits: adfb80c, e4a23b4, e99ccdd, 4688cec, 978afc0
+  Plus: E2E harness (playwright, live chromium with loaded extension, page.route hh.ru intercept), local mock stand (serve-mock :8080, build:dev dist-dev with dev manifest)
+
+---
+
+Commit: 978afc0
