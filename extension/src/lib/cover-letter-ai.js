@@ -107,6 +107,16 @@ export async function generateAICoverLetter(vacancy, resume, opts) {
 
   aiLetterLog.info("Generated letter: " + finalText.length + " chars | warnings=" + validation.warnings.length);
 
+  if (validation.ok === false) {
+    return {
+      ok: false,
+      text: finalText,
+      method: "ai",
+      warnings: validation.warnings,
+      reason: "validation-failed",
+    };
+  }
+
   return {
     ok: true,
     text: finalText,

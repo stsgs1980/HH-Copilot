@@ -118,3 +118,47 @@ describe("F-CR-02 -- validateLetter: AI patterns (humanizer)", () => {
     expect(r.warnings.some((w) => /AI_PATTERN/i.test(w))).toBe(false);
   });
 });
+
+describe("inverted skill whitelist (#16)", () => {
+  it("catches Angular hallucination (was silently passed)", () => {
+    const result = validateLetter(
+      "Опыт с React и Angular в высоконагруженных проектах.",
+      [{ competency: "React", evidenceText: "5 лет React" }],
+      ["React"],
+    );
+    expect(result.warnings).toContain("UNVERIFIED_SKILL: Angular");
+    expect(result.ok).toBe(false);
+  });
+
+  it("known skills do not warn", () => {
+    const result = validateLetter(
+      "Работал с React, Go и Docker.",
+      [{ competency: "React", evidenceText: "5 лет React" }],
+      ["React", "Go", "Docker"],
+    );
+    expect(result.warnings.filter((w) => w.startsWith("UNVERIFIED_SKILL")).length).toBe(0);
+    expect(result.ok).toBe(true);
+  });
+
+  it("C++ is now reachable (was unreachable in old whitelist)", () => {
+    const result = validateLetter("Пишу на C++ профессионально.", [], ["C++"]);
+    expect(result.ok).toBe(true);
+  });
+
+  it("C++ hallucination is caught", () => {
+    const result = validateLetter("Пишу на C++ в проектах.", [], ["Java"]);
+    expect(result.warnings).toContain("UNVERIFIED_SKILL: C++");
+  });
+
+  it("STOP words do not warn", () => {
+    const result = validateLetter("I am the best candidate for the role.", [], []);
+    expect(result.warnings.filter((w) => w.startsWith("UNVERIFIED_SKILL")).length).toBe(0);
+  });
+
+  it("name intro preserved beyond 40 chars (positioning phrase kept)", () => {
+    const text =
+      "Здравствуйте, меня зовут Мария, я ведущий backend-разработчик с 8 годами опыта в fintech. Работала с React.";
+    const result = validateLetter(text, [{ competency: "React", evidenceText: "React" }], ["React"]);
+    expect(result.text).toContain("backend-разработчик");
+  });
+});

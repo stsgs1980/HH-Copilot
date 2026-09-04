@@ -98,7 +98,7 @@ describe("F-CR-02 -- generateAICoverLetter", () => {
     isAiAvailable.mockResolvedValue(true);
     sendMessage.mockResolvedValue({
       ok: true,
-      text: "Здравствуйте! React 3 года, TypeScript. Готов к интервью.",
+      text: "Здравствуйте! Работал с React и TypeScript. Готов к интервью.",
       usage: { total_tokens: 100 },
     });
     const r = await generateAICoverLetter(baseVacancy, baseResume, { tone: "formal" });
