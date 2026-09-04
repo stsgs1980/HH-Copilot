@@ -5,6 +5,7 @@
  */
 
 import { createLogger } from "../../lib/anti-hallucination.js";
+import { collectPersonalTexts } from "../../lib/resume-dom-cells.js";
 
 const _resumeLog = createLogger("Resume");
 

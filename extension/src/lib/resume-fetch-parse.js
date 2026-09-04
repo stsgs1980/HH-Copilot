@@ -7,7 +7,7 @@
  */
 
 export { parseContactsFromDoc } from "./resume-fetch-parse-contacts.js";
-import { parseCardHead, parseStepperJob } from "./resume-dom-cells.js";
+import { collectPersonalTexts, parseCardHead, parseStepperJob } from "./resume-dom-cells.js";
 
 // ===============================================
 // COMPANY CARD PARSER
