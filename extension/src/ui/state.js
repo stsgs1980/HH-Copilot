@@ -34,6 +34,7 @@ export const panelState = {
     logging: true,
     shadowDOM: true,
     matchMode: "precise",
+    semanticOptIn: false,
   },
   logs: [],
   dailyStats: {

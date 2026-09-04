@@ -229,4 +229,17 @@ function bindInputChanges(container) {
       window.dispatchEvent(new CustomEvent("hh-ar-match-mode-changed", { detail: { mode } }));
     });
   }
+
+  /* Semantic scoring opt-in toggle change (issue #9, default OFF) */
+  const semanticOptInEl = container.querySelector("#s-semantic-optin");
+  if (semanticOptInEl) {
+    semanticOptInEl.addEventListener("change", async (e) => {
+      const on = !!e.target.checked;
+      const data = await chrome.storage.local.get("settings");
+      const settings = data.settings || {};
+      settings.semanticOptIn = on;
+      await chrome.storage.local.set({ settings });
+      panelState.settings.semanticOptIn = on;
+    });
+  }
 }

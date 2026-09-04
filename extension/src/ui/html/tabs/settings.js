@@ -67,6 +67,7 @@ function settingsAI() {
         <input type="number" id="s-ai-timeout" value="60000" min="5000" max="600000" step="1000" placeholder="60000" aria-label="AI request timeout in milliseconds" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
         <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">5 000--180 000 мс. Если AI отвечает медленно -- увеличь до 90 000--120 000.</div>
       </div>
+      ${settingToggle("Семантический скоринг (AI)", "Отправляет фрагменты резюме во внешний LLM. Выключено -- только локальные эвристики, данные не покидают браузер", "s-semantic-optin", false)}
       <div id="s-ai-status" style="font-size:11px;padding:6px 8px;border-radius:6px;display:none;"></div>
       <div style="font-size:10px;color:#71717A;line-height:1.4;">Изменения сохраняются автоматически (debounce 500 мс). Поля хранятся в chrome.storage.local под ключом aiConfig.</div>
     </div>

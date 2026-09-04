@@ -58,6 +58,7 @@ export function renderSettingsValues() {
   chk("s-logging", panelState.settings.logging);
   chk("s-shadow-dom", panelState.settings.shadowDOM);
   set("s-match-mode", panelState.settings.matchMode || "precise");
+  chk("s-semantic-optin", panelState.settings.semanticOptIn === true);
 }
 
 function declension(n, forms) {

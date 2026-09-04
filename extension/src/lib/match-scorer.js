@@ -9,12 +9,15 @@
  *   - match-scorer-experience.js  -> experience match (0-10)
  *   - match-scorer-location.js    -> location fit (0-15)
  *
- * Score breakdown (0-100):
+ * Score breakdown (0-100, precise profile):
  *   skills     0-35
  *   title      0-25
  *   salary     0-15
  *   experience 0-10
  *   location   0-15
+ *
+ * flexible: title 45 replaces skills weight; flexible_semantic (opt-in):
+ * semantic takes 20 from title (25+20=45). All profiles sum to 100.
  *
  * v1.9.23.0: split from monolith into 4 focused modules
  * v1.9.72.0: added location dimension, rebalanced weights (F7.2)
@@ -39,9 +42,11 @@ const scoreLog = createLogger("Scorer");
 const WEIGHT_PROFILES = {
   precise: { skills: 35, title: 25, salary: 15, experience: 10, location: 15 },
   flexible: { title: 45, experience: 20, salary: 15, skills: 15, location: 5 },
+  // semantic REPLACES part of title weight (25+20=45) -- profile sums to 100
+  flexible_semantic: { title: 25, experience: 20, salary: 15, skills: 15, location: 5, semantic: 20 },
 };
 
-export async function computeMatchScore(resume, vacancy, mode = "precise") {
+export async function computeMatchScore(resume, vacancy, mode = "precise", opts = {}) {
   if (!resume || !vacancy) {
     return {
       total: 0,
@@ -50,10 +55,12 @@ export async function computeMatchScore(resume, vacancy, mode = "precise") {
     };
   }
 
-  const profile = WEIGHT_PROFILES[mode] || WEIGHT_PROFILES.precise;
+  const useSemantic = mode === "flexible" && (opts || {}).semanticOptIn === true;
+  const profile =
+    WEIGHT_PROFILES[mode === "flexible" && useSemantic ? "flexible_semantic" : mode] || WEIGHT_PROFILES.precise;
 
   let semanticScore = 0;
-  if (mode === "flexible") {
+  if (useSemantic) {
     semanticScore = await computeSemanticSimilarity(resume, vacancy);
   }
 
@@ -68,8 +75,8 @@ export async function computeMatchScore(resume, vacancy, mode = "precise") {
     title: Math.round(titleResult.score * (profile.title / 30)),
     salary: Math.round(salaryResult.score * (profile.salary / 15)),
     experience: Math.round(expResult.score * (profile.experience / 15)),
-    location: locResult.score,
-    semantic: mode === "flexible" ? Math.round(semanticScore * 45) : 0,
+    location: Math.round(locResult.score * (profile.location / 15)),
+    semantic: profile.semantic ? Math.round(semanticScore * profile.semantic) : 0,
   };
 
   let total = Math.min(
