@@ -13,6 +13,7 @@
  */
 
 import { generateChatReply, generateCoverLetterAI } from "../src/services/ai-helpers.js";
+import { fetchZenModels } from "../src/services/ai-providers.js";
 import { sendMessage as aiSendMessage, getAiConfig, isAiAvailable, setAiConfig } from "../src/services/ai-service.js";
 
 // --- Install / Update --------------------------

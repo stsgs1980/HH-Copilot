@@ -13,9 +13,16 @@
  */
 
 import { createLogger } from "../lib/anti-hallucination.js";
-import { PROVIDER_CUSTOM, PROVIDER_ZEN, ZEN_DEFAULT_MODEL, detectProvider, fetchZenModels } from "./ai-providers.js";
+import {
+  PROVIDER_CUSTOM,
+  PROVIDER_ZEN,
+  ZEN_BASE_URL,
+  ZEN_DEFAULT_MODEL,
+  detectProvider,
+  fetchZenModels,
+} from "./ai-providers.js";
 
-export { PROVIDER_CUSTOM, PROVIDER_ZEN, ZEN_DEFAULT_MODEL, fetchZenModels };
+export { PROVIDER_CUSTOM, PROVIDER_ZEN, ZEN_BASE_URL, ZEN_DEFAULT_MODEL, fetchZenModels };
 
 const aiLog = createLogger("AIService");
 const DEFAULT_TIMEOUT_MS = 60000;
