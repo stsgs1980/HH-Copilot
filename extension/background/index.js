@@ -13,7 +13,6 @@
  */
 
 import { generateChatReply, generateCoverLetterAI } from "../src/services/ai-helpers.js";
-import { fetchOllamaModels, fetchOpenRouterModels } from "../src/services/ai-providers.js";
 import { sendMessage as aiSendMessage, getAiConfig, isAiAvailable, setAiConfig } from "../src/services/ai-service.js";
 
 // --- Install / Update --------------------------
@@ -175,14 +174,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       isAiAvailable().then(sendResponse);
       return true;
 
-    case "ai-fetch-ollama-models":
-      fetchOllamaModels(message.baseUrl)
-        .then((models) => sendResponse({ ok: true, models }))
-        .catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
-      return true;
-
-    case "ai-fetch-openrouter-models":
-      fetchOpenRouterModels(message.baseUrl)
+    case "ai-fetch-zen-models":
+      fetchZenModels(message.baseUrl)
         .then((models) => sendResponse({ ok: true, models }))
         .catch((e) => sendResponse({ ok: false, error: e.message, models: [] }));
       return true;

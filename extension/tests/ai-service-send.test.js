@@ -99,11 +99,10 @@ function makeNetworkErrFetch(msg = "Network failed") {
 beforeEach(() => {
   installChromeStub({
     [AI_CONFIG_KEY]: {
-      baseUrl: "https://api.z.ai/api/paas/v4",
+      provider: "zen",
+      baseUrl: "https://opencode.ai/zen/v1",
       apiKey: "test-key",
-      token: "test-jwt",
-      chatId: "chat-test",
-      userId: "user-test",
+      model: "mimo-v2.5-free",
     },
   });
 });
@@ -114,18 +113,8 @@ describe("F4.2 -- sendMessage error paths", () => {
     expect(res.code).toBe("BAD_INPUT");
   });
 
-  it("returns NO_API_KEY when no key configured (both apiKey and token empty, defaults disabled)", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "", token: "", __test_no_defaults: true } });
-    const res = await sendMessage({
-      messages: [{ role: "user", content: "x" }],
-      fetchImpl: makeOkFetch("x"),
-    });
-    expect(res.ok).toBe(false);
-    expect(res.code).toBe("NO_API_KEY");
-  });
-
-  it("returns NO_API_KEY when token missing but apiKey present (defaults disabled)", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "", __test_no_defaults: true } });
+  it("returns NO_API_KEY when no key configured (apiKey empty, defaults disabled)", async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "", __test_no_defaults: true } });
     const res = await sendMessage({
       messages: [{ role: "user", content: "x" }],
       fetchImpl: makeOkFetch("x"),
@@ -172,7 +161,7 @@ describe("F4.2 -- sendMessage error paths", () => {
   });
 
   it("uses aiConfig.timeoutMs when params.timeoutMs not provided", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 120000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: 120000 } });
     const fetchImpl = makeAbortFetch();
     await sendMessage({ messages: [{ role: "user", content: "x" }], fetchImpl });
     // AbortController fires after the configured timeout; for the test we only
@@ -185,7 +174,7 @@ describe("F4.2 -- sendMessage error paths", () => {
   });
 
   it("params.timeoutMs overrides aiConfig.timeoutMs", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 120000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: 120000 } });
     const fetchImpl = makeAbortFetch();
     const res = await sendMessage({
       messages: [{ role: "user", content: "x" }],

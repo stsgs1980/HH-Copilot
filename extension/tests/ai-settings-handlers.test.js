@@ -2,10 +2,10 @@
 /**
  * TESTS: AI settings UI panel module (F5.6)
  * Covers:
- *   - loadAiConfig: success (3 shapes), BG error, no chrome.runtime
+ *   - loadAiConfig: success (2 shapes), BG error, no chrome.runtime
  *   - saveAiConfig: success, BAD_INPUT, BG error
- *   - populateAiFields: populates 3 fields, defaults on BG error, no shadowRoot
- *   - readAiFields: reads 3 fields from DOM
+ *   - populateAiFields: populates 4 fields, defaults on BG error, no shadowRoot
+ *   - readAiFields: reads 4 fields from DOM
  *   - bindAiSettingsHandlers: debounce, partial save on input
  *   - internal helpers: setFieldValue, getFieldValue
  */
@@ -152,14 +152,11 @@ describe("F5.6 -- internal helpers", () => {
     expect(_internal.getFieldValue(sr, "nope")).toBe("");
   });
 
-  it("AI_FIELD_IDS has exactly 8 ids (provider, baseUrl, apiKey, token, chatId, userId, model, timeout)", () => {
-    expect(_internal.AI_FIELD_IDS).toHaveLength(8);
+  it("AI_FIELD_IDS has exactly 5 ids (provider, baseUrl, apiKey, model, timeout)", () => {
+    expect(_internal.AI_FIELD_IDS).toHaveLength(5);
     expect(_internal.AI_FIELD_IDS).toContain("s-ai-provider");
     expect(_internal.AI_FIELD_IDS).toContain("s-ai-base-url");
     expect(_internal.AI_FIELD_IDS).toContain("s-ai-api-key");
-    expect(_internal.AI_FIELD_IDS).toContain("s-ai-token");
-    expect(_internal.AI_FIELD_IDS).toContain("s-ai-chat-id");
-    expect(_internal.AI_FIELD_IDS).toContain("s-ai-user-id");
     expect(_internal.AI_FIELD_IDS).toContain("s-ai-model");
     expect(_internal.AI_FIELD_IDS).toContain("s-ai-timeout");
   });
@@ -168,11 +165,9 @@ describe("F5.6 -- internal helpers", () => {
 function makeShadowRootWithFields(values) {
   const div = document.createElement("div");
   div.innerHTML = `
+    <input id="s-ai-provider" value="">
     <input id="s-ai-base-url" value="">
     <input id="s-ai-api-key" value="">
-    <textarea id="s-ai-token"></textarea>
-    <input id="s-ai-chat-id" value="">
-    <input id="s-ai-user-id" value="">
     <input id="s-ai-model" value="">
     <input id="s-ai-timeout" value="">
   `;

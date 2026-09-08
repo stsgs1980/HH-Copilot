@@ -62,24 +62,21 @@ function makeOkFetch(text) {
 }
 
 describe("F4.2 -- legacy baseUrl migration (#11)", () => {
-  it("migrates stored legacy baseUrl and rewrites storage", async () => {
-    const { store, setCalls } = installSpyingStub({
-      provider: "zai",
-      baseUrl: "https://internal-api.z.ai/v1",
+  it("passes through legacy baseUrl without migration", async () => {
+    const { setCalls } = installSpyingStub({
+      provider: "zen",
+      baseUrl: "https://opencode.ai/zen/v1",
       apiKey: "k",
-      token: "t",
     });
     const cfg = await getAiConfig();
-    expect(cfg.baseUrl).toBe("https://api.z.ai/api/paas/v4");
-    expect(setCalls).toHaveLength(1);
-    expect(setCalls[0][AI_CONFIG_KEY].baseUrl).toBe("https://api.z.ai/api/paas/v4");
-    expect(store[AI_CONFIG_KEY].baseUrl).toBe("https://api.z.ai/api/paas/v4");
+    expect(cfg.baseUrl).toBe("https://opencode.ai/zen/v1");
+    expect(setCalls).toHaveLength(0);
   });
 
-  it("migrates legacy baseUrl with trailing slash", async () => {
-    installSpyingStub({ provider: "zai", baseUrl: "https://internal-api.z.ai/v1/" });
+  it("passes through legacy baseUrl with trailing slash", async () => {
+    installSpyingStub({ provider: "zen", baseUrl: "https://opencode.ai/zen/v1/" });
     const cfg = await getAiConfig();
-    expect(cfg.baseUrl).toBe("https://api.z.ai/api/paas/v4");
+    expect(cfg.baseUrl).toBe("https://opencode.ai/zen/v1/");
   });
 
   it("leaves custom baseUrl untouched, no storage write", async () => {
@@ -93,43 +90,26 @@ describe("F4.2 -- legacy baseUrl migration (#11)", () => {
     expect(setCalls).toHaveLength(0);
   });
 
-  it("migrates legacy baseUrl without stored provider", async () => {
-    installSpyingStub({ baseUrl: "https://internal-api.z.ai/v1" });
+  it("detects provider from zen baseUrl", async () => {
+    installSpyingStub({ baseUrl: "https://opencode.ai/zen/v1" });
     const cfg = await getAiConfig();
-    expect(cfg.provider).toBe("zai");
-    expect(cfg.baseUrl).toBe("https://api.z.ai/api/paas/v4");
+    expect(cfg.provider).toBe("zen");
+    expect(cfg.baseUrl).toBe("https://opencode.ai/zen/v1");
   });
 });
 
-describe("F4.2 -- ZAI request headers (#11)", () => {
-  it("sends Bearer auth without X-Z-AI-From", async () => {
+describe("F4.2 -- Zen request headers (#11)", () => {
+  it("sends Bearer auth", async () => {
     installChromeStub({
       [AI_CONFIG_KEY]: {
-        provider: "zai",
-        baseUrl: "https://api.z.ai/api/paas/v4",
+        provider: "zen",
+        baseUrl: "https://opencode.ai/zen/v1",
         apiKey: "k",
-        token: "t",
       },
     });
     const fetchImpl = makeOkFetch("ok");
     await sendMessage({ messages: [{ role: "user", content: "hi" }], fetchImpl });
     const headers = fetchImpl.mock.calls[0][1].headers;
     expect(headers["Authorization"]).toBe("Bearer k");
-    expect("X-Z-AI-From" in headers).toBe(false);
-  });
-
-  it("keeps legacy X-Token when token is set", async () => {
-    installChromeStub({
-      [AI_CONFIG_KEY]: {
-        provider: "zai",
-        baseUrl: "https://api.z.ai/api/paas/v4",
-        apiKey: "k",
-        token: "legacy-jwt",
-      },
-    });
-    const fetchImpl = makeOkFetch("ok");
-    await sendMessage({ messages: [{ role: "user", content: "hi" }], fetchImpl });
-    const headers = fetchImpl.mock.calls[0][1].headers;
-    expect(headers["X-Token"]).toBe("legacy-jwt");
   });
 });

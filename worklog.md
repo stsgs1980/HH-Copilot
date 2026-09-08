@@ -6605,3 +6605,25 @@ Stage Summary:
 ---
 
 Commit: 3c32d41
+
+Task ID: auto-2026-09-04-misc
+Agent: main
+Task: [DRAFT] fix(lint): no-undef as error, restore 9 missing imports
+
+Work Log:
+
+- cfe1075 fix(lint): no-undef as error, restore 9 missing imports
+  [DRAFT] supplemented by user before commit
+
+Stage Summary:
+
+- Commits: cfe1075
+- .husky/pre-push | 2 +
+- e2e/fixtures/hh-mock.html | 27 ++--
+- extension/eslint.config.mjs | 2 +-
+- extension/src/lib/resume-fetch-experience.js | 1 +
+- extension/src/lib/resume-fetch-iframe-helpers.js | 1 +
+
+---
+
+Commit: cfe1075

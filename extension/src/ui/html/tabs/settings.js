@@ -23,49 +23,32 @@ function settingsAI() {
       <div>
         <label for="s-ai-provider" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Провайдер</label>
         <select id="s-ai-provider" aria-label="AI provider" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;">
-          <option value="zai">Z.ai (облачный)</option>
-          <option value="ollama">Ollama (локальный)</option>
-          <option value="openrouter">OpenRouter (free models)</option>
+          <option value="zen">OpenCode Zen (free models)</option>
           <option value="custom">Custom OpenAI-compatible</option>
         </select>
-        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">Z.ai -- из коробки. Ollama -- запусти <code>ollama serve</code> и скачай модель. Custom -- любой OpenAI-совместимый API.</div>
+        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">OpenCode Zen -- бесплатные модели (mimo-v2.5-free). Custom -- любой OpenAI-совместимый API.</div>
       </div>
       <div>
         <label for="s-ai-base-url" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Base URL</label>
-        <input type="text" id="s-ai-base-url" value="https://api.z.ai/api/paas/v4" placeholder="https://api.example.com/v1" aria-label="AI API base URL" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+        <input type="text" id="s-ai-base-url" value="" placeholder="https://api.example.com/v1" aria-label="AI API base URL" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
       </div>
       <div>
         <label for="s-ai-api-key" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">API Key</label>
         <input type="text" id="s-ai-api-key" value="" placeholder="API ключ" aria-label="AI API key" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
-        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">API ключ провайдера. Для Z.ai оставь "Z.ai". Для Custom впиши ключ.</div>
-      </div>
-      <div id="s-ai-zai-fields">
-        <div style="margin-bottom:10px;">
-          <label for="s-ai-token" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Token (JWT)</label>
-          <textarea id="s-ai-token" rows="2" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." aria-label="ZAI JWT token" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;resize:vertical;"></textarea>
-          <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">JWT-токен из z.ai web chat. Если AI перестал работать с ошибкой HTTP 401 -- токен истёк, обнови его: открой <a href="https://chat.z.ai" target="_blank" rel="noopener">chat.z.ai</a> -> F12 -> Application -> Local Storage -> найди "token" -> скопируй значение сюда.</div>
-        </div>
-        <div style="margin-bottom:10px;">
-          <label for="s-ai-chat-id" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-Chat-Id</label>
-          <input type="text" id="s-ai-chat-id" value="" placeholder="chat-xxxxxxxx-xxxx-..." aria-label="ZAI chat id" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;">
-        </div>
-        <div>
-          <label for="s-ai-user-id" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">X-User-Id</label>
-          <input type="text" id="s-ai-user-id" value="" placeholder="xxxxxxxx-xxxx-xxxx-..." aria-label="ZAI user id" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:11px;font-family:monospace;">
-        </div>
+        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">API ключ провайдера.</div>
       </div>
       <div>
         <label for="s-ai-model" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Model</label>
         <div style="display:flex;gap:6px;">
-          <input type="text" id="s-ai-model" value="glm-4.5" placeholder="glm-4.5" aria-label="AI model name" style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
-          <button type="button" id="s-ai-fetch-models" class="btn btn-outline btn-sm" style="white-space:nowrap;font-size:11px;padding:7px 10px;" title="Загрузить список моделей из Ollama">Загрузить</button>
+          <input type="text" id="s-ai-model" value="" placeholder="model-name" aria-label="AI model name" style="flex:1;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
+          <button type="button" id="s-ai-fetch-models" class="btn btn-outline btn-sm" style="white-space:nowrap;font-size:11px;padding:7px 10px;" title="Загрузить список моделей из Zen">Загрузить</button>
         </div>
         <div id="s-ai-model-list" style="margin-top:4px;font-size:10px;color:#71717A;"></div>
       </div>
       <div>
         <label for="s-ai-timeout" style="font-size:12px;font-weight:500;display:block;margin-bottom:4px;">Timeout (мс)</label>
         <input type="number" id="s-ai-timeout" value="60000" min="5000" max="600000" step="1000" placeholder="60000" aria-label="AI request timeout in milliseconds" style="width:100%;padding:7px 10px;border:1px solid #e4e4e7;border-radius:8px;font-size:12px;font-family:monospace;">
-        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">5 000--180 000 мс. Если AI отвечает медленно -- увеличь до 90 000--120 000.</div>
+        <div style="font-size:10px;color:#71717A;margin-top:3px;line-height:1.4;">5 000--600 000 мс. Если AI отвечает медленно -- увеличь до 90 000--120 000.</div>
       </div>
       ${settingToggle("Семантический скоринг (AI)", "Отправляет фрагменты резюме во внешний LLM. Выключено -- только локальные эвристики, данные не покидают браузер", "s-semantic-optin", false)}
       <div id="s-ai-status" style="font-size:11px;padding:6px 8px;border-radius:6px;display:none;"></div>

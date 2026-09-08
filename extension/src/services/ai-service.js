@@ -1,57 +1,26 @@
-/* eslint-disable ahg-rules/max-file-lines */
 /**
  * SERVICES: AI SERVICE (F4.2)
  * =========================================
  * Thin fetch-based client for chat completions API.
- * Supports multiple providers: Z.ai, Ollama (local), and custom OpenAI-compatible.
+ * Supports providers: OpenCode Zen (free models) and custom OpenAI-compatible.
  *
  * Provider detection delegated to ai-providers.js.
  *
  * Anti-hallucination: NEVER throws; always returns { ok:false, error, code }.
  *   EMPTY / NETWORK / TIMEOUT / HTTP_<status> / RATE_LIMIT / NO_API_KEY / BAD_JSON
  *
- * v1.9.78.0
+ * v1.9.87.0
  */
 
 import { createLogger } from "../lib/anti-hallucination.js";
-import {
-  OLLAMA_BASE_URL,
-  OLLAMA_DEFAULT_MODEL,
-  OPENROUTER_BASE_URL,
-  PROVIDER_CUSTOM,
-  PROVIDER_OLLAMA,
-  PROVIDER_OPENROUTER,
-  PROVIDER_ZAI,
-  detectProvider,
-  fetchOllamaModels,
-  fetchOpenRouterModels,
-} from "./ai-providers.js";
-import { sendOllamaNative } from "./ai-service-ollama.js";
+import { PROVIDER_CUSTOM, PROVIDER_ZEN, ZEN_DEFAULT_MODEL, detectProvider, fetchZenModels } from "./ai-providers.js";
 
-export {
-  OPENROUTER_BASE_URL,
-  PROVIDER_CUSTOM,
-  PROVIDER_OLLAMA,
-  PROVIDER_OPENROUTER,
-  PROVIDER_ZAI,
-  fetchOllamaModels,
-  fetchOpenRouterModels,
-};
+export { PROVIDER_CUSTOM, PROVIDER_ZEN, ZEN_DEFAULT_MODEL, fetchZenModels };
 
 const aiLog = createLogger("AIService");
-const DEFAULT_BASE_URL = "https://api.z.ai/api/paas/v4";
 const DEFAULT_TIMEOUT_MS = 60000;
-const DEFAULT_MODEL = "glm-4.5";
 const MIN_TIMEOUT_MS = 5000;
 const MAX_TIMEOUT_MS = 600000;
-
-const OLLAMA_DEFAULTS = Object.freeze({
-  provider: PROVIDER_OLLAMA,
-  apiKey: "",
-  token: "",
-  chatId: "",
-  userId: "",
-});
 
 export const AI_CONFIG_KEY = "aiConfig";
 
@@ -60,52 +29,22 @@ export async function getAiConfig() {
     const data = await chrome.storage.local.get(AI_CONFIG_KEY);
     let cfg = data[AI_CONFIG_KEY];
     if (!cfg || typeof cfg !== "object") cfg = {};
-    // Migration v1 -> v2 (issue #11): internal-api.z.ai is gone.
-    // Rewrite stored legacy baseUrl to the public endpoint. Custom URLs
-    // (not equal to legacy) pass through untouched.
-    const LEGACY_ZAI_BASE_URL = "https://internal-api.z.ai/v1";
-    if (
-      (cfg.provider === PROVIDER_ZAI || !cfg.provider) &&
-      typeof cfg.baseUrl === "string" &&
-      cfg.baseUrl.replace(/\/+$/, "") === LEGACY_ZAI_BASE_URL
-    ) {
-      cfg = { ...cfg, baseUrl: DEFAULT_BASE_URL };
-      chrome.storage.local.set({ [AI_CONFIG_KEY]: cfg }).catch(() => {});
-    }
-    const useDefaults = !cfg.__test_no_defaults;
-    const baseUrl = cfg.baseUrl || DEFAULT_BASE_URL;
-    const provider = cfg.provider || detectProvider(baseUrl);
-
-    let d;
-    if (provider === PROVIDER_OLLAMA) {
-      d = useDefaults ? OLLAMA_DEFAULTS : { apiKey: "", token: "", chatId: "", userId: "" };
-    } else if (provider === PROVIDER_CUSTOM) {
-      d = { apiKey: "", token: "", chatId: "", userId: "" };
-    } else {
-      d = { apiKey: "", token: "", chatId: "", userId: "" };
-    }
+    const provider = cfg.provider || detectProvider(cfg.baseUrl);
+    const baseUrl = cfg.baseUrl || (provider === PROVIDER_ZEN ? ZEN_BASE_URL : "");
 
     return {
       provider,
-      baseUrl: provider === PROVIDER_OLLAMA ? cfg.baseUrl || OLLAMA_BASE_URL : baseUrl,
-      apiKey: cfg.apiKey || d.apiKey,
-      token: cfg.token || d.token,
-      chatId: cfg.chatId || d.chatId,
-      userId: cfg.userId || d.userId,
-      model:
-        cfg.model ||
-        (provider === PROVIDER_OLLAMA ? OLLAMA_DEFAULT_MODEL : provider === PROVIDER_OPENROUTER ? "" : DEFAULT_MODEL),
+      baseUrl,
+      apiKey: cfg.apiKey || "",
+      model: cfg.model || (provider === PROVIDER_ZEN ? ZEN_DEFAULT_MODEL : ""),
       timeoutMs: clampTimeout(cfg.timeoutMs),
     };
   } catch (_e) {
     return {
-      provider: PROVIDER_ZAI,
-      baseUrl: DEFAULT_BASE_URL,
+      provider: PROVIDER_CUSTOM,
+      baseUrl: "",
       apiKey: "",
-      token: "",
-      chatId: "",
-      userId: "",
-      model: DEFAULT_MODEL,
+      model: "",
       timeoutMs: DEFAULT_TIMEOUT_MS,
     };
   }
@@ -114,7 +53,7 @@ export async function getAiConfig() {
 function clampTimeout(ms) {
   const n = Number(ms);
   if (!Number.isFinite(n) || n <= 0) return DEFAULT_TIMEOUT_MS;
-  return Math.min(MAX_TIMEOUT_MS, Math.max(MIN_TIMEOUT_MS, Math.floor(n)));
+  return Math.min(MAX_TIMEOUT_MS, Math.max(MIN_TIMEOUT_MS, Math.floor(ms)));
 }
 
 export async function setAiConfig(partial) {
@@ -127,10 +66,9 @@ export async function setAiConfig(partial) {
 
 export async function isAiAvailable() {
   const cfg = await getAiConfig();
-  if (cfg.provider === PROVIDER_OLLAMA) return true;
+  if (cfg.provider === PROVIDER_ZEN) return !!cfg.apiKey;
   if (cfg.provider === PROVIDER_CUSTOM) return !!cfg.apiKey;
-  if (cfg.provider === PROVIDER_OPENROUTER) return !!cfg.apiKey;
-  return !!(cfg.apiKey && cfg.token);
+  return false;
 }
 
 /**
@@ -152,51 +90,28 @@ export async function sendMessage(params) {
 
   const cfg = await getAiConfig();
 
-  if (cfg.provider === PROVIDER_ZAI && (!cfg.apiKey || !cfg.token)) {
-    return { ok: false, error: "AI not configured (apiKey or token missing)", code: "NO_API_KEY" };
-  }
-  if (cfg.provider === PROVIDER_CUSTOM && !cfg.apiKey) {
+  if (cfg.provider === PROVIDER_ZEN && !cfg.apiKey) {
     return { ok: false, error: "AI not configured (apiKey missing)", code: "NO_API_KEY" };
   }
-  if (cfg.provider === PROVIDER_OPENROUTER && !cfg.apiKey) {
+  if (cfg.provider === PROVIDER_CUSTOM && !cfg.apiKey) {
     return { ok: false, error: "AI not configured (apiKey missing)", code: "NO_API_KEY" };
   }
 
   const timeoutMs = clampTimeout(params.timeoutMs || cfg.timeoutMs) || DEFAULT_TIMEOUT_MS;
   const fetchImpl = params.fetchImpl || fetch;
 
-  // Ollama: use native /api/chat endpoint (no CORS issues)
-  if (cfg.provider === PROVIDER_OLLAMA) {
-    return sendOllamaNative(messages, params.model || cfg.model, params.temperature, timeoutMs, fetchImpl, cfg.baseUrl);
-  }
-
-  // Z.ai and Custom: use OpenAI-compatible /v1/chat/completions
   const body = {
     messages,
     model: params.model || cfg.model,
     temperature: typeof params.temperature === "number" ? params.temperature : 0.7,
     stream: false,
   };
-  if (cfg.provider === PROVIDER_ZAI) {
-    body.thinking = { type: "disabled" };
-  }
   if (typeof params.max_tokens === "number") body.max_tokens = params.max_tokens;
 
   const url = cfg.baseUrl.replace(/\/$/, "") + "/chat/completions";
 
   const headers = { "Content-Type": "application/json" };
-  if (cfg.provider === PROVIDER_ZAI) {
-    headers["Authorization"] = "Bearer " + cfg.apiKey;
-    if (cfg.token) headers["X-Token"] = cfg.token; // legacy, only if set
-    if (cfg.chatId) headers["X-Chat-Id"] = cfg.chatId; // legacy
-    if (cfg.userId) headers["X-User-Id"] = cfg.userId; // legacy
-  } else if (cfg.provider === PROVIDER_CUSTOM) {
-    headers["Authorization"] = "Bearer " + cfg.apiKey;
-  } else if (cfg.provider === PROVIDER_OPENROUTER) {
-    headers["Authorization"] = "Bearer " + cfg.apiKey;
-    headers["HTTP-Referer"] = "https://github.com/stsgs1980/HH-Copilot";
-    headers["X-Title"] = "HH-Copilot";
-  }
+  headers["Authorization"] = "Bearer " + cfg.apiKey;
 
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
   const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;

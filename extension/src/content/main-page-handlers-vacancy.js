@@ -56,7 +56,11 @@ export async function handleVacancySearchPage() {
     new MutationObserver(() => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        if (!window.location.pathname.startsWith("/search/vacancy")) return;
+        if (
+          !window.location.pathname.startsWith("/search/vacancy") &&
+          !window.location.pathname.startsWith("/vacancies")
+        )
+          return;
         abortVacancyFetch();
         const fresh = await parseVacanciesFromPage(panelState.resume);
         await enrichFromCache(fresh, panelState.resume);

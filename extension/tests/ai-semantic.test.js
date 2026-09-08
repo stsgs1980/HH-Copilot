@@ -56,9 +56,9 @@ describe("computeSemanticSimilarity", () => {
     expect(result).toBeLessThanOrEqual(1);
   });
 
-  it("clamps values outside 0-1 range (openrouter aiConfig)", async () => {
+  it("clamps values outside 0-1 range (zen aiConfig)", async () => {
     installChromeStub({
-      aiConfig: { provider: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKey: "k" },
+      aiConfig: { provider: "zen", baseUrl: "https://opencode.ai/zen/v1", apiKey: "k" },
     });
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -117,9 +117,9 @@ describe("computeSemanticSimilarity", () => {
     expect(result).toBe(0);
   });
 
-  it("sends through unified ai-service (openrouter, no groq leftovers)", async () => {
+  it("sends through unified ai-service (zen, no groq leftovers)", async () => {
     installChromeStub({
-      aiConfig: { provider: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKey: "k" },
+      aiConfig: { provider: "zen", baseUrl: "https://opencode.ai/zen/v1", apiKey: "k" },
     });
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -137,7 +137,7 @@ describe("computeSemanticSimilarity", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toContain("openrouter.ai");
+    expect(url).toContain("opencode.ai");
     expect(opts.method).toBe("POST");
     expect(opts.headers["Authorization"]).toBe("Bearer k");
     const body = JSON.parse(opts.body);
@@ -149,7 +149,7 @@ describe("computeSemanticSimilarity", () => {
 
   it("handles missing optional fields (prompt has N/A fallbacks)", async () => {
     installChromeStub({
-      aiConfig: { provider: "openrouter", baseUrl: "https://openrouter.ai/api/v1", apiKey: "k" },
+      aiConfig: { provider: "zen", baseUrl: "https://opencode.ai/zen/v1", apiKey: "k" },
     });
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

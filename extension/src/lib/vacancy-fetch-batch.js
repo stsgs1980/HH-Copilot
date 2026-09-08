@@ -10,7 +10,6 @@ import { createLogger } from "./anti-hallucination.js";
 import { saveVacancyDetail, saveVacancyScore } from "./storage-vacancies.js";
 import { gaussianDelay } from "./timing.js";
 import { enrichVacancy, isDetailFresh } from "./vacancy-fetch-enrichment.js";
-import { fetchVacancyViaIframe } from "./vacancy-fetch-iframe.js";
 import { fetchVacancyViaText } from "./vacancy-fetch-text.js";
 
 const batchLog = createLogger("VacFetch");
@@ -47,16 +46,9 @@ export function sortVacanciesByScore(vacancies) {
 export async function fetchWithFallback(url, vacancyId) {
   let detail = null;
   try {
-    detail = await fetchVacancyViaIframe(url);
+    detail = await fetchVacancyViaText(url);
   } catch (err) {
-    batchLog.warn("Iframe failed for " + vacancyId + ": " + err.message);
-  }
-  if (!detail) {
-    try {
-      detail = await fetchVacancyViaText(url);
-    } catch (err) {
-      batchLog.warn("Text fetch failed for " + vacancyId + ": " + err.message);
-    }
+    batchLog.warn("Text fetch failed for " + vacancyId + ": " + err.message);
   }
   return detail;
 }

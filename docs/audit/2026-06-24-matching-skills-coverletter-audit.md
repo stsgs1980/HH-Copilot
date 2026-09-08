@@ -175,7 +175,7 @@ word-boundary enforcement.
 
 **RF-J — Validator skill whitelist misses most tech names.**
 `cover-letter-validator.js:92`. A hallucinated "Vue"/"Angular"/"Spring"
-(not in evidence, not in resume.skills) is **not flagged** -> letter
+(not in evidence, not in resume.skills) is **not flagged** → letter
 ships with `ok:true`. Large hole.
 
 ### MEDIUM

@@ -42,6 +42,8 @@
     "test": "cd extension && npm test",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "build:dev": "node scripts/build-dev.mjs",
+    "debug:chrome": "node scripts/build-dev.mjs && start \"\" \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --remote-debugging-port=9222 --no-first-run --disable-features=Translate --load-extension=\"%CD%\\extension\\dist-dev\" --user-data-dir=\"%CD%\\chrome-debug-profile\" https://hh.ru/search/vacancy?text=frontend",
     "check:versions": "node scripts/version-sync.mjs",
     "worklog": "node scripts/update-worklog.mjs",
     "prepare": "husky"

@@ -30,7 +30,7 @@ describe("AI Service Error Handling", () => {
 
     expect(result.ok).toBe(false);
     expect(result.code).toBe("NO_API_KEY"); // no built-in defaults
-    expect(result.error).toBe("AI not configured (apiKey or token missing)");
+    expect(result.error).toBe("AI not configured (apiKey missing)");
   });
 
   test("should handle invalid JSON response", async () => {

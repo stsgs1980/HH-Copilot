@@ -2,10 +2,10 @@
 /**
  * TESTS: AI settings UI panel module (F5.6)
  * Covers:
- *   - loadAiConfig: success (3 shapes), BG error, no chrome.runtime
+ *   - loadAiConfig: success (2 shapes), BG error, no chrome.runtime
  *   - saveAiConfig: success, BAD_INPUT, BG error
- *   - populateAiFields: populates 3 fields, defaults on BG error, no shadowRoot
- *   - readAiFields: reads 3 fields from DOM
+ *   - populateAiFields: populates 4 fields, defaults on BG error, no shadowRoot
+ *   - readAiFields: reads 4 fields from DOM
  *   - bindAiSettingsHandlers: debounce, partial save on input
  *   - internal helpers: setFieldValue, getFieldValue
  */
@@ -36,10 +36,14 @@ describe("F5.6 -- populateAiFields", () => {
   it("populates the 4 fields from loaded config", async () => {
     refs.shadowRoot = makeShadowRootWithFields();
     chrome.runtime.sendMessage.mockImplementation((msg, cb) => {
-      cb({ ok: true, config: { baseUrl: "https://b/v1", apiKey: "kk", model: "mm", timeoutMs: 75000 } });
+      cb({
+        ok: true,
+        config: { provider: "zen", baseUrl: "https://b/v1", apiKey: "kk", model: "mm", timeoutMs: 75000 },
+      });
     });
     const ok = await populateAiFields();
     expect(ok).toBe(true);
+    expect(refs.shadowRoot.getElementById("s-ai-provider").value).toBe("zen");
     expect(refs.shadowRoot.getElementById("s-ai-base-url").value).toBe("https://b/v1");
     expect(refs.shadowRoot.getElementById("s-ai-api-key").value).toBe("kk");
     expect(refs.shadowRoot.getElementById("s-ai-model").value).toBe("mm");
@@ -53,12 +57,10 @@ describe("F5.6 -- populateAiFields", () => {
     });
     const ok = await populateAiFields();
     expect(ok).toBe(false);
-    expect(refs.shadowRoot.getElementById("s-ai-base-url").value).toBe("https://api.z.ai/api/paas/v4");
+    expect(refs.shadowRoot.getElementById("s-ai-provider").value).toBe("zen");
+    expect(refs.shadowRoot.getElementById("s-ai-base-url").value).toBe("");
     expect(refs.shadowRoot.getElementById("s-ai-api-key").value).toBe("");
-    expect(refs.shadowRoot.getElementById("s-ai-token").value).toBe("");
-    expect(refs.shadowRoot.getElementById("s-ai-chat-id").value).toBe("");
-    expect(refs.shadowRoot.getElementById("s-ai-user-id").value).toBe("");
-    expect(refs.shadowRoot.getElementById("s-ai-model").value).toBe("glm-4.5");
+    expect(refs.shadowRoot.getElementById("s-ai-model").value).toBe("");
     expect(refs.shadowRoot.getElementById("s-ai-timeout").value).toBe("60000");
   });
 
@@ -72,12 +74,14 @@ describe("F5.6 -- populateAiFields", () => {
 describe("F5.6 -- readAiFields", () => {
   it("reads 4 field values from DOM", () => {
     refs.shadowRoot = makeShadowRootWithFields({
+      "s-ai-provider": "custom",
       "s-ai-base-url": "https://r/v1",
       "s-ai-api-key": "rk",
       "s-ai-model": "rm",
       "s-ai-timeout": "120000",
     });
     const cfg = readAiFields();
+    expect(cfg.provider).toBe("custom");
     expect(cfg.baseUrl).toBe("https://r/v1");
     expect(cfg.apiKey).toBe("rk");
     expect(cfg.model).toBe("rm");
@@ -86,6 +90,7 @@ describe("F5.6 -- readAiFields", () => {
 
   it("falls back to 60000 when timeout field is empty or invalid", () => {
     refs.shadowRoot = makeShadowRootWithFields({
+      "s-ai-provider": "zen",
       "s-ai-base-url": "https://r/v1",
       "s-ai-api-key": "rk",
       "s-ai-model": "rm",
@@ -108,11 +113,9 @@ describe("F5.6 -- readAiFields", () => {
 function makeShadowRootWithFields(values) {
   const div = document.createElement("div");
   div.innerHTML = `
+    <input id="s-ai-provider" value="">
     <input id="s-ai-base-url" value="">
     <input id="s-ai-api-key" value="">
-    <textarea id="s-ai-token"></textarea>
-    <input id="s-ai-chat-id" value="">
-    <input id="s-ai-user-id" value="">
     <input id="s-ai-model" value="">
     <input id="s-ai-timeout" value="">
   `;

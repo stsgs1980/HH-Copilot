@@ -8,18 +8,18 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { detectProvider, fetchOpenRouterModels } from "../src/services/ai-providers.js";
+import { detectProvider, fetchZenModels } from "../src/services/ai-providers.js";
 import { sendMessage } from "../src/services/ai-service.js";
 
-function installOpenRouterChromeStub() {
+function installZenChromeStub() {
   globalThis.chrome = {
     storage: {
       local: {
         async get() {
           return {
             aiConfig: {
-              provider: "openrouter",
-              baseUrl: "https://openrouter.ai/api/v1",
+              provider: "zen",
+              baseUrl: "https://opencode.ai/zen/v1",
               apiKey: "test-key",
             },
           };
@@ -33,9 +33,9 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("#8 -- detectProvider: openrouter", () => {
-  it('detectProvider("https://openrouter.ai/api/v1") === "openrouter"', () => {
-    expect(detectProvider("https://openrouter.ai/api/v1")).toBe("openrouter");
+describe("#8 -- detectProvider: zen", () => {
+  it('detectProvider("https://opencode.ai/zen/v1") === "zen"', () => {
+    expect(detectProvider("https://opencode.ai/zen/v1")).toBe("zen");
   });
 
   it('detectProvider("https://api.groq.com/...") === "custom" (no regression)', () => {
@@ -43,26 +43,26 @@ describe("#8 -- detectProvider: openrouter", () => {
   });
 });
 
-describe("#8 -- fetchOpenRouterModels", () => {
+describe("#8 -- fetchZenModels", () => {
   it("maps data[].id list", async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: true,
-      json: async () => ({ data: [{ id: "a/b:free" }, { id: "c/d" }] }),
+      json: async () => ({ data: [{ id: "mimo-v2.5-free" }, { id: "gpt-4" }] }),
     }));
-    const models = await fetchOpenRouterModels("https://openrouter.ai/api/v1", fetchImpl);
-    expect(models).toEqual(["a/b:free", "c/d"]);
+    const models = await fetchZenModels("https://opencode.ai/zen/v1", fetchImpl);
+    expect(models).toEqual(["mimo-v2.5-free", "gpt-4"]);
   });
 
   it("resp.ok=false -> []", async () => {
     const fetchImpl = vi.fn(async () => ({ ok: false, status: 500 }));
-    const models = await fetchOpenRouterModels("https://openrouter.ai/api/v1", fetchImpl);
+    const models = await fetchZenModels("https://opencode.ai/zen/v1", fetchImpl);
     expect(models).toEqual([]);
   });
 });
 
-describe("#8 -- sendMessage with openrouter", () => {
-  it("posts to openrouter /chat/completions with Bearer key + Referer", async () => {
-    installOpenRouterChromeStub();
+describe("#8 -- sendMessage with zen", () => {
+  it("posts to zen /chat/completions with Bearer key", async () => {
+    installZenChromeStub();
     let seenUrl = "";
     let seenHeaders = {};
     const fetchImpl = vi.fn(async (url, opts) => {
@@ -77,8 +77,7 @@ describe("#8 -- sendMessage with openrouter", () => {
     const r = await sendMessage({ messages: [{ role: "user", content: "hi" }], fetchImpl });
     expect(r.ok).toBe(true);
     expect(r.text).toBe("hello");
-    expect(seenUrl).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(seenUrl).toBe("https://opencode.ai/zen/v1/chat/completions");
     expect(seenHeaders["Authorization"]).toBe("Bearer test-key");
-    expect(seenHeaders["HTTP-Referer"]).toBeTruthy();
   });
 });

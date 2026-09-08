@@ -119,7 +119,7 @@ function onSPANavigate(newPath) {
 async function routeToHandler(path) {
   pageLog.info("Routing: " + path);
 
-  if (path.startsWith("/search/vacancy")) {
+  if (path.startsWith("/search/vacancy") || path.startsWith("/vacancies")) {
     await handleVacancySearchPage();
   } else if (/^\/resume\/[a-f0-9]+/.test(path)) {
     await handleResumeDetailPage(path);

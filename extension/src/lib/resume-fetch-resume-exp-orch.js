@@ -7,7 +7,6 @@
  * Split from resume-fetch-resume.js for anti-monolith compliance.
  */
 import { createLogger } from "./anti-hallucination.js";
-import { VISIBILITY_HIDDEN, VISIBILITY_UNKNOWN, VISIBILITY_VISIBLE } from "./resume-constants.js";
 import { parseExperienceFromDocStrategies1to3 } from "./resume-fetch-experience.js";
 import { parseExperienceFromHtmlText } from "./resume-fetch-strategy4-text.js";
 import { parseExperienceFromScripts } from "./resume-fetch-strategy5-scripts.js";
@@ -66,19 +65,9 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
   }
 
   // Strategy 6: Fetch expanded experience via AJAX/API endpoints
-  // ALSO returns iframe-based visibility detection (most reliable -- from hydrated DOM)
-  let iframeVis = null;
-  let iframeVisTrace = null;
-  let iframeDiag = null;
   if (html && entries.length > 0 && entries.length < 20) {
     try {
       const s6result = await fetchExpandedExperience(doc, html, resume.id, entries.length, resumeUrl);
-      // Always capture iframe visibility even if entries didn't increase
-      if (s6result.iframeVis) {
-        iframeVis = s6result.iframeVis;
-        iframeVisTrace = s6result.iframeVisTrace;
-        iframeDiag = s6result.iframeDiag || null;
-      }
       if (s6result.entries && s6result.entries.length > entries.length) {
         expLog.info(
           "Strategy 6 (expanded fetch): found " + s6result.entries.length + " experiences (was " + entries.length + ")",
@@ -95,70 +84,4 @@ export async function parseExperienceFromDoc(doc, dbg, resume, html, resumeUrl) 
   resume.experience = entries;
   if (entries.length > 0) resume._debug.found.push("experience: " + entries.length);
   else resume._debug.missing.push("experience (0 entries)");
-
-  // === IFRAME VISIBILITY OVERRIDE ===
-  // The iframe loaded the fully-hydrated React DOM, which contains visibility
-  // indicators that SSR HTML lacks. iframeVis is the MOST RELIABLE source.
-  applyIframeVisibilityOverride(resume, iframeVis, iframeVisTrace, iframeDiag);
-}
-
-/**
- * Apply iframe visibility override to the resume object.
- * iframe HIDDEN always overrides previous decision;
- * iframe VISIBLE overrides UNKNOWN only.
- */
-function applyIframeVisibilityOverride(resume, iframeVis, iframeVisTrace, iframeDiag) {
-  if (!iframeVis) return;
-
-  const prevVis = resume.visibility;
-  const prevReason = resume._visDiag?.decisionReason || "";
-
-  if (iframeVis === VISIBILITY_HIDDEN && prevVis !== VISIBILITY_HIDDEN) {
-    expLog.info(
-      "[VIS-DIAG] iframe OVERRIDE: " +
-        (resume.id ? resume.id.substring(0, 8) : "?") +
-        " was " +
-        prevVis +
-        ", iframe says HIDDEN -> overriding",
-    );
-    resume.visibility = VISIBILITY_HIDDEN;
-    resume.hidden = true;
-    if (resume._visDiag) {
-      resume._visDiag.decision = VISIBILITY_HIDDEN;
-      resume._visDiag.decisionReason = "iframe-detected-hidden (overrode " + prevVis + ", was: " + prevReason + ")";
-      resume._visDiag.pageTrace = (resume._visDiag.pageTrace || []).concat(iframeVisTrace || []);
-    }
-  } else if (iframeVis === VISIBILITY_VISIBLE && prevVis === VISIBILITY_UNKNOWN) {
-    expLog.info(
-      "[VIS-DIAG] iframe OVERRIDE: " +
-        (resume.id ? resume.id.substring(0, 8) : "?") +
-        " was UNKNOWN, iframe says VISIBLE -> overriding",
-    );
-    resume.visibility = VISIBILITY_VISIBLE;
-    resume.hidden = false;
-    if (resume._visDiag) {
-      resume._visDiag.decision = VISIBILITY_VISIBLE;
-      resume._visDiag.decisionReason = "iframe-detected-visible (overrode UNKNOWN, was: " + prevReason + ")";
-      resume._visDiag.pageTrace = (resume._visDiag.pageTrace || []).concat(iframeVisTrace || []);
-    }
-  } else {
-    expLog.info(
-      "[VIS-DIAG] iframe CONFIRMED: " +
-        (resume.id ? resume.id.substring(0, 8) : "?") +
-        " is " +
-        prevVis +
-        ", iframe agrees (" +
-        iframeVis +
-        ")",
-    );
-    if (resume._visDiag && iframeVisTrace) {
-      resume._visDiag.pageTrace = (resume._visDiag.pageTrace || []).concat(iframeVisTrace);
-    }
-  }
-  // Mark that iframe was executed + store iframe diagnostic data
-  if (resume._visDiag) {
-    resume._visDiag.iframeRan = true;
-    resume._visDiag.iframeVis = iframeVis;
-    if (iframeDiag) resume._visDiag.iframeDiag = iframeDiag;
-  }
 }

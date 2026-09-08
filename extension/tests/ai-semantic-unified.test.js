@@ -4,21 +4,21 @@
  * ===========================================================
  * computeSemanticSimilarity tested through the REAL sendMessage
  * (no vi.mock of ai-service) with globalThis.fetch stubbed.
- * Config: OpenRouter aiConfig from chrome.storage stub.
+ * Config: Zen aiConfig from chrome.storage stub.
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { computeSemanticSimilarity } from "../src/lib/ai-semantic.js";
 
-function installOpenRouterChromeStub() {
+function installZenChromeStub() {
   globalThis.chrome = {
     storage: {
       local: {
         async get() {
           return {
             aiConfig: {
-              provider: "openrouter",
-              baseUrl: "https://openrouter.ai/api/v1",
+              provider: "zen",
+              baseUrl: "https://opencode.ai/zen/v1",
               apiKey: "test-key",
             },
           };
@@ -40,7 +40,7 @@ const RESUME = { title: "Frontend Developer", skills: ["React"], experienceTotal
 const VACANCY = { title: "Frontend Developer", keySkills: ["React"], description: { text: "Build UIs" } };
 
 beforeEach(() => {
-  installOpenRouterChromeStub();
+  installZenChromeStub();
   vi.restoreAllMocks();
 });
 
@@ -71,7 +71,7 @@ describe("#8 -- computeSemanticSimilarity via unified sendMessage", () => {
     expect(score).toBe(0);
   });
 
-  it("fetch body: max_tokens === 10, temperature === 0.1, url ~ openrouter.ai", async () => {
+  it("fetch body: max_tokens === 10, temperature === 0.1, url ~ opencode.ai", async () => {
     let seenUrl = "";
     let seenBody = {};
     globalThis.fetch = vi.fn(async (url, opts) => {
@@ -80,7 +80,7 @@ describe("#8 -- computeSemanticSimilarity via unified sendMessage", () => {
       return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: "0.5" } }], usage: null }) };
     });
     await computeSemanticSimilarity(RESUME, VACANCY);
-    expect(seenUrl).toContain("openrouter.ai");
+    expect(seenUrl).toContain("opencode.ai");
     expect(seenBody.max_tokens).toBe(10);
     expect(seenBody.temperature).toBe(0.1);
   });

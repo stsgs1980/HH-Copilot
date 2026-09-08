@@ -2,10 +2,10 @@
 /**
  * TESTS: AI settings UI panel module (F5.6)
  * Covers:
- *   - loadAiConfig: success (3 shapes), BG error, no chrome.runtime
+ *   - loadAiConfig: success (2 shapes), BG error, no chrome.runtime
  *   - saveAiConfig: success, BAD_INPUT, BG error
- *   - populateAiFields: populates 3 fields, defaults on BG error, no shadowRoot
- *   - readAiFields: reads 3 fields from DOM
+ *   - populateAiFields: populates 4 fields, defaults on BG error, no shadowRoot
+ *   - readAiFields: reads 4 fields from DOM
  *   - bindAiSettingsHandlers: debounce, partial save on input
  *   - internal helpers: setFieldValue, getFieldValue
  */
@@ -35,10 +35,11 @@ beforeEach(() => {
 describe("F5.6 -- loadAiConfig", () => {
   it("handles {ok:true, config:{...}} shape (background wrapper)", async () => {
     chrome.runtime.sendMessage.mockImplementation((msg, cb) => {
-      cb({ ok: true, config: { baseUrl: "https://x.example/v1", apiKey: "k1", model: "m1" } });
+      cb({ ok: true, config: { provider: "zen", baseUrl: "https://x.example/v1", apiKey: "k1", model: "m1" } });
     });
     const res = await loadAiConfig();
     expect(res.ok).toBe(true);
+    expect(res.config.provider).toBe("zen");
     expect(res.config.baseUrl).toBe("https://x.example/v1");
     expect(res.config.apiKey).toBe("k1");
     expect(res.config.model).toBe("m1");
@@ -60,10 +61,9 @@ describe("F5.6 -- loadAiConfig", () => {
     });
     const res = await loadAiConfig();
     expect(res.ok).toBe(true);
-    expect(res.config.baseUrl).toBe("https://api.z.ai/api/paas/v4");
+    expect(res.config.baseUrl).toBe("");
     expect(res.config.apiKey).toBe(""); // no fake stub key (#8)
-    expect(res.config.token).toBe(""); // empty (user must paste their JWT)
-    expect(res.config.model).toBe("glm-4.5");
+    expect(res.config.model).toBe("");
   });
 
   it("returns EMPTY_RESP when BG returns null", async () => {
@@ -119,7 +119,7 @@ describe("F5.6 -- saveAiConfig", () => {
     chrome.runtime.sendMessage.mockImplementation((msg, cb) => {
       cb(null);
     });
-    const res = await saveAiConfig({ model: "glm-4.5" });
+    const res = await saveAiConfig({ model: "mimo-v2.5-free" });
     expect(res.ok).toBe(false);
     expect(res.code).toBe("EMPTY_RESP");
   });
@@ -128,11 +128,9 @@ describe("F5.6 -- saveAiConfig", () => {
 function makeShadowRootWithFields(values) {
   const div = document.createElement("div");
   div.innerHTML = `
+    <input id="s-ai-provider" value="">
     <input id="s-ai-base-url" value="">
     <input id="s-ai-api-key" value="">
-    <textarea id="s-ai-token"></textarea>
-    <input id="s-ai-chat-id" value="">
-    <input id="s-ai-user-id" value="">
     <input id="s-ai-model" value="">
     <input id="s-ai-timeout" value="">
   `;

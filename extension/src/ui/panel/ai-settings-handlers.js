@@ -4,7 +4,7 @@
  * Provider change and model fetch button handlers for AI settings.
  * Extracted from ai-settings.js for AHG Rule 12 (250-line hard cap).
  *
- * v1.9.78.0
+ * v1.9.87.0
  */
 
 import { PROVIDER_DEFAULTS } from "../../services/ai-providers.js";
@@ -20,14 +20,8 @@ function getFieldValue(sr, id) {
   return el ? el.value || "" : "";
 }
 
-/** Show/hide Z.ai-specific fields based on provider. */
-export function toggleZaiFields(sr, provider) {
-  const zaiBlock = sr.getElementById("s-ai-zai-fields");
-  if (zaiBlock) zaiBlock.style.display = provider === "zai" ? "" : "none";
-}
-
 /**
- * Bind provider change handler: auto-fill URL, toggle Z.ai fields.
+ * Bind provider change handler: auto-fill URL, toggle base URL readonly.
  */
 export function bindProviderHandler(container, readAiFields, saveAiConfig, msgImpl) {
   const providerEl = container.querySelector("#s-ai-provider");
@@ -36,25 +30,19 @@ export function bindProviderHandler(container, readAiFields, saveAiConfig, msgIm
     const sr = refs.shadowRoot;
     if (!sr) return;
     const provider = providerEl.value;
-    const defs = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.zai;
-    toggleZaiFields(sr, provider);
+    const defs = PROVIDER_DEFAULTS[provider] || { baseUrl: "", apiKey: "", model: "" };
     setFieldValue(sr, "s-ai-base-url", defs.baseUrl);
     const baseUrlEl = sr.getElementById("s-ai-base-url");
-    if (baseUrlEl) baseUrlEl.readOnly = provider === "openrouter";
+    if (baseUrlEl) baseUrlEl.readOnly = provider === "zen";
     setFieldValue(sr, "s-ai-api-key", defs.apiKey);
     setFieldValue(sr, "s-ai-model", defs.model);
-    if (provider !== "zai") {
-      setFieldValue(sr, "s-ai-token", "");
-      setFieldValue(sr, "s-ai-chat-id", "");
-      setFieldValue(sr, "s-ai-user-id", "");
-    }
     const cfg = readAiFields();
     saveAiConfig(cfg, msgImpl).catch(() => {});
   });
 }
 
 /**
- * Bind model fetch button (Ollama / OpenRouter) click handler.
+ * Bind model fetch button (Zen) click handler.
  */
 export function bindModelFetchHandler(container, sendBg, setFieldValue_, saveAiConfig, msgImpl) {
   const fetchBtn = container.querySelector("#s-ai-fetch-models");
@@ -65,12 +53,10 @@ export function bindModelFetchHandler(container, sendBg, setFieldValue_, saveAiC
     const listEl = sr.getElementById("s-ai-model-list");
     const baseUrl = getFieldValue(sr, "s-ai-base-url");
     const provider = getFieldValue(sr, "s-ai-provider");
-    const isOpenRouter = provider === "openrouter";
-    const msgType = isOpenRouter ? "ai-fetch-openrouter-models" : "ai-fetch-ollama-models";
-    const emptyText = isOpenRouter
-      ? "Модели не получены. Проверь ключ/подключение."
-      : "Модели не найдены. Проверь, что Ollama запущен.";
-    const errorText = isOpenRouter ? "Модели не получены. Проверь ключ/подключение." : "Ошибка подключения к Ollama.";
+    const isZen = provider === "zen";
+    const msgType = isZen ? "ai-fetch-zen-models" : "ai-fetch-zen-models";
+    const emptyText = "Модели не получены. Проверь ключ/подключение.";
+    const errorText = "Ошибка подключения к Zen.";
     fetchBtn.disabled = true;
     fetchBtn.textContent = "...";
     try {

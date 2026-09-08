@@ -99,11 +99,9 @@ function makeNetworkErrFetch(msg = "Network failed") {
 beforeEach(() => {
   installChromeStub({
     [AI_CONFIG_KEY]: {
-      baseUrl: "https://api.z.ai/api/paas/v4",
+      baseUrl: "https://opencode.ai/zen/v1",
       apiKey: "test-key",
-      token: "test-jwt",
-      chatId: "chat-test",
-      userId: "user-test",
+      model: "mimo-v2.5-free",
     },
   });
 });
@@ -111,30 +109,28 @@ describe("F4.2 -- config", () => {
   it("getAiConfig returns built-in defaults when no config in storage", async () => {
     installChromeStub({});
     const cfg = await getAiConfig();
-    expect(cfg.baseUrl).toBe("https://api.z.ai/api/paas/v4");
+    expect(cfg.baseUrl).toBe("");
     expect(cfg.apiKey).toBe(""); // no built-in defaults
-    expect(cfg.token).toBe(""); // no built-in JWT
-    expect(cfg.model).toBe("glm-4.5");
+    expect(cfg.model).toBe("");
     expect(cfg.timeoutMs).toBe(60000);
   });
 
   it("setAiConfig merges partial", async () => {
     const store = installChromeStub({
-      [AI_CONFIG_KEY]: { baseUrl: "https://api.z.ai/api/paas/v4", apiKey: "old", token: "old-jwt" },
+      [AI_CONFIG_KEY]: { baseUrl: "https://opencode.ai/zen/v1", apiKey: "old" },
     });
     await setAiConfig({ apiKey: "new" });
     expect(store[AI_CONFIG_KEY].apiKey).toBe("new");
-    expect(store[AI_CONFIG_KEY].baseUrl).toBe("https://api.z.ai/api/paas/v4");
-    // token is preserved
-    expect(store[AI_CONFIG_KEY].token).toBe("old-jwt");
+    expect(store[AI_CONFIG_KEY].baseUrl).toBe("https://opencode.ai/zen/v1");
   });
 
-  it("isAiAvailable true when BOTH apiKey and token set, false when either missing (with defaults disabled)", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", __test_no_defaults: true } });
+  it("isAiAvailable true when apiKey set", async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", __test_no_defaults: true } });
     expect(await isAiAvailable()).toBe(true);
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "", __test_no_defaults: true } });
-    expect(await isAiAvailable()).toBe(false);
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "", token: "jwt", __test_no_defaults: true } });
+  });
+
+  it("isAiAvailable false when apiKey missing", async () => {
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "", __test_no_defaults: true } });
     expect(await isAiAvailable()).toBe(false);
   });
 
@@ -144,25 +140,25 @@ describe("F4.2 -- config", () => {
   });
 
   it("getAiConfig returns stored timeoutMs when set", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 90000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: 90000 } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(90000);
   });
 
   it("getAiConfig clamps too-small timeoutMs to 5000", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 1000 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: 1000 } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(5000);
   });
 
   it("getAiConfig clamps too-large timeoutMs to 600000", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: 999999 } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: 999999 } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(600000);
   });
 
   it("getAiConfig falls back to 60000 when timeoutMs is invalid", async () => {
-    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", token: "jwt", timeoutMs: "abc" } });
+    installChromeStub({ [AI_CONFIG_KEY]: { apiKey: "k", timeoutMs: "abc" } });
     const cfg = await getAiConfig();
     expect(cfg.timeoutMs).toBe(60000);
   });
@@ -181,6 +177,14 @@ describe("F4.2 -- sendMessage success", () => {
   });
 
   it("calls fetch with correct URL + headers", async () => {
+    installChromeStub({
+      [AI_CONFIG_KEY]: {
+        baseUrl: "https://opencode.ai/zen/v1",
+        apiKey: "test-key",
+        provider: "zen",
+        model: "mimo-v2.5-free",
+      },
+    });
     const fetchImpl = makeOkFetch("ok");
     await sendMessage({
       messages: [{ role: "user", content: "hi" }],
@@ -188,14 +192,13 @@ describe("F4.2 -- sendMessage success", () => {
     });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, opts] = fetchImpl.mock.calls[0];
-    expect(url).toBe("https://api.z.ai/api/paas/v4/chat/completions");
+    expect(url).toBe("https://opencode.ai/zen/v1/chat/completions");
     expect(opts.method).toBe("POST");
     expect(opts.headers["Authorization"]).toBe("Bearer test-key");
     expect(opts.headers["Content-Type"]).toBe("application/json");
     const body = JSON.parse(opts.body);
     expect(body.messages).toHaveLength(1);
-    expect(body.model).toBe("glm-4.5");
-    expect(body.thinking).toEqual({ type: "disabled" });
+    expect(body.model).toBe("mimo-v2.5-free");
     expect(body.stream).toBe(false);
   });
 

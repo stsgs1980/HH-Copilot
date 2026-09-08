@@ -168,8 +168,12 @@ if (!("update_url" in chrome.runtime.getManifest())) {
       }
     };
     hmr.onopen = () => mainLog.info("[hmr] Connected to dev server");
-    hmr.onerror = () => {}; // server not running -- that's fine
-    hmr.onclose = () => mainLog.info("[hmr] Disconnected from dev server");
+    hmr.onerror = () => {
+      try {
+        hmr.close();
+      } catch (_e) {}
+    };
+    hmr.onclose = () => {};
   } catch (_e) {
     // WebSocket not available -- ignore
   }

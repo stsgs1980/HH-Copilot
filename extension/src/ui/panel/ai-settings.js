@@ -5,27 +5,17 @@
  * in the Settings tab: provider, base URL, API key, model, etc.
  * On input -- debounced save via ai-set-config. Never throws.
  *
- * Supports 3 providers: Z.ai (cloud), Ollama (local), Custom (OpenAI-compatible).
+ * Supports 2 providers: OpenCode Zen (free models), Custom (OpenAI-compatible).
  * Provider switching and model fetch delegated to ai-settings-handlers.js.
  *
- * v1.9.78.0
+ * v1.9.87.0
  */
 
-import { PROVIDER_DEFAULTS } from "../../services/ai-providers.js";
 import { refs } from "../state.js";
-import { bindModelFetchHandler, bindProviderHandler, toggleZaiFields } from "./ai-settings-handlers.js";
+import { bindModelFetchHandler, bindProviderHandler } from "./ai-settings-handlers.js";
 
 const DEBOUNCE_MS = 500;
-const AI_FIELD_IDS = [
-  "s-ai-provider",
-  "s-ai-base-url",
-  "s-ai-api-key",
-  "s-ai-token",
-  "s-ai-chat-id",
-  "s-ai-user-id",
-  "s-ai-model",
-  "s-ai-timeout",
-];
+const AI_FIELD_IDS = ["s-ai-provider", "s-ai-base-url", "s-ai-api-key", "s-ai-model", "s-ai-timeout"];
 
 async function sendBg(msg, msgImpl) {
   const sender = msgImpl || (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage);
@@ -63,13 +53,10 @@ export async function loadAiConfig(msgImpl) {
   return {
     ok: true,
     config: {
-      provider: cfg.provider || "zai",
-      baseUrl: cfg.baseUrl || PROVIDER_DEFAULTS.zai.baseUrl,
+      provider: cfg.provider || "zen",
+      baseUrl: cfg.baseUrl || "",
       apiKey: cfg.apiKey || "",
-      token: cfg.token || "",
-      chatId: cfg.chatId || "",
-      userId: cfg.userId || "",
-      model: cfg.model || PROVIDER_DEFAULTS.zai.model,
+      model: cfg.model || "",
       timeoutMs: cfg.timeoutMs || 60000,
     },
   };
@@ -96,27 +83,19 @@ export async function populateAiFields(msgImpl) {
 
   const result = await loadAiConfig(msgImpl);
   if (!result.ok) {
-    setFieldValue(sr, "s-ai-provider", "zai");
-    setFieldValue(sr, "s-ai-base-url", PROVIDER_DEFAULTS.zai.baseUrl);
+    setFieldValue(sr, "s-ai-provider", "zen");
+    setFieldValue(sr, "s-ai-base-url", "");
     setFieldValue(sr, "s-ai-api-key", "");
-    setFieldValue(sr, "s-ai-token", "");
-    setFieldValue(sr, "s-ai-chat-id", "");
-    setFieldValue(sr, "s-ai-user-id", "");
-    setFieldValue(sr, "s-ai-model", PROVIDER_DEFAULTS.zai.model);
+    setFieldValue(sr, "s-ai-model", "");
     setFieldValue(sr, "s-ai-timeout", "60000");
-    toggleZaiFields(sr, "zai");
     return false;
   }
 
   setFieldValue(sr, "s-ai-provider", result.config.provider);
   setFieldValue(sr, "s-ai-base-url", result.config.baseUrl);
   setFieldValue(sr, "s-ai-api-key", result.config.apiKey);
-  setFieldValue(sr, "s-ai-token", result.config.token);
-  setFieldValue(sr, "s-ai-chat-id", result.config.chatId);
-  setFieldValue(sr, "s-ai-user-id", result.config.userId);
   setFieldValue(sr, "s-ai-model", result.config.model);
   setFieldValue(sr, "s-ai-timeout", String(result.config.timeoutMs || 60000));
-  toggleZaiFields(sr, result.config.provider);
   return true;
 }
 
@@ -133,16 +112,19 @@ function getFieldValue(sr, id) {
 export function readAiFields() {
   const sr = refs.shadowRoot;
   if (!sr)
-    return { provider: "zai", baseUrl: "", apiKey: "", token: "", chatId: "", userId: "", model: "", timeoutMs: 60000 };
+    return {
+      provider: "zen",
+      baseUrl: "",
+      apiKey: "",
+      model: "",
+      timeoutMs: 60000,
+    };
   const timeoutStr = getFieldValue(sr, "s-ai-timeout");
   const timeoutMs = Number(timeoutStr);
   return {
-    provider: getFieldValue(sr, "s-ai-provider") || "zai",
+    provider: getFieldValue(sr, "s-ai-provider") || "zen",
     baseUrl: getFieldValue(sr, "s-ai-base-url"),
     apiKey: getFieldValue(sr, "s-ai-api-key"),
-    token: getFieldValue(sr, "s-ai-token"),
-    chatId: getFieldValue(sr, "s-ai-chat-id"),
-    userId: getFieldValue(sr, "s-ai-user-id"),
     model: getFieldValue(sr, "s-ai-model"),
     timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 60000,
   };
@@ -158,9 +140,6 @@ export function bindAiSettingsHandlers(container, opts) {
     "s-ai-provider": "provider",
     "s-ai-base-url": "baseUrl",
     "s-ai-api-key": "apiKey",
-    "s-ai-token": "token",
-    "s-ai-chat-id": "chatId",
-    "s-ai-user-id": "userId",
     "s-ai-model": "model",
     "s-ai-timeout": "timeoutMs",
   };
